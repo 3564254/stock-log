@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="headerFragment">
+    <style>
+        .header-pill {
+            background: white; border: 1px solid #ebebeb; padding: 6px 16px 6px 8px; border-radius: 50px;
+            display: flex; align-items: center; gap: 8px; position: relative; cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .header-pill:hover { background-color: var(--toss-gray-bg, #f2f4f6); }
+        .profile-dropdown {
+            position: absolute; top: 56px; right: 0; width: 150px; z-index: 1050;
+            background: white; border-radius: 20px; box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+            border: 1px solid #f2f4f6; overflow: hidden;
+        }
+        .logout-btn {
+            width: 100%; text-align: left; padding: 14px 20px; font-weight: 700;
+            color: var(--toss-red, #f04452); border: none; background: transparent;
+            transition: background-color 0.2s ease; font-size: 0.9rem;
+        }
+        .logout-btn:hover { background-color: #fff1f2; }
+    </style>
+
+    <header class="d-flex justify-content-end align-items-center mb-4 pt-3">
+        <div class="d-flex align-items-center gap-3">
+            <div th:if="${loginMember != null}" class="header-pill" x-data="{ open: false }" @click.away="open = false">
+                <div class="d-flex align-items-center gap-2" @click="open = !open">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background-color: #f2f4f6;">
+                        <i class="bi bi-person-fill text-secondary fs-5"></i>
+                    </div>
+                    <span class="fw-bold text-dark small" th:text="${loginMember.username}">사용자</span>
+                    <i class="bi bi-chevron-down small text-secondary ms-1"></i>
+                </div>
+
+                <div x-show="open" x-transition.opacity x-cloak class="profile-dropdown">
+                    <form th:action="@{/auth/logout}" method="post" class="m-0">
+                        <button type="submit" class="logout-btn">로그아웃</button>
+                    </form>
+                </div>
+            </div>
+
+            <div th:if="${loginMember == null}">
+                <a th:href="@{/auth/login}" class="btn btn-primary rounded-pill px-4 fw-bold border-0 shadow-sm" style="background: var(--toss-blue, #3182f6);">로그인</a>
+            </div>
+        </div>
+    </header>
+</div>
+</html>

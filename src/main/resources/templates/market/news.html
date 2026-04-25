@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StockLog - 시황·뉴스</title>
+
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+
+  <style>
+    :root { --toss-blue: #3182f6; --toss-red: #f04452; --toss-gray-bg: #f2f4f6; --sidebar-width: 250px; }
+    body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: #191f28; }
+    [x-cloak] { display: none !important; }
+
+    .layout-wrapper { display: flex; min-height: 100vh; }
+    .main-content { flex-grow: 1; margin-left: var(--sidebar-width); padding: 0 60px 60px 60px; transition: 0.3s; }
+    .main-content.expanded { margin-left: 80px; }
+    .content-container { width: 100%; max-width: 1100px; margin: 0 auto; padding-top: 32px; }
+
+    /* 카드 UI 통일 */
+    .toss-card { background: white; border-radius: 28px; padding: 36px; box-shadow: 0 4px 24px rgba(0,0,0,0.03); margin-bottom: 30px; border: none; }
+
+    /* 증시 지표 미니 카드 */
+    .index-card { background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 20px; padding: 20px; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+    .index-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.06); }
+    .index-title { font-size: 14px; font-weight: 700; color: #8b95a1; margin-bottom: 8px; }
+    .index-value { font-size: 22px; font-weight: 800; color: #191f28; margin-bottom: 4px; }
+    .index-change { font-size: 14px; font-weight: 700; }
+
+    /* 뉴스 리스트 UI */
+    .news-row { display: flex; gap: 20px; padding: 24px 20px; border-radius: 16px; transition: background 0.2s; cursor: pointer; text-decoration: none; color: inherit; border-bottom: 1px solid #f2f4f6; }
+    .news-row:hover { background-color: #f8fafc; }
+    .news-row:last-child { border-bottom: none; }
+
+    .news-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+    .news-title { font-size: 18px; font-weight: 700; color: #191f28; line-height: 1.4; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .news-summary { font-size: 15px; color: #4e5968; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 12px; }
+    .news-meta { font-size: 13px; font-weight: 600; color: #8b95a1; }
+
+    .news-thumbnail { width: 120px; height: 80px; border-radius: 12px; object-fit: cover; flex-shrink: 0; border: 1px solid #f2f4f6; }
+
+    .text-up { color: var(--toss-red) !important; }
+    .text-down { color: var(--toss-blue) !important; }
+  </style>
+</head>
+<body x-data="newsApp">
+
+<div class="layout-wrapper">
+  <aside th:replace="~{fragments/sidebar :: sidebarFragment('news')}"></aside>
+
+  <main class="main-content" :class="!sidebarOpen ? 'expanded' : ''">
+    <div th:replace="~{fragments/header :: headerFragment}"></div>
+
+    <div class="content-container">
+      <h2 class="fw-bold mb-4 fs-3">시황·뉴스</h2>
+
+      <section class="toss-card mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h3 class="fw-bold m-0 fs-5">주요 증시</h3>
+          <span class="text-secondary small fw-bold">실시간</span>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-6 col-md-4 col-lg-3" th:each="index : ${marketIndices}">
+            <div class="index-card">
+              <div class="index-title" th:text="${index.name}">코스피</div>
+              <div class="index-value" th:text="${#numbers.formatDecimal(index.value, 1, 'COMMA', 2, 'POINT')}">2,650.12</div>
+              <div class="index-change" th:classappend="${index.changeRate > 0 ? 'text-up' : (index.changeRate < 0 ? 'text-down' : 'text-secondary')}">
+                <span th:text="${index.changeRate > 0 ? '▲' : (index.changeRate < 0 ? '▼' : '-')}">▲</span>
+                <span th:text="${#numbers.formatDecimal(Math.abs(index.changeValue), 1, 2)} + ' (' + ${index.changeRate > 0 ? '+' : ''} + ${index.changeRate} + '%)'">25.12 (+1.23%)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-6 col-md-4 col-lg-3" th:if="${marketIndices == null}">
+            <div class="index-card">
+              <div class="index-title">코스피</div>
+              <div class="index-value">2,745.34</div>
+              <div class="index-change text-up">▲ 31.12 (+1.15%)</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg-3" th:if="${marketIndices == null}">
+            <div class="index-card">
+              <div class="index-title">나스닥</div>
+              <div class="index-value">16,091.92</div>
+              <div class="index-change text-down">▼ 65.42 (-0.41%)</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg-3" th:if="${marketIndices == null}">
+            <div class="index-card">
+              <div class="index-title">S&P 500</div>
+              <div class="index-value">5,111.06</div>
+              <div class="index-change text-up">▲ 5.21 (+0.10%)</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg-3" th:if="${marketIndices == null}">
+            <div class="index-card">
+              <div class="index-title">금 (국내, g)</div>
+              <div class="index-value">89,230</div>
+              <div class="index-change text-up">▲ 450 (+0.51%)</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="toss-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h3 class="fw-bold m-0 fs-5">오늘의 주요 뉴스</h3>
+        </div>
+
+        <div class="d-flex flex-column">
+          <a th:each="news : ${newsList}" th:href="${news.link}" target="_blank" class="news-row">
+            <div class="news-content">
+              <div>
+                <h4 class="news-title" th:text="${news.title}">뉴스 제목이 들어갑니다. 두 줄까지 표시되며 넘어가면 말줄임표가 생깁니다.</h4>
+                <p class="news-summary" th:text="${news.summary}">뉴스의 상세 요약 내용이 들어갑니다. 이 부분도 두 줄 이상 넘어가면 자동으로 말줄임표 처리되어 깔끔하게 보입니다.</p>
+              </div>
+              <div class="news-meta">
+                <span th:text="${news.publisher}">한국경제</span> · <span th:text="${news.publishedAt}">1시간 전</span>
+              </div>
+            </div>
+            <img th:if="${news.thumbnailUrl != null}" th:src="${news.thumbnailUrl}" class="news-thumbnail" alt="뉴스 썸네일">
+            <img th:unless="${news.thumbnailUrl != null}" src="https://placehold.co/120x80/f2f4f6/8b95a1?text=News" class="news-thumbnail" alt="기본 썸네일">
+          </a>
+
+          <a th:if="${newsList == null}" href="#" class="news-row">
+            <div class="news-content">
+              <div>
+                <h4 class="news-title">파월 의장 "금리 인하, 인플레이션 둔화 확신 필요해"</h4>
+                <p class="news-summary">제롬 파월 미 연준 의장이 연내 금리 인하 가능성을 열어두면서도 물가 안정에 대한 확실한 지표가 필요하다고 강조했습니다. 시장은 이를 매파적으로 해석했습니다.</p>
+              </div>
+              <div class="news-meta">매일경제 · 2시간 전</div>
+            </div>
+            <img src="https://placehold.co/120x80/f2f4f6/8b95a1?text=News" class="news-thumbnail" alt="news">
+          </a>
+
+          <a th:if="${newsList == null}" href="#" class="news-row">
+            <div class="news-content">
+              <div>
+                <h4 class="news-title">엔비디아, 새로운 AI 칩 공개로 주가 사상 최고치 경신</h4>
+                <p class="news-summary">엔비디아가 기존 대비 처리 속도가 30배 빠른 차세대 인공지능(AI) 칩을 공개하며 기술주 랠리를 이끌었습니다. 시가총액은 2조 달러를 돌파했습니다.</p>
+              </div>
+              <div class="news-meta">한국경제 · 4시간 전</div>
+            </div>
+            <img src="https://placehold.co/120x80/f2f4f6/8b95a1?text=News" class="news-thumbnail" alt="news">
+          </a>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+  document.addEventListener('alpine:init', () => {
+      Alpine.data('newsApp', () => ({
+          sidebarOpen: true
+          // 추가적인 필터링 로직이나 더보기 버튼이 필요하면 여기에 작성
+      }));
+  });
+</script>
+</body>
+</html>

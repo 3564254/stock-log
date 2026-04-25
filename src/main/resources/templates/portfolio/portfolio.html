@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StockLog - 자산 분석</title>
+
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+
+  <style>
+    :root {
+      --toss-blue: #3182f6;
+      --toss-red: #f04452;
+      --toss-green: #05c072;
+      --toss-warning: #f5a623;
+      --toss-gray-bg: #f2f4f6;
+      --text-primary: #191f28;
+      --text-secondary: #4e5968;
+      --text-tertiary: #8b95a1;
+      --sidebar-width: 250px;
+    }
+    body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: var(--text-primary); }
+    [x-cloak] { display: none !important; }
+
+    .layout-wrapper { display: flex; min-height: 100vh; }
+    .main-content { flex-grow: 1; margin-left: var(--sidebar-width); padding: 0 60px 80px; transition: 0.3s; }
+    .main-content.expanded { margin-left: 80px; }
+    .content-container { width: 100%; max-width: 1200px; margin: 0 auto; padding-top: 32px; }
+    .content-container h2 { margin-bottom: 32px !important; }
+
+    /* 공통 카드 스타일 */
+    .toss-card { background: white; border-radius: 28px; padding: 32px; box-shadow: 0 2px 16px rgba(0,0,0,0.04); margin-bottom: 24px; border: none; }
+    .card-title { font-size: 16px; font-weight: 800; color: var(--text-primary); margin-bottom: 24px; letter-spacing: -0.2px; }
+
+    /* ── 원본 Chart.js 스타일 ── */
+    .chart-wrapper { position: relative; width: 220px; height: 220px; margin: 0 auto; }
+    .chart-center-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Analysis 스타일 SVG Ring (투자 성적표) ── */
+    .ring-wrap { position: relative; width: 190px; height: 190px; flex-shrink: 0; margin: 0 auto; }
+    .ring-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
+    .ring-score { font-size: 3.5rem; font-weight: 800; letter-spacing: -2px; line-height: 1; }
+    .ring-grade { font-size: 1.1rem; font-weight: 900; margin-top: 8px; padding: 6px 16px; border-radius: 12px; color: white; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+    /* 등급별 색상 분리 (에러 픽스됨) */
+    .text-grade-A { color: var(--toss-green) !important; }
+    .text-grade-B { color: var(--toss-blue) !important; }
+    .text-grade-C { color: var(--toss-warning) !important; }
+    .text-grade-D { color: var(--toss-red) !important; }
+
+    .stroke-grade-A { stroke: var(--toss-green) !important; }
+    .stroke-grade-B { stroke: var(--toss-blue) !important; }
+    .stroke-grade-C { stroke: var(--toss-warning) !important; }
+    .stroke-grade-D { stroke: var(--toss-red) !important; }
+
+    .bg-grade-A { background-color: var(--toss-green) !important; color: white !important; }
+    .bg-grade-B { background-color: var(--toss-blue) !important; color: white !important; }
+    .bg-grade-C { background-color: var(--toss-warning) !important; color: white !important; }
+    .bg-grade-D { background-color: var(--toss-red) !important; color: white !important; }
+
+    /* ── 공통 지표/리스트 스타일 ── */
+    .metric-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #f2f4f6; }
+    .metric-row:last-child { border-bottom: none; }
+    .insight-box { background: #f8fafc; border-radius: 16px; padding: 20px; font-size: 14px; color: var(--text-secondary); line-height: 1.6; border: 1px solid #f1f5f9; }
+
+    /* ── Axis Bar (섹터 및 지표용) ── */
+    .axis-row { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid #f2f4f6; }
+    .axis-row:last-child { border-bottom: none; }
+    .axis-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .axis-name-wrap { min-width: 90px; flex-shrink: 0; }
+    .axis-name { font-size: 14px; font-weight: 800; color: var(--text-primary); }
+    .axis-bar-bg { flex: 1; height: 6px; background: #f2f4f6; border-radius: 99px; overflow: hidden; position: relative;}
+    .axis-bar-fill { height: 100%; border-radius: 99px; transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1); }
+    .axis-num { font-size: 15px; font-weight: 900; color: var(--text-primary); min-width: 50px; text-align: right; }
+    .axis-unit { font-size: 11px; color: var(--text-tertiary); font-weight: 600; margin-left: 2px;}
+
+    /* ── 원본 보유 종목 리스트 (holding-row 완벽 복구) ── */
+    .holding-row { display: flex; align-items: center; padding: 20px; border-radius: 16px; transition: background 0.15s; margin-bottom: 12px; background: white; border: 1px solid #e2e8f0 !important;}
+    .holding-row:last-child { margin-bottom: 0; }
+    .holding-row:hover { background: #f8f9fa; }
+    .holding-icon { width: 48px; height: 48px; border-radius: 50%; background: white; border: 1.5px solid #eef0f3; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--toss-blue); font-size: 16px; flex-shrink: 0; margin-right: 20px;}
+
+    .progress-bar-custom { height: 6px; border-radius: 3px; background: #f2f4f6; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 3px; background: var(--toss-blue); transition: width 1s ease-out; }
+
+    .text-up { color: var(--toss-red) !important; }
+    .text-down { color: var(--toss-blue) !important; }
+    .opacity-12 { opacity: 0.12; }
+
+    /* ── 시뮬레이션 전용 스타일 (원본 유지) ── */
+    .sim-banner { background: linear-gradient(135deg, #eef5ff 0%, #f0f4ff 100%); border: 1.5px solid #b5d4f4; border-radius: 20px; padding: 20px 28px; margin-bottom: 24px; }
+    .sim-stock-row { display: flex; align-items: center; padding: 14px 16px; border-radius: 14px; background: #f8fafc; border: 1px solid #edf2f7; margin-bottom: 8px; transition: background 0.15s; }
+    .sim-stock-row:hover { background: #eef5ff; }
+    .sim-stock-icon { width: 40px; height: 40px; border-radius: 12px; background: #eef5ff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; color: var(--toss-blue); flex-shrink: 0; margin-right: 12px;}
+    .sim-remove-btn { background: none; border: none; color: #d1d6db; padding: 4px 8px; border-radius: 8px; cursor: pointer; transition: 0.15s; }
+    .sim-remove-btn:hover { background: rgba(240,68,82,0.08); color: var(--toss-red); }
+    .hhi-bar { height: 8px; border-radius: 99px; background: #f2f4f6; overflow: hidden; margin-top: 6px; }
+    .hhi-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease-out, background 0.4s; }
+    .sim-search-dropdown { background: white; border: 1px solid #edf2f7; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); max-height: 280px; overflow-y: auto; z-index: 100; }
+    .sim-search-item { padding: 12px 16px; cursor: pointer; transition: background 0.12s; border-radius: 10px; }
+    .sim-search-item:hover { background: #f2f4f6; }
+    .sim-ai-box { background: #f0f4ff; border: 1px solid #b5d4f4; border-radius: 16px; padding: 18px 20px; font-size: 13px; color: #1a5cb8; line-height: 1.7; }
+    .warn-pill { display: inline-flex; align-items: center; gap: 4px; background: rgba(240,68,82,0.08); color: var(--toss-red); border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 800; }
+    .weight-seg-bar { display: flex; height: 10px; border-radius: 99px; overflow: hidden; gap: 2px; }
+    .weight-seg { border-radius: 99px; height: 100%; transition: width 0.5s ease-out; }
+
+    @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+    .fu { animation: fadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+    .d1 { animation-delay: 0.05s; }
+    .d2 { animation-delay: 0.12s; }
+    .d3 { animation-delay: 0.20s; }
+  </style>
+</head>
+<body x-data="portfolioApp">
+
+<div class="layout-wrapper">
+  <aside th:replace="~{fragments/sidebar :: sidebarFragment('portfolio')}"></aside>
+
+  <main class="main-content" :class="!sidebarOpen ? 'expanded' : ''">
+    <div th:replace="~{fragments/header :: headerFragment}"></div>
+
+    <div class="content-container">
+      <h2 class="fw-bold" style="font-size: 24px; letter-spacing: -0.5px;">내 자산 분석</h2>
+
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <div class="d-flex align-items-center gap-3">
+          <div class="form-check form-switch p-0 m-0 d-flex align-items-center gap-2">
+            <label class="fw-bold m-0" :class="isSimMode ? 'text-primary' : 'text-secondary'" style="font-size:15px; cursor:pointer;" for="simSwitch">시뮬레이션 모드</label>
+            <input class="form-check-input m-0" type="checkbox" role="switch" id="simSwitch"
+                   style="width:2.5em; height:1.25em; cursor:pointer;"
+                   x-model="isSimMode" @change="onModeToggle()">
+          </div>
+          <span x-show="isSimMode" x-cloak class="fw-bold px-3 py-1 rounded-pill"
+                style="background:rgba(49,130,246,0.1); color:var(--toss-blue); font-size:12px;">
+            <i class="bi bi-magic me-1"></i> Sandbox
+          </span>
+        </div>
+        <div x-show="isSimMode" x-cloak class="d-flex gap-2">
+          <button class="btn btn-outline-secondary rounded-pill px-4 fw-bold border-0"
+                  style="background:#f2f4f6; font-size:13px;" @click="resetSim()">초기화</button>
+        </div>
+      </div>
+
+      <div x-show="!isSimMode" class="fu d2">
+
+        <div class="row g-4 mb-4">
+          <div class="col-lg-7">
+            <div class="toss-card h-100 mb-0">
+              <h3 class="card-title">자산 구성</h3>
+              <div class="d-flex align-items-center gap-5 flex-wrap flex-md-nowrap h-100 pb-3">
+                <div class="chart-wrapper flex-shrink-0">
+                  <canvas id="portfolioChart"></canvas>
+                  <div class="chart-center-label">
+                    <div class="text-secondary fw-bold" style="font-size:11px;">총 자산</div>
+                    <div class="fw-bold text-dark" style="font-size:16px; letter-spacing:-0.5px;" x-text="formatNumber(assets) + '원'">-</div>
+                  </div>
+                </div>
+                <div class="flex-grow-1 w-100">
+                  <div th:each="stock, stat : ${portfolio.myStocks}" class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="legend-dot" th:style="'background-color:' + ${ {'#3182F6','#F04452','#FFCC00','#4ECDC4','#FF6B6B','#A78BFA','#34D399'}[stat.index % 7] }"></div>
+                      <span class="fw-bold text-dark" style="font-size:14px;" th:text="${stock.korName}"></span>
+                    </div>
+                    <span class="fw-bold text-secondary" style="font-size:14px;" th:text="${#numbers.formatDecimal(stock.getCurrentValueKrw(), 0, 'COMMA', 0, 'POINT')} + '원'"></span>
+                  </div>
+                  <div th:if="${#lists.isEmpty(portfolio.myStocks)}" class="text-center py-5 text-secondary fw-bold small">데이터가 없습니다.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-5">
+            <div class="toss-card h-100 mb-0 d-flex flex-column justify-content-center position-relative overflow-hidden">
+
+              <div th:if="${analysis != null and analysis.grade != null}"
+                   class="position-absolute"
+                   th:classappend="'bg-grade-' + ${analysis.grade}"
+                   style="top:-40px; right:-40px; width:250px; height:250px; border-radius:50%; filter:blur(80px); opacity:0.06;"></div>
+
+              <h3 class="card-title position-relative z-1 mb-2">투자 성적표</h3>
+
+              <div class="text-center py-2 position-relative z-1">
+                <div class="ring-wrap mb-3">
+                  <svg width="190" height="190" viewBox="0 0 190 190">
+                    <circle cx="95" cy="95" r="80" fill="none" stroke="#f2f4f6" stroke-width="14"/>
+                    <circle cx="95" cy="95" r="80" fill="none"
+                            th:classappend="${analysis != null and analysis.grade != null ? 'stroke-grade-' + analysis.grade : 'stroke-grade-C'}"
+                            th:attr="stroke-dashoffset=${502.6 - ( (analysis != null ? analysis.totalScore : 0) / 100.0 * 502.6)}"
+                            stroke-dasharray="502.6"
+                            stroke-width="14" stroke-linecap="round"
+                            transform="rotate(-90 95 95)"
+                            style="transition: stroke-dashoffset 1.5s cubic-bezier(0.22, 1, 0.36, 1);"/>
+                  </svg>
+                  <div class="ring-center mt-1">
+                    <div class="ring-score"
+                         th:classappend="${analysis != null and analysis.grade != null ? 'text-grade-' + analysis.grade : 'text-secondary'}"
+                         x-text="score">0</div>
+                    <div class="text-secondary fw-bold mt-1" style="font-size:12px;">100점 만점</div>
+                  </div>
+                </div>
+
+                <div th:if="${analysis != null and analysis.grade != null}"
+                     class="ring-grade"
+                     th:classappend="'bg-grade-' + ${analysis.grade}"
+                     th:text="${analysis.grade} + ' 등급'"></div>
+              </div>
+
+              <div class="insight-box mt-3 position-relative z-1">
+                <div class="d-flex align-items-start gap-2">
+                  <i class="bi bi-stars fs-5 mt-1"
+                     th:classappend="${analysis != null and analysis.grade != null ? 'text-grade-' + analysis.grade : 'text-tertiary'}"></i>
+                  <span class="fw-bold text-dark mt-1" th:text="${analysis != null && analysis.insightMessage != null ? analysis.insightMessage : '자산을 추가하여 분석 리포트를 확인해보세요.'}"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+          <div class="col-lg-6">
+            <div class="toss-card h-100 mb-0 d-flex flex-column justify-content-center">
+              <h3 class="card-title">포트폴리오 지표</h3>
+              <div class="metric-row">
+                <div><div class="fw-bold text-dark" style="font-size:14px;">집중도 (HHI)</div><div class="text-secondary mt-1" style="font-size:12px;">낮을수록 분산 투자</div></div>
+                <div class="fw-bold text-dark" style="font-size:18px;" th:text="${analysis != null && analysis.hhi != null ? #numbers.formatDecimal(analysis.hhi, 0, 'COMMA', 0, 'POINT') : '-'}"></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="fw-bold text-dark" style="font-size:14px;">투자 승률 (Win Rate)</div><div class="text-secondary mt-1" style="font-size:12px;">수익을 내고 있는 종목의 비율</div></div>
+                <div class="fw-bold text-dark" style="font-size:18px;" th:text="${analysis != null && analysis.winRate != null ? #numbers.formatDecimal(analysis.winRate, 0, 'COMMA', 0, 'POINT') + '%' : '-'}"></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="fw-bold text-dark" style="font-size:14px;">보유 종목 수</div></div>
+                <div class="fw-bold text-dark" style="font-size:18px;" th:text="${#lists.size(portfolio.myStocks)} + '개'"></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="fw-bold text-dark" style="font-size:14px;">총 수익률</div></div>
+                <div class="fw-bold" style="font-size:20px; letter-spacing: -0.5px;" th:classappend="${portfolio.totalReturnRate >= 0 ? 'text-up' : 'text-down'}"
+                     th:text="${(portfolio.totalReturnRate >= 0 ? '+' : '') + portfolio.totalReturnRate + '%'}"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="toss-card h-100 mb-0">
+              <h3 class="card-title">섹터별 비중</h3>
+              <div class="d-flex flex-column justify-content-center h-100 pb-4">
+                <template x-for="(item, index) in sectorStats" :key="item.sector">
+                  <div class="axis-row">
+                    <div class="axis-dot" :style="'background-color:' + getSectorColor(index)"></div>
+                    <div class="axis-name-wrap">
+                      <div class="axis-name" x-text="item.sector"></div>
+                    </div>
+                    <div class="axis-bar-bg">
+                      <div class="axis-bar-fill" :style="'width:' + item.percent + '%; background-color:' + getSectorColor(index)"></div>
+                    </div>
+                    <div class="axis-num">
+                      <span x-text="item.percent.toFixed(1)"></span><span class="axis-unit">%</span>
+                    </div>
+                  </div>
+                </template>
+                <div x-show="sectorStats.length === 0" class="text-center py-4 text-secondary fw-bold small">데이터가 없습니다.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-12">
+            <div class="toss-card mb-0">
+              <h3 class="card-title">보유 종목 상세</h3>
+              <div class="d-flex flex-column">
+                <div th:each="stock : ${portfolio.myStocks}" class="holding-row">
+                  <div class="holding-icon" th:text="${#strings.substring(stock.korName,0,1)}"></div>
+                  <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <div>
+                        <span class="fw-bold text-dark" style="font-size:16px;" th:text="${stock.korName}"></span>
+                        <span class="text-secondary fw-bold ms-2" style="font-size:13px;" th:text="${stock.stockCode}"></span>
+                      </div>
+                      <div class="text-end d-flex align-items-center gap-4">
+                        <div class="fw-bold text-dark" style="font-size:16px;" th:text="${#numbers.formatDecimal(stock.getCurrentValueKrw(), 0, 'COMMA', 0, 'POINT')} + '원'"></div>
+                        <div class="fw-bold" style="font-size:16px; min-width:60px; text-align:right;" th:classappend="${stock.profitRate >= 0 ? 'text-up' : 'text-down'}"
+                             th:text="${(stock.profitRate >= 0 ? '+' : '') + stock.profitRate + '%'}"></div>
+                      </div>
+                    </div>
+                    <div class="progress-bar-custom mt-2" style="height: 5px;">
+                      <div class="progress-fill" th:style="'width:' + ${portfolio.totalAssets > 0 ? (stock.getCurrentValueKrw() * 100.0 / portfolio.totalAssets) : 0} + '%'"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div th:if="${#lists.isEmpty(portfolio.myStocks)}" class="text-center py-5 text-secondary fw-bold small">
+                <i class="bi bi-folder-x d-block mb-3" style="font-size:2.5rem; opacity:0.3;"></i>
+                보유 중인 종목이 없습니다. 자산을 추가해보세요.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><div x-show="isSimMode" x-cloak class="fu d2">
+
+      <div class="sim-banner d-flex align-items-center gap-3 mb-4">
+        <i class="bi bi-magic" style="font-size:1.4rem; color:var(--toss-blue);"></i>
+        <div>
+          <div class="fw-bold" style="font-size:14px; color:#1a5cb8;">Sandbox 모드 — 가상 포트폴리오 분석</div>
+          <div class="text-secondary fw-bold" style="font-size:12px;">종목을 추가하면 동일 비중(Equal Weight) 기준으로 리스크와 섹터 궁합을 즉시 분석합니다.</div>
+        </div>
+      </div>
+
+      <div class="row g-4 mb-4">
+        <div class="col-lg-5">
+          <div class="toss-card h-100 mb-0">
+            <h3 class="card-title mb-4">
+              종목 추가
+              <span class="ms-2 fw-bold px-2 py-1 rounded-pill" style="font-size:11px; background:#f2f4f6; color:#8b95a1;" x-text="simStocks.length + '개 추가됨'"></span>
+            </h3>
+
+            <div class="position-relative mb-3" @click.outside="simSearchOpen = false">
+              <div class="d-flex align-items-center gap-2 px-3 py-2 rounded-3" style="background:#f2f4f6;">
+                <i class="bi bi-search text-secondary" style="font-size:14px;"></i>
+                <input type="text" x-model="simQuery" @input.debounce.400ms="searchSimStock()" @focus="simSearchOpen = simResults.length > 0"
+                       class="border-0 bg-transparent w-100 fw-bold" style="outline:none; font-size:14px;" placeholder="종목명 또는 코드 검색">
+                <div x-show="simSearchLoading" class="spinner-border spinner-border-sm text-primary" style="width:1rem;height:1rem;"></div>
+              </div>
+
+              <div x-show="simSearchOpen && simResults.length > 0" x-cloak class="sim-search-dropdown position-absolute w-100 mt-1 p-2">
+                <template x-for="item in simResults" :key="item.stock.code">
+                  <div class="sim-search-item d-flex align-items-center justify-content-between" @click="addSimStock(item)">
+                    <div>
+                      <div class="fw-bold" style="font-size:13px;" x-text="item.stock.name"></div>
+                      <div class="text-secondary fw-bold" style="font-size:11px;" x-text="item.stock.code + ' · ' + (item.stock.sector || '')"></div>
+                    </div>
+                    <div class="text-end">
+                      <div class="fw-bold" style="font-size:13px;" x-text="item.stock.currency === 'USD' ? '$' + Number(item.price?.currentPrice||0).toFixed(2) : formatNumber(item.price?.currentPrice||0) + '원'"></div>
+                      <i class="bi bi-plus-circle-fill text-primary" style="font-size:16px;"></i>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <div x-show="simStocks.length === 0" class="text-center py-5 text-secondary fw-bold" style="font-size:13px;">
+              <i class="bi bi-collection d-block mb-2" style="font-size:2rem; opacity:0.3;"></i>
+              종목을 검색해서 추가해보세요
+            </div>
+
+            <template x-for="(s, i) in simStocks" :key="s.code">
+              <div class="sim-stock-row">
+                <div class="sim-stock-icon" x-text="s.name.charAt(0)"></div>
+                <div class="flex-grow-1">
+                  <div class="fw-bold text-dark" style="font-size:13px;" x-text="s.name"></div>
+                  <div class="text-secondary fw-bold" style="font-size:11px;" x-text="s.code + ' · ' + (s.sector || '기타')"></div>
+                </div>
+                <div class="text-end me-3">
+                  <div class="fw-bold" style="font-size:12px; color:var(--toss-blue);" x-text="(100 / simStocks.length).toFixed(1) + '%'"></div>
+                  <div class="text-secondary fw-bold" style="font-size:11px;">동일 비중</div>
+                </div>
+                <button class="sim-remove-btn" @click="removeSimStock(i)"><i class="bi bi-x-lg" style="font-size:14px;"></i></button>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <div class="col-lg-7">
+          <div class="toss-card h-100 mb-0">
+            <h3 class="card-title">자산 구성 미리보기</h3>
+
+            <div x-show="simStocks.length === 0" class="text-center py-5 text-secondary fw-bold" style="font-size:13px;">
+              <i class="bi bi-pie-chart d-block mb-2" style="font-size:2rem; opacity:0.3;"></i>
+              종목을 추가하면 비중 차트가 표시됩니다
+            </div>
+
+            <div x-show="simStocks.length > 0">
+              <div class="d-flex align-items-center gap-4 flex-wrap flex-md-nowrap mb-4">
+                <div class="chart-wrapper flex-shrink-0" style="width:180px;height:180px;">
+                  <canvas id="simChart"></canvas>
+                  <div class="chart-center-label">
+                    <div class="text-secondary fw-bold" style="font-size:10px;">종목 수</div>
+                    <div class="fw-bold text-dark" style="font-size:20px;" x-text="simStocks.length + '개'"></div>
+                  </div>
+                </div>
+                <div class="flex-grow-1 w-100">
+                  <template x-for="(s, i) in simStocks" :key="s.code">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="legend-dot" :style="'background:' + getSectorColor(i)"></div>
+                        <span class="fw-bold text-dark" style="font-size:13px;" x-text="s.name"></span>
+                      </div>
+                      <span class="text-secondary fw-bold" style="font-size:12px;" x-text="(100 / simStocks.length).toFixed(1) + '%'"></span>
+                    </div>
+                  </template>
+                </div>
+              </div>
+
+              <div class="weight-seg-bar mb-4">
+                <template x-for="(s, i) in simStocks" :key="s.code">
+                  <div class="weight-seg" :style="'width:' + (100/simStocks.length).toFixed(2) + '%; background:' + getSectorColor(i)"></div>
+                </template>
+              </div>
+
+              <div class="p-3 rounded-3 mb-3" style="background:#f8fafc; border:1px solid #edf2f7;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div>
+                    <span class="fw-bold text-dark" style="font-size:13px;">집중도 (HHI)</span>
+                    <span class="text-secondary fw-bold ms-2" style="font-size:11px;">낮을수록 분산</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="fw-bold" style="font-size:16px;" :style="simHhi >= 2500 ? 'color:var(--toss-red)' : simHhi >= 1500 ? 'color:#f5a623' : 'color:#05c072'" x-text="Math.round(simHhi).toLocaleString()"></span>
+                    <span x-show="simHhi >= 2500" class="warn-pill"><i class="bi bi-exclamation-triangle-fill" style="font-size:10px;"></i> 집중 위험</span>
+                  </div>
+                </div>
+                <div class="hhi-bar">
+                  <div class="hhi-fill" :style="'width:' + Math.min(simHhi/10000*100, 100) + '%; background:' + (simHhi >= 2500 ? 'var(--toss-red)' : simHhi >= 1500 ? '#f5a623' : '#05c072')"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div x-show="simStocks.length > 0" class="toss-card">
+        <div class="row g-4">
+          <div class="col-lg-5">
+            <h3 class="card-title mb-4">섹터 구성</h3>
+            <template x-for="(sec, i) in simSectorStats" :key="sec.sector">
+              <div class="axis-row py-2">
+                <div class="axis-name-wrap" style="min-width: 80px;">
+                  <div class="axis-name" style="font-size:13px;" x-text="sec.sector"></div>
+                </div>
+                <div class="axis-bar-bg" style="height: 5px;">
+                  <div class="axis-bar-fill" :style="'width:' + sec.percent + '%; background:' + getSectorColor(i)"></div>
+                </div>
+                <div class="axis-num" style="min-width: 40px;">
+                  <span style="font-size:13px;" x-text="sec.percent.toFixed(1)"></span><span class="axis-unit">%</span>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <div class="col-lg-7">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+              <h3 class="card-title m-0">AI 포트폴리오 분석</h3>
+              <button class="btn btn-primary rounded-pill px-4 fw-bold border-0 shadow-sm" style="background:var(--toss-blue); font-size:13px;" @click="getSimAiComment()" :disabled="simAiLoading || simStocks.length === 0">
+                <span x-show="!simAiLoading"><i class="bi bi-stars me-1 text-warning"></i> AI 분석 요청</span>
+                <span x-show="simAiLoading"><span class="spinner-border spinner-border-sm me-1"></span>분석 중...</span>
+              </button>
+            </div>
+
+            <div x-show="!simAiComment && !simAiLoading" class="text-center py-4 text-secondary fw-bold" style="font-size:13px;">
+              <i class="bi bi-robot d-block mb-2" style="font-size:2rem; opacity:0.3;"></i> AI 분석 요청 버튼을 눌러주세요
+            </div>
+
+            <div x-show="simAiComment" class="sim-ai-box">
+              <div class="d-flex align-items-start gap-2">
+                <i class="bi bi-stars flex-shrink-0 mt-1" style="color:var(--toss-blue); font-size:16px;"></i>
+                <span x-text="simAiComment"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div></div>
+  </main>
+</div>
+
+<script th:inline="javascript">
+  /*<![CDATA[*/
+  const _targetScore  = /*[[${analysis != null ? analysis.totalScore : 0}]]*/ 0;
+  const _targetAssets = /*[[${portfolio != null ? portfolio.totalAssets : 0}]]*/ 0;
+  const chartLabels   = /*[[${analysis != null ? analysis.chartLabels : {}}]]*/ [];
+  const chartData     = /*[[${analysis != null ? analysis.chartData : {}}]]*/ [];
+
+  const _stockList = [];
+  /*[# th:each="stock : ${portfolio.myStocks}"]*/
+  _stockList.push({
+      sector: /*[[${stock.sector}]]*/ '기타',
+      value: /*[[${stock.getCurrentValueKrw()}]]*/ 0
+  });
+  /*[/]*/
+  /*]]>*/
+
+  const COLORS = ['#3182F6','#F04452','#FFCC00','#4ECDC4','#FF6B6B','#A78BFA','#34D399','#F69931','#8B95A1'];
+
+  document.addEventListener('alpine:init', () => {
+      Alpine.data('portfolioApp', () => ({
+          sidebarOpen: true,
+          score: 0,
+          assets: 0,
+          sectorStats: [],
+          isSimMode: false,
+          simStocks: [],
+          simQuery: '',
+          simResults: [],
+          simSearchLoading: false,
+          simSearchOpen: false,
+          simChart: null,
+          simAiComment: '',
+          simAiLoading: false,
+
+          get simHhi() {
+              if (this.simStocks.length === 0) return 0;
+              const w = 100 / this.simStocks.length;
+              return this.simStocks.length * (w * w);
+          },
+          get simSectorStats() {
+              const map = {};
+              this.simStocks.forEach(s => {
+                  const sec = s.sector || '기타';
+                  map[sec] = (map[sec] || 0) + 1;
+              });
+              return Object.keys(map).map(k => ({
+                  sector: k,
+                  count: map[k],
+                  percent: map[k] / this.simStocks.length * 100
+              })).sort((a, b) => b.percent - a.percent);
+          },
+
+          init() {
+              if (_targetScore > 0) {
+                  const si = setInterval(() => {
+                      if (this.score < _targetScore) this.score++;
+                      else { this.score = Math.floor(_targetScore); clearInterval(si); }
+                  }, 15);
+              }
+              if (_targetAssets > 0) {
+                  const ai = setInterval(() => {
+                      if (this.assets < _targetAssets) {
+                          this.assets += Math.max(1, Math.ceil(_targetAssets / 50));
+                      } else { this.assets = _targetAssets; clearInterval(ai); }
+                  }, 20);
+              }
+              this.calculateSectors();
+          },
+
+          onModeToggle() {
+              if (this.isSimMode) {
+                  this.$nextTick(() => this.renderSimChart());
+              }
+          },
+
+          calculateSectors() {
+              const map = {};
+              let total = 0;
+              _stockList.forEach(s => {
+                  const sec = s.sector || '기타';
+                  map[sec] = (map[sec] || 0) + s.value;
+                  total += s.value;
+              });
+              this.sectorStats = Object.keys(map).map(k => ({
+                  sector: k, value: map[k],
+                  percent: total > 0 ? (map[k] / total * 100) : 0
+              })).sort((a, b) => b.value - a.value);
+          },
+
+          async searchSimStock() {
+              if (this.simQuery.length < 1) { this.simResults = []; this.simSearchOpen = false; return; }
+              this.simSearchLoading = true;
+              try {
+                  const res = await fetch(`/api/stock/search?name=${encodeURIComponent(this.simQuery)}&page=0`);
+                  if (res.ok) {
+                      this.simResults = await res.json();
+                      this.simSearchOpen = this.simResults.length > 0;
+                  }
+              } catch(e) { console.error(e); }
+              finally { this.simSearchLoading = false; }
+          },
+
+          addSimStock(item) {
+              if (this.simStocks.find(s => s.code === item.stock.code)) {
+                  this.simSearchOpen = false;
+                  return;
+              }
+              this.simStocks.push({
+                  code:     item.stock.code,
+                  name:     item.stock.name,
+                  sector:   item.stock.sector || '기타',
+                  price:    item.price?.currentPrice || 0,
+                  currency: item.stock.currency
+              });
+              this.simQuery = '';
+              this.simResults = [];
+              this.simSearchOpen = false;
+              this.simAiComment = '';
+              this.$nextTick(() => this.renderSimChart());
+          },
+
+          removeSimStock(index) {
+              this.simStocks.splice(index, 1);
+              this.simAiComment = '';
+              this.$nextTick(() => this.renderSimChart());
+          },
+
+          resetSim() {
+              this.simStocks = [];
+              this.simAiComment = '';
+              this.simQuery = '';
+              this.simResults = [];
+              if (this.simChart) { this.simChart.destroy(); this.simChart = null; }
+          },
+
+          renderSimChart() {
+              const ctx = document.getElementById('simChart')?.getContext('2d');
+              if (!ctx) return;
+              if (this.simChart) { this.simChart.destroy(); this.simChart = null; }
+              if (this.simStocks.length === 0) return;
+
+              const n = this.simStocks.length;
+              this.simChart = new Chart(ctx, {
+                  type: 'doughnut',
+                  data: {
+                      labels: this.simStocks.map(s => s.name),
+                      datasets: [{
+                          data: this.simStocks.map(() => 1),
+                          backgroundColor: COLORS.slice(0, n),
+                          borderWidth: 0, hoverOffset: 6
+                      }]
+                  },
+                  options: {
+                      cutout: '70%',
+                      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.label}: ${(100/n).toFixed(1)}%` } } },
+                      animation: { animateRotate: true, duration: 600 }
+                  }
+              });
+          },
+
+          async getSimAiComment() {
+              if (this.simStocks.length === 0) return;
+              this.simAiLoading = true;
+              this.simAiComment = '';
+              try {
+                  const payload = {
+                      stocks: this.simStocks.map(s => ({ code: s.code, name: s.name, sector: s.sector })),
+                      hhi: Math.round(this.simHhi),
+                      sectorStats: this.simSectorStats
+                  };
+                  const res = await fetch('/api/portfolio/sim-analysis', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(payload)
+                  });
+                  this.simAiComment = res.ok ? await res.text() : 'AI 분석 중 오류가 발생했습니다.';
+              } catch(e) {
+                  this.simAiComment = 'AI 분석 중 오류가 발생했습니다.';
+              } finally {
+                  this.simAiLoading = false;
+              }
+          },
+
+          getSectorColor(index) { return COLORS[index % COLORS.length]; },
+          formatNumber(val) {
+              if (val === null || isNaN(val)) return '0';
+              return new Intl.NumberFormat('ko-KR').format(Math.floor(val));
+          }
+      }));
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+      const ctx = document.getElementById('portfolioChart')?.getContext('2d');
+      if (!ctx) return;
+      const colors = ['#3182F6','#F04452','#FFCC00','#4ECDC4','#FF6B6B','#A78BFA','#34D399'];
+      if (Array.isArray(chartLabels) && chartLabels.length > 0) {
+          new Chart(ctx, {
+              type: 'doughnut',
+              data: { labels: chartLabels, datasets: [{ data: chartData, backgroundColor: colors.slice(0, chartData.length), borderWidth: 0, hoverOffset: 6 }] },
+              options: { cutout: '72%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.label}: ${new Intl.NumberFormat('ko-KR').format(c.raw)}원` } } }, animation: { animateRotate: true, duration: 800 } }
+          });
+      } else {
+          new Chart(ctx, {
+              type: 'doughnut',
+              data: { datasets: [{ data: [1], backgroundColor: ['#f2f4f6'], borderWidth: 0 }] },
+              options: { cutout: '72%', plugins: { legend: { display: false }, tooltip: { enabled: false } }, animation: false }
+          });
+      }
+  });
+</script>
+</body>
+</html>

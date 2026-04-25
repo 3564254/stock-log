@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>시장 대시보드 — StockLog</title>
+
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+
+  <style>
+    :root { --toss-blue: #3182f6; --toss-red: #f04452; --toss-gray-bg: #f2f4f6; --sidebar-width: 250px; }
+    body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; margin: 0; color: #191f28; overflow-x: hidden; }
+    .layout-wrapper { display: flex; min-height: 100vh; }
+    .main-content { flex-grow: 1; margin-left: var(--sidebar-width); padding: 0 60px 80px; transition: 0.3s; }
+    .content-container { width: 100%; max-width: 1100px; margin: 0 auto; padding-top: 32px; }
+
+    .toss-card { background: white; border-radius: 28px; padding: 28px; box-shadow: 0 2px 16px rgba(0,0,0,0.04); margin-bottom: 24px; border: none; }
+    .tab-nav { display: flex; gap: 4px; background: #f2f4f6; border-radius: 14px; padding: 4px; margin-bottom: 20px; width: fit-content; }
+    .tab-btn { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; color: #8b95a1; border: none; background: none; cursor: pointer; transition: all 0.15s; }
+    .tab-btn.active { background: white; color: #191f28; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+
+    .indicator-label { font-size: 12px; font-weight: 700; color: #8b95a1; margin-bottom: 6px; }
+    .indicator-value { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; }
+    #market-chart-container { width: 100%; height: 450px; position: relative; border-radius: 16px; overflow: hidden; background: white; }
+
+    .signal-list li { padding: 6px 0; border-bottom: 1px dashed #e5e8eb; }
+    .signal-list li:last-child { border-bottom: none; }
+
+    @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+    .fu { animation: fadeUp 0.4s cubic-bezier(0.22,1,0.36,1) both; }
+    .d1 { animation-delay: 0.04s; } .d2 { animation-delay: 0.10s; } .d3 { animation-delay: 0.16s; } .d4 { animation-delay: 0.22s; }
+  </style>
+</head>
+<body x-data="marketApp">
+<div class="layout-wrapper">
+  <aside th:replace="~{fragments/sidebar :: sidebarFragment('market')}"></aside>
+
+  <main class="main-content">
+    <div th:replace="~{fragments/header :: headerFragment}"></div>
+
+    <div class="content-container">
+
+      <div class="mb-4 fu d1">
+        <h2 class="fw-bold mb-1" style="font-size: 24px; letter-spacing: -0.5px;">글로벌 시장 대시보드</h2>
+        <p class="text-secondary fw-medium" th:if="${loginMember != null}"
+           th:text="|${loginMember.username}님, 오늘의 시장 흐름입니다. 📈|"></p>
+        <p class="text-secondary fw-medium" th:unless="${loginMember != null}">
+          오늘의 시장 흐름입니다. 📈
+        </p>
+      </div>
+
+      <div class="toss-card py-4 mb-4 fu d2" th:if="${dashboard.analysis != null}"
+           th:styleappend="${dashboard.analysis.riskScore > 60 ? 'border: 2px solid rgba(240, 68, 82, 0.3); background-color: #fffafb;' : ''}">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="fw-bold m-0" style="font-size: 18px;"><i class="bi bi-robot text-primary me-2"></i>AI 시장 진단</h3>
+          <span class="badge rounded-pill fs-6 px-3 py-2"
+                th:classappend="${dashboard.analysis.riskScore <= 35 ? 'bg-success' : (dashboard.analysis.riskScore <= 60 ? 'bg-secondary' : (dashboard.analysis.riskScore <= 80 ? 'bg-warning text-dark' : 'bg-danger'))}"
+                th:text="${dashboard.analysis.regime}">
+          </span>
+        </div>
+        <div class="progress mb-2" style="height: 8px; border-radius: 4px; background-color: #e5e8eb;">
+          <div class="progress-bar progress-bar-striped progress-bar-animated"
+               th:classappend="${dashboard.analysis.riskScore <= 35 ? 'bg-success' : (dashboard.analysis.riskScore <= 60 ? 'bg-secondary' : (dashboard.analysis.riskScore <= 80 ? 'bg-warning' : 'bg-danger'))}"
+               th:style="'width: ' + ${dashboard.analysis.riskScore} + '%'"></div>
+        </div>
+        <div class="bg-light rounded p-3 mt-3">
+          <ul class="list-unstyled signal-list mb-0" style="font-size: 14px; color: #4e5968;">
+            <li th:each="signal : ${dashboard.analysis.signals}" th:text="${signal}"></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4 fu d3">
+        <template x-for="type in ['SP500', 'NASDAQ', 'PHLX', 'DXY', 'VIX']" :key="type">
+          <div class="col-md-4 col-lg">
+            <div class="toss-card py-4 px-4 mb-0 h-100 d-flex flex-column justify-content-center">
+              <div class="indicator-label" x-text="getDisplayName(type)"></div>
+              <div class="indicator-value" x-text="formatValue(type)"></div>
+              <div class="small fw-bold mt-1" :class="getChangeClass(type)" x-text="formatChange(type)"></div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <div class="row g-3 mb-4 fu d3" style="animation-delay: 0.18s;">
+        <div class="col-md-3" th:each="idx : ${ {'us10y', 'us2y', 'wti'} }">
+          <div class="toss-card py-4 px-4 mb-0 h-100 d-flex flex-column justify-content-center" th:with="item=${dashboard.__${idx}__}">
+            <div class="indicator-label" th:text="${idx == 'us10y' ? '미 국채 10년물' : (idx == 'us2y' ? '미 국채 2년물' : 'WTI 유가')}"></div>
+            <div class="indicator-value" th:text="${idx == 'wti' ? '$' + #numbers.formatDecimal(item.data[item.data.size()-1].value, 1, 0) : #numbers.formatDecimal(item.data[item.data.size()-1].value, 1, 2) + '%'}"></div>
+            <div class="small fw-bold mt-1" th:classappend="${item.changeValue > 0 ? 'text-danger' : (item.changeValue < 0 ? 'text-primary' : 'text-secondary')}"
+                 th:text="${(item.changeValue > 0 ? '+' : '') + (idx == 'wti' ? #numbers.formatDecimal(item.changeValue, 1, 1) : #numbers.formatDecimal(item.changeValue, 1, 2) + 'bp') + ' (' + #numbers.formatDecimal(item.changeRate, 1, 2) + '%)'}">
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="toss-card py-4 px-4 mb-0 h-100 d-flex flex-column justify-content-center">
+            <div class="indicator-label">장단기 금리차 (10Y-2Y)</div>
+            <div class="indicator-value"
+                 th:with="diff=${dashboard.us10y.data[dashboard.us10y.data.size()-1].value - dashboard.us2y.data[dashboard.us2y.data.size()-1].value}"
+                 th:classappend="${diff < 0 ? 'text-danger' : 'text-primary'}"
+                 th:text="${#numbers.formatDecimal(diff, 1, 3)} + '%p'"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4 mb-5 fu d4">
+        <div class="col-lg-8">
+          <div class="toss-card h-100 mb-0">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+              <h3 class="fw-bold m-0" style="font-size: 16px;">지표별 추세 (최근 1년)</h3>
+              <div class="tab-nav mb-0">
+                <button class="tab-btn" :class="activeTab === 'SP500' ? 'active' : ''" @click="changeTab('SP500')">S&P 500</button>
+                <button class="tab-btn" :class="activeTab === 'NASDAQ' ? 'active' : ''" @click="changeTab('NASDAQ')">나스닥</button>
+                <button class="tab-btn" :class="activeTab === 'PHLX' ? 'active' : ''" @click="changeTab('PHLX')">반도체</button>
+                <button class="tab-btn" :class="activeTab === 'DXY' ? 'active' : ''" @click="changeTab('DXY')">달러</button>
+              </div>
+            </div>
+            <div id="market-chart-container"></div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="toss-card h-100 mb-0 text-white d-flex flex-column justify-content-center"
+               style="background: linear-gradient(135deg, #3182f6 0%, #1b64da 100%);">
+            <h3 class="fw-bold fs-6 mb-4 opacity-80"><i class="bi bi-currency-exchange me-2"></i>실시간 환율</h3>
+            <div class="display-5 fw-bold mb-2">
+              <span th:text="${#numbers.formatDecimal(dashboard.usdKrw.data[dashboard.usdKrw.data.size()-1].value, 1, 2)}"></span><small style="font-size: 1.5rem">원</small>
+            </div>
+            <div class="fw-bold" th:classappend="${dashboard.usdKrw.changeValue > 0 ? 'text-white' : 'text-white-50'}">
+              <i th:class="${dashboard.usdKrw.changeValue > 0 ? 'bi bi-caret-up-fill' : 'bi bi-caret-down-fill'}"></i>
+              <span th:text="${#numbers.formatDecimal(dashboard.usdKrw.changeValue, 1, 2)}"></span>
+              <span th:text="'(' + ${#numbers.formatDecimal(dashboard.usdKrw.changeRate, 1, 2)} + '%)'"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div> </main>
+</div>
+
+<script th:inline="javascript">
+  document.addEventListener('alpine:init', () => {
+      Alpine.data('marketApp', () => ({
+          activeTab: 'SP500',
+          chart: null, areaSeries: null,
+          allData: {
+              SP500: /*[[${dashboard.sp500}]]*/ {},
+              NASDAQ: /*[[${dashboard.nasdaq}]]*/ {},
+              PHLX: /*[[${dashboard.phlxSemi}]]*/ {},
+              DXY: /*[[${dashboard.dxy}]]*/ {},
+              VIX: /*[[${dashboard.vix}]]*/ {}
+          },
+          init() {
+              this.$nextTick(() => {
+                  this.createChart();
+                  this.updateChartData();
+              });
+          },
+          createChart() {
+              const container = document.getElementById('market-chart-container');
+              this.chart = LightweightCharts.createChart(container, {
+                  layout: { background: { color: '#ffffff' }, textColor: '#8b95a1', fontFamily: 'Pretendard' },
+                  grid: { vertLines: { visible: false }, horzLines: { color: '#f2f4f6' } },
+                  timeScale: { borderVisible: false },
+              });
+              this.areaSeries = this.chart.addAreaSeries({ lineColor: '#3182f6', topColor: 'rgba(49, 130, 246, 0.2)', bottomColor: 'rgba(49, 130, 246, 0)', lineWidth: 2 });
+          },
+          updateChartData() {
+              const list = this.allData[this.activeTab]?.data || [];
+              const formatted = list.map(d => ({ time: String(d.date), value: parseFloat(d.value) })).sort((a,b) => a.time.localeCompare(b.time));
+              this.areaSeries.setData(formatted);
+              this.chart.timeScale().fitContent();
+          },
+          changeTab(t) { this.activeTab = t; this.updateChartData(); },
+          getDisplayName(t) { return {SP500:'S&P 500', NASDAQ:'나스닥 종합', PHLX:'반도체 지수', DXY:'달러 인덱스', VIX:'VIX 변동성'}[t]; },
+          getLatestValue(t) { return this.allData[t]?.data?.slice(-1)[0]?.value || '-'; },
+          formatValue(t) {
+              const v = this.getLatestValue(t);
+              if (v === '-') return v;
+              return ['SP500','NASDAQ','PHLX'].includes(t) ? Math.floor(v).toLocaleString() : parseFloat(v).toFixed(2);
+          },
+          getChangeClass(t) {
+              const cv = this.allData[t]?.changeValue;
+              return cv > 0 ? 'text-danger' : (cv < 0 ? 'text-primary' : 'text-secondary');
+          },
+          formatChange(t) {
+              const cv = this.allData[t]?.changeValue;
+              const cr = this.allData[t]?.changeRate;
+              if (cv === undefined) return '';
+              return `${cv > 0 ? '+' : ''}${parseFloat(cv).toFixed(2)} (${cr > 0 ? '+' : ''}${parseFloat(cr).toFixed(2)}%)`;
+          }
+      }));
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+/* Toss-like Design System - PC Dashboard Version */
+:root {
+    --toss-blue: #3182f6;
+    --toss-red: #f04452;
+    --toss-grey-bg: #f2f4f6;
+    --toss-grey-text: #8b95a1;
+    --toss-dark: #191f28;
+    --toss-sub-text: #4e5968;
+
+    /* 레이아웃 변수 */
+    --sidebar-width: 250px;
+    --sidebar-collapsed-width: 80px;
+    --content-max-width: 950px; /* 대시보드 알맹이 최대 너비 */
+}
+
+* { box-sizing: border-box; }
+
+body {
+    background-color: var(--toss-grey-bg);
+    margin: 0;
+    font-family: 'Noto Sans KR', sans-serif;
+    color: var(--toss-dark);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* [1] 전체 레이아웃 구조 */
+.layout-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* [2] 좌측 사이드바 */
+.sidebar {
+    width: var(--sidebar-width);
+    background: white;
+    border-right: 1px solid #ebebeb;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    z-index: 1000;
+}
+
+.sidebar.collapsed {
+    width: var(--sidebar-collapsed-width);
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 24px;
+    color: var(--toss-sub-text);
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s;
+    border-radius: 12px;
+    margin: 4px 12px;
+}
+
+.menu-item:hover, .menu-item.active {
+    background: var(--toss-grey-bg);
+    color: var(--toss-blue);
+}
+
+.menu-item i {
+    font-size: 1.3rem;
+    margin-right: 14px;
+}
+
+.sidebar.collapsed .menu-item i { margin-right: 0; }
+.sidebar.collapsed .nav-text { display: none; }
+
+/* [3] 메인 컨텐츠 영역 */
+.main-content {
+    flex-grow: 1;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.3s;
+}
+
+.content-container {
+    width: 100%;
+    max-width: var(--content-max-width);
+}
+
+/* [4] 토스풍 카드 스타일 (PC에 맞춰 여백 확대) */
+.toss-card {
+    background: white;
+    padding: 32px;
+    border-radius: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    width: 100%;
+}
+
+/* [5] 버튼 & 입력창 */
+.btn-primary-toss {
+    background-color: var(--toss-blue);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 14px 24px;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: background 0.2s;
+    cursor: pointer;
+}
+
+.btn-primary-toss:hover { background-color: #1b64da; }
+
+.toss-input {
+    width: 100%;
+    border: none;
+    background-color: var(--toss-grey-bg);
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 1rem;
+    outline: none;
+    transition: 0.2s;
+}
+
+.toss-input:focus {
+    background-color: #e8f3ff;
+    box-shadow: 0 0 0 2px var(--toss-blue);
+}
+
+/* [6] 모달 (기존 스타일 유지하되 모바일 대응 추가) */
+.modal-backdrop {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end; /* 모바일처럼 아래서 올라오는 느낌 */
+}
+
+@media (min-width: 768px) {
+    .modal-backdrop { align-items: center; } /* PC에선 중앙 팝업 */
+}
+
+.modal-sheet {
+    background: white;
+    width: 100%;
+    max-width: 500px;
+    border-radius: 24px 24px 0 0;
+    padding: 32px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+@media (min-width: 768px) {
+    .modal-sheet { border-radius: 24px; }
+}
+
+/* [7] 유틸리티 */
+.text-sub { color: var(--toss-grey-text); }
+.text-up { color: var(--toss-red); }
+.text-down { color: var(--toss-blue); }
+.fw-toss { font-weight: 700; }
+[x-cloak] { display: none !important; }
+
+/* 스크롤바 커스텀 (깔끔하게) */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d6db; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #b0b8c1; }

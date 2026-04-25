@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>StockLog - 매매 기록</title>
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+
+  <style>
+    :root {
+      --blue: #3182f6; --red: #f04452; --green: #05c072;
+      --gray-bg: #f2f4f6; --sidebar-width: 250px;
+    }
+    body { background: var(--gray-bg); font-family: 'Pretendard', sans-serif; margin: 0; color: #191f28; overflow-x: hidden; }
+    [x-cloak] { display: none !important; }
+    .layout-wrapper { display: flex; min-height: 100vh; }
+    .main-content { flex-grow: 1; margin-left: var(--sidebar-width); padding: 0 56px 80px; transition: 0.3s; }
+    .main-content.expanded { margin-left: 80px; }
+    .page-wrap { max-width: 1000px; margin: 0 auto; padding-top: 32px; }
+
+    /* ── 카드 ── */
+    .card { background: white; border-radius: 24px; padding: 28px 32px; box-shadow: 0 2px 16px rgba(0,0,0,0.04); margin-bottom: 20px; border: none; }
+
+    /* ── 월 네비 ── */
+    .month-nav { display: flex; align-items: center; gap: 16px; }
+    .nav-btn { background: #f2f4f6; border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s; color: #4e5968; }
+    .nav-btn:hover { background: #e4e8ec; }
+    .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .month-title { font-size: 1.4rem; font-weight: 900; letter-spacing: -0.5px; min-width: 130px; text-align: center; }
+
+    /* ── 요약 지표 ── */
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 24px; }
+    .summary-item { background: #f8fafc; border-radius: 16px; padding: 18px 20px; border: 1px solid #edf2f7; }
+    .summary-label { font-size: 11px; font-weight: 800; color: #a0a8b2; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 6px; }
+    .summary-value { font-size: 1.5rem; font-weight: 900; letter-spacing: -0.5px; }
+    .text-up   { color: var(--red)   !important; }
+    .text-down { color: var(--blue)  !important; }
+    .text-green { color: var(--green) !important; }
+
+    /* ── 바 차트 ── */
+    .chart-wrap { position: relative; height: 140px; margin-top: 4px; }
+
+    /* ── 캘린더 ── */
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 16px; }
+    .cal-day-label { text-align: center; font-size: 11px; font-weight: 800; color: #a0a8b2; padding: 4px 0 8px; }
+    .cal-day-label.sun { color: var(--red); }
+    .cal-day-label.sat { color: var(--blue); }
+
+    .cal-cell { border-radius: 12px; min-height: 72px; padding: 8px 10px; background: #f8fafc; border: 1.5px solid transparent; cursor: default; transition: border 0.15s, background 0.15s; position: relative; display: flex; flex-direction: column; }
+    .cal-cell.empty { background: transparent; border-color: transparent; }
+    .cal-cell.today { border-color: var(--blue) !important; }
+    .cal-cell.has-log { cursor: pointer; }
+    .cal-cell.has-log:hover { background: #eef5ff; border-color: #b5d4f4; }
+    .cal-cell.active { background: #eef5ff; border-color: var(--blue); }
+    .cal-cell.profit { background: rgba(5,192,114,0.06); }
+    .cal-cell.loss   { background: rgba(240,68,82,0.05); }
+
+    .cal-num { font-size: 12px; font-weight: 800; color: #4e5968; margin-bottom: 4px; }
+    .cal-num.sun { color: var(--red); }
+    .cal-num.sat { color: var(--blue); }
+    .cal-dot-wrap { display: flex; flex-wrap: wrap; gap: 3px; margin-top: auto; }
+    .cal-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .cal-amount { font-size: 10px; font-weight: 800; margin-top: 2px; }
+
+    /* ── 로그 리스트 ── */
+    .log-date-label { font-size: 11px; font-weight: 800; color: #a0a8b2; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 10px; margin-top: 4px; }
+    .log-item { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid #f2f4f6; gap: 14px; }
+    .log-item:last-child { border-bottom: none; }
+    .log-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 900; flex-shrink: 0; }
+    .log-icon.profit { background: rgba(5,192,114,0.1); color: var(--green); }
+    .log-icon.loss   { background: rgba(240,68,82,0.1); color: var(--red); }
+    .log-name { font-size: 14px; font-weight: 800; color: #191f28; }
+    .log-code { font-size: 11px; font-weight: 700; color: #a0a8b2; margin-top: 1px; }
+    .log-qty  { font-size: 12px; font-weight: 700; color: #8b95a1; margin-left: auto; margin-right: 20px; flex-shrink: 0; }
+    .log-profit { font-size: 14px; font-weight: 900; text-align: right; flex-shrink: 0; min-width: 90px; }
+    .badge-pill { font-size: 10px; font-weight: 800; padding: 3px 9px; border-radius: 20px; }
+    .badge-profit { background: rgba(5,192,114,0.1); color: var(--green); }
+    .badge-loss   { background: rgba(240,68,82,0.1); color: var(--red); }
+
+    /* ── 빈 상태 ── */
+    .empty-state { text-align: center; padding: 48px 0; color: #b0b8c1; }
+    .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 12px; opacity: 0.4; }
+
+    /* ── 모달 ── */
+    .modal-backdrop-custom { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(6px); }
+    .modal-sheet { background: white; width: 100%; max-width: 480px; border-radius: 28px; padding: 36px; animation: slideUp 0.28s cubic-bezier(0.22,1,0.36,1); }
+    @keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .toss-input { width: 100%; border: none; background: #f2f4f6; border-radius: 14px; padding: 16px 18px; outline: none; margin-bottom: 14px; font-size: 14px; font-weight: 600; transition: 0.2s; font-family: 'Pretendard', sans-serif; }
+    .toss-input:focus { outline: 2px solid var(--blue); background: white; }
+    .search-item { transition: background 0.15s; cursor: pointer; border-radius: 12px; padding: 14px 16px; margin-bottom: 6px; }
+    .search-item:hover { background: #f2f4f6; }
+    .spinner-wrap { display: flex; justify-content: center; padding: 20px; }
+
+    /* ── 애니메이션 ── */
+    @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    .fu  { animation: fadeUp 0.38s cubic-bezier(0.22,1,0.36,1) both; }
+    .d1  { animation-delay: 0.04s; }
+    .d2  { animation-delay: 0.10s; }
+    .d3  { animation-delay: 0.17s; }
+  </style>
+</head>
+
+<body x-data="tradeLogApp">
+<div class="layout-wrapper">
+  <aside th:replace="~{fragments/sidebar :: sidebarFragment('tradelog')}"></aside>
+
+  <main class="main-content" :class="!sidebarOpen ? 'expanded' : ''">
+    <div th:replace="~{fragments/header :: headerFragment}"></div>
+
+    <div class="page-wrap">
+      <h2 class="fw-bold mb-4 fu" style="font-size:22px; letter-spacing:-0.3px;">매매 기록</h2>
+
+      <!-- ① 월 요약 + 바 차트 -->
+      <div class="card fu d1">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+          <div class="month-nav">
+            <button class="nav-btn" @click="changeDate(-1)"><i class="bi bi-chevron-left"></i></button>
+            <span class="month-title" x-text="displayDate"></span>
+            <button class="nav-btn" @click="changeDate(1)" :disabled="!canGoNext()"><i class="bi bi-chevron-right"></i></button>
+          </div>
+          <button class="btn btn-primary rounded-pill px-4 fw-bold border-0"
+                  style="background:var(--blue); font-size:13px;"
+                  @click="openModal()">
+            <i class="bi bi-plus me-1"></i>기록 추가
+          </button>
+        </div>
+
+        <!-- 요약 지표 -->
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="summary-label">월 실현 손익</div>
+            <div class="summary-value"
+                 :class="(data?.totalRealizedProfit||0) >= 0 ? 'text-up' : 'text-down'"
+                 x-text="formatMoney(data?.totalRealizedProfit||0)"></div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">성공률</div>
+            <div class="summary-value text-green"
+                 x-text="(data?.successRate||0).toFixed(1) + '%'"></div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">매매 횟수</div>
+            <div class="summary-value" x-text="totalTrades() + '건'"></div>
+          </div>
+        </div>
+
+        <!-- 일별 손익 바 차트 -->
+        <div class="chart-wrap mt-4">
+          <canvas id="dailyChart"></canvas>
+        </div>
+      </div>
+
+      <!-- ② 캘린더 -->
+      <div class="card fu d2">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="fw-bold" style="font-size:14px;">월간 캘린더</span>
+          <span class="text-secondary fw-bold" style="font-size:11px;">날짜 클릭 시 상세 보기</span>
+        </div>
+
+        <!-- 요일 헤더 -->
+        <div class="cal-grid">
+          <div class="cal-day-label sun">일</div>
+          <div class="cal-day-label">월</div>
+          <div class="cal-day-label">화</div>
+          <div class="cal-day-label">수</div>
+          <div class="cal-day-label">목</div>
+          <div class="cal-day-label">금</div>
+          <div class="cal-day-label sat">토</div>
+
+          <!-- 빈 셀 -->
+          <template x-for="_ in firstDayOffset()" :key="'e'+_">
+            <div class="cal-cell empty"></div>
+          </template>
+
+          <!-- 날짜 셀 -->
+          <template x-for="day in daysInMonth()" :key="day">
+            <div class="cal-cell"
+                 :class="{
+                   'has-log':  getLogsForDay(day).length > 0,
+                   'active':   selectedDay === day,
+                   'today':    isToday(day),
+                   'profit':   getDayProfit(day) > 0,
+                   'loss':     getDayProfit(day) < 0 && getLogsForDay(day).length > 0
+                 }"
+                 @click="getLogsForDay(day).length > 0 && (selectedDay = selectedDay === day ? null : day)">
+              <div class="cal-num"
+                   :class="{ 'sun': getDayOfWeek(day) === 0, 'sat': getDayOfWeek(day) === 6 }"
+                   x-text="day"></div>
+              <template x-if="getLogsForDay(day).length > 0">
+                <div>
+                  <div class="cal-amount"
+                       :class="getDayProfit(day) >= 0 ? 'text-up' : 'text-down'"
+                       x-text="formatCompact(getDayProfit(day))"></div>
+                  <div class="cal-dot-wrap">
+                    <template x-for="log in getLogsForDay(day).slice(0,4)" :key="log.id">
+                      <div class="cal-dot" :style="'background:' + (log.isProfit ? '#05c072' : '#f04452')"></div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- ③ 선택일 or 전체 로그 리스트 -->
+      <div class="card fu d3">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <span class="fw-bold" style="font-size:14px;"
+                x-text="selectedDay ? formatSelectedDay(selectedDay) + ' 매매 기록' : '이번 달 전체 기록'"></span>
+          <button x-show="selectedDay" @click="selectedDay = null"
+                  class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold"
+                  style="font-size:11px;">전체 보기</button>
+        </div>
+
+        <!-- 로그 없을 때 -->
+        <div class="empty-state"
+             x-show="!data?.dailyLogs || Object.keys(data.dailyLogs).length === 0">
+          <i class="bi bi-calendar-x"></i>
+          <div class="fw-bold" style="font-size:14px;">이번 달 매매 기록이 없습니다.</div>
+          <div class="text-secondary fw-bold mt-1" style="font-size:12px;">상단 버튼으로 기록을 추가해보세요.</div>
+        </div>
+
+        <!-- 로그 있을 때 -->
+        <div x-show="data?.dailyLogs && Object.keys(data.dailyLogs).length > 0">
+          <template x-for="date in filteredDates()" :key="date">
+            <div class="mb-3">
+              <div class="log-date-label" x-text="formatDisplayDate(date)"></div>
+              <template x-for="log in data.dailyLogs[date]" :key="log.id">
+                <div class="log-item">
+                  <div class="log-icon" :class="log.isProfit ? 'profit' : 'loss'">
+                    <i class="bi" :class="log.isProfit ? 'bi-arrow-up' : 'bi-arrow-down'"></i>
+                  </div>
+                  <div>
+                    <div class="log-name" x-text="log.korName"></div>
+                    <div class="log-code" x-text="log.stockCode"></div>
+                  </div>
+                  <div class="log-qty" x-text="formatNumber(log.quantity) + '주'"></div>
+                  <div>
+                    <div class="log-profit"
+                         :class="log.isProfit ? 'text-up' : 'text-down'"
+                         x-text="(log.profit >= 0 ? '+' : '') + formatNumber(log.profit) + '원'"></div>
+                    <div class="text-end mt-1">
+                      <span class="badge-pill" :class="log.isProfit ? 'badge-profit' : 'badge-loss'"
+                            x-text="log.isProfit ? '수익' : '손실'"></span>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- 기록 추가 모달 -->
+<div x-show="showModal" class="modal-backdrop-custom" x-cloak @click.self="closeModal()">
+  <div class="modal-sheet" @click.stop>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="fw-bold m-0" style="font-size:18px;"
+          x-text="step === 1 ? '어떤 종목을 매매하셨나요?' : '매매 정보 입력'"></h4>
+      <button @click="closeModal()" class="btn-close shadow-none"></button>
+    </div>
+
+    <!-- Step 1: 종목 검색 -->
+    <div x-show="step === 1">
+      <input type="text" x-model="searchQuery"
+             @input.debounce.400ms="searchNew()"
+             class="toss-input" placeholder="종목명 또는 코드 검색" autofocus>
+      <div x-show="isLoading" class="spinner-wrap">
+        <div class="spinner-border text-primary" style="width:1.4rem; height:1.4rem;"></div>
+      </div>
+      <div style="max-height: 38vh; overflow-y: auto;">
+        <template x-for="item in searchResults" :key="item.stock.code">
+          <div @click="selectStock(item)" class="search-item d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-bold" style="font-size:14px;" x-text="item.stock.name"></div>
+              <div class="text-secondary fw-bold" style="font-size:11px;" x-text="item.stock.code"></div>
+            </div>
+            <i class="bi bi-chevron-right text-secondary"></i>
+          </div>
+        </template>
+        <div x-show="hasMore && !isLoading && searchResults.length > 0" class="text-center mt-2">
+          <button @click="fetchStocks(false)"
+                  class="btn btn-link text-decoration-none fw-bold text-secondary"
+                  style="font-size:12px;">더 보기</button>
+        </div>
+        <div x-show="!isLoading && searchResults.length === 0 && searchQuery.length > 0"
+             class="text-center py-4 text-secondary fw-bold" style="font-size:13px;">
+          검색 결과가 없습니다.
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: 매매 정보 입력 -->
+    <div x-show="step === 2">
+      <form th:action="@{/trade/add}" method="post">
+        <input type="hidden" name="stockCode" :value="selectedStock.code">
+
+        <!-- 선택 종목 -->
+        <div class="d-flex align-items-center justify-content-between p-4 rounded-3 mb-4"
+             style="background:#f8fafc; border:1px solid #edf2f7;">
+          <div>
+            <div class="fw-bold" style="font-size:16px; color:var(--blue);" x-text="selectedStock.name"></div>
+            <div class="text-secondary fw-bold" style="font-size:11px;" x-text="selectedStock.code"></div>
+          </div>
+          <button type="button" @click="step = 1"
+                  class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold"
+                  style="font-size:11px;">변경</button>
+        </div>
+
+        <div class="text-start">
+          <label class="fw-bold mb-2 d-block ms-1" style="font-size:12px;">매매 수량</label>
+          <input type="number" step="0.0001" name="quantity" class="toss-input" placeholder="0.0000" required>
+        </div>
+        <div class="text-start">
+          <label class="fw-bold mb-2 d-block ms-1" style="font-size:12px;">실현 손익 (원)</label>
+          <input type="number" step="0.01" name="profit" class="toss-input" placeholder="수익이면 +, 손실이면 -" required>
+        </div>
+        <div class="text-start">
+          <label class="fw-bold mb-2 d-block ms-1" style="font-size:12px;">매매 일자</label>
+          <input type="date" name="tradeDate" class="toss-input"
+                 th:value="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" required>
+        </div>
+
+        <button type="submit"
+                class="btn btn-primary w-100 rounded-pill py-3 fw-bold mt-2 border-0"
+                style="background:var(--blue); font-size:14px;">
+          기록 저장하기
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script th:inline="javascript">
+  /*<![CDATA[*/
+  const _initData = /*[[${tradelog}]]*/ null;
+  const _initYM   = /*[[${tradelog?.currentYearMonth ?: '2026-03'}]]*/ '2026-03';
+  /*]]>*/
+
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('tradeLogApp', () => ({
+      sidebarOpen: true,
+      data: _initData,
+      today: new Date(),
+      currDate: (() => {
+        const [y, m] = _initYM.split('-');
+        return new Date(parseInt(y), parseInt(m) - 1, 1);
+      })(),
+      selectedDay: null,
+      showModal: false,
+      step: 1,
+      searchQuery: '',
+      searchResults: [],
+      isLoading: false,
+      selectedStock: { name: '', code: '' },
+      page: 0,
+      hasMore: true,
+      chart: null,
+
+      get displayDate() {
+        return `${this.currDate.getFullYear()}년 ${String(this.currDate.getMonth()+1).padStart(2,'0')}월`;
+      },
+
+      // ── 날짜 유틸 ──
+      daysInMonth() {
+        const y = this.currDate.getFullYear(), m = this.currDate.getMonth();
+        return Array.from({ length: new Date(y, m+1, 0).getDate() }, (_, i) => i+1);
+      },
+      firstDayOffset() {
+        const y = this.currDate.getFullYear(), m = this.currDate.getMonth();
+        const offset = new Date(y, m, 1).getDay();
+        return Array.from({ length: offset }, (_, i) => i);
+      },
+      getDayOfWeek(day) {
+        return new Date(this.currDate.getFullYear(), this.currDate.getMonth(), day).getDay();
+      },
+      isToday(day) {
+        const t = this.today;
+        return this.currDate.getFullYear() === t.getFullYear()
+            && this.currDate.getMonth()    === t.getMonth()
+            && day === t.getDate();
+      },
+      canGoNext() {
+        const t = this.today;
+        return this.currDate.getFullYear() < t.getFullYear()
+            || (this.currDate.getFullYear() === t.getFullYear()
+                && this.currDate.getMonth() < t.getMonth());
+      },
+
+      // ── 로그 유틸 ──
+      getLogsForDay(day) {
+        if (!this.data?.dailyLogs) return [];
+        const key = `${this.currDate.getFullYear()}-${String(this.currDate.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        return this.data.dailyLogs[key] || [];
+      },
+      getDayProfit(day) {
+        return this.getLogsForDay(day).reduce((s, l) => s + (l.profit || 0), 0);
+      },
+      totalTrades() {
+        if (!this.data?.dailyLogs) return 0;
+        return Object.values(this.data.dailyLogs).reduce((s, arr) => s + arr.length, 0);
+      },
+      filteredDates() {
+        if (!this.data?.dailyLogs) return [];
+        const allDates = Object.keys(this.data.dailyLogs).sort().reverse();
+        if (!this.selectedDay) return allDates;
+        const key = `${this.currDate.getFullYear()}-${String(this.currDate.getMonth()+1).padStart(2,'0')}-${String(this.selectedDay).padStart(2,'0')}`;
+        return allDates.filter(d => d === key);
+      },
+
+      // ── 포맷 ──
+      formatMoney(val) { return (val >= 0 ? '+' : '') + this.formatNumber(val) + '원'; },
+      formatNumber(val) { return new Intl.NumberFormat('ko-KR').format(Math.floor(val || 0)); },
+      formatCompact(val) {
+        const abs = Math.abs(val);
+        const sign = val >= 0 ? '+' : '-';
+        if (abs >= 1_000_000) return sign + (abs/1_000_000).toFixed(1) + 'M';
+        if (abs >= 10_000)    return sign + Math.round(abs/10_000) + '만';
+        return sign + this.formatNumber(abs);
+      },
+      formatDisplayDate(dateStr) {
+        const d = new Date(dateStr + 'T00:00:00');
+        const days = ['일','월','화','수','목','금','토'];
+        return `${d.getMonth()+1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
+      },
+      formatSelectedDay(day) {
+        const days = ['일','월','화','수','목','금','토'];
+        const dow = this.getDayOfWeek(day);
+        return `${this.currDate.getMonth()+1}월 ${day}일 (${days[dow]})`;
+      },
+
+      // ── 차트 ──
+      buildChart() {
+        const ctx = document.getElementById('dailyChart');
+        if (!ctx) return;
+        if (this.chart) { this.chart.destroy(); this.chart = null; }
+
+        const dim = this.daysInMonth();
+        const labels = dim.map(d => d + '일');
+        const values = dim.map(d => this.getDayProfit(d));
+        const colors = values.map(v => v > 0 ? 'rgba(240,68,82,0.7)' : v < 0 ? 'rgba(49,130,246,0.7)' : 'rgba(200,200,200,0.3)');
+
+        this.chart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{ data: values, backgroundColor: colors, borderRadius: 4, borderSkipped: false }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: {
+              callbacks: {
+                label: ctx => (ctx.raw >= 0 ? '+' : '') + new Intl.NumberFormat('ko-KR').format(Math.floor(ctx.raw)) + '원'
+              }
+            }},
+            scales: {
+              x: { grid: { display: false }, ticks: { font: { size: 10, weight: '700' }, color: '#a0a8b2',
+                    callback: (_, i) => (i % 5 === 0 ? labels[i] : '') } },
+              y: { grid: { color: '#f2f4f6' }, border: { display: false },
+                   ticks: { font: { size: 10 }, color: '#a0a8b2',
+                     callback: v => v === 0 ? '0' : (Math.abs(v) >= 10000 ? (v/10000).toFixed(0)+'만' : v) } }
+            }
+          }
+        });
+      },
+
+      // ── 데이터 로드 ──
+      async changeDate(offset) {
+        this.currDate = new Date(this.currDate.getFullYear(), this.currDate.getMonth() + offset, 1);
+        this.selectedDay = null;
+        await this.loadData();
+      },
+      async loadData() {
+        const y = this.currDate.getFullYear();
+        const m = String(this.currDate.getMonth()+1).padStart(2,'0');
+        try {
+          const res = await fetch(`/trade/api?date=${y}-${m}-01`);
+          if (res.ok) { this.data = await res.json(); }
+        } catch(e) { console.error(e); }
+        await this.$nextTick();
+        this.buildChart();
+      },
+
+      // ── 검색 ──
+      searchNew() { this.page = 0; this.hasMore = true; this.searchResults = []; this.fetchStocks(true); },
+      async fetchStocks(isNew = false) {
+        if (this.searchQuery.length < 1) return;
+        this.isLoading = true;
+        try {
+          const res = await fetch(`/api/stock/search?name=${encodeURIComponent(this.searchQuery)}&page=${this.page}`);
+          if (res.ok) {
+            const d = await res.json();
+            this.searchResults = isNew ? d : [...this.searchResults, ...d];
+            if (d.length < 5) this.hasMore = false;
+            this.page++;
+          }
+        } catch(e) { console.error(e); }
+        finally { this.isLoading = false; }
+      },
+      selectStock(item) { this.selectedStock = { name: item.stock.name, code: item.stock.code }; this.step = 2; },
+      openModal()  { this.step = 1; this.searchQuery = ''; this.searchResults = []; this.page = 0; this.hasMore = true; this.showModal = true; },
+      closeModal() { this.showModal = false; },
+
+      // ── 초기화 ──
+      init() {
+        this.$nextTick(() => this.buildChart());
+      }
+    }));
+  });
+</script>
+</body>
+</html>

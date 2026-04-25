@@ -1,0 +1,59 @@
+spring:
+  application:
+    name: StockLog
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  datasource:
+    url: jdbc:h2:file:./data/testdb;MODE=MySQL  # 기존: jdbc:h2:mem:testdb;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: update
+  thymeleaf:
+    encoding: UTF-8
+    mode: HTML
+    cache: false
+  session:
+    tracking-modes: cookie
+
+
+
+
+kis:
+  app-key: ${KIS_APP_KEY}
+  app-secret: ${KIS_APP_SECRET}
+  base-url: https://openapi.koreainvestment.com:9443
+kexim:
+  auth-key: {KEXIM_AUTH_KEY}
+twelve:
+  auth-key: {TWELVE_AUTH_KEY}
+exchange:
+  auth-key: {EXCHANGE_AUTH_KEY}
+
+gemini:
+  api:
+    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent
+    key: {GEMINI_API_KEY}
+
+finnhub:
+  api:
+    key: {FINNHUB_API_KEY}
+    secret: {FINNHUB_SECRET}
+
+fred:
+  api:
+    key: {FRED_API_KEY}
+
+server:
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+      enabled: true
+    session:   
+      tracking-modes: cookie

@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${analysis.code} + ' 분석 — StockLog'"></title>
+
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+
+    <style>
+        :root { --toss-blue: #3182f6; --toss-red: #f04452; --toss-gray-bg: #f2f4f6; --sidebar-width: 250px; }
+        body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: #191f28; }
+        [x-cloak] { display: none !important; }
+        .layout-wrapper { display: flex; min-height: 100vh; }
+        .main-content { flex-grow: 1; margin-left: var(--sidebar-width); padding: 0 60px 80px; transition: 0.3s; }
+        .main-content.expanded { margin-left: 80px; }
+        .content-container { width: 100%; max-width: 1100px; margin: 0 auto; padding-top: 32px; }
+
+        .toss-card { background: white; border-radius: 28px; padding: 32px; box-shadow: 0 2px 16px rgba(0,0,0,0.04); margin-bottom: 24px; border: none; }
+        .progress-bar-custom { height: 6px; border-radius: 3px; background: #f2f4f6; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 3px; transition: width 1.2s ease-out; }
+        .insight-box { background: #f8fafc; border-radius: 16px; padding: 20px; font-size: 14px; color: #4e5968; line-height: 1.6; border: 1px solid #f1f5f9; }
+
+        .back-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 700; color: #8b95a1; cursor: pointer; text-decoration: none; padding: 8px 12px; border-radius: 10px; transition: background 0.15s, color 0.15s; }
+        .back-btn:hover { background: white; color: #191f28; }
+
+        .etf-banner { display: flex; align-items: flex-start; gap: 10px; padding: 14px 18px; border-radius: 14px; background: #eef5ff; border: 1px solid #b5d4f4; margin-bottom: 20px; }
+        .etf-banner i { color: var(--toss-blue); flex-shrink: 0; margin-top: 1px; }
+        .etf-banner span { font-size: 13px; font-weight: 700; color: #1a5cb8; line-height: 1.55; }
+
+        .ring-wrap { position: relative; width: 200px; height: 200px; flex-shrink: 0; }
+        .ring-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
+        .ring-score { font-size: 2.8rem; font-weight: 800; letter-spacing: -2px; line-height: 1; }
+        .ring-unit  { font-size: 0.75rem; font-weight: 700; color: #b0b8c1; margin-top: 2px; }
+        .ring-grade { font-size: 1rem; font-weight: 900; margin-top: 4px; }
+
+        .axis-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid #f2f4f6; }
+        .axis-row:last-child { border-bottom: none; }
+        .axis-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .axis-name-wrap { min-width: 76px; }
+        .axis-name { font-size: 13px; font-weight: 800; color: #191f28; }
+        .axis-sub  { font-size: 10px; color: #a0a8b2; font-weight: 600; margin-top: 1px; }
+        .axis-bar-bg { flex: 1; height: 6px; background: #f2f4f6; border-radius: 99px; overflow: hidden; }
+        .axis-bar-fill { height: 100%; border-radius: 99px; transition: width 1.2s ease-out; }
+        .axis-num  { font-size: 14px; font-weight: 900; color: #191f28; min-width: 32px; text-align: right; }
+        .axis-max  { font-size: 10px; color: #c4c9d0; }
+
+        .tab-nav { display: flex; gap: 4px; background: #f2f4f6; border-radius: 14px; padding: 4px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; text-align: center; font-size: 12px; font-weight: 700; padding: 9px 4px; border-radius: 10px; color: #8b95a1; cursor: pointer; transition: all 0.15s; border: none; background: none; line-height: 1.3; }
+        .tab-btn.active { background: white; color: #191f28; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+
+        .tab-info { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 12px; margin-bottom: 16px; }
+        .tab-info span { font-size: 12px; font-weight: 700; line-height: 1.5; }
+
+        .signal-item { padding: 16px 0; border-bottom: 1px solid #f2f4f6; }
+        .signal-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .signal-name { font-size: 14px; font-weight: 700; color: #333d4b; margin-bottom: 6px; line-height: 1.4; word-break: keep-all; letter-spacing: -0.01em; }
+        .signal-name.warn { color: var(--toss-red); }
+        .signal-desc { font-size: 13px; font-weight: 500; color: #8b95a1; line-height: 1.6; word-break: keep-all; letter-spacing: -0.01em; }
+
+        .signal-card { padding: 20px 22px; border-radius: 16px; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+        .signal-card.normal { background: #f8fafc; border: 1px solid #f1f5f9; }
+        .signal-card.warn   { background: rgba(240,68,82,0.03); border: 1px solid rgba(240,68,82,0.08); }
+
+        .warn-banner { padding: 13px 16px; border-radius: 14px; background: rgba(240,68,82,0.06); border: 1px solid rgba(240,68,82,0.15); display: flex; align-items: flex-start; gap: 10px; }
+        .warn-banner i { color: var(--toss-red); flex-shrink: 0; margin-top: 1px; }
+        .warn-banner span { font-size: 13px; font-weight: 700; color: var(--toss-red); line-height: 1.5; }
+
+        .disclaimer { font-size: 11px; font-weight: 600; color: #c4c9d0; text-align: center; line-height: 1.7; padding-bottom: 8px; }
+
+        @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+        .fu { animation: fadeUp 0.4s cubic-bezier(0.22,1,0.36,1) both; }
+        .d1 { animation-delay: 0.04s; }
+        .d2 { animation-delay: 0.10s; }
+        .d3 { animation-delay: 0.18s; }
+        .d4 { animation-delay: 0.25s; }
+        .d5 { animation-delay: 0.32s; }
+
+        .ai-comment-box { white-space: pre-line; line-height: 1.7; font-size: 15px; color: #333d4b; }
+
+        /* 캔들 배지 및 차트 보조 스타일 복구 */
+        .timing-badge { font-size: 11px; padding: 6px 10px; border-radius: 8px; font-weight: 700; display: inline-block; margin-bottom: 6px; white-space: normal; word-break: keep-all; line-height: 1.5; }
+        .bg-red-soft  { background: rgba(240,68,82,0.06);  color: var(--toss-red); }
+        .bg-blue-soft { background: rgba(49,130,246,0.10); color: var(--toss-blue); }
+        .text-up   { color: var(--toss-red)  !important; }
+        .text-down { color: var(--toss-blue) !important; }
+
+        /* 재무재표(실적) 스타일 복구 */
+        .fin-scroll-wrap { position: relative; border-radius: 16px; overflow: hidden; border: 1px solid #edf2f7; }
+        .fin-scroll-inner { overflow-x: auto; background: white; }
+        .fin-scroll-inner::-webkit-scrollbar { height: 4px; }
+        .fin-scroll-inner::-webkit-scrollbar-track { background: #f2f4f6; }
+        .fin-scroll-inner::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
+
+        .fin-kpi-card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px 18px; position: relative; overflow: hidden; }
+        .fin-kpi-card::before { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; border-radius: 0 0 16px 16px; }
+        .fin-kpi-card.good::before  { background: var(--toss-red); }
+        .fin-kpi-card.warn::before  { background: var(--toss-blue); }
+        .fin-kpi-card.neutral::before { background: #e2e8f0; }
+        .fin-kpi-label { font-size: 11px; font-weight: 700; color: #8b95a1; margin-bottom: 6px; letter-spacing: 0.02em; }
+        .fin-kpi-value { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; line-height: 1; }
+        .fin-kpi-sub   { font-size: 11px; font-weight: 600; color: #b0b8c1; margin-top: 4px; }
+        .fin-tr { border-bottom: 1px solid #f2f4f6; transition: background 0.12s; }
+        .fin-tr:hover { background: #fafbfc; }
+        .fin-tr:last-child { border-bottom: none; }
+        .fin-chart-nav { display: flex; gap: 4px; background: #f2f4f6; border-radius: 10px; padding: 3px; margin-bottom: 16px; width: fit-content; }
+        .fin-chart-btn { font-size: 11px; font-weight: 700; padding: 5px 14px; border-radius: 7px; border: none; background: none; color: #8b95a1; cursor: pointer; transition: all 0.15s; }
+        .fin-chart-btn.active { background: white; color: #191f28; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .fin-chart-canvas-wrap { position: relative; width: 100%; height: 160px; margin-bottom: 20px; }
+        .fin-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 48px 0; }
+        .fin-placeholder i { font-size: 2.2rem; color: #d1d5db; }
+        .fin-placeholder p { font-size: 13px; font-weight: 700; color: #b0b8c1; margin: 0; }
+    </style>
+</head>
+<body x-data="analysisApp">
+<div class="layout-wrapper">
+    <aside th:replace="~{fragments/sidebar :: sidebarFragment('')}"></aside>
+
+    <main class="main-content">
+        <div th:replace="~{fragments/header :: headerFragment}"></div>
+
+        <div class="content-container">
+
+            <div class="mb-3 fu">
+                <a th:href="${backUrl != null ? backUrl : '/'}" class="back-btn">
+                    <i class="bi bi-chevron-left"></i> 돌아가기
+                </a>
+            </div>
+
+            <h2 class="fw-bold mb-4 fu d1" style="font-size:22px; letter-spacing:-0.3px;"
+                th:attr="data-code=${analysis.code}"
+                th:text="${analysis.code} + ' 주식 분석'"></h2>
+
+            <div th:if="${isEtf}" class="etf-banner fu d1">
+                <i class="bi bi-info-circle-fill fs-6"></i>
+                <span>
+                    ETF 종목입니다. PER·PBR 등 개별 종목 밸류에이션 지표는 적용되지 않으며,
+                    52주 가격 위치와 거래량 기반으로만 분석됩니다.
+                </span>
+            </div>
+
+            <div class="row g-4 mb-4 fu d2">
+                <div class="col-lg-7">
+                    <div class="toss-card h-100 mb-0">
+                        <h3 class="fw-bold mb-4" style="font-size:16px;">종합 점수</h3>
+                        <div class="d-flex align-items-center gap-4 flex-wrap flex-md-nowrap">
+                            <div class="ring-wrap">
+                                <svg width="200" height="200" viewBox="0 0 200 200">
+                                    <circle cx="100" cy="100" r="80" fill="none" stroke="#f2f4f6" stroke-width="13"/>
+                                    <circle cx="100" cy="100" r="80" fill="none"
+                                            th:attr="stroke=${gradeColor}, stroke-dashoffset=${502.7 - (analysis.score / 100.0 * 502.7)}"
+                                            stroke-dasharray="502.7" stroke-width="13" stroke-linecap="round"
+                                            transform="rotate(-90 100 100)" style="transition: stroke-dashoffset 1.2s ease-out;"/>
+                                </svg>
+                                <div class="ring-center">
+                                    <div class="ring-score" th:style="'color:' + ${gradeColor}" th:text="${analysis.score}"></div>
+                                    <div class="ring-unit">/ 100점</div>
+                                    <div class="ring-grade" th:style="'color:' + ${gradeColor}" th:text="${analysis.grade} + '등급'"></div>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 w-100">
+                                <div class="axis-row">
+                                    <div class="axis-dot" style="background:#3182f6;"></div>
+                                    <div class="axis-name-wrap"><div class="axis-name">밸류에이션</div><div class="axis-sub">PER · PBR · ROE · BPS</div></div>
+                                    <div class="axis-bar-bg"><div class="axis-bar-fill" th:style="'background:#3182f6; width:' + (${analysis.valuation.score} / 40.0 * 100) + '%'"></div></div>
+                                    <div><span class="axis-num" th:text="${analysis.valuation.score}"></span><span class="axis-max">/40</span></div>
+                                </div>
+                                <div class="axis-row">
+                                    <div class="axis-dot" style="background:#05c072;"></div>
+                                    <div class="axis-name-wrap"><div class="axis-name">모멘텀</div><div class="axis-sub">52주 · 시총 · 거래량</div></div>
+                                    <div class="axis-bar-bg"><div class="axis-bar-fill" th:style="'background:#05c072; width:' + (${analysis.momentum.score} / 30.0 * 100) + '%'"></div></div>
+                                    <div><span class="axis-num" th:text="${analysis.momentum.score}"></span><span class="axis-max">/30</span></div>
+                                </div>
+                                <div class="axis-row">
+                                    <div class="axis-dot" style="background:#f5a623;"></div>
+                                    <div class="axis-name-wrap"><div class="axis-name">기술적</div><div class="axis-sub">MA · 크로스 · 변동성</div></div>
+                                    <div class="axis-bar-bg"><div class="axis-bar-fill" th:style="'background:#f5a623; width:' + (${analysis.technical.score} / 30.0 * 100) + '%'"></div></div>
+                                    <div><span class="axis-num" th:text="${analysis.technical.score}"></span><span class="axis-max">/30</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="toss-card h-100 mb-0 d-flex flex-column justify-content-between position-relative overflow-hidden">
+                        <div class="position-absolute" th:style="'top:-40px; right:-40px; width:200px; height:200px; border-radius:50%; filter:blur(60px); opacity:0.12; background:' + ${gradeColor}"></div>
+                        <div class="position-relative" style="z-index:1;">
+                            <h3 class="fw-bold mb-4" style="font-size:16px;">분석 요약</h3>
+                            <div th:if="${isEtf}" class="mb-3">
+                                <div class="text-secondary fw-bold mb-2" style="font-size:11px; letter-spacing:0.04em;">가격 추세 시그널</div>
+                                <th:block th:each="s, stat : ${analysis.signals}">
+                                    <div th:if="${stat.index < 3}" class="d-flex align-items-center gap-2 mb-2">
+                                        <i class="bi bi-bar-chart-fill" style="color:#3182f6; font-size:14px; flex-shrink:0;"></i><span class="fw-bold" style="font-size:13px;" th:text="${s}"></span>
+                                    </div>
+                                </th:block>
+                            </div>
+                            <div th:if="${!isEtf}" class="mb-3">
+                                <div class="text-secondary fw-bold mb-2" style="font-size:11px; letter-spacing:0.04em;">주요 시그널</div>
+                                <th:block th:each="s, stat : ${analysis.signals}">
+                                    <div th:if="${stat.index < 3 and !#strings.startsWith(s,'[경고]') and !#strings.startsWith(s,'[주의]') and !#strings.startsWith(s,'과열') and !#strings.startsWith(s,'PER 없음')}"
+                                         class="d-flex align-items-center gap-2 mb-2">
+                                        <i class="bi bi-check-circle-fill" style="color:#05c072; font-size:14px; flex-shrink:0;"></i><span class="fw-bold" style="font-size:13px;" th:text="${s}"></span>
+                                    </div>
+                                </th:block>
+                            </div>
+                            <div th:if="${!isEtf and analysis.grade == 'D'}" class="warn-banner">
+                                <i class="bi bi-exclamation-triangle-fill"></i><span>관리종목 또는 고위험 종목입니다. 투자에 각별히 주의하세요.</span>
+                            </div>
+                            <div th:if="${analysis.grade != 'D' or isEtf == true}" class="insight-box">
+                                <div class="d-flex align-items-start gap-2">
+                                    <i class="bi bi-stars fs-5 flex-shrink-0" th:style="'color:' + ${gradeColor}"></i><span class="fw-bold text-dark" th:text="${insightMessage}"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="position-relative mt-4" style="z-index:1;">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-secondary fw-bold" style="font-size:12px;">종합 점수</span><span class="fw-bold" style="font-size:12px;" th:text="${analysis.score} + ' / 100'"></span>
+                            </div>
+                            <div class="progress-bar-custom" style="height:8px; border-radius:4px;">
+                                <div class="progress-fill" th:style="'border-radius:4px; width:' + ${analysis.score} + '%; background:' + ${gradeColor}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="toss-card fu d3 mb-4">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <h3 class="fw-bold m-0" style="font-size:16px;">주가 흐름 및 매매 타이밍</h3>
+                    <div class="text-secondary fw-bold" style="font-size:12px;">최근 일봉 & 기술적 지표 기준</div>
+                </div>
+
+                <div style="width: 100%; height: 500px; position: relative; border-radius: 16px; border: 1px solid #f2f4f6; overflow: hidden; background: white; margin-bottom: 24px;">
+                    <div x-show="chartLoading" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: white; z-index: 5;">
+                        <div class="spinner-border text-primary spinner-border-sm"></div>
+                    </div>
+                    <div id="tv-chart-container" style="width: 100%; height: 100%;"></div>
+                </div>
+
+                <div th:if="${analysis.entrySignal != null && analysis.entrySignal.verdict != null}" class="mb-3">
+                    <div class="p-3 rounded-4 fw-bold d-flex align-items-center gap-2"
+                         th:style="${#strings.contains(analysis.entrySignal.verdict, '매수')} ? 'background: rgba(240,68,82,0.08); color: var(--toss-red); border: 1px solid rgba(240,68,82,0.15);' :
+                                  (${#strings.contains(analysis.entrySignal.verdict, '관망') or #strings.contains(analysis.entrySignal.verdict, '힘겨루기')} ? 'background: #f8fafc; color: #4e5968; border: 1px solid #e2e8f0;' :
+                                  'background: rgba(49,130,246,0.08); color: var(--toss-blue); border: 1px solid rgba(49,130,246,0.15);')">
+                        <i class="bi" th:classappend="${#strings.contains(analysis.entrySignal.verdict, '매수')} ? 'bi-fire' : (${#strings.contains(analysis.entrySignal.verdict, '관망') or #strings.contains(analysis.entrySignal.verdict, '힘겨루기')} ? 'bi-eye-fill' : 'bi-snow2')" style="font-size: 1.1rem;"></i>
+                        <span style="font-size: 15px;" th:text="${analysis.entrySignal.verdict}"></span>
+                    </div>
+                </div>
+
+                <div th:if="${analysis.entrySignal != null && analysis.entrySignal.suggestedEntry1 != null}" class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-4 h-100" style="background: white; border: 1px solid #b5d4f4; box-shadow: 0 2px 8px rgba(49,130,246,0.05);">
+                            <div class="d-flex align-items-center gap-2 mb-3 px-1">
+                                <i class="bi bi-box-arrow-in-down" style="color: var(--toss-blue); font-size: 1.1rem;"></i>
+                                <span style="font-size: 13px; font-weight: 800; color: #1a5cb8; letter-spacing: -0.3px;">분할 매수 (지지선)</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="text-center flex-grow-1">
+                                    <div style="font-size: 11px; color: #8b95a1; font-weight: 600; margin-bottom: 2px;">1차 (단기)</div>
+                                    <div style="font-size: 15px; font-weight: 800; color: #191f28;" th:text="${#numbers.formatDecimal(analysis.entrySignal.suggestedEntry1, 0, 'COMMA', 2, 'POINT')}"></div>
+                                </div>
+                                <div style="width: 1px; height: 28px; background: #e2e8f0;"></div>
+                                <div class="text-center flex-grow-1">
+                                    <div style="font-size: 11px; color: #8b95a1; font-weight: 600; margin-bottom: 2px;">2차 (스윙)</div>
+                                    <div style="font-size: 15px; font-weight: 800; color: var(--toss-blue);" th:text="${#numbers.formatDecimal(analysis.entrySignal.suggestedEntry2, 0, 'COMMA', 2, 'POINT')}"></div>
+                                </div>
+                                <div style="width: 1px; height: 28px; background: #e2e8f0;"></div>
+                                <div class="text-center flex-grow-1">
+                                    <div style="font-size: 11px; color: #8b95a1; font-weight: 600; margin-bottom: 2px;">3차 (방어)</div>
+                                    <div style="font-size: 15px; font-weight: 800; color: #1a5cb8;" th:text="${#numbers.formatDecimal(analysis.entrySignal.suggestedEntry3, 0, 'COMMA', 2, 'POINT')}"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-4 h-100" style="background: white; border: 1px solid #fecaca; box-shadow: 0 2px 8px rgba(240,68,82,0.05);">
+                            <div class="d-flex align-items-center gap-2 mb-3 px-1">
+                                <i class="bi bi-box-arrow-up" style="color: var(--toss-red); font-size: 1.1rem;"></i>
+                                <span style="font-size: 13px; font-weight: 800; color: #b91c1c; letter-spacing: -0.3px;">분할 익절 (저항선)</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="text-center flex-grow-1">
+                                    <div style="font-size: 11px; color: #8b95a1; font-weight: 600; margin-bottom: 2px;">1차 (단기)</div>
+                                    <div style="font-size: 15px; font-weight: 800; color: #191f28;" th:text="${#numbers.formatDecimal(analysis.entrySignal.suggestedTarget1, 0, 'COMMA', 2, 'POINT')}"></div>
+                                </div>
+                                <div style="width: 1px; height: 28px; background: #e2e8f0;"></div>
+                                <div class="text-center flex-grow-1">
+                                    <div style="font-size: 11px; color: #8b95a1; font-weight: 600; margin-bottom: 2px;">2차 (스윙)</div>
+                                    <div style="font-size: 15px; font-weight: 800; color: var(--toss-red);" th:text="${#numbers.formatDecimal(analysis.entrySignal.suggestedTarget2, 0, 'COMMA', 2, 'POINT')}"></div>
+                                </div>
+                                <div style="width: 1px; height: 28px; background: #e2e8f0;"></div>
+                                <div class="text-center flex-grow-1">
+                                    <div style="font-size: 11px; color: #8b95a1; font-weight: 600; margin-bottom: 2px;">3차 (추세)</div>
+                                    <div style="font-size: 15px; font-weight: 800; color: #b91c1c;" th:text="${#numbers.formatDecimal(analysis.entrySignal.suggestedTarget3, 0, 'COMMA', 2, 'POINT')}"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:if="${analysis.entrySignal != null}">
+                    <div class="row g-4">
+                        <div class="col-md-5">
+                            <div class="p-3 rounded-4 h-100" style="background: #f8fafc; border: 1px solid #edf2f7;">
+                                <div class="d-flex justify-content-between mb-3 pb-2 border-bottom" style="border-color: #e2e8f0 !important;">
+                                    <span class="text-secondary fw-bold" style="font-size:13px;">RSI (14일)</span>
+                                    <span class="fw-bold" style="font-size:14px;"
+                                          th:classappend="${analysis.entrySignal.rsi > 70 ? 'text-up' : (analysis.entrySignal.rsi < 30 ? 'text-down' : '')}"
+                                          th:text="${#numbers.formatDecimal(analysis.entrySignal.rsi, 1, 1)}"></span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-3 pb-2 border-bottom" style="border-color: #e2e8f0 !important;">
+                                    <span class="text-secondary fw-bold" style="font-size:13px;">MACD 추세</span>
+                                    <span class="fw-bold" style="font-size:14px;"
+                                          th:classappend="${analysis.entrySignal.macd >= 0 ? 'text-up' : 'text-down'}"
+                                          th:text="${#numbers.formatDecimal(analysis.entrySignal.macd, 1, 2)}"></span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-secondary fw-bold" style="font-size:13px;">볼린저 밴드 (하/상)</span>
+                                    <span class="fw-bold" style="font-size:13px;"
+                                          th:text="${#numbers.formatDecimal(analysis.entrySignal.bollingerLower, 0, 'COMMA', 0, 'POINT')} + ' / ' + ${#numbers.formatDecimal(analysis.entrySignal.bollingerUpper, 0, 'COMMA', 0, 'POINT')}"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-7">
+                            <div class="p-3 rounded-4 h-100" style="border: 1px solid #edf2f7;">
+                                <div class="d-flex gap-4 mb-3">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span class="fw-bold" style="font-size:12px; color: var(--toss-red);">매수 신호 강도</span>
+                                            <span class="fw-bold" style="font-size:12px; color: var(--toss-red);" th:text="${analysis.entrySignal.buyStrength} + '%'"></span>
+                                        </div>
+                                        <div class="progress-bar-custom" style="height: 8px;">
+                                            <div class="progress-fill" th:style="'background:var(--toss-red); width:' + ${analysis.entrySignal.buyStrength} + '%'"></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span class="fw-bold" style="font-size:12px; color: var(--toss-blue);">매도 신호 강도</span>
+                                            <span class="fw-bold" style="font-size:12px; color: var(--toss-blue);" th:text="${analysis.entrySignal.sellStrength} + '%'"></span>
+                                        </div>
+                                        <div class="progress-bar-custom" style="height: 8px;">
+                                            <div class="progress-fill" th:style="'background:var(--toss-blue); width:' + ${analysis.entrySignal.sellStrength} + '%'"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex flex-wrap gap-2 mt-3">
+                                    <div th:if="${#lists.isEmpty(analysis.entrySignal.buySignals) and #lists.isEmpty(analysis.entrySignal.sellSignals)}"
+                                         class="text-secondary fw-bold" style="font-size:12px;">현재 포착된 특이 캔들/추세 신호가 없습니다.</div>
+
+                                    <span th:each="sig : ${analysis.entrySignal.buySignals}" class="timing-badge bg-red-soft" th:text="${sig}"></span>
+                                    <span th:each="sig : ${analysis.entrySignal.sellSignals}" class="timing-badge bg-blue-soft" th:text="${sig}"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="toss-card fu d4">
+                <h3 class="fw-bold mb-4" style="font-size:16px;">분석 상세</h3>
+
+                <div class="tab-nav">
+                    <button class="tab-btn" :class="tab==='all'?'active':''" @click="tab='all'">전체 시그널</button>
+                    <button class="tab-btn" :class="tab==='val'?'active':''" @click="tab='val'">
+                        밸류에이션<br>
+                        <span th:text="'(' + ${analysis.valuation.score} + '/40)'" style="font-size:10px; color:#3182f6;"></span>
+                    </button>
+                    <button class="tab-btn" :class="tab==='mom'?'active':''" @click="tab='mom'">
+                        모멘텀<br>
+                        <span th:text="'(' + ${analysis.momentum.score} + '/30)'" style="font-size:10px; color:#05c072;"></span>
+                    </button>
+                    <button class="tab-btn" :class="tab==='tech'?'active':''" @click="tab='tech'">
+                        기술적<br>
+                        <span th:text="'(' + ${analysis.technical.score} + '/30)'" style="font-size:10px; color:#f5a623;"></span>
+                    </button>
+                </div>
+
+                <div x-show="tab==='all'">
+                    <div class="row g-3">
+                        <th:block th:each="signal : ${analysis.signals}">
+                            <div class="col-md-6 col-lg-4">
+                                <div class="signal-card" th:classappend="${#strings.startsWith(signal,'[경고]') or #strings.startsWith(signal,'[주의]')} ? ' warn' : ' normal'">
+                                    <div class="signal-name" th:classappend="${#strings.startsWith(signal,'[경고]') or #strings.startsWith(signal,'[주의]')} ? ' warn' : ''" th:text="${signal}"></div>
+                                    <div class="signal-desc" th:text="${signalDescMap != null ? signalDescMap.get(signal) : ''}"></div>
+                                </div>
+                            </div>
+                        </th:block>
+                    </div>
+                </div>
+
+                <div x-show="tab==='val'">
+                    <div th:if="${isEtf}" class="tab-info" style="background:#eef5ff;">
+                        <i class="bi bi-info-circle-fill" style="color:#3182f6; font-size:15px; flex-shrink:0;"></i>
+                        <span style="color:#1a5cb8;">ETF 종목은 PER·PBR·ROE·BPS 기반 밸류에이션 분석이 적용되지 않습니다.</span>
+                    </div>
+                    <div th:if="${!isEtf}" class="tab-info" style="background:#eef5ff;">
+                        <i class="bi bi-info-circle-fill" style="color:#3182f6; font-size:15px; flex-shrink:0;"></i>
+                        <span style="color:#1a5cb8;">PER·PBR·ROE·BPS 기반으로 현재 주가가 기업 가치 대비 얼마나 저평가·고평가됐는지 측정합니다.</span>
+                    </div>
+                    <th:block th:each="s : ${analysis.valuation.signals}">
+                        <div class="signal-item">
+                            <div class="signal-name" th:text="${s}"></div>
+                            <div class="signal-desc" th:text="${signalDescMap != null ? signalDescMap.get(s) : ''}"></div>
+                        </div>
+                    </th:block>
+                </div>
+
+                <div x-show="tab==='mom'">
+                    <div class="tab-info" style="background:#edfaf4;">
+                        <i class="bi bi-info-circle-fill" style="color:#05c072; font-size:15px; flex-shrink:0;"></i>
+                        <span style="color:#076644;">52주 가격 위치, 시가총액 규모, 거래량 회전율로 시장의 관심도와 추세 강도를 측정합니다.</span>
+                    </div>
+                    <th:block th:each="s : ${analysis.momentum.signals}">
+                        <div class="signal-item">
+                            <div class="signal-name" th:text="${s}"></div>
+                            <div class="signal-desc" th:text="${signalDescMap != null ? signalDescMap.get(s) : ''}"></div>
+                        </div>
+                    </th:block>
+                </div>
+
+                <div x-show="tab==='tech'">
+                    <div th:if="${isEtf}" class="tab-info" style="background:#fff8ed;">
+                        <i class="bi bi-info-circle-fill" style="color:#f5a623; font-size:15px; flex-shrink:0;"></i>
+                        <span style="color:#854F0B;">ETF 종목은 기술적 분석이 적용되지 않습니다.</span>
+                    </div>
+                    <div th:if="${!isEtf}" class="tab-info" style="background:#fff8ed;">
+                        <i class="bi bi-info-circle-fill" style="color:#f5a623; font-size:15px; flex-shrink:0;"></i>
+                        <span style="color:#854F0B;">주봉 100개 기반 이동평균 배열, 골든/데드크로스, 변동성으로 차트 추세를 분석합니다.</span>
+                    </div>
+                    <th:block th:each="s : ${analysis.technical.signals}">
+                        <div class="signal-item">
+                            <div class="signal-name" th:text="${s}"></div>
+                            <div class="signal-desc" th:text="${signalDescMap != null ? signalDescMap.get(s) : ''}"></div>
+                        </div>
+                    </th:block>
+                </div>
+            </div>
+
+            <div class="toss-card fu d5 mb-4" th:if="${!isEtf}" x-cloak>
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <h3 class="fw-bold m-0" style="font-size:16px;">기업 실적 및 추세 분석</h3>
+                        <div class="text-secondary fw-bold mt-1" style="font-size:11px;">분기·연간 손익 / 자본 / 현금흐름</div>
+                    </div>
+                </div>
+
+                <div x-show="finLoaded && finData.length === 0" class="fin-placeholder">
+                    <i class="bi bi-file-earmark-x"></i>
+                    <p>제공되는 재무 데이터가 없습니다.</p>
+                </div>
+
+                <div x-show="finLoaded && finData.length > 0">
+                    <div class="row g-3 mb-4" x-show="finIndicators" x-cloak>
+                        <div class="col-6 col-md-4">
+                            <div class="fin-kpi-card" :class="(finIndicators?.per ?? 99) <= 15 ? 'good' : (finIndicators?.per ?? 0) >= 40 ? 'warn' : 'neutral'">
+                                <div class="fin-kpi-label">PER · 주가수익비율</div>
+                                <div class="fin-kpi-value" :class="(finIndicators?.per ?? 99) <= 15 ? 'text-up' : (finIndicators?.per ?? 0) >= 40 ? 'text-down' : 'text-dark'" x-text="formatMultiple(finIndicators?.per)"></div>
+                                <div class="fin-kpi-sub" x-text="(finIndicators?.per ?? 0) > 0 ? '이익 대비 주가 수준' : '적자 상태'"></div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="fin-kpi-card" :class="(finIndicators?.pbr ?? 99) <= 1.0 ? 'good' : (finIndicators?.pbr ?? 0) >= 3.0 ? 'warn' : 'neutral'">
+                                <div class="fin-kpi-label">PBR · 주가순자산비율</div>
+                                <div class="fin-kpi-value" :class="(finIndicators?.pbr ?? 99) <= 1.0 ? 'text-up' : (finIndicators?.pbr ?? 0) >= 3.0 ? 'text-down' : 'text-dark'" x-text="formatMultiple(finIndicators?.pbr)"></div>
+                                <div class="fin-kpi-sub" x-text="(finIndicators?.pbr ?? 99) <= 1.0 ? '자산 가치 우수' : '자본 대비 주가 수준'"></div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="fin-kpi-card" :class="(finIndicators?.psr ?? 99) <= 1.5 ? 'good' : 'neutral'">
+                                <div class="fin-kpi-label">PSR · 주가매출비율</div>
+                                <div class="fin-kpi-value" :class="(finIndicators?.psr ?? 99) <= 1.5 ? 'text-up' : 'text-dark'" x-text="formatMultiple(finIndicators?.psr)"></div>
+                                <div class="fin-kpi-sub" x-text="(finIndicators?.psr ?? 99) <= 1.5 ? '매출 대비 저평가' : '매출 대비 주가 수준'"></div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="fin-kpi-card" :class="(finIndicators?.roe ?? 0) >= 15 ? 'good' : (finIndicators?.roe ?? 0) <= 5 ? 'warn' : 'neutral'">
+                                <div class="fin-kpi-label">ROE · 수익성</div>
+                                <div class="fin-kpi-value" :class="getColorClass(finIndicators?.roe)" x-text="formatPercent(finIndicators?.roe)"></div>
+                                <div class="fin-kpi-sub" x-text="(finIndicators?.roe ?? 0) >= 15 ? '수익성 매우 우수' : '자기자본이익률(TTM)'"></div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="fin-kpi-card" :class="(finIndicators?.revenueGrowth ?? 0) >= 10 ? 'good' : (finIndicators?.revenueGrowth ?? 0) < 0 ? 'warn' : 'neutral'">
+                                <div class="fin-kpi-label">매출성장률 · 성장성</div>
+                                <div class="fin-kpi-value" :class="getColorClass(finIndicators?.revenueGrowth)" x-text="formatPercent(finIndicators?.revenueGrowth)"></div>
+                                <div class="fin-kpi-sub" x-text="(finIndicators?.revenueGrowth ?? 0) >= 10 ? '안정적 외형 성장' : '전년 동기 대비(YoY)'"></div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="fin-kpi-card" :class="(finIndicators?.debtRatio ?? 200) <= 100 ? 'good' : (finIndicators?.debtRatio ?? 0) >= 200 ? 'warn' : 'neutral'">
+                                <div class="fin-kpi-label">부채비율 · 건전성</div>
+                                <div class="fin-kpi-value" :class="(finIndicators?.debtRatio ?? 200) <= 100 ? 'text-up' : 'text-dark'" x-text="formatPercent(finIndicators?.debtRatio)"></div>
+                                <div class="fin-kpi-sub" x-text="(finIndicators?.debtRatio ?? 200) <= 100 ? '튼튼한 재무 구조' : '자본 대비 부채 비중'"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 p-3 rounded-4" style="background: #fafbfc; border: 1px solid #edf2f7;">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <span class="fw-bold" style="font-size: 13px; color: #191f28;">실적 추세</span>
+                            <div class="fin-chart-nav">
+                                <button class="fin-chart-btn" :class="finChartType==='revenue'?'active':''" @click="finChartType='revenue'; renderFinChart()">매출액</button>
+                                <button class="fin-chart-btn" :class="finChartType==='operating'?'active':''" @click="finChartType='operating'; renderFinChart()">영업이익</button>
+                                <button class="fin-chart-btn" :class="finChartType==='net'?'active':''" @click="finChartType='net'; renderFinChart()">순이익</button>
+                            </div>
+                        </div>
+                        <div class="fin-chart-canvas-wrap">
+                            <canvas id="finChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="fin-scroll-wrap">
+                        <div class="fin-scroll-inner">
+                            <table class="table table-borderless align-middle m-0" style="min-width: 640px; white-space: nowrap;">
+                                <thead style="background: #fafbfc; border-bottom: 1px solid #edf2f7;">
+                                <tr>
+                                    <th class="ps-4 py-3 text-secondary fw-bold" style="font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; width: 14%;">기간</th>
+                                    <th class="text-end py-3 pe-4 text-secondary fw-bold" style="font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; width: 22%;">매출액</th>
+                                    <th class="text-end py-3 pe-4 text-secondary fw-bold" style="font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; width: 22%;">영업이익</th>
+                                    <th class="text-end py-3 pe-4 text-secondary fw-bold" style="font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; width: 22%;">순이익</th>
+                                    <th class="text-end py-3 pe-3 text-secondary fw-bold" style="font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; width: 20%;">자본 · 영업현금</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <template x-for="(item, index) in finData" :key="index">
+                                    <tr class="fin-tr">
+                                        <td class="ps-4 py-3">
+                                            <div class="fw-bold text-dark" style="font-size: 13px;" x-text="item.quarter > 0 ? `${item.year}년 ${item.quarter}Q` : `${item.year}년`"></div>
+                                            <div class="text-secondary fw-bold mt-1" style="font-size: 10px;" x-text="item.quarter > 0 ? '분기' : '연간'"></div>
+                                        </td>
+                                        <td class="text-end py-3 pe-4 position-relative">
+                                            <div class="position-absolute top-50 translate-middle-y rounded-start" style="right: 0; height: 36px; background: rgba(49,130,246,0.08); z-index: 0;" :style="`width: ${(Math.abs(item.report?.incomeStatement?.revenue || 0) / maxFin.revenue) * 100}%;`"></div>
+                                            <div class="position-relative" style="z-index: 1;">
+                                                <div class="fw-bold" style="font-size: 14px; color: #191f28;" x-text="formatShortMoney(item.report?.incomeStatement?.revenue)"></div>
+                                                <div style="font-size: 11px; font-weight: 700; margin-top: 1px;" :class="getColorClass(getQoQGrowth(item, 'revenue', index))" x-text="formatGrowth(getQoQGrowth(item, 'revenue', index))"></div>
+                                            </div>
+                                        </td>
+                                        <td class="text-end py-3 pe-4 position-relative">
+                                            <div class="position-absolute top-50 translate-middle-y rounded-start" style="right: 0; height: 36px; z-index: 0;" :style="`background: ${(item.report?.incomeStatement?.operatingIncome || 0) >= 0 ? 'rgba(240,68,82,0.08)' : 'rgba(49,130,246,0.08)'}; width: ${(Math.abs(item.report?.incomeStatement?.operatingIncome || 0) / maxFin.operatingIncome) * 100}%;`"></div>
+                                            <div class="position-relative" style="z-index: 1;">
+                                                <div class="fw-bold" style="font-size: 14px;" :class="getColorClass(item.report?.incomeStatement?.operatingIncome)" x-text="formatShortMoney(item.report?.incomeStatement?.operatingIncome)"></div>
+                                                <div style="font-size: 11px; font-weight: 700; margin-top: 1px;" :class="getColorClass(getQoQGrowth(item, 'operatingIncome', index))" x-text="formatGrowth(getQoQGrowth(item, 'operatingIncome', index))"></div>
+                                            </div>
+                                        </td>
+                                        <td class="text-end py-3 pe-4 position-relative">
+                                            <div class="position-absolute top-50 translate-middle-y rounded-start" style="right: 0; height: 36px; z-index: 0;" :style="`background: ${(item.report?.incomeStatement?.netIncomeLoss || 0) >= 0 ? 'rgba(240,68,82,0.08)' : 'rgba(49,130,246,0.08)'}; width: ${(Math.abs(item.report?.incomeStatement?.netIncomeLoss || 0) / maxFin.netIncome) * 100}%;`"></div>
+                                            <div class="position-relative" style="z-index: 1;">
+                                                <div class="fw-bold" style="font-size: 14px;" :class="getColorClass(item.report?.incomeStatement?.netIncomeLoss)" x-text="formatShortMoney(item.report?.incomeStatement?.netIncomeLoss)"></div>
+                                                <div style="font-size: 11px; font-weight: 700; margin-top: 1px;" :class="getColorClass(getQoQGrowth(item, 'netIncome', index))" x-text="formatGrowth(getQoQGrowth(item, 'netIncome', index))"></div>
+                                            </div>
+                                        </td>
+                                        <td class="text-end py-3 pe-3">
+                                            <div class="d-flex flex-column gap-1">
+                                                <div>
+                                                    <span class="text-secondary fw-bold" style="font-size: 10px;">자본 </span>
+                                                    <span class="fw-bold text-dark" style="font-size: 13px;" x-text="formatShortMoney(item.report?.balanceSheet?.stockholdersEquity)"></span>
+                                                </div>
+                                                <div>
+                                                    <span class="text-secondary fw-bold" style="font-size: 10px;">현금 </span>
+                                                    <span class="fw-bold" style="font-size: 13px;" :class="getColorClass(item.report?.cashFlow?.operatingCashFlow)" x-text="formatShortMoney(item.report?.cashFlow?.operatingCashFlow)"></span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="toss-card fu d5 mb-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h3 class="fw-bold m-0" style="font-size:16px;"><i class="bi bi-stars text-warning me-2"></i>AI 종합 코멘트</h3>
+                    <button @click="requestAiComment()"
+                            class="btn btn-sm fw-bold rounded-pill px-4 py-2"
+                            style="background: #f2f4f6; color: #4e5968; font-size:12px; border:none;"
+                            :disabled="aiLoading || aiCooldown > 0">
+                        <span x-show="!aiLoading && aiCooldown === 0">분석 요청</span>
+                        <span x-show="aiLoading" class="spinner-border spinner-border-sm text-primary"></span>
+                        <span x-show="!aiLoading && aiCooldown > 0" x-text="`${aiCooldown}초 후 재요청`" style="font-size:11px; color:#f04452;"></span>
+                    </button>
+                </div>
+                <div x-show="!aiComment && !aiLoading" class="fin-placeholder" style="padding: 32px 0;">
+                    <i class="bi bi-chat-dots" style="font-size: 1.8rem; color: #d1d5db;"></i>
+                    <p style="font-size: 13px; font-weight: 700; color: #b0b8c1; margin: 0;">버튼을 눌러 AI의 종합 분석 코멘트를 받아보세요</p>
+                </div>
+                <div x-show="aiLoading" class="fin-placeholder" style="padding: 32px 0;">
+                    <div class="spinner-border text-primary spinner-border-sm"></div>
+                    <p style="font-size: 13px; font-weight: 700; color: #b0b8c1; margin: 0;">AI가 차트를 째려보는 중...</p>
+                </div>
+                <div x-show="aiComment && !aiLoading" style="background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%); border: 1px solid #edf2f7; border-radius: 16px; padding: 20px;" x-cloak>
+                    <div class="ai-comment-box" x-text="aiComment"></div>
+                </div>
+            </div>
+
+            <div class="disclaimer fu d5 mt-4">
+                본 분석은 공개 데이터 기반의 참고용 정보로, 투자 권유가 아닙니다.<br>
+                투자 결정은 반드시 본인의 판단과 책임 하에 이루어져야 합니다.
+            </div>
+
+        </div>
+    </main>
+</div>
+<script th:inline="javascript">
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('analysisApp', () => ({
+            sidebarOpen: true,
+            tab: 'all',
+            stockCode: '',
+            isKoreanStock: false,
+
+            aiComment: '',
+            aiLoading: false,
+            aiCooldown: 0,
+            cooldownInterval: null,
+            chartLoading: false,
+            tvChart: null,
+
+            finLoaded: false,
+            finData: [],
+            finIndicators: null,
+            finChartType: 'revenue',
+            finChartInstance: null,
+
+            init() {
+                const codeEl = document.querySelector('h2[data-code]');
+                if (codeEl) {
+                    this.stockCode = codeEl.dataset.code;
+                    this.isKoreanStock = /^\d{6}$/.test(this.stockCode);
+                }
+                this.currentPrice = 0;
+
+                /*<![CDATA[*/
+                const serverFinResponse = /*[[${finData}]]*/ null;
+                /*]]>*/
+
+                const isEtf = document.querySelector('.etf-banner') !== null;
+
+                if (!isEtf && serverFinResponse && serverFinResponse.data) {
+                    this.finData = serverFinResponse.data;
+                    this.finIndicators = serverFinResponse.indicators;
+                    this.$nextTick(() => this.renderFinChart());
+                }
+
+                this.finLoaded = true;
+                this.$nextTick(() => { this.loadChart(); });
+            },
+
+            async loadChart() {
+                this.chartLoading = true;
+                const container = document.getElementById('tv-chart-container');
+                if (!container) return;
+
+                await this.renderLightweightChart(container, this.stockCode);
+            },
+
+            async renderLightweightChart(container, code) {
+                try {
+                    const chart = LightweightCharts.createChart(container, {
+                        autoSize: true,
+                        height: 500,
+                        layout: {
+                            background: { color: '#ffffff' },
+                            textColor: '#4e5968',
+                            fontFamily: 'Pretendard, sans-serif'
+                        },
+                        grid: {
+                            vertLines: { color: 'rgba(242, 244, 246, 0.8)', style: 1 },
+                            horzLines: { color: 'rgba(242, 244, 246, 0.8)', style: 1 }
+                        },
+                        // ✨ 1. 크로스헤어(십자선) 화려하게 튜닝 (레이저 느낌)
+                        crosshair: {
+                            mode: LightweightCharts.CrosshairMode.Normal,
+                            vertLine: { width: 1, color: '#3182f6', style: 3, labelBackgroundColor: '#3182f6' },
+                            horzLine: { width: 1, color: '#3182f6', style: 3, labelBackgroundColor: '#3182f6' },
+                        },
+                        rightPriceScale: {
+                            borderVisible: false,
+                            scaleMargins: { top: 0.1, bottom: 0.25 },
+                        },
+                        timeScale: {
+                            borderVisible: false,
+                            fixLeftEdge: true,
+                            fixRightEdge: true,
+                            timeVisible: true,
+                        },
+                        // ✨ 2. 배경에 워터마크 추가 (프로페셔널한 느낌)
+                        watermark: {
+                            color: 'rgba(49, 130, 246, 0.04)',
+                            visible: true,
+                            text: code + ' | StockLog',
+                            fontSize: 52,
+                            horzAlign: 'center',
+                            vertAlign: 'center',
+                        }
+                    });
+
+                    // ✨ 3. 캔들 색상 채도 극대화 (선명하고 쨍한 컬러)
+                    const candleSeries = chart.addCandlestickSeries({
+                        upColor: '#ff3b30', downColor: '#007aff',
+                        borderUpColor: '#ff3b30', borderDownColor: '#007aff',
+                        wickUpColor: '#ff3b30', wickDownColor: '#007aff',
+                    });
+
+                    // ✨ 4. 거래량 바를 투명하게 처리하여 캔들과 겹쳐도 예쁘게
+                    const volumeSeries = chart.addHistogramSeries({
+                        priceFormat: { type: 'volume' },
+                        priceScaleId: '',
+                    });
+
+                    const upperBand = chart.addLineSeries({ color: 'rgba(139, 149, 161, 0.3)', lineWidth: 1, lineStyle: 2, lastValueVisible: false, priceLineVisible: false });
+                    const midBand   = chart.addLineSeries({ color: 'rgba(245, 166, 35, 0.8)', lineWidth: 1.5, lastValueVisible: false, priceLineVisible: false });
+                    const lowerBand = chart.addLineSeries({ color: 'rgba(139, 149, 161, 0.3)', lineWidth: 1, lineStyle: 2, lastValueVisible: false, priceLineVisible: false });
+
+                    chart.priceScale('').applyOptions({ scaleMargins: { top: 0.75, bottom: 0 } });
+
+                    const res = await fetch(`/api/stock/${encodeURIComponent(code)}/chart?period=DAY`);
+                    const response = await res.json();
+                    const dataList = Array.isArray(response) ? response : (response.chartDataList || []);
+
+                    if (dataList && dataList.length > 0) {
+                        const formatted = dataList
+                            .filter(d => d.time && d.value)
+                            .map(d => {
+                                let t = String(d.time);
+                                let chartTime = t.length === 8 ? `${t.substring(0,4)}-${t.substring(4,6)}-${t.substring(6,8)}` : t;
+                                const open = Number(d.open);
+                                const close = Number(d.value);
+
+                                return {
+                                    time: chartTime, open: open,
+                                    high: d.high ? Number(d.high) : close,
+                                    low: d.low ? Number(d.low) : close,
+                                    close: close, value: Number(d.volume || 0),
+                                    // ✨ 거래량 색상도 상승/하락에 맞추되 투명도(0.3) 적용
+                                    color: open > close ? 'rgba(0, 122, 255, 0.3)' : 'rgba(255, 59, 48, 0.3)',
+                                    upper: d.bollingerUpper, mid: d.bollingerMid, lower: d.bollingerLower
+                                };
+                            })
+                            .filter(d => d.open > 0)
+                            .sort((a, b) => a.time.localeCompare(b.time));
+
+                        candleSeries.setData(formatted);
+                        volumeSeries.setData(formatted);
+                        upperBand.setData(formatted.map(d => ({ time: d.time, value: d.upper })));
+                        midBand.setData(formatted.map(d => ({ time: d.time, value: d.mid })));
+                        lowerBand.setData(formatted.map(d => ({ time: d.time, value: d.lower })));
+
+                        chart.timeScale().fitContent();
+                    }
+                    this.tvChart = chart;
+                } catch (e) {
+                    console.error("차트 렌더링 에러:", e);
+                } finally {
+                    this.chartLoading = false;
+                }
+            },
+
+            // ✨ 5. 재무제표 차트(Chart.js)에 입체적인 그라데이션 적용
+            renderFinChart() {
+                const canvas = document.getElementById('finChart');
+                if (!canvas || !this.finData || this.finData.length === 0) return;
+
+                const ctx = canvas.getContext('2d');
+
+                // 빨간색(흑자) 그라데이션 생성
+                const gradientRed = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                gradientRed.addColorStop(0, 'rgba(255, 59, 48, 0.85)');
+                gradientRed.addColorStop(1, 'rgba(255, 59, 48, 0.1)');
+
+                // 파란색(적자) 그라데이션 생성
+                const gradientBlue = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                gradientBlue.addColorStop(0, 'rgba(0, 122, 255, 0.85)');
+                gradientBlue.addColorStop(1, 'rgba(0, 122, 255, 0.1)');
+
+                const sorted = [...this.finData].reverse();
+                const labels = sorted.map(d => d.quarter > 0 ? `${d.year}년 ${d.quarter}Q` : `${d.year}년`);
+
+                const fieldMap = {
+                    revenue:   d => d.report?.incomeStatement?.revenue        ?? 0,
+                    operating: d => d.report?.incomeStatement?.operatingIncome ?? 0,
+                    net:       d => d.report?.incomeStatement?.netIncomeLoss   ?? 0,
+                };
+                const labelMap = { revenue: '매출액', operating: '영업이익', net: '순이익' };
+                const rawValues = sorted.map(fieldMap[this.finChartType]);
+
+                // 막대 색상에 그라데이션 적용
+                const bgColors = rawValues.map(v => v >= 0 ? gradientRed : gradientBlue);
+                const borderColors = rawValues.map(v => v >= 0 ? '#ff3b30' : '#007aff');
+                const fmt = v => this.formatShortMoney(v);
+
+                if (this.finChartInstance) this.finChartInstance.destroy();
+
+                this.finChartInstance = new Chart(canvas, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: labelMap[this.finChartType],
+                            data: rawValues,
+                            backgroundColor: bgColors,
+                            borderColor: borderColors,
+                            borderWidth: 1, // 테두리 선명하게
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        animation: {
+                            duration: 1000, // 차트 렌더링 시 스르륵 올라오는 애니메이션
+                            easing: 'easeOutQuart'
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(25, 31, 40, 0.9)', // 툴팁 다크모드화
+                                titleFont: { size: 13, family: 'Pretendard' },
+                                bodyFont: { size: 14, weight: 'bold', family: 'Pretendard' },
+                                padding: 12,
+                                callbacks: { label: ctx => ' ' + labelMap[this.finChartType] + ': ' + fmt(ctx.raw) }
+                            }
+                        },
+                        scales: {
+                            x: { grid: { display: false }, border: { display: false } },
+                            y: { grid: { color: 'rgba(242, 244, 246, 0.6)', drawBorder: false }, ticks: { callback: v => fmt(v) }, border: { display: false } }
+                        }
+                    }
+                });
+            },
+
+            // ... (이하 formatGrowth, getQoQGrowth, maxFin, formatShortMoney, requestAiComment 등 기존 함수들은 모두 그대로 둡니다) ...
+            formatGrowth(val) {
+                if (val === null) return '-';
+                return (val > 0 ? '▲ ' : (val < 0 ? '▼ ' : '')) + Math.abs(val).toFixed(1) + '%';
+            },
+
+            getQoQGrowth(item, field, index) {
+                if (!this.finData || this.finData.length === 0) return null;
+                const pastItem = this.finData[index + 1];
+                if (!pastItem) return null;
+
+                let currentVal = 0, pastVal = 0;
+                if (field === 'revenue') { currentVal = item.report?.incomeStatement?.revenue; pastVal = pastItem.report?.incomeStatement?.revenue; }
+                else if (field === 'operatingIncome') { currentVal = item.report?.incomeStatement?.operatingIncome; pastVal = pastItem.report?.incomeStatement?.operatingIncome; }
+                else if (field === 'netIncome') { currentVal = item.report?.incomeStatement?.netIncomeLoss; pastVal = pastItem.report?.incomeStatement?.netIncomeLoss; }
+
+                if (currentVal == null || pastVal == null || pastVal === 0) return null;
+                return ((currentVal - pastVal) / Math.abs(pastVal)) * 100;
+            },
+
+            get maxFin() {
+                if (!this.finData || this.finData.length === 0) return { revenue: 1, operatingIncome: 1, netIncome: 1 };
+                return {
+                    revenue: Math.max(...this.finData.map(d => Math.abs(d.report?.incomeStatement?.revenue || 0))) || 1,
+                    operatingIncome: Math.max(...this.finData.map(d => Math.abs(d.report?.incomeStatement?.operatingIncome || 0))) || 1,
+                    netIncome: Math.max(...this.finData.map(d => Math.abs(d.report?.incomeStatement?.netIncomeLoss || 0))) || 1
+                };
+            },
+
+            formatShortMoney(val) {
+                if (!val) return '-';
+                const n = Math.abs(Number(val));
+                const s = Number(val) < 0 ? '-' : '';
+                if (this.isKoreanStock) {
+                    if (n >= 1_000_000_000_000) return s + (n / 1_000_000_000_000).toFixed(1) + '조';
+                    if (n >= 100_000_000) return s + (n / 100_000_000).toFixed(0) + '억';
+                    return s + n.toLocaleString();
+                } else {
+                    if (n >= 1_000_000_000_000) return s + (n / 1_000_000_000_000).toFixed(2) + '조$';
+                    if (n >= 100_000_000) return s + (n / 100_000_000).toFixed(1) + '억$';
+                    return s + n.toLocaleString() + '$';
+                }
+            },
+
+            formatMultiple(val) { return val ? Number(val).toFixed(1) + '배' : '-'; },
+            formatPercent(val) { return val ? (Number(val) > 0 ? '+' : '') + Number(val).toFixed(1) + '%' : '-'; },
+
+            getColorClass(val) {
+                const n = Number(val);
+                return n > 0 ? 'text-up' : (n < 0 ? 'text-down' : '');
+            },
+
+            async requestAiComment() {
+                if (this.aiLoading || this.aiCooldown > 0) return;
+                this.aiLoading = true;
+                try {
+                    const res = await fetch(`/api/stock/${this.stockCode}/ai-comment`);
+                    if (res.ok) { this.aiComment = await res.text(); this.startCooldown(); }
+                } catch (e) { this.aiComment = '서버 통신 오류가 발생했습니다.'; } finally { this.aiLoading = false; }
+            },
+
+            startCooldown() {
+                this.aiCooldown = 60;
+                if (this.cooldownInterval) clearInterval(this.cooldownInterval);
+                this.cooldownInterval = setInterval(() => {
+                    this.aiCooldown--;
+                    if (this.aiCooldown <= 0) clearInterval(this.cooldownInterval);
+                }, 1000);
+            }
+        }));
+    });
+</script>
+</body>
+</html>

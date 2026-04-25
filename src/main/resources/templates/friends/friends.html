@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockLog - 친구</title>
+
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+
+    <style>
+        :root { --toss-blue: #3182f6; --toss-red: #f04452; --toss-gray-bg: #f2f4f6; --sidebar-width: 250px; }
+        body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: #191f28; }
+        [x-cloak] { display: none !important; }
+
+        .layout-wrapper { display: flex; min-height: 100vh; }
+        .main-content { flex-grow: 1; margin-left: var(--sidebar-width); padding: 0 60px 60px 60px; transition: 0.3s; }
+        .main-content.expanded { margin-left: 80px; }
+        .content-container { width: 100%; max-width: 900px; margin: 0 auto; padding-top: 32px; }
+
+        /* 카드 및 버튼 UI 통일 */
+        .toss-card { background: white; border-radius: 28px; padding: 36px; box-shadow: 0 4px 24px rgba(0,0,0,0.03); margin-bottom: 30px; border: none; }
+
+        .btn-add { background: #f2f4f6; color: #4e5968; border: none; padding: 12px 20px; border-radius: 14px; font-weight: 700; transition: 0.2s; font-size: 15px; }
+        .btn-add:hover { background: #e5e8eb; color: var(--toss-blue); }
+
+        /* 친구 리스트 호버 디자인 통일 */
+        .friend-row { display: flex; align-items: center; padding: 16px 20px; border-radius: 16px; transition: background 0.2s; cursor: pointer; text-decoration: none !important; color: inherit; border: 1px solid transparent; }
+        .friend-row:hover { background-color: #f8fafc; border-color: #f1f5f9; }
+
+        /* 모달 디자인 통일 */
+        .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(6px); }
+        .modal-sheet { background: white; width: 100%; max-width: 480px; border-radius: 32px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.1); animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+
+        .toss-input { width: 100%; border: none; background: #f2f4f6; border-radius: 16px; padding: 18px; outline: none; transition: 0.2s; font-weight: 600; font-size: 15px; }
+        .toss-input:focus { outline: 2px solid var(--toss-blue); background: white; }
+
+        .text-up { color: var(--toss-red) !important; }
+        .text-down { color: var(--toss-blue) !important; }
+
+        /* 삭제 버튼 스타일 */
+        .btn-delete-friend { background: none; border: none; color: #d1d6db; padding: 8px; border-radius: 50%; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .btn-delete-friend:hover { background-color: rgba(240, 68, 82, 0.1); color: var(--toss-red); }
+    </style>
+</head>
+<body x-data="friendsApp">
+
+<div class="layout-wrapper">
+    <aside th:replace="~{fragments/sidebar :: sidebarFragment('friends')}"></aside>
+
+    <main class="main-content" :class="!sidebarOpen ? 'expanded' : ''">
+        <div th:replace="~{fragments/header :: headerFragment}"></div>
+
+        <div th:if="${successMessage}" class="alert alert-success border-0 rounded-4 fw-bold shadow-sm mx-auto mt-3" style="max-width: 900px;" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger border-0 rounded-4 fw-bold shadow-sm mx-auto mt-3" style="max-width: 900px;" th:text="${errorMessage}"></div>
+
+        <div class="content-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold fs-3 m-0">친구 <span class="text-secondary fs-5 ms-1 fw-bold opacity-50" th:text="${friendCount}">0</span></h2>
+                <button @click="openSearchModal()" class="btn-add"><i class="bi bi-person-plus-fill me-2"></i>친구 추가</button>
+            </div>
+
+            <section class="toss-card d-flex align-items-center mb-4 p-4">
+                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white me-4 shadow-sm flex-shrink-0"
+                     style="width: 64px; height: 64px; background-color: var(--toss-blue); font-size: 24px;">
+                    나
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-bold fs-5 text-dark" th:text="${me != null ? '나 (' + me.username + ')' : '나 (사용자)'}">나</div>
+                </div>
+                <a th:href="@{/auth/info}" class="btn btn-light rounded-pill px-4 py-2 fw-bold text-secondary border-0" style="background: #f2f4f6;">설정</a>
+            </section>
+
+            <section th:if="${pendingRequests != null and !#lists.isEmpty(pendingRequests)}" class="toss-card p-4 mb-4" style="background-color: #f8fafc; border: 1px solid #e2e8f0; box-shadow: none;">
+                <h3 class="fw-bold fs-6 mb-3 text-dark"><i class="bi bi-bell-fill text-warning me-2"></i>받은 친구 요청</h3>
+
+                <div class="d-flex flex-column gap-3">
+                    <div th:each="req : ${pendingRequests}" class="d-flex align-items-center justify-content-between p-2 rounded-4 bg-white shadow-sm border" style="border-color: #f2f4f6 !important;">
+                        <div class="d-flex align-items-center ms-2">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold me-3 text-white"
+                                 style="width: 48px; height: 48px; background-color: #8b95a1; font-size: 18px;"
+                                 th:text="${req.requesterName != null && !req.requesterName.isEmpty() ? #strings.substring(req.requesterName, 0, 1) : 'U'}">
+                                요
+                            </div>
+                            <div class="fw-bold text-dark fs-6" th:text="${req.requesterName != null ? req.requesterName : '알 수 없는 사용자'}">요청자</div>
+                        </div>
+
+                        <div class="d-flex gap-2 me-2">
+                            <form th:action="@{/friends/accept}" method="post" class="m-0">
+                                <input type="hidden" name="friendshipId" th:value="${req.friendshipId}">
+                                <button type="submit" class="btn btn-sm btn-primary rounded-pill px-4 py-2 fw-bold" style="background: var(--toss-blue); border: none;">수락</button>
+                            </form>
+                            <form th:action="@{/friends/reject}" method="post" class="m-0">
+                                <input type="hidden" name="friendshipId" th:value="${req.friendshipId}">
+                                <button type="submit" class="btn btn-sm btn-light rounded-pill px-4 py-2 fw-bold text-secondary" style="background: #f2f4f6; border: none;">거절</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="toss-card p-4">
+                <div class="d-flex flex-column gap-2">
+                    <a th:each="friend : ${friends}" th:href="@{/friends/{id}(id=${friend.id})}" class="friend-row">
+                        <div class="position-relative me-4">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0 text-white"
+                                 style="width: 56px; height: 56px; background-color: #8b95a1; font-size: 20px;"
+                                 th:text="${friend.username != null && !friend.username.isEmpty() ? #strings.substring(friend.username, 0, 1) : 'F'}">
+                                F
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold fs-5 mb-1 text-dark" th:text="${friend.username}">이름</div>
+                            <div class="small fw-bold text-secondary">
+                                포트폴리오 보기 →
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center" @click.prevent.stop>
+                            <form th:action="@{/friends/reject}" method="post" class="m-0" onsubmit="return confirm('이 친구를 삭제하시겠습니까?');">
+                                <input type="hidden" name="friendshipId" th:value="${friend.friendshipId}">
+                                <button type="submit" class="btn-delete-friend" title="친구 삭제">
+                                    <i class="bi bi-trash-fill fs-5"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </a>
+
+                    <div th:if="${#lists.isEmpty(friends)}" class="text-center py-5">
+                        <i class="bi bi-people-fill text-secondary opacity-25 d-block mb-3" style="font-size: 3rem;"></i>
+                        <p class="text-secondary fw-bold m-0">아직 추가된 친구가 없습니다.<br>친구를 추가하고 수익률을 비교해보세요!</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div x-show="showSearchModal" x-cloak class="modal-backdrop" @click.self="closeSearchModal()">
+        <div class="modal-sheet" @click.stop>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold m-0 fs-4 text-dark">친구 추가</h4>
+                <button @click="closeSearchModal()" class="btn-close shadow-none"></button>
+            </div>
+
+            <div class="mb-4">
+                <label class="fw-bold small mb-2 d-block ms-1 text-secondary">아이디로 검색</label>
+                <div class="d-flex gap-2">
+                    <input type="text" x-model="searchQuery" @keyup.enter="searchFriend()" class="toss-input flex-grow-1 mb-0" placeholder="친구 아이디를 입력하세요" autofocus>
+                    <button @click="searchFriend()" class="btn btn-primary rounded-4 fw-bold px-4 mb-0" style="background: var(--toss-blue); border: none; min-width: 80px;" :disabled="isSearching">
+                        <span x-show="!isSearching">검색</span>
+                        <span x-show="isSearching" class="spinner-border spinner-border-sm"></span>
+                    </button>
+                </div>
+            </div>
+
+            <div style="min-height: 120px;">
+                <div x-show="!searchResult && !searchError && !isSearching" class="text-center py-5 rounded-4" style="background: #f8fafc; border: 1px dashed #e2e8f0;">
+                    <p class="text-secondary small fw-bold m-0"><i class="bi bi-search me-2"></i>새로운 투자 친구를 찾아보세요</p>
+                </div>
+
+                <div x-show="searchError && !isSearching" class="text-center py-5 rounded-4 bg-light text-danger fw-bold" x-text="searchError"></div>
+
+                <div x-show="searchResult && searchResult.username && !isSearching" class="p-4 rounded-4 border d-flex align-items-center justify-content-between shadow-sm" style="background: white; border-color: #f2f4f6 !important;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white shadow-sm flex-shrink-0"
+                             style="width: 52px; height: 52px; background-color: #8b95a1; font-size: 20px;"
+                             x-text="(searchResult?.username || 'U').charAt(0).toUpperCase()">
+                        </div>
+                        <div class="text-start">
+                            <div class="fw-bold fs-5 text-dark mb-1" x-text="searchResult?.username"></div>
+                            <div class="small text-secondary fw-bold" x-text="'아이디: ' + (searchResult?.loginId || '')"></div>
+                        </div>
+                    </div>
+
+                    <button @click="sendFriendRequest()" class="btn rounded-pill px-4 py-2 fw-bold text-white shadow-sm" style="background: var(--toss-blue); border: none; font-size: 14px;" :disabled="isSending">
+                        <span x-show="!isSending">요청 보내기</span>
+                        <span x-show="isSending" class="spinner-border spinner-border-sm"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('friendsApp', () => ({
+            sidebarOpen: true,
+            showSearchModal: false,
+
+            // 타임리프를 통해 로그인한 '내 아이디'를 안전하게 주입받음
+            myLoginId: /*[[${loginMember != null ? loginMember.loginId : ''}]]*/ '',
+
+            // 검색 및 전송 상태 데이터
+            searchQuery: '',
+            isSearching: false,
+            searchResult: null,
+            searchError: '',
+            isSending: false,
+
+            openSearchModal() {
+                this.showSearchModal = true;
+                this.resetSearch();
+            },
+
+            closeSearchModal() {
+                this.showSearchModal = false;
+                this.resetSearch();
+            },
+
+            resetSearch() {
+                this.searchQuery = '';
+                this.searchResult = null;
+                this.searchError = '';
+                this.isSearching = false;
+                this.isSending = false;
+            },
+
+async searchFriend() {
+                if (!this.searchQuery.trim()) return;
+
+                if (this.searchQuery === this.myLoginId) {
+                    this.searchError = '자신은 검색할 수 없습니다.';
+                    this.searchResult = null;
+                    return;
+                }
+
+                this.isSearching = true;
+                this.searchResult = null;
+                this.searchError = '';
+
+                try {
+                    const response = await fetch(`/friends/search?loginId=${encodeURIComponent(this.searchQuery)}`);
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data && data.username) {
+                            this.searchResult = data;
+                        } else {
+                            this.searchError = '해당 아이디의 사용자를 찾을 수 없습니다.';
+                            this.searchResult = null;
+                        }
+                    } else {
+                        const errorText = await response.text();
+                        this.searchError = errorText || '사용자를 찾을 수 없습니다.';
+                    }
+                } catch (e) {
+                    this.searchError = '검색 중 오류가 발생했습니다.';
+                } finally {
+                    this.isSearching = false;
+                }
+            },
+
+            async sendFriendRequest() {
+                this.isSending = true;
+                this.searchError = '';
+
+                try {
+                    const formData = new FormData();
+                    formData.append('keyword', this.searchQuery);
+
+                    const response = await fetch('/friends/add', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        // 성공 시 화면 전체 새로고침 (컨트롤러 측에서 넘겨주는 플래시 메시지가 있다면 표시됨)
+                        window.location.reload();
+                    } else {
+                        // 백엔드 예외 처리 메시지를 받아서 모달 안쪽에 빨간 글씨로 띄움
+                        const errorText = await response.text();
+                        this.searchError = errorText;
+                        this.searchResult = null;
+                    }
+                } catch (e) {
+                    this.searchError = '요청 중 오류가 발생했습니다.';
+                } finally {
+                    this.isSending = false;
+                }
+            }
+        }));
+    });
+</script>
+</body>
+</html>

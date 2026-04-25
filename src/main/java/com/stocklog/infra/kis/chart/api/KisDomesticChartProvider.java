@@ -1,0 +1,153 @@
+package com.stocklog.infra.kis.chart.api;
+
+import com.stocklog.domain.stock.dto.request.ChartRequest;
+import com.stocklog.domain.stock.dto.response.StockChartResponse;
+import com.stocklog.domain.stock.dto.vo.price.StockChartData;
+import com.stocklog.domain.stock.provider.StockChartProvider;
+import com.stocklog.domain.stock.type.MarketType;
+import com.stocklog.domain.stock.type.Period;
+import com.stocklog.infra.kis.chart.dto.KisDomesticChartOutput1;
+import com.stocklog.infra.kis.chart.dto.KisDomesticChartOutput2;
+import com.stocklog.infra.kis.common.KisResponseV2;
+import com.stocklog.infra.kis.config.KisProperties;
+import com.stocklog.infra.kis.config.client.KisTokenManager;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+
+@Component
+@RequiredArgsConstructor
+@Slf4j
+public class KisDomesticChartProvider implements StockChartProvider {
+
+    private final WebClient webClient;
+    private final KisProperties properties;
+    private final KisTokenManager tokenManager;
+
+    @Override
+    public StockChartResponse fetchInfo(ChartRequest request, Period period) {
+        log.info("KIS 국내 종목  fetchInfo Period: {}, Code: {}", period.name() ,request.code());
+        try {
+            List<KisDomesticChartOutput2> output = callApi(request, period);
+            if (output == null) return StockChartResponse.createFallback();
+
+            return StockChartResponse.builder()
+                    .code(request.code())
+                    .chartDataList(convertChart(output, period))
+                    .build();
+        } catch (Exception e) {
+            log.error("국내 종목 차트 정보 조회 중 오류: {}", e.getMessage());
+            return StockChartResponse.createFallback();
+        }
+    }
+
+    @Override
+    public boolean supports(MarketType marketType) {
+        return marketType.isDomestic();
+    }
+
+    private List<KisDomesticChartOutput2> callApi(ChartRequest request, Period period) {
+        Date date = new Date(period);
+
+        KisResponseV2<KisDomesticChartOutput1, KisDomesticChartOutput2> response = webClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice")
+                        .queryParam("FID_COND_MRKT_DIV_CODE", "J")  // ← 파라미터명도 수정
+                        .queryParam("FID_INPUT_ISCD", request.code())
+                        .queryParam("FID_INPUT_DATE_1", date.startDate)
+                        .queryParam("FID_INPUT_DATE_2", date.endDate)
+                        .queryParam("FID_PERIOD_DIV_CODE", convertPeriod(period))
+                        .queryParam("FID_ORG_ADJ_PRC", "1")
+                        .build())
+                .headers(h -> {
+                    h.add("content-type", "application/json; charset=utf-8");
+                    h.add("authorization", "Bearer " + tokenManager.getAccessToken());
+                    h.add("appkey", properties.appKey());
+                    h.add("appsecret", properties.appSecret());
+                    h.add("tr_id", "FHKST03010100");
+                    h.add("custtype", "P");
+                })
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<KisResponseV2<KisDomesticChartOutput1, KisDomesticChartOutput2>>() {})
+                .block();
+
+        // 디버그용 로그 (확인 후 제거 가능)
+        if (response != null) {
+            log.info("차트 응답코드: {}, output2 건수: {}",
+                    response.getReturnCode(),
+                    response.getOutput2() != null ? response.getOutput2().size() : "null");
+
+        }
+        if (response != null) {
+            KisDomesticChartOutput2 output2 =  response.getOutput2().get(0);
+            log.info("time: {}, open: {}, value: {}, high:{}, low:{}, volume{}", output2.getTime(), output2.getOpen(), output2.getValue(), output2.getHigh(), output2.getLow(), output2.getVolume());
+        }
+        return (response != null && "0".equals(response.getReturnCode())) ? response.getOutput2() : null;
+    }
+
+    private List<StockChartData> convertChart(List<KisDomesticChartOutput2> list, Period period) {
+        List<StockChartData> result = new ArrayList<>();
+
+        for (KisDomesticChartOutput2 data : list) {
+            if (data.getTime()  == null || data.getTime().isBlank())  continue;
+            if (data.getValue() == null || data.getValue().isBlank()) continue;
+
+            result.add(StockChartData.builder()
+                    .time(StockChartData.formatDate(data.getTime()))
+                    .value(new BigDecimal(data.getValue()))
+                    .timeFrame(period)
+                    .open(parseSafe(data.getOpen()))
+                    .high(parseSafe(data.getHigh()))
+                    .low(parseSafe(data.getLow()))
+                    .volume(parseSafe(data.getVolume()))
+                    .build());
+        }
+        return result;
+    }
+
+    private String convertPeriod(Period period) {
+        return switch (period) {
+            case DAY -> "D";
+            case WEEK -> "W";
+            case MONTH -> "M";
+        };
+    }
+
+    private class Date {
+        String startDate;
+        String endDate;
+
+        public Date(String startDate, String endDate) {
+            this.startDate = startDate;
+            this.endDate = endDate;
+        }
+
+        public Date(Period period) {
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
+            this.endDate = LocalDate.now().format(fmt);
+            this.startDate = switch (period) {
+                case DAY -> LocalDate.now().minusDays(100).format(fmt);
+                case WEEK -> LocalDate.now().minusWeeks(100).format(fmt);
+                case MONTH -> LocalDate.now().minusMonths(100).format(fmt);
+            };
+        }
+    }
+
+    private BigDecimal parseSafe(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            return new BigDecimal(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+
+}
