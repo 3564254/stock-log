@@ -48,6 +48,9 @@ finnhub:
 fred:
   api:
     key: {FRED_API_KEY}
+alpha:
+  api:
+    key: {ALPHA_API_KEY}
 
 server:
   servlet:

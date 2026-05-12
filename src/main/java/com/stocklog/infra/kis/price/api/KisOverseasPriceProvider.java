@@ -1,9 +1,9 @@
 package com.stocklog.infra.kis.price.api;
 
-import com.stocklog.domain.stock.dto.request.StockRequest;
-import com.stocklog.domain.stock.dto.vo.price.StockPriceDetail;
-import com.stocklog.domain.stock.provider.StockPriceProvider;
-import com.stocklog.domain.stock.type.MarketType;
+import com.stocklog.domain.stock.common.StockRequest;
+import com.stocklog.domain.stock.price.dto.response.StockPriceResponse;
+import com.stocklog.domain.stock.price.StockPriceProvider;
+import com.stocklog.domain.stock.common.type.MarketType;
 import com.stocklog.infra.kis.common.KisResponseV1;
 import com.stocklog.infra.kis.config.KisProperties;
 import com.stocklog.infra.kis.config.client.KisTokenManager;
@@ -27,27 +27,28 @@ public class KisOverseasPriceProvider implements StockPriceProvider {
     private final KisTokenManager tokenManager;
 
     @Override
-    public StockPriceDetail fetchPrice(StockRequest request) {
+    public StockPriceResponse fetchPrice(StockRequest request) {
         KisOverseasPriceOutput output =callApi(request);
-        if (output == null) return StockPriceDetail.createFallback();
+        if (output == null) return StockPriceResponse.createFallback();
 
-        BigDecimal current = safeBigDecimal(output.getCurrentPrice());
-        BigDecimal base = safeBigDecimal(output.getBasePrice());
+        BigDecimal currentPrice = safeParse(output.getCurrentPrice());
+        BigDecimal basePrice = safeParse(output.getBasePrice());
 
-        return StockPriceDetail.builder()
-                .currentPrice(safeBigDecimal(output.getCurrentPrice()))
-                .changePrice(calculateChangePrice(current,base))
-                .changeRate(calculateChangeRate(current,base))
-                .basePrice(safeBigDecimal(output.getBasePrice()))
-                .per(safeBigDecimal(output.getPer()))
-                .pbr(safeBigDecimal(output.getPbr()))
-                .eps(safeBigDecimal(output.getEps()))
-                .bps(safeBigDecimal(output.getBps()))
-                .marketCap(safeBigDecimal(output.getMarketCap()))
-                .volume(safeBigDecimal(output.getVolume()))
-                .w52High(safeBigDecimal(output.getW52High()))
-                .w52Low(safeBigDecimal(output.getW52Low()))
+        return StockPriceResponse.builder()
+                .currentPrice(currentPrice)
+                .changePrice(calculateChangePrice(currentPrice, basePrice))
+                .changeRate(calculateChangeRate(currentPrice, basePrice))
+                .basePrice(basePrice)
+                .per(safeParse(output.getPer()))
+                .pbr(safeParse(output.getPbr()))
+                .eps(safeParse(output.getEps()))
+                .bps(safeParse(output.getBps()))
+                .marketCap(safeParse(output.getMarketCap()))
+                .w52High(safeParse(output.getW52High()))
+                .w52Low(safeParse(output.getW52Low()))
+                .volume(safeParse(output.getVolume()))
                 .build();
+
     }
 
     @Override

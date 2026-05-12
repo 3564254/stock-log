@@ -2,7 +2,7 @@ package com.stocklog.web.api;
 
 import com.stocklog.domain.marketdata.exchange.dto.ExchangeRateInfo;
 import com.stocklog.domain.marketdata.exchange.service.ExchangeService;
-import com.stocklog.domain.marketdata.index.dto.IndexResponse;
+import com.stocklog.domain.marketdata.index.dto.IndexDto;
 import com.stocklog.domain.marketdata.index.service.IndexService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ public class MarketDataApiController {
     }
 
     @GetMapping("/{seriesId}/index")
-    public IndexResponse getIndexResponse(@PathVariable String seriesId) {
+    public IndexDto getIndexResponse(@PathVariable String seriesId) {
         return indexService.getIndexResponse(seriesId);
     }
 }

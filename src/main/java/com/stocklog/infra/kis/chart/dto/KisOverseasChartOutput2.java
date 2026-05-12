@@ -12,7 +12,7 @@ public class KisOverseasChartOutput2 {
     @JsonProperty("open")
     private String open;
     @JsonProperty("clos")
-    private String value;
+    private String close;
     @JsonProperty("high")
     private String high;
     @JsonProperty("low")

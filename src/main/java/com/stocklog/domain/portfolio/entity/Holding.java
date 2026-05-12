@@ -2,14 +2,15 @@ package com.stocklog.domain.portfolio.entity;
 
 
 import com.stocklog.domain.member.entity.Member;
-import com.stocklog.domain.stock.entity.Stock;
-import com.stocklog.domain.stock.type.Currency;
+import com.stocklog.domain.stock.common.type.Currency;
+import com.stocklog.domain.stock.info.StockInfo;
 import com.stocklog.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import com.stocklog.global.util.FinancialConst;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -30,7 +31,7 @@ public class Holding extends BaseTimeEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "stock_code", nullable = false)
-    private Stock stock;
+    private StockInfo stock;
 
     private BigDecimal quantity;
     private BigDecimal purchasePrice;         // 현지 통화 기준 매수 단가
@@ -40,7 +41,7 @@ public class Holding extends BaseTimeEntity {
     private Currency currency;
 
     @Builder
-    public Holding(Member member, Stock stock, BigDecimal quantity, BigDecimal purchasePrice, BigDecimal purchaseExchangeRate, Currency currency) {
+    public Holding(Member member, StockInfo stock, BigDecimal quantity, BigDecimal purchasePrice, BigDecimal purchaseExchangeRate, Currency currency) {
         this.member = member;
         this.stock = stock;
         this.quantity = quantity;

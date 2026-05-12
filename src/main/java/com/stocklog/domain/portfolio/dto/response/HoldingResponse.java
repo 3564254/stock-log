@@ -1,8 +1,9 @@
 package com.stocklog.domain.portfolio.dto.response;
 
 import com.stocklog.domain.portfolio.entity.Holding;
-import com.stocklog.domain.stock.type.Currency;
+import com.stocklog.domain.stock.common.type.Currency;
 import lombok.Builder;
+import com.stocklog.global.util.FinancialConst;
 
 import java.math.BigDecimal;
 
@@ -46,8 +47,8 @@ public record HoldingResponse(
                 .sector("")
                 .quantity(BigDecimal.ZERO)
                 .currency(Currency.UNKNOWN)
-                .purchaseExchangeRate(BigDecimal.ONE)
-                .currentExchangeRate(BigDecimal.ONE)
+                .purchaseExchangeRate(BigDecimal.ZERO)
+                .currentExchangeRate(BigDecimal.ZERO)
                 .currentPrice(BigDecimal.ZERO)
                 .purchasePrice(BigDecimal.ZERO)
                 .profit(BigDecimal.ZERO)

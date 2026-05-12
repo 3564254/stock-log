@@ -3,6 +3,7 @@ package com.stocklog.web.controller;
 import com.stocklog.domain.marketdata.exchange.service.ExchangeService;
 import com.stocklog.domain.member.dto.response.MemberResponse;
 import com.stocklog.domain.portfolio.dto.response.PortfolioResponse;
+import com.stocklog.domain.marketdata.universe.service.UniverseService;
 import com.stocklog.global.annotation.LoginUser;
 import com.stocklog.domain.portfolio.service.PortfolioService;
 import com.stocklog.domain.portfolio.dto.request.AddPortfolioStockRequest;
@@ -19,6 +20,7 @@ public class MainController {
 
     private final PortfolioService portfolioService;
     private final ExchangeService exchangeService;
+    private final UniverseService universeService;
 
     @GetMapping({"/", "/main"})
     public String mainPage(@LoginUser MemberResponse loginMember,
@@ -35,4 +37,6 @@ public class MainController {
         model.addAttribute("exchangeRate", exchangeService.fetchExchangeRate());
         return "main/main";
     }
+
+
 }

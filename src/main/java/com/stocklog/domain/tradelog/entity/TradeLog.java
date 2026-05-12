@@ -1,7 +1,7 @@
 package com.stocklog.domain.tradelog.entity;
 
 import com.stocklog.domain.member.entity.Member;
-import com.stocklog.domain.stock.entity.Stock;
+import com.stocklog.domain.stock.info.StockInfo;
 import com.stocklog.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -22,7 +22,7 @@ public class TradeLog extends BaseTimeEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "stock_code", nullable = false)
-    private Stock stock;
+    private StockInfo stock;
 
     private LocalDate tradeDate;
     private BigDecimal quantity;
@@ -30,7 +30,7 @@ public class TradeLog extends BaseTimeEntity {
     private BigDecimal profit;
 
     @Builder
-    public TradeLog(Member member, Stock stock, LocalDate tradeDate,
+    public TradeLog(Member member, StockInfo stock, LocalDate tradeDate,
                     BigDecimal quantity, BigDecimal profit) {
         this.member = member;
         this.stock = stock;

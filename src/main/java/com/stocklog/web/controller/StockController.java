@@ -4,9 +4,11 @@
 package com.stocklog.web.controller;
 
 import com.stocklog.domain.member.dto.response.MemberResponse;
+import com.stocklog.domain.stock.analysis.StockAnalysisService;
 import com.stocklog.domain.stock.analysis.result.StockAnalysisResult;
 import com.stocklog.domain.stock.analysis.result.SignalDescription;
-import com.stocklog.domain.stock.service.StockAnalysisService;
+import com.stocklog.domain.application.StockFacadeService;
+import com.stocklog.domain.application.dto.stock.StockSnapshot;
 import com.stocklog.global.annotation.LoginUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -24,6 +27,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/stock")
 public class StockController {
 
+    private final StockFacadeService stockFacadeService;
     private final StockAnalysisService stockAnalysisService;
 
     @GetMapping("/analysis")
@@ -32,7 +36,9 @@ public class StockController {
                                Model model) {
         if (loginMember == null) return "redirect:/auth/login";
 
-        StockAnalysisResult analysisResult = stockAnalysisService.analyze(code);
+        StockSnapshot stockSnapShot = stockFacadeService.getStockSnapShot(code);
+
+        StockAnalysisResult analysisResult = stockAnalysisService.getAnalysisResult(stockSnapShot);
 
         Map<String, String> signalDescMap = analysisResult.getSignals().stream()
                 .collect(Collectors.toMap(
@@ -42,11 +48,32 @@ public class StockController {
                         LinkedHashMap::new
                 ));
 
+        double valuationPercent = (analysisResult.getValuation().getScore() / 40.0) * 100;
+        double momentumPercent = (analysisResult.getMomentum().getScore() / 30.0) * 100;
+        double technicalPercent = (analysisResult.getTechnical().getScore() / 30.0) * 100;
+        double ringOffset = 502.7 - (analysisResult.getScore() / 100.0 * 502.7);
+
+
+        model.addAttribute("revenueGrowthPositive",
+                stockSnapShot.financial() != null &&
+                        stockSnapShot.financial().revenueGrowth() != null &&
+                        stockSnapShot.financial().revenueGrowth().compareTo(BigDecimal.ZERO) >= 0);
+
+        model.addAttribute("epsGrowthPositive",
+                stockSnapShot.financial() != null &&
+                        stockSnapShot.financial().epsGrowth() != null &&
+                        stockSnapShot.financial().epsGrowth().compareTo(BigDecimal.ZERO) >= 0);
+
+        model.addAttribute("stockCode", code);
+        model.addAttribute("valuationPercent", valuationPercent);
+        model.addAttribute("momentumPercent", momentumPercent);
+        model.addAttribute("technicalPercent", technicalPercent);
+        model.addAttribute("ringOffset", ringOffset);
 
         model.addAttribute("isEtf", analysisResult.isEtf());
         model.addAttribute("loginMember", loginMember);
         model.addAttribute("analysis", analysisResult);
-        model.addAttribute("finData", analysisResult.getFinancials());
+        model.addAttribute("stockSnapShot", stockSnapShot);
         model.addAttribute("signalDescMap", signalDescMap);
         model.addAttribute("gradeColor", gradeColor(analysisResult.getGrade()));
         model.addAttribute("insightMessage", insightMessage(analysisResult.getGrade()));

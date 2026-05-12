@@ -6,35 +6,22 @@
     <title>StockLog - 대시보드</title>
 
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        /* 1. 기본 테마 및 레이아웃 설정 */
         :root { --toss-blue: #3182f6; --toss-red: #f04452; --toss-gray-bg: #f2f4f6; --sidebar-width: 250px; }
-
-        /* 폰트 적용 */
         body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: #191f28; }
-
         [x-cloak] { display: none !important; }
         .layout-wrapper { display: flex; min-height: 100vh; }
         .main-content { flex-grow: 1; margin-left: var(--sidebar-width); padding: 0 60px 60px 60px; transition: 0.3s; }
         .main-content.expanded { margin-left: 80px; }
         .content-container { width: 100%; max-width: 1400px; margin: 0 auto; }
-
-        /* 2. 카드 및 UI 컴포넌트 */
         .toss-card { background: white; border-radius: 28px; padding: 36px; box-shadow: 0 4px 24px rgba(0,0,0,0.03); margin-bottom: 30px; border: none; position: relative; }
-
-        /* Input 포커스 효과 추가 */
         .toss-input { width: 100%; border: none; background: #f2f4f6; border-radius: 16px; padding: 18px; outline: none; margin-bottom: 20px; transition: 0.2s; }
         .toss-input:focus { outline: 2px solid var(--toss-blue); background: white; }
-
-        /* 모달 공통 */
         .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(6px); }
         .modal-sheet { background: white; width: 100%; max-width: 540px; border-radius: 32px; padding: 40px; }
-
-        /* 3. 회사 정보(종목 상세) 전용 스타일 */
         .stock-detail-sheet { background: white; width: 100%; max-width: 760px; border-radius: 32px; overflow: hidden; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
         @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
         .detail-header { padding: 36px 40px 28px; border-bottom: 1px solid #f2f4f6; position: sticky; top: 0; background: white; z-index: 10; }
@@ -46,42 +33,21 @@
         .info-grid { background: white; border-radius: 16px; overflow: hidden; border: 1px solid #f2f4f6; }
         .info-row { display: flex; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid #f2f4f6; }
         .info-row:last-child { border-bottom: none; }
-
         .spinner-container { display: flex; justify-content: center; padding: 20px; width: 100%; }
         .text-up { color: var(--toss-red) !important; }
         .text-down { color: var(--toss-blue) !important; }
-
-        /* 수익/손실 배지 및 호버 디자인 추가 */
         .badge-profit { background-color: rgba(240, 68, 82, 0.1); color: var(--toss-red); padding: 4px 10px; border-radius: 8px; }
         .badge-loss { background-color: rgba(49, 130, 246, 0.1); color: var(--toss-blue); padding: 4px 10px; border-radius: 8px; }
-
         .stock-row-clickable { cursor: pointer; transition: background 0.2s; }
         .stock-row-clickable:hover { background-color: var(--toss-gray-bg) !important; }
-
         .search-item { transition: background-color 0.2s ease; cursor: pointer; }
         .search-item:hover { background-color: var(--toss-gray-bg); }
-
-        .inset-0 { top: 0; left: 0; right: 0; bottom: 0; }
-
-        .btn-add {
-            background: none;
-            border: none;
-            color: var(--toss-blue);
-            font-weight: 700;
-            font-size: 0.9rem;
-            padding: 8px 16px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
+        .btn-add { background: none; border: none; color: var(--toss-blue); font-weight: 700; font-size: 0.9rem; padding: 8px 16px; cursor: pointer; transition: 0.2s; }
         .btn-add:hover { background: rgba(49, 130, 246, 0.1); border-radius: 8px; }
-
-        /* 스크롤바 스타일링 */
         .stock-detail-sheet::-webkit-scrollbar { width: 4px; }
         .stock-detail-sheet::-webkit-scrollbar-track { background: transparent; }
         .stock-detail-sheet::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
         .stock-detail-sheet::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
-
-        /* 랜딩 페이지 카드 호버 효과 */
         .hover-up { transition: transform 0.2s ease, box-shadow 0.2s ease; }
         .hover-up:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(0,0,0,0.06); }
     </style>
@@ -96,117 +62,59 @@
 
         <div class="content-container">
 
+            <!-- 1. 상단 글로벌 검색 -->
             <div th:if="${loginMember != null}" class="position-relative mb-4" @click.outside="isGlobalSearchOpen = false">
                 <div class="d-flex align-items-center bg-white rounded-pill px-4 py-3 shadow-sm border"
                      style="transition: 0.2s;"
                      :style="isGlobalSearchOpen ? 'border-color: var(--toss-blue) !important; box-shadow: 0 0 0 3px rgba(49,130,246,0.1) !important;' : 'border-color: #f2f4f6 !important;'">
                     <i class="bi bi-search text-secondary fs-5 me-3"></i>
-                    <input type="text"
-                           class="border-0 bg-transparent w-100 fs-6 fw-bold text-dark"
-                           style="outline: none;"
-                           placeholder="어떤 종목을 찾으시나요?"
-                           x-model="globalSearchQuery"
-                           @input.debounce.500ms="globalSearchNew()"
-                           @focus="isGlobalSearchOpen = true">
+                    <input type="text" class="border-0 bg-transparent w-100 fs-6 fw-bold text-dark" style="outline: none;"
+                           placeholder="어떤 종목을 찾으시나요?" x-model="globalSearchQuery"
+                           @input.debounce.500ms="globalSearchNew()" @focus="isGlobalSearchOpen = true">
                 </div>
 
-                <div x-show="isGlobalSearchOpen && globalSearchQuery.length > 0"
-                     class="position-absolute w-100 bg-white shadow-lg rounded-4 mt-2 p-3 border"
-                     style="z-index: 1050; max-height: 400px; overflow-y: auto; border-color: #f2f4f6 !important;"
-                     x-cloak x-transition.opacity.duration.200ms>
+                <div x-show="isGlobalSearchOpen && globalSearchQuery.length > 0" class="position-absolute w-100 bg-white shadow-lg rounded-4 mt-2 p-3 border" style="z-index: 1050; max-height: 400px; overflow-y: auto; border-color: #f2f4f6 !important;" x-cloak x-transition.opacity.duration.200ms>
+                    <div x-show="isGlobalLoading" class="text-center p-4"><div class="spinner-border text-primary" style="width: 1.5rem; height: 1.5rem;"></div></div>
 
-                    <div x-show="isGlobalLoading" class="text-center p-4">
-                        <div class="spinner-border text-primary" style="width: 1.5rem; height: 1.5rem;"></div>
-                    </div>
-
-                    <template x-for="item in globalSearchResults" :key="item.stock.code">
-                        <div @click="openStockDetailFromSearch(item)"
-                             class="search-item p-3 mb-1 d-flex justify-content-between align-items-center rounded-4"
-                             style="cursor: pointer;">
+                    <!-- ✨ 변경: StockDashBoard 구조에 맞게 item.stock 및 Flat Price 변수로 매핑 -->
+                    <template x-for="item in globalSearchResults" :key="item.stock?.code">
+                        <div @click="openStockDetailFromSearch(item)" class="search-item p-3 mb-1 d-flex justify-content-between align-items-center rounded-4" style="cursor: pointer;">
                             <div>
-                                <div class="fw-bold fs-5 text-dark" x-text="item.stock.name"></div>
-                                <div class="text-secondary small fw-bold" x-text="item.stock.code"></div>
+                                <div class="fw-bold fs-5 text-dark" x-text="item.stock?.name"></div>
+                                <div class="text-secondary small fw-bold" x-text="item.stock?.code"></div>
                             </div>
                             <div class="text-end">
-                                <div class="fw-bold fs-6 text-dark"
-                                     x-text="formatCurrency(item.price?.currentPrice, item.stock.currency)">
-                                </div>
-                                <div class="small fw-bold"
-                                     :class="item.price?.changeRate > 0 ? 'text-up' : (item.price?.changeRate < 0 ? 'text-down' : 'text-secondary')"
-                                     x-text="(item.price?.changeRate > 0 ? '+' : '') + (item.price?.changeRate || 0) + '%'">
-                                </div>
+                                <div class="fw-bold fs-6 text-dark" x-text="formatCurrency(item.currentPrice, item.stock?.currency)"></div>
+                                <div class="small fw-bold" :class="item.changeRate > 0 ? 'text-up' : (item.changeRate < 0 ? 'text-down' : 'text-secondary')"
+                                     x-text="(item.changeRate > 0 ? '+' : '') + (item.changeRate || 0) + '%'"></div>
                             </div>
                         </div>
                     </template>
-
-                    <div x-show="globalSearchHasMore && !isGlobalLoading && globalSearchResults.length > 0" class="text-center mt-2 mb-2">
-                        <button @click.stop="fetchGlobalStocks(false)" class="btn btn-link text-decoration-none fw-bold text-secondary small">검색 결과 더 보기</button>
-                    </div>
-
-                    <div x-show="!isGlobalLoading && globalSearchResults.length === 0 && globalSearchQuery.length > 0"
-                         class="p-4 text-center text-secondary fw-bold">
-                        검색 결과가 없습니다.
-                    </div>
+                    <div x-show="globalSearchHasMore && !isGlobalLoading && globalSearchResults.length > 0" class="text-center mt-2 mb-2"><button @click.stop="fetchGlobalStocks(false)" class="btn btn-link text-decoration-none fw-bold text-secondary small">검색 결과 더 보기</button></div>
+                    <div x-show="!isGlobalLoading && globalSearchResults.length === 0 && globalSearchQuery.length > 0" class="p-4 text-center text-secondary fw-bold">검색 결과가 없습니다.</div>
                 </div>
             </div>
+
             <div th:if="${loginMember == null}" class="mt-2">
-
-                <div class="toss-card text-center position-relative overflow-hidden mb-4"
-                     style="min-height: 420px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);">
-
+                <!-- 랜딩 페이지 (로그인 안함) -->
+                <div class="toss-card text-center position-relative overflow-hidden mb-4" style="min-height: 420px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);">
                     <div class="position-absolute rounded-circle" style="width: 400px; height: 400px; background: rgba(49, 130, 246, 0.03); top: -100px; right: -100px;"></div>
                     <div class="position-absolute rounded-circle" style="width: 300px; height: 300px; background: rgba(49, 130, 246, 0.02); bottom: -50px; left: -100px;"></div>
-
                     <div class="position-relative z-1">
-                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4 shadow-sm"
-                             style="width: 88px; height: 88px; background: white;">
-                            <i class="bi bi-graph-up-arrow" style="font-size: 2.5rem; color: var(--toss-blue);"></i>
-                        </div>
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4 shadow-sm" style="width: 88px; height: 88px; background: white;"><i class="bi bi-graph-up-arrow" style="font-size: 2.5rem; color: var(--toss-blue);"></i></div>
                         <h1 class="fw-bold mb-3 text-dark display-6" style="letter-spacing: -1px;">나만의 주식 포트폴리오,<br>한눈에 똑똑하게 관리하세요</h1>
-                        <p class="text-secondary mb-5 fw-bold" style="font-size: 1.1rem; line-height: 1.6;">
-                            실시간 주가 확인부터 수익률 분석, 친구와의 투자 기록 공유까지.<br>StockLog에서 스마트한 투자를 시작해보세요.
-                        </p>
-                        <a th:href="@{/auth/login}" class="btn btn-primary rounded-pill px-5 py-3 fw-bold shadow-sm border-0 hover-up"
-                           style="background: var(--toss-blue); font-size: 1.1rem;">
-                            3초 만에 시작하기
-                        </a>
+                        <p class="text-secondary mb-5 fw-bold" style="font-size: 1.1rem; line-height: 1.6;">실시간 주가 확인부터 수익률 분석, 친구와의 투자 기록 공유까지.<br>StockLog에서 스마트한 투자를 시작해보세요.</p>
+                        <a th:href="@{/auth/login}" class="btn btn-primary rounded-pill px-5 py-3 fw-bold shadow-sm border-0 hover-up" style="background: var(--toss-blue); font-size: 1.1rem;">3초 만에 시작하기</a>
                     </div>
                 </div>
-
                 <div class="row g-4">
-                    <div class="col-md-4">
-                        <div class="toss-card h-100 p-4 text-start hover-up mb-0">
-                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4"
-                                 style="width: 56px; height: 56px; background: rgba(49, 130, 246, 0.1); color: var(--toss-blue);">
-                                <i class="bi bi-pie-chart-fill fs-4"></i>
-                            </div>
-                            <h4 class="fw-bold fs-5 mb-2 text-dark">직관적인 자산 분석</h4>
-                            <p class="text-secondary small fw-bold m-0" style="line-height: 1.5;">흩어진 내 주식을 한곳에 모아<br>총 자산과 실시간 수익률을 쉽게 확인하세요.</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="toss-card h-100 p-4 text-start hover-up mb-0">
-                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4"
-                                 style="width: 56px; height: 56px; background: rgba(240, 68, 82, 0.1); color: var(--toss-red);">
-                                <i class="bi bi-people-fill fs-4"></i>
-                            </div>
-                            <h4 class="fw-bold fs-5 mb-2 text-dark">투자 친구와 함께</h4>
-                            <p class="text-secondary small fw-bold m-0" style="line-height: 1.5;">친구를 추가하고 서로의 포트폴리오를<br>참고하며 성공적인 투자를 계획하세요.</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="toss-card h-100 p-4 text-start hover-up mb-0">
-                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4"
-                                 style="width: 56px; height: 56px; background: rgba(139, 149, 161, 0.1); color: #4e5968;">
-                                <i class="bi bi-newspaper fs-4"></i>
-                            </div>
-                            <h4 class="fw-bold fs-5 mb-2 text-dark">실시간 시황·뉴스</h4>
-                            <p class="text-secondary small fw-bold m-0" style="line-height: 1.5;">주요 증시 지표와 최신 금융 뉴스를<br>앱 이동 없이 발 빠르게 확인할 수 있습니다.</p>
-                        </div>
-                    </div>
+                    <div class="col-md-4"><div class="toss-card h-100 p-4 text-start hover-up mb-0"><div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 56px; height: 56px; background: rgba(49, 130, 246, 0.1); color: var(--toss-blue);"><i class="bi bi-pie-chart-fill fs-4"></i></div><h4 class="fw-bold fs-5 mb-2 text-dark">직관적인 자산 분석</h4><p class="text-secondary small fw-bold m-0" style="line-height: 1.5;">흩어진 내 주식을 한곳에 모아<br>총 자산과 실시간 수익률을 쉽게 확인하세요.</p></div></div>
+                    <div class="col-md-4"><div class="toss-card h-100 p-4 text-start hover-up mb-0"><div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 56px; height: 56px; background: rgba(240, 68, 82, 0.1); color: var(--toss-red);"><i class="bi bi-people-fill fs-4"></i></div><h4 class="fw-bold fs-5 mb-2 text-dark">투자 친구와 함께</h4><p class="text-secondary small fw-bold m-0" style="line-height: 1.5;">친구를 추가하고 서로의 포트폴리오를<br>참고하며 성공적인 투자를 계획하세요.</p></div></div>
+                    <div class="col-md-4"><div class="toss-card h-100 p-4 text-start hover-up mb-0"><div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 56px; height: 56px; background: rgba(139, 149, 161, 0.1); color: #4e5968;"><i class="bi bi-newspaper fs-4"></i></div><h4 class="fw-bold fs-5 mb-2 text-dark">실시간 시황·뉴스</h4><p class="text-secondary small fw-bold m-0" style="line-height: 1.5;">주요 증시 지표와 최신 금융 뉴스를<br>앱 이동 없이 발 빠르게 확인할 수 있습니다.</p></div></div>
                 </div>
             </div>
 
+            <!-- 보유 현황 및 리스트 -->
             <div th:if="${loginMember != null}">
                 <div class="row g-4 mb-4">
                     <div class="col-lg-8">
@@ -216,14 +124,12 @@
                             <div class="d-flex gap-5">
                                 <div>
                                     <div class="text-secondary small fw-bold mb-1">총 수익</div>
-                                    <div class="fw-bold fs-3" th:classappend="${portfolio.totalProfit >= 0 ? 'text-up' : 'text-down'}"
-                                         th:text="${(portfolio.totalProfit >= 0 ? '+' : '') + #numbers.formatDecimal(portfolio.totalProfit, 0, 'COMMA', 0, 'POINT')} + '원'"></div>
+                                    <div class="fw-bold fs-3" th:classappend="${portfolio.totalProfit >= 0 ? 'text-up' : 'text-down'}" th:text="${(portfolio.totalProfit >= 0 ? '+' : '') + #numbers.formatDecimal(portfolio.totalProfit, 0, 'COMMA', 0, 'POINT')} + '원'"></div>
                                 </div>
                                 <div class="vr opacity-10"></div>
                                 <div>
                                     <div class="text-secondary small fw-bold mb-1">수익률</div>
-                                    <div class="fw-bold fs-3" th:classappend="${portfolio.totalReturnRate >= 0 ? 'text-up' : 'text-down'}"
-                                         th:text="${(portfolio.totalReturnRate >= 0 ? '+' : '') + portfolio.totalReturnRate + '%'}"></div>
+                                    <div class="fw-bold fs-3" th:classappend="${portfolio.totalReturnRate >= 0 ? 'text-up' : 'text-down'}" th:text="${(portfolio.totalReturnRate >= 0 ? '+' : '') + portfolio.totalReturnRate + '%'}"></div>
                                 </div>
                             </div>
                         </section>
@@ -248,36 +154,23 @@
                         </div>
                     </div>
 
-                    <div th:each="stock : ${portfolio.myStocks}"
-                         class="d-flex align-items-center p-4 mb-3 bg-light bg-opacity-50 rounded-4 transition-all stock-row-clickable"
-                         th:attr="data-code=${stock.stockCode}, data-name=${stock.korName}, data-qty=${stock.quantity.toPlainString()}, data-price=${stock.purchasePrice.toPlainString()}, data-curr-price=${stock.currentPrice}, data-currency=${stock.currency}, data-profit-rate=${stock.profitRate}, data-profit=${stock.profit}"
-                         @click="openStockDetail($el)">
-
+                    <div th:each="stock : ${portfolio.myStocks}" class="d-flex align-items-center p-4 mb-3 bg-light bg-opacity-50 rounded-4 transition-all stock-row-clickable" th:attr="data-code=${stock.stockCode}, data-name=${stock.korName}, data-qty=${stock.quantity.toPlainString()}, data-price=${stock.purchasePrice.toPlainString()}, data-curr-price=${stock.currentPrice}, data-currency=${stock.currency}, data-profit-rate=${stock.profitRate}, data-profit=${stock.profit}" @click="openStockDetail($el)">
                         <div class="flex-grow-1">
-                            <div class="fw-bold fs-5" th:text="${stock.korName}">애플</div>
+                            <div class="fw-bold fs-5" th:text="${stock.korName}"></div>
                             <div class="text-secondary small fw-bold mt-1">
-                                <span th:text="${#numbers.formatDecimal(stock.quantity, 0, 'COMMA', 0, 'POINT')} + '주'"></span>
-                                <span class="mx-1 text-opacity-25">|</span>
-                                <span>내 평균
-                                    <span th:text="${stock.currency.toString() == 'USD' ? '$' : ''} + ${#numbers.formatDecimal(stock.purchasePrice, 0, 'COMMA', (stock.currency.toString() == 'USD' ? 2 : 0), 'POINT')} + ${stock.currency.toString() == 'KRW' ? '원' : ''}"></span>
-                                </span>
+                                <span th:text="${#numbers.formatDecimal(stock.quantity, 0, 'COMMA', 0, 'POINT')} + '주'"></span><span class="mx-1 text-opacity-25">|</span>
+                                <span>내 평균 <span th:text="${stock.currency.toString() == 'USD' ? '$' : ''} + ${#numbers.formatDecimal(stock.purchasePrice, 0, 'COMMA', (stock.currency.toString() == 'USD' ? 2 : 0), 'POINT')} + ${stock.currency.toString() == 'KRW' ? '원' : ''}"></span></span>
                             </div>
                         </div>
-
                         <div class="text-end" style="min-width: 150px;">
-                            <div class="fw-bold fs-5 text-dark mb-1"
-                                 th:text="${#numbers.formatDecimal(stock.currentPrice * stock.quantity * stock.currentExchangeRate, 0, 'COMMA', 0, 'POINT')} + '원'">
-                            </div>
+                            <div class="fw-bold fs-5 text-dark mb-1" th:text="${#numbers.formatDecimal(stock.currentPrice * stock.quantity * stock.currentExchangeRate, 0, 'COMMA', 0, 'POINT')} + '원'"></div>
                             <div class="small fw-bold d-inline-block" th:classappend="${stock.profitRate >= 0 ? 'badge-profit' : 'badge-loss'}">
-                                <span th:text="${(stock.profitRate >= 0 ? '+' : '') + stock.profitRate + '%'}"></span>
-                                (<span th:text="${#numbers.formatDecimal(stock.profit, 0, 'COMMA', 0, 'POINT')} + '원'"></span>)
+                                <span th:text="${(stock.profitRate >= 0 ? '+' : '') + stock.profitRate + '%'}"></span> (<span th:text="${#numbers.formatDecimal(stock.profit, 0, 'COMMA', 0, 'POINT')} + '원'"></span>)
                             </div>
                         </div>
-
                         <div x-show="isManaging" x-cloak class="ms-3" @click.stop>
                             <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold"
-                                        @click="openEditModal($el.closest('.stock-row-clickable').dataset.code, $el.closest('.stock-row-clickable').dataset.name, $el.closest('.stock-row-clickable').dataset.qty, $el.closest('.stock-row-clickable').dataset.price, $el.closest('.stock-row-clickable').dataset.currPrice, $el.closest('.stock-row-clickable').dataset.currency)">수정</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold" @click="openEditModal($el.closest('.stock-row-clickable').dataset.code, $el.closest('.stock-row-clickable').dataset.name, $el.closest('.stock-row-clickable').dataset.qty, $el.closest('.stock-row-clickable').dataset.price, $el.closest('.stock-row-clickable').dataset.currPrice, $el.closest('.stock-row-clickable').dataset.currency)">수정</button>
                                 <form th:action="@{/portfolio/delete}" method="post" class="m-0" onsubmit="return confirm('이 종목을 삭제하시겠습니까?');">
                                     <input type="hidden" name="code" th:value="${stock.stockCode}">
                                     <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold">삭제</button>
@@ -285,16 +178,15 @@
                             </div>
                         </div>
                     </div>
-
                     <div th:if="${#lists.isEmpty(portfolio.myStocks)}" class="py-5 text-center" style="color: #b0b8c1;">
-                        <i class="bi bi-file-earmark-x" style="font-size: 3rem; margin-bottom: 1rem; display: block; opacity: 0.5;"></i>
-                        <div class="fw-bold">보유 중인 종목이 없습니다.</div>
+                        <i class="bi bi-file-earmark-x" style="font-size: 3rem; margin-bottom: 1rem; display: block; opacity: 0.5;"></i><div class="fw-bold">보유 중인 종목이 없습니다.</div>
                     </div>
                 </section>
             </div>
         </div>
     </main>
 
+    <!-- 2. 종목 추가 모달 (검색) -->
     <div x-show="showModal" class="modal-backdrop" x-cloak @click.self="closeModal()">
         <div class="modal-sheet" @click.stop>
             <div class="d-flex justify-content-between align-items-center mb-5">
@@ -306,14 +198,17 @@
                 <input type="text" x-model="searchQuery" @input.debounce.500ms="searchNew()" class="toss-input" placeholder="종목명 검색" autofocus>
                 <div x-show="isLoading" class="spinner-container" x-cloak><div class="spinner-border text-primary"></div></div>
                 <div class="mt-2" style="max-height: 45vh; overflow-y: auto;">
-                    <template x-for="item in searchResults" :key="item.stock.code">
+
+                    <!-- ✨ 변경: StockDashBoard 구조에 맞게 item.stock 및 Flat Price 변수로 매핑 -->
+                    <template x-for="item in searchResults" :key="item.stock?.code">
                         <div @click="selectStock(item)" class="search-item p-4 mb-2 d-flex justify-content-between align-items-center rounded-4">
-                            <div><div class="fw-bold fs-5 text-dark" x-text="item.stock.name"></div><div class="text-secondary small fw-bold" x-text="item.stock.code"></div></div>
+                            <div>
+                                <div class="fw-bold fs-5 text-dark" x-text="item.stock?.name"></div>
+                                <div class="text-secondary small fw-bold" x-text="item.stock?.code"></div>
+                            </div>
                             <div class="text-end">
-                                <div class="search-price fw-bold text-dark" x-text="formatCurrency(item.price.currentPrice, item.stock.currency)"></div>
-                                <div class="small fw-bold"
-                                     :class="item.price?.changeRate > 0 ? 'text-up' : (item.price?.changeRate < 0 ? 'text-down' : 'text-secondary')"
-                                     x-text="(item.price?.changeRate > 0 ? '+' : '') + (item.price?.changeRate || 0) + '%'"></div>
+                                <div class="search-price fw-bold text-dark" x-text="formatCurrency(item.currentPrice, item.stock?.currency)"></div>
+                                <div class="small fw-bold" :class="item.changeRate > 0 ? 'text-up' : (item.changeRate < 0 ? 'text-down' : 'text-secondary')" x-text="(item.changeRate > 0 ? '+' : '') + (item.changeRate || 0) + '%'"></div>
                             </div>
                         </div>
                     </template>
@@ -338,6 +233,7 @@
         </div>
     </div>
 
+    <!-- 상세정보 모달 -->
     <div x-show="showStockDetail" class="modal-backdrop" x-cloak @click.self="closeStockDetail()">
         <div class="stock-detail-sheet" @click.stop>
             <div x-show="detailLoading" class="p-5 text-center position-relative">
@@ -352,13 +248,8 @@
                         <div>
                             <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
                                 <h4 class="fw-bold m-0 fs-3" x-text="detailStock.name"></h4>
-                                <span class="badge rounded-pill px-3 py-2 fw-bold"
-                                      style="background:#edf2fb;color:#3182f6;font-size:0.75rem;"
-                                      x-text="detailStock.code"></span>
-                                <span x-show="detailStock.sector"
-                                      class="badge rounded-pill px-3 py-2 fw-bold"
-                                      style="background:#f2f4f6;color:#4e5968;font-size:0.75rem;"
-                                      x-text="detailStock.sector"></span>
+                                <span class="badge rounded-pill px-3 py-2 fw-bold" style="background:#edf2fb;color:#3182f6;font-size:0.75rem;" x-text="detailStock.code"></span>
+                                <span x-show="detailStock.sector" class="badge rounded-pill px-3 py-2 fw-bold" style="background:#f2f4f6;color:#4e5968;font-size:0.75rem;" x-text="detailStock.sector"></span>
                             </div>
                         </div>
                         <button @click="closeStockDetail()" class="btn-close shadow-none mt-1"></button>
@@ -378,9 +269,7 @@
                     <div class="mb-5">
                         <div class="section-label">주가 흐름</div>
                         <div style="width: 100%; height: 300px; position: relative; border-radius: 16px; border: 1px solid #f2f4f6;">
-                            <div x-show="chartLoading" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: white; z-index: 5; border-radius: 16px;">
-                                <div class="spinner-border text-primary spinner-border-sm"></div>
-                            </div>
+                            <div x-show="chartLoading" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: white; z-index: 5; border-radius: 16px;"><div class="spinner-border text-primary spinner-border-sm"></div></div>
                             <div id="tv-chart-container" style="width: 100%; height: 100%;"></div>
                         </div>
                     </div>
@@ -392,10 +281,7 @@
                                 <div class="info-row"><span>시가총액</span><span class="fw-bold" x-text="formatBigNum(detailPrice.marketCap, detailStock.currency)"></span></div>
                                 <div class="info-row"><span>52주 최고</span><span class="text-up fw-bold" x-text="formatCurrency(detailPrice.w52High, detailStock.currency)"></span></div>
                                 <div class="info-row"><span>52주 최저</span><span class="text-down fw-bold" x-text="formatCurrency(detailPrice.w52Low, detailStock.currency)"></span></div>
-                                <div class="info-row">
-                                    <span>거래량</span>
-                                    <span class="fw-bold" x-text="formatNumber(detailPrice.volume) + '주'"></span>
-                                </div>
+                                <div class="info-row"><span>거래량</span><span class="fw-bold" x-text="formatNumber(detailPrice.volume) + '주'"></span></div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -403,133 +289,76 @@
                             <div class="info-grid">
                                 <div class="info-row"><span>PER</span><span class="fw-bold" x-text="(detailPrice.per || '-') + '배'"></span></div>
                                 <div class="info-row"><span>PBR</span><span class="fw-bold" x-text="(detailPrice.pbr || '-') + '배'"></span></div>
-                                <div class="info-row">
-                                    <span>EPS</span>
-                                    <span class="fw-bold"
-                                          x-text="formatEps(detailPrice.eps, detailStock.currency)"></span>
-                                </div>
+                                <div class="info-row"><span>EPS</span><span class="fw-bold" x-text="formatEps(detailPrice.eps, detailStock.currency)"></span></div>
                             </div>
                         </div>
                     </div>
 
                     <div class="d-grid mt-2">
-                        <a :href="'/stock/analysis?code=' + detailStock.code"
-                           class="btn btn-primary rounded-pill py-3 fw-bold border-0 shadow-sm"
-                           style="background: var(--toss-blue); font-size: 1rem;">
-                            <i class="bi bi-bar-chart-line me-2"></i>세부 분석 보기
-                        </a>
+                        <a :href="'/stock/analysis?code=' + detailStock.code" class="btn btn-primary rounded-pill py-3 fw-bold border-0 shadow-sm" style="background: var(--toss-blue); font-size: 1rem;"><i class="bi bi-bar-chart-line me-2"></i>세부 분석 보기</a>
                     </div>
-
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
 <script th:inline="javascript">
     const _targetAssets = parseFloat([[${portfolio?.totalAssets?.toPlainString() ?: '0'}]]);
 
     document.addEventListener('alpine:init', () => {
         Alpine.data('dashboardApp', () => ({
-            sidebarOpen: true,
-            isManaging: false,
-            showModal: false,
-            isEditMode: false,
-            step: 1,
-
-            showStockDetail: false,
-            detailLoading: false,
-            detailStock: {},
-            detailPrice: {},
-            detailInfo: {},
-            chartLoading: false,
-            tvChart: null,
-            areaSeries: null,
-
-            // 글로벌 검색용 변수
-            globalSearchQuery: '',
-            globalSearchResults: [],
-            isGlobalSearchOpen: false,
-            isGlobalLoading: false,
-            globalSearchPage: 0,
-            globalSearchHasMore: true,
-            isFromGlobalSearch: false,
-
-            // 종목 추가 모달 검색용 변수
-            searchQuery: '',
-            searchResults: [],
-            isLoading: false,
-            page: 0,
-            hasMore: true,
+            sidebarOpen: true, isManaging: false, showModal: false, isEditMode: false, step: 1,
+            showStockDetail: false, detailLoading: false, detailStock: {}, detailPrice: {}, detailInfo: {},
+            chartLoading: false, tvChart: null, areaSeries: null,
+            globalSearchQuery: '', globalSearchResults: [], isGlobalSearchOpen: false, isGlobalLoading: false, globalSearchPage: 0, globalSearchHasMore: true, isFromGlobalSearch: false,
+            searchQuery: '', searchResults: [], isLoading: false, page: 0, hasMore: true,
             selectedStock: { name: '', code: '', nation: '', quantity: '', purchasePrice: '', purchaseExchangeRate: '1.0', currentPrice: 0, currency: '' },
-            totalAssets: 0,
-            targetAssets: _targetAssets,
+            totalAssets: 0, targetAssets: _targetAssets,
 
             init() {
                 let int = setInterval(() => {
-                    if (this.totalAssets < this.targetAssets) {
-                        this.totalAssets += Math.ceil(this.targetAssets / 50);
-                    } else {
-                        this.totalAssets = this.targetAssets;
-                        clearInterval(int);
-                    }
+                    if (this.totalAssets < this.targetAssets) this.totalAssets += Math.ceil(this.targetAssets / 50);
+                    else { this.totalAssets = this.targetAssets; clearInterval(int); }
                 }, 20);
             },
 
             globalSearchNew() {
-                this.globalSearchPage = 0;
-                this.globalSearchHasMore = true;
-                this.globalSearchResults = [];
-
-                if (this.globalSearchQuery.length < 1) {
-                    return;
-                }
+                this.globalSearchPage = 0; this.globalSearchHasMore = true; this.globalSearchResults = [];
+                if (this.globalSearchQuery.length < 1) return;
                 this.fetchGlobalStocks(true);
             },
 
             async fetchGlobalStocks(isNewSearch = false) {
-                this.isGlobalLoading = true;
-                this.isGlobalSearchOpen = true;
+                this.isGlobalLoading = true; this.isGlobalSearchOpen = true;
                 try {
                     const res = await fetch(`/api/stock/search?name=${encodeURIComponent(this.globalSearchQuery)}&page=${this.globalSearchPage}`);
                     if (res.ok) {
                         const data = await res.json();
-                        if (isNewSearch) {
-                            this.globalSearchResults = data;
-                        } else {
-                            this.globalSearchResults = [...this.globalSearchResults, ...data];
-                        }
-
-                        if (data.length < 5) {
-                            this.globalSearchHasMore = false;
-                        }
+                        if (isNewSearch) this.globalSearchResults = data;
+                        else this.globalSearchResults = [...this.globalSearchResults, ...data];
+                        if (data.length < 5) this.globalSearchHasMore = false;
                         this.globalSearchPage++;
+                    } else {
+                        console.error("서버에서 오류를 반환했습니다.");
                     }
-                } catch (error) {
-                    console.error("Global search failed:", error);
-                } finally {
-                    this.isGlobalLoading = false;
-                }
+                } catch (error) { console.error("Global search failed:", error); }
+                finally { this.isGlobalLoading = false; }
             },
 
             openStockDetailFromSearch(item) {
-                this.isGlobalSearchOpen = false;
-                this.isFromGlobalSearch = true; // 검색으로 접근함 (보유 현황 숨김 처리용)
-
+                this.isGlobalSearchOpen = false; this.isFromGlobalSearch = true;
+                // ✨ 안전하게 평탄화된 변수로 매핑
                 this.detailStock = {
-                    code: item.stock.code,
-                    name: item.stock.name,
-                    currentPrice: item.price ? item.price.currentPrice : 0,
-                    currency: item.stock.currency,
-                    sector: item.stock.sector || null,
-                    profitRate: 0,
-                    profit: 0,
-                    quantity: 0,
-                    purchasePrice: 0
+                    code: item.stock?.code,
+                    name: item.stock?.name,
+                    currentPrice: item.currentPrice || 0,
+                    currency: item.stock?.currency,
+                    sector: item.stock?.sector || null,
+                    profitRate: 0, profit: 0, quantity: 0, purchasePrice: 0
                 };
-
-                this.detailLoading = true;
-                this.showStockDetail = true;
+                this.detailLoading = true; this.showStockDetail = true;
                 this.fetchStockDetail(this.detailStock.code);
             },
 
@@ -548,34 +377,24 @@
 
             openStockDetail(el) {
                 if (this.isManaging) return;
-
-                this.isFromGlobalSearch = false; // 보유 포트폴리오에서 접근함 (보유 현황 보임)
-
-                this.detailStock = {
-                    code: el.dataset.code, name: el.dataset.name,
-                    currentPrice: parseFloat(el.dataset.currPrice), currency: el.dataset.currency,
-                    profitRate: parseFloat(el.dataset.profitRate), profit: parseFloat(el.dataset.profit),
-                    quantity: parseFloat(el.dataset.qty), purchasePrice: parseFloat(el.dataset.price)
-                };
-                this.detailLoading = true;
-                this.showStockDetail = true;
+                this.isFromGlobalSearch = false;
+                this.detailStock = { code: el.dataset.code, name: el.dataset.name, currentPrice: parseFloat(el.dataset.currPrice), currency: el.dataset.currency, profitRate: parseFloat(el.dataset.profitRate), profit: parseFloat(el.dataset.profit), quantity: parseFloat(el.dataset.qty), purchasePrice: parseFloat(el.dataset.price) };
+                this.detailLoading = true; this.showStockDetail = true;
                 this.fetchStockDetail(this.detailStock.code);
             },
 
             async fetchStockDetail(code) {
                 try {
+                    // detail 엔드포인트는 여전히 StockSnapshot (info 포함)을 반환하므로 info 유지
                     const res = await fetch(`/api/stock/${encodeURIComponent(code)}/detail`);
                     const data = await res.json();
                     this.detailInfo = data.info || {};
                     this.detailPrice = data.price || {};
-                    this.detailStock.sector = data.stock?.sector || null;
+                    this.detailStock.sector = data.info?.sector || null;
                 } catch (e) {
-                    console.error('상세 조회 실패:', e);
-                    this.detailInfo = {};
-                    this.detailPrice = {};
+                    this.detailInfo = {}; this.detailPrice = {};
                 } finally {
-                    this.detailLoading = false;
-                    await this.$nextTick();
+                    this.detailLoading = false; await this.$nextTick();
                     await new Promise(resolve => setTimeout(resolve, 350));
                     this.loadChart(code);
                 }
@@ -584,70 +403,26 @@
             async loadChart(code) {
                 this.chartLoading = true;
                 const container = document.getElementById('tv-chart-container');
-                if (!container) {
-                    console.error('차트 컨테이너를 찾을 수 없음');
-                    this.chartLoading = false;
-                    return;
-                }
-
-                if (this.tvChart) {
-                    this.tvChart.remove();
-                    this.tvChart = null;
-                }
-
-                this.tvChart = LightweightCharts.createChart(container, {
-                    autoSize: true,
-                    height: 300,
-                    layout: { background: { color: '#ffffff' }, textColor: '#8b95a1' },
-                    grid: { vertLines: { visible: false }, horzLines: { color: '#f2f4f6' } },
-                    rightPriceScale: { borderVisible: false },
-                    timeScale: { borderVisible: false },
-                });
-
-                this.areaSeries = this.tvChart.addAreaSeries({
-                    lineColor: '#3182f6',
-                    topColor: 'rgba(49, 130, 246, 0.4)',
-                    bottomColor: 'rgba(49, 130, 246, 0.0)',
-                    lineWidth: 2,
-                    priceFormat: { type: 'price', precision: 0, minMove: 1 },
-                });
-
+                if (!container) return;
+                if (this.tvChart) { this.tvChart.remove(); this.tvChart = null; }
+                this.tvChart = LightweightCharts.createChart(container, { autoSize: true, height: 300, layout: { background: { color: '#ffffff' }, textColor: '#8b95a1' }, grid: { vertLines: { visible: false }, horzLines: { color: '#f2f4f6' } }, rightPriceScale: { borderVisible: false }, timeScale: { borderVisible: false } });
+                this.areaSeries = this.tvChart.addAreaSeries({ lineColor: '#3182f6', topColor: 'rgba(49, 130, 246, 0.4)', bottomColor: 'rgba(49, 130, 246, 0.0)', lineWidth: 2, priceFormat: { type: 'price', precision: 0, minMove: 1 } });
                 try {
                     const res = await fetch(`/api/stock/${encodeURIComponent(code)}/chart?period=DAY`);
                     const response = await res.json();
-
-                    if (response && response.chartDataList && response.chartDataList.length > 0) {
-                        const formattedData = response.chartDataList
-                            .map(d => ({
-                                time: d.time,
-                                value: Number(d.value)
-                            }))
-                            .sort((a, b) => a.time.localeCompare(b.time));
-
+                    if (response && response.chartDtoList && response.chartDtoList.length > 0) {
+                    const formattedData = response.chartDtoList.map(d => ({
+                        time: d.time,
+                        value: Number(d.close)
+                    })).sort((a, b) => a.time.localeCompare(b.time));
                         this.areaSeries.setData(formattedData);
                         this.tvChart.timeScale().fitContent();
                     }
-                } catch (e) {
-                    console.error('차트 생성 중 에러 발생:', e);
-                } finally {
-                    this.chartLoading = false;
-                }
+                } catch (e) {} finally { this.chartLoading = false; }
             },
 
-            closeStockDetail() {
-                this.showStockDetail = false;
-                this.isFromGlobalSearch = false;
-                this.detailLoading = false;
-                if (this.tvChart) {
-                    this.tvChart.remove();
-                    this.tvChart = null;
-                }
-            },
-
-            closeModal() {
-                this.showModal = false;
-                setTimeout(() => { this.step = 1; this.isEditMode = false; this.searchQuery = ''; this.searchResults = []; }, 200);
-            },
+            closeStockDetail() { this.showStockDetail = false; this.isFromGlobalSearch = false; this.detailLoading = false; if (this.tvChart) { this.tvChart.remove(); this.tvChart = null; } },
+            closeModal() { this.showModal = false; setTimeout(() => { this.step = 1; this.isEditMode = false; this.searchQuery = ''; this.searchResults = []; }, 200); },
 
             searchNew() { this.page = 0; this.hasMore = true; this.searchResults = []; this.fetchStocks(true); },
 
@@ -658,58 +433,50 @@
                     const res = await fetch(`/api/stock/search?name=${encodeURIComponent(this.searchQuery)}&page=${this.page}`);
                     if (res.ok) {
                         const data = await res.json();
-                        if (isNewSearch) this.searchResults = data;
-                        else this.searchResults = [...this.searchResults, ...data];
+                        if (isNewSearch) this.searchResults = data; else this.searchResults = [...this.searchResults, ...data];
                         if (data.length < 5) this.hasMore = false;
                         this.page++;
                     }
-                } catch (error) { console.error("Search failed:", error); }
-                finally { this.isLoading = false; }
+                } catch (error) {} finally { this.isLoading = false; }
             },
 
             selectStock(item) {
-                this.selectedStock.name = item.stock.name; this.selectedStock.code = item.stock.code;
-                this.selectedStock.nation = item.stock.nation; this.selectedStock.currentPrice = item.price ? item.price.currentPrice : 0;
-                this.selectedStock.currency = item.stock.currency; this.step = 2;
+                // ✨ 안전하게 평탄화된 변수로 매핑
+                this.selectedStock.name = item.stock?.name;
+                this.selectedStock.code = item.stock?.code;
+                this.selectedStock.nation = item.stock?.nation;
+                this.selectedStock.currentPrice = item.currentPrice || 0;
+                this.selectedStock.currency = item.stock?.currency;
+                this.step = 2;
             },
 
-formatBigNum(val, currency) {
-    if (!val || isNaN(val)) return '-';
-    const n = Number(val);
-
-    if (currency === 'KRW') {
-        // 백만 원 단위 → 조/억 변환
-        const won = n * 1_000_000;
-        if (won >= 1_000_000_000_000) return (won / 1_000_000_000_000).toFixed(1) + '조원';
-        if (won >= 100_000_000)       return Math.round(won / 100_000_000).toLocaleString() + '억원';
-        return won.toLocaleString() + '원';
-    } else {
-        // USD: 달러 원 단위 → T/B 변환
-        if (n >= 1_000_000_000_000) return '$' + (n / 1_000_000_000_000).toFixed(2) + 'T';
-        if (n >= 1_000_000_000)     return '$' + (n / 1_000_000_000).toFixed(1) + 'B';
-        return '$' + n.toLocaleString();
-    }
-},
-
+            formatBigNum(val, currency) {
+                if (!val || isNaN(val)) return '-';
+                const n = Number(val);
+                if (currency === 'KRW') {
+                    const won = n * 1_000_000;
+                    if (won >= 1_000_000_000_000) return (won / 1_000_000_000_000).toFixed(1) + '조원';
+                    if (won >= 100_000_000) return Math.round(won / 100_000_000).toLocaleString() + '억원';
+                    return won.toLocaleString() + '원';
+                } else {
+                    if (n >= 1_000_000_000_000) return '$' + (n / 1_000_000_000_000).toFixed(2) + 'T';
+                    if (n >= 1_000_000_000) return '$' + (n / 1_000_000_000).toFixed(1) + 'B';
+                    return '$' + n.toLocaleString();
+                }
+            },
             formatCurrency(val, currency) {
                 if (val === null || val === undefined || isNaN(val)) return '-';
                 if (currency === 'USD') return '$' + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
                 return new Intl.NumberFormat('ko-KR').format(Math.floor(val)) + '원';
             },
-
-formatNumber(val) {
-    if (val === null || val === undefined || isNaN(val)) return '0';
-    return new Intl.NumberFormat('ko-KR').format(Math.floor(val));
-},
-
-formatEps(val, currency) {
-    if (val === null || val === undefined || isNaN(val)) return '-';
-    if (currency === 'USD') return '$' + Number(val).toFixed(2);
-    return new Intl.NumberFormat('ko-KR').format(Math.floor(val)) + '원';
-},
+            formatNumber(val) { return (val === null || val === undefined || isNaN(val)) ? '0' : new Intl.NumberFormat('ko-KR').format(Math.floor(val)); },
+            formatEps(val, currency) {
+                if (val === null || val === undefined || isNaN(val)) return '-';
+                if (currency === 'USD') return '$' + Number(val).toFixed(2);
+                return new Intl.NumberFormat('ko-KR').format(Math.floor(val)) + '원';
+            }
         }));
     });
 </script>
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
 </body>
 </html>

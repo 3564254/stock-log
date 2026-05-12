@@ -1,6 +1,6 @@
 package com.stocklog.domain.stock.runner;
 
-import com.stocklog.domain.stock.service.StockService;
+import com.stocklog.domain.stock.stock.StockService;
 import com.stocklog.global.init.StockLoaderRunner;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

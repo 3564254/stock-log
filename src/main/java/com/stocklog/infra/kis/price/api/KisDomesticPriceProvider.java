@@ -1,9 +1,9 @@
 package com.stocklog.infra.kis.price.api;
 
-import com.stocklog.domain.stock.dto.request.StockRequest;
-import com.stocklog.domain.stock.dto.vo.price.StockPriceDetail;
-import com.stocklog.domain.stock.provider.StockPriceProvider;
-import com.stocklog.domain.stock.type.MarketType;
+import com.stocklog.domain.stock.common.StockRequest;
+import com.stocklog.domain.stock.price.dto.response.StockPriceResponse;
+import com.stocklog.domain.stock.price.StockPriceProvider;
+import com.stocklog.domain.stock.common.type.MarketType;
 import com.stocklog.infra.kis.common.KisResponseV1;
 import com.stocklog.infra.kis.config.client.KisTokenManager;
 import com.stocklog.infra.kis.config.KisProperties;
@@ -13,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import static com.stocklog.global.util.FinancialUtils.safeBigDecimal;
+import static com.stocklog.global.util.FinancialUtils.safeParse;
 
 @Component
 @Slf4j
@@ -24,23 +24,23 @@ public class KisDomesticPriceProvider implements StockPriceProvider {
     private final KisTokenManager tokenManager;
 
     @Override
-    public StockPriceDetail fetchPrice(StockRequest request) {
+    public StockPriceResponse fetchPrice(StockRequest request) {
         KisDomesticPriceOutput output = callApi(request.code());
-        if (output == null) return StockPriceDetail.createFallback(); // 상세 전용 폴백 호출
+        if (output == null) return StockPriceResponse.createFallback(); // 상세 전용 폴백 호출
 
-        return StockPriceDetail.builder()
-                .currentPrice(safeBigDecimal(output.getCurrentPrice()))
-                .changePrice(safeBigDecimal(output.getChangePrice()))
-                .changeRate(safeBigDecimal(output.getChangeRate()))
-                .basePrice(safeBigDecimal(output.getBasePrice()))
-                .per(safeBigDecimal(output.getPer()))
-                .pbr(safeBigDecimal(output.getPbr()))
-                .eps(safeBigDecimal(output.getEps()))
-                .bps(safeBigDecimal(output.getBps()))
-                .marketCap(safeBigDecimal(output.getMarketCap()))
-                .volume(safeBigDecimal(output.getVolume()))
-                .w52High(safeBigDecimal(output.getW52High()))
-                .w52Low(safeBigDecimal(output.getW52Low()))
+        return StockPriceResponse.builder()
+                .currentPrice(safeParse(output.getCurrentPrice()))
+                .changePrice(safeParse(output.getChangePrice()))
+                .changeRate(safeParse(output.getChangeRate()))
+                .basePrice(safeParse(output.getBasePrice()))
+                .per(safeParse(output.getPer()))
+                .pbr(safeParse(output.getPbr()))
+                .eps(safeParse(output.getEps()))
+                .bps(safeParse(output.getBps()))
+                .marketCap(safeParse(output.getMarketCap()))
+                .volume(safeParse(output.getVolume()))
+                .w52High(safeParse(output.getW52High()))
+                .w52Low(safeParse(output.getW52Low()))
                 .build();
     }
 

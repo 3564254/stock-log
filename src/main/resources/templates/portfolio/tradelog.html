@@ -277,15 +277,18 @@
         <div class="spinner-border text-primary" style="width:1.4rem; height:1.4rem;"></div>
       </div>
       <div style="max-height: 38vh; overflow-y: auto;">
-        <template x-for="item in searchResults" :key="item.stock.code">
+
+        <!-- ✨ 에러 원인 수정: item.stock -> item.info 로 변경 및 옵셔널 체이닝 추가 -->
+        <template x-for="item in searchResults" :key="item.info?.code">
           <div @click="selectStock(item)" class="search-item d-flex justify-content-between align-items-center">
             <div>
-              <div class="fw-bold" style="font-size:14px;" x-text="item.stock.name"></div>
-              <div class="text-secondary fw-bold" style="font-size:11px;" x-text="item.stock.code"></div>
+              <div class="fw-bold" style="font-size:14px;" x-text="item.info?.name"></div>
+              <div class="text-secondary fw-bold" style="font-size:11px;" x-text="item.info?.code"></div>
             </div>
             <i class="bi bi-chevron-right text-secondary"></i>
           </div>
         </template>
+
         <div x-show="hasMore && !isLoading && searchResults.length > 0" class="text-center mt-2">
           <button @click="fetchStocks(false)"
                   class="btn btn-link text-decoration-none fw-bold text-secondary"
@@ -505,7 +508,12 @@
         } catch(e) { console.error(e); }
         finally { this.isLoading = false; }
       },
-      selectStock(item) { this.selectedStock = { name: item.stock.name, code: item.stock.code }; this.step = 2; },
+
+      // ✨ 수정: item.stock -> item.info
+      selectStock(item) {
+          this.selectedStock = { name: item.info?.name, code: item.info?.code };
+          this.step = 2;
+      },
       openModal()  { this.step = 1; this.searchQuery = ''; this.searchResults = []; this.page = 0; this.hasMore = true; this.showModal = true; },
       closeModal() { this.showModal = false; },
 

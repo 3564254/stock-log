@@ -2,6 +2,7 @@ package com.stocklog.domain.portfolio.analysis.dto;
 
 import com.stocklog.domain.portfolio.dto.response.HoldingResponse;
 import com.stocklog.domain.portfolio.dto.response.PortfolioAnalysisResponse;
+import com.stocklog.global.util.FinancialConst;
 import lombok.Builder;
 
 import java.math.BigDecimal;

@@ -4,14 +4,14 @@ import com.stocklog.domain.portfolio.dto.response.HoldingResponse;
 import com.stocklog.domain.portfolio.dto.response.PortfolioAnalysisResponse;
 import com.stocklog.domain.portfolio.dto.response.PortfolioResponse;
 import com.stocklog.domain.portfolio.entity.PortfolioGrade;
-import com.stocklog.domain.stock.entity.Stock;
-import com.stocklog.domain.stock.service.StockService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import com.stocklog.global.util.FinancialConst;
 
 @Service
 @RequiredArgsConstructor

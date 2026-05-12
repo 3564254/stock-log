@@ -71,6 +71,7 @@ dependencies {
 	implementation 'com.opencsv:opencsv:5.9'
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 	implementation 'com.yahoofinance-api:YahooFinanceAPI:3.17.0'
+	implementation files('libs/yfinance4j-0.1.7.jar')
 }
 
 

@@ -1,10 +1,9 @@
 package com.stocklog.domain.stock.analysis.result;
 
 import com.stocklog.domain.stock.analysis.domain.momentum.MomentumScore;
+import com.stocklog.domain.stock.analysis.domain.signal.vo.EntrySignal;
 import com.stocklog.domain.stock.analysis.domain.technical.TechnicalScore;
 import com.stocklog.domain.stock.analysis.domain.valuation.ValuationScore;
-import com.stocklog.domain.stock.analysis.domain.signal.EntrySignal;
-import com.stocklog.domain.stock.dto.response.StockFinancialsResponse;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -22,7 +21,4 @@ public class StockAnalysisResult {
     private final MomentumScore momentum;
     private final TechnicalScore technical;
     private final EntrySignal entrySignal;
-
-    private StockFinancialsResponse financials;
-
 }

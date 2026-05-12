@@ -1,11 +1,11 @@
 package com.stocklog.infra.kis.chart.api;
 
-import com.stocklog.domain.stock.dto.request.ChartRequest;
-import com.stocklog.domain.stock.dto.response.StockChartResponse;
-import com.stocklog.domain.stock.dto.vo.price.StockChartData;
-import com.stocklog.domain.stock.provider.StockChartProvider;
-import com.stocklog.domain.stock.type.MarketType;
-import com.stocklog.domain.stock.type.Period;
+import com.stocklog.domain.stock.chart.dto.request.ChartRequest;
+import com.stocklog.domain.stock.chart.dto.internal.StockChartDto;
+import com.stocklog.domain.stock.chart.dto.response.StockChartResponse;
+import com.stocklog.domain.stock.chart.StockChartProvider;
+import com.stocklog.domain.stock.common.type.MarketType;
+import com.stocklog.domain.stock.common.type.Period;
 import com.stocklog.infra.kis.chart.dto.KisOverseasChartOutput1;
 import com.stocklog.infra.kis.chart.dto.KisOverseasChartOutput2;
 import com.stocklog.infra.kis.common.KisResponseV2;
@@ -13,14 +13,17 @@ import com.stocklog.infra.kis.config.KisProperties;
 import com.stocklog.infra.kis.config.client.KisTokenManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+
+
 
 @Component
 @Slf4j
@@ -41,7 +44,7 @@ public class KisOverseasChartProvider implements StockChartProvider {
 
             return StockChartResponse.builder()
                     .code(request.code())
-                    .chartDataList(convertChart(output, period))
+                    .chartDtoList(convertChart(output, period))
                     .build();
         } catch (Exception e) {
             log.info("해외 종목 정보 조회 중 오류: {}",e.getMessage());
@@ -76,25 +79,20 @@ public class KisOverseasChartProvider implements StockChartProvider {
                 })
                 .block();
 
-        if (response != null) {
-            KisOverseasChartOutput2 output2 =  response.getOutput2().get(0);
-            log.info("time: {}, open: {}, value: {}, high:{}, low:{}, volume{}", output2.getTime(), output2.getOpen(), output2.getValue(), output2.getHigh(), output2.getLow(), output2.getVolume());
-        }
         return (response != null && "0".equals(response.getReturnCode())) ? response.getOutput2() : null;
     }
 
-    private List<StockChartData> convertChart(List<KisOverseasChartOutput2> list, Period period) {
-        List<StockChartData> result = new ArrayList<>();
+    private List<StockChartDto> convertChart(List<KisOverseasChartOutput2> list, Period period) {
+        List<StockChartDto> result = new ArrayList<>();
 
         for (KisOverseasChartOutput2 data : list) {
             if (data.getTime()  == null || data.getTime().isBlank())  continue;
-            if (data.getValue() == null || data.getValue().isBlank()) continue;
+            if (data.getClose() == null || data.getClose().isBlank()) continue;
 
-            result.add(StockChartData.builder()
-                    .time(StockChartData.formatDate(data.getTime()))
-                    .value(new BigDecimal(data.getValue()))
-                    .timeFrame(period)
+            result.add(StockChartDto.builder()
+                    .time(parsedDate(data.getTime()))
                     .open(parseSafe(data.getOpen()))
+                    .close(parseSafe(data.getClose()))
                     .high(parseSafe(data.getHigh()))
                     .low(parseSafe(data.getLow()))
                     .volume(parseSafe(data.getVolume()))
@@ -108,8 +106,12 @@ public class KisOverseasChartProvider implements StockChartProvider {
             case DAY -> "0";
             case WEEK -> "1";
             case MONTH -> "2";
-
         };
+    }
+
+    private LocalDate parsedDate(String date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        return LocalDate.parse(date, formatter);
     }
 
     private BigDecimal parseSafe(String value) {

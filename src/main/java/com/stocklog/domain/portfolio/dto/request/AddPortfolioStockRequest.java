@@ -1,5 +1,6 @@
 package com.stocklog.domain.portfolio.dto.request;
 
+import com.stocklog.global.util.FinancialConst;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
 

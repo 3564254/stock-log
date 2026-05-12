@@ -1,5 +1,6 @@
 package com.stocklog.domain.marketdata.index.dto.vo;
 
+import com.stocklog.global.util.FinancialConst;
 import lombok.*;
 
 import java.math.BigDecimal;

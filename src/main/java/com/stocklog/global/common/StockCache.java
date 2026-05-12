@@ -1,7 +1,6 @@
 package com.stocklog.global.common;
 
-import com.stocklog.domain.stock.entity.Stock;
-import com.stocklog.domain.stock.repository.StockRepository;
+import com.stocklog.domain.stock.common.StockMasterDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -14,24 +13,21 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @RequiredArgsConstructor
 public class StockCache {
-    private final StockRepository stockRepository;
-    private final Map<String, String> stockNameCache = new ConcurrentHashMap<>();
+    private final Map<String, StockMasterDto> stockNameCache = new ConcurrentHashMap<>();
 
 
-    public void loadStockNamesToCache() {
-        List<Stock> allStocks = stockRepository.findAll();
+    public void loadStockNamesToCache(List<StockMasterDto> results) {
         stockNameCache.clear();
 
-
-        for (Stock stock : allStocks) {
-            if (stock.getCode() != null) {
-                stockNameCache.put(stock.getCode().trim(), stock.getName().trim());
+        for (StockMasterDto stock : results) {
+            if (stock.shortCode() != null) {
+                stockNameCache.put(stock.shortCode().trim(), stock);
             }
         }
         log.info("주식 이름 캐시 로드 완료: {}건", stockNameCache.size());
     }
 
-    public String getName(String code) {
+    public StockMasterDto getStockLoadDto(String code) {
         return stockNameCache.get(code);
     }
 }

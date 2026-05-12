@@ -1,12 +1,11 @@
 package com.stocklog.infra.fred.indexdata.api;
 
-import com.stocklog.domain.marketdata.index.dto.IndexResponse;
+import com.stocklog.domain.marketdata.index.dto.IndexDto;
 import com.stocklog.domain.marketdata.index.dto.vo.IndexChartData;
 import com.stocklog.domain.marketdata.index.provider.IndexChartProvider;
 import com.stocklog.domain.marketdata.index.type.IndexType;
 import com.stocklog.infra.fred.config.FredProperties;
 import com.stocklog.infra.fred.indexdata.dto.IndexChartOutput1;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -31,7 +30,7 @@ public class FredIndexChartProvider implements IndexChartProvider {
     }
 
     @Override
-    public IndexResponse fetchIndexResponse(IndexType type) {
+    public IndexDto fetchIndexResponse(IndexType type) {
         log.info("fetchIndexResponse: [{}]", type.getDisplayName());
 
         try {
@@ -39,7 +38,7 @@ public class FredIndexChartProvider implements IndexChartProvider {
 
             if (output == null || output.getObservations() == null || output.getObservations().length == 0) {
                 log.warn("FRED API 응답이 비어있습니다. type: {}", type);
-                return IndexResponse.createFallback();
+                return IndexDto.createFallback();
             }
 
             List<IndexChartData> chartDataList = Arrays.stream(output.getObservations())
@@ -50,14 +49,14 @@ public class FredIndexChartProvider implements IndexChartProvider {
                             .build())
                     .collect(Collectors.toList());
 
-                return IndexResponse.builder()
+                return IndexDto.builder()
                         .seriesId(type.getSeriesId())
                         .data(chartDataList)
                         .build();
             }
         catch (Exception e) {
         log.error("FRED API 통신 실패 [{}]: {}", type.getSeriesId(), e.getMessage());
-        return IndexResponse.createFallback();
+        return IndexDto.createFallback();
     }}
 
 
@@ -65,7 +64,7 @@ public class FredIndexChartProvider implements IndexChartProvider {
         LocalDate end = LocalDate.now();
         LocalDate start = end.minusYears(1);
 
-        log.debug("FRED 데이터 요청 기간: {} ~ {}", start, end);
+        log.info("FRED 데이터 요청 기간: {} ~ {}", start, end);
 
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder

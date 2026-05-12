@@ -2,6 +2,7 @@ package com.stocklog.domain.marketdata.exchange.dto;
 
 
 import com.stocklog.domain.marketdata.exchange.entity.ExchangeRate;
+import com.stocklog.global.util.FinancialConst;
 import lombok.Builder;
 import java.math.BigDecimal;
 

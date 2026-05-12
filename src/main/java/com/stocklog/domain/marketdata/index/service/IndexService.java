@@ -1,9 +1,8 @@
 package com.stocklog.domain.marketdata.index.service;
 
-import com.stocklog.domain.marketdata.analysis.MarketTrendAnalyzer;
 import com.stocklog.domain.marketdata.analysis.MarketTrendResult;
-import com.stocklog.domain.marketdata.index.dto.IndexResponse;
-import com.stocklog.domain.marketdata.index.dto.MarketDashboardResponse;
+import com.stocklog.domain.marketdata.index.dto.IndexDto;
+import com.stocklog.domain.marketdata.index.dto.IndexDashboardDto;
 import com.stocklog.domain.marketdata.index.dto.vo.IndexChartData;
 import com.stocklog.domain.marketdata.index.entity.MarketIndex;
 import com.stocklog.domain.marketdata.index.entity.MarketIndexHistory;
@@ -30,12 +29,11 @@ public class IndexService {
     private final IndexChartProvider provider;
     private final MarketIndexRepository marketIndexRepository;
     private final MarketIndexHistoryRepository marketIndexHistoryRepository;
-    private final MarketTrendAnalyzer trendAnalyzer;
 
     @Transactional(readOnly = true)
-    public MarketDashboardResponse getMarketDashboard() {
+    public IndexDashboardDto getMarketDashboard() {
         // 1. 데이터들 먼저 조회
-        MarketDashboardResponse rawDashboard = MarketDashboardResponse.builder()
+        IndexDashboardDto rawDashboard = IndexDashboardDto.builder()
                 .sp500(getIndexResponse(IndexType.SP500.getSeriesId()))
                 .nasdaq(getIndexResponse(IndexType.NASDAQ.getSeriesId()))
                 .vix(getIndexResponse(IndexType.VIX.getSeriesId()))
@@ -45,13 +43,14 @@ public class IndexService {
                 .us2y(getIndexResponse(IndexType.US_TREASURY_2Y.getSeriesId()))
                 .wti(getIndexResponse(IndexType.WTI_CRUDE_OIL.getSeriesId()))
                 .phlxSemi(getIndexResponse(IndexType.PHLX_SEMI.getSeriesId()))
+                .totalMarket(getIndexResponse(IndexType.WILSHIRE_5000.getSeriesId()))
+                .yieldCurve(getIndexResponse(IndexType.T10Y2Y.getSeriesId()))
                 .build();
 
         // 2. 조회된 데이터를 바탕으로 분석 실행
-        MarketTrendResult trendResult = trendAnalyzer.analyze(rawDashboard);
 
         // 3. 분석 결과까지 담아서 최종 반환
-        return MarketDashboardResponse.builder()
+        return IndexDashboardDto.builder()
                 .sp500(rawDashboard.sp500())
                 .nasdaq(rawDashboard.nasdaq())
                 .vix(rawDashboard.vix())
@@ -61,13 +60,14 @@ public class IndexService {
                 .us2y(rawDashboard.us2y())
                 .wti(rawDashboard.wti())
                 .phlxSemi(rawDashboard.phlxSemi())
-                .analysis(trendResult)
+                .totalMarket(rawDashboard.totalMarket()) // 추가
+                .yieldCurve(rawDashboard.yieldCurve())   // 추가
                 .build();
     }
 
 
     @Transactional
-    public IndexResponse getIndexResponse(String seriesId) {
+    public IndexDto getIndexResponse(String seriesId) {
         MarketIndex marketIndex = marketIndexRepository.findById(seriesId).orElse(null);
         boolean isUpdatedToday = marketIndex != null
                 && marketIndex.getUpdatedAt() != null
@@ -75,7 +75,7 @@ public class IndexService {
 
         if (!isUpdatedToday) {
             log.info("[{}] 최신 데이터 API 호출 및 DB 동기화 시작", seriesId);
-            IndexResponse apiResponse = provider.fetchIndexResponse(IndexType.fromSeriesId(seriesId));
+            IndexDto apiResponse = provider.fetchIndexResponse(IndexType.fromSeriesId(seriesId));
 
             // DB에 데이터 저장 (스냅샷 MarketIndex 도 업데이트 됨)
             saveIndexHistory(apiResponse);
@@ -92,7 +92,7 @@ public class IndexService {
                 changeRate = getChangeRate(today, yesterday);
             }
 
-            return IndexResponse.builder()
+            return IndexDto.builder()
                     .seriesId(seriesId)
                     .data(data)
                     .changeValue(changeValue)
@@ -111,7 +111,7 @@ public class IndexService {
                         .build())
                 .collect(Collectors.toList());
 
-        return IndexResponse.builder()
+        return IndexDto.builder()
                 .seriesId(seriesId)
                 .data(chartDataList)
                 .changeValue(marketIndex != null ? marketIndex.getChangeValue() : BigDecimal.ZERO)
@@ -121,9 +121,9 @@ public class IndexService {
 
 
     @Transactional
-    protected void saveIndexHistory(IndexResponse indexResponse) {
-        String seriesId = indexResponse.seriesId();
-        List<IndexChartData> indexChartData = indexResponse.data();
+    protected void saveIndexHistory(IndexDto indexDto) {
+        String seriesId = indexDto.seriesId();
+        List<IndexChartData> indexChartData = indexDto.data();
 
         if (indexChartData == null || indexChartData.size() < 2) {
             log.warn("[{}] 저장할 데이터가 부족합니다.", seriesId);

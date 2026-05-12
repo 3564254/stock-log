@@ -8,10 +8,9 @@ import com.stocklog.domain.portfolio.dto.request.HoldingUpdateRequest;
 import com.stocklog.domain.portfolio.dto.response.PortfolioResponse;
 import com.stocklog.domain.portfolio.entity.Holding;
 import com.stocklog.domain.portfolio.repository.HoldingRepository;
-import com.stocklog.domain.stock.entity.Stock;
-import com.stocklog.domain.stock.service.StockPriceService;
-import com.stocklog.domain.stock.service.StockService;
-import com.stocklog.domain.stock.type.Currency;
+import com.stocklog.domain.application.StockFacadeService;
+import com.stocklog.domain.stock.info.dto.internal.StockInfoDto;
+import com.stocklog.domain.stock.common.type.Currency;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,8 +24,7 @@ import java.util.List;
 public class PortfolioService {
 
     private final HoldingRepository holdingRepository;
-    private final StockPriceService stockPriceService;
-    private final StockService stockService;
+    private final StockFacadeService stockFacadeService;
     private final MemberService memberService;
     private final ExchangeService exchangeService;
 
@@ -74,7 +72,7 @@ public class PortfolioService {
     }
 
     private BigDecimal fetchCurrentPrice(String stockCode) {
-        return stockPriceService.fetchPrice(stockCode).price().getCurrentPrice();
+        return stockFacadeService.getStockSummary(stockCode).price().currentPrice();
     }
 
     private BigDecimal fetchCurrentExchangeRate(Currency currency) {
@@ -86,14 +84,14 @@ public class PortfolioService {
 
     private void saveNewHolding(Long memberId, HoldingUpdateRequest request) {
         Member member = memberService.getReference(memberId);
-        Stock stock = stockService.getStock(request.code());
+        StockInfoDto info = stockFacadeService.getStockSummary(request.code()).info();
         holdingRepository.save(Holding.builder()
                 .member(member)
-                .stock(stock)
+                .stock(StockInfoDto.toEntity(info))
                 .quantity(request.quantity())
                 .purchasePrice(request.purchasePrice())
                 .purchaseExchangeRate(request.purchaseExchangeRate())
-                .currency(stock.getCurrency())
+                .currency(info.currency())
                 .build());
     }
 }
