@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="headerFragment">
+    <style>
+        /* ── Header Design Tokens ── */
+        :root {
+            --header-pill-bg: #ffffff;
+            --header-pill-border: #eceef1;
+            --header-pill-hover: #f7f8fa;
+            --header-pill-radius: 50px;
+            --header-dropdown-radius: 16px;
+            --header-dropdown-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+            --header-avatar-size: 34px;
+            --header-avatar-bg: linear-gradient(135deg, #e8f0fe 0%, #dbeafe 100%);
+        }
+
+        /* ── Profile Pill ── */
+        .header-pill {
+            background: var(--header-pill-bg);
+            border: 1px solid var(--header-pill-border);
+            padding: 5px 14px 5px 5px;
+            border-radius: var(--header-pill-radius);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+        .header-pill:hover {
+            background-color: var(--header-pill-hover);
+            border-color: #dde1e6;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        /* ── Avatar ── */
+        .header-avatar {
+            width: var(--header-avatar-size);
+            height: var(--header-avatar-size);
+            background: var(--header-avatar-bg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .header-avatar i {
+            color: #3182f6;
+            font-size: 1rem;
+        }
+
+        .header-username {
+            font-weight: 700;
+            font-size: 0.875rem;
+            color: #191f28;
+            letter-spacing: -0.2px;
+        }
+
+        .header-chevron {
+            font-size: 0.65rem;
+            color: #adb5bd;
+            margin-left: 2px;
+            transition: transform 0.2s ease;
+        }
+        .header-pill:hover .header-chevron {
+            color: #6b7684;
+        }
+
+        /* ── Dropdown ── */
+        .profile-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            width: 180px;
+            z-index: 1050;
+            background: #ffffff;
+            border-radius: var(--header-dropdown-radius);
+            box-shadow: var(--header-dropdown-shadow);
+            border: 1px solid #eceef1;
+            overflow: hidden;
+            animation: dropdownFadeIn 0.15s ease-out;
+        }
+
+        @keyframes dropdownFadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .dropdown-header {
+            padding: 14px 18px 10px;
+            border-bottom: 1px solid #f2f4f6;
+        }
+        .dropdown-header-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #191f28;
+        }
+        .dropdown-header-sub {
+            font-size: 0.75rem;
+            color: #8b95a1;
+            margin-top: 2px;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: #f2f4f6;
+            margin: 0;
+        }
+
+        /* ── Logout Button ── */
+        .logout-btn {
+            width: 100%;
+            text-align: left;
+            padding: 13px 18px;
+            font-weight: 600;
+            color: #f04452;
+            border: none;
+            background: transparent;
+            transition: background-color 0.15s ease;
+            font-size: 0.875rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logout-btn:hover {
+            background-color: #fff5f5;
+        }
+        .logout-btn i {
+            font-size: 1rem;
+        }
+
+        /* ── Login Button ── */
+        .login-btn {
+            background: linear-gradient(135deg, #3182f6 0%, #1b64da 100%);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            padding: 10px 24px;
+            font-weight: 700;
+            font-size: 0.875rem;
+            letter-spacing: -0.2px;
+            box-shadow: 0 2px 8px rgba(49, 130, 246, 0.3);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .login-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(49, 130, 246, 0.4);
+            color: #fff;
+        }
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        /* ── Notification Bell (optional enhancement) ── */
+        .header-icon-btn {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            border: 1px solid #eceef1;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .header-icon-btn:hover {
+            background: #f7f8fa;
+            border-color: #dde1e6;
+        }
+        .header-icon-btn i {
+            color: #6b7684;
+            font-size: 1.05rem;
+        }
+        .notification-dot {
+            position: absolute;
+            top: 8px; right: 8px;
+            width: 7px; height: 7px;
+            background: #f04452;
+            border-radius: 50%;
+            border: 1.5px solid #fff;
+        }
+    </style>
+
+    <header class="d-flex justify-content-end align-items-center mb-4 pt-3" style="gap: 10px;">
+        <div class="d-flex align-items-center" style="gap: 10px;">
+
+            <!-- 알림 버튼 (선택적 개선) -->
+            <div th:if="${loginMember != null}" class="header-icon-btn">
+                <i class="bi bi-bell"></i>
+                <!-- <div class="notification-dot"></div> -->
+            </div>
+
+            <!-- 프로필 Pill -->
+            <div th:if="${loginMember != null}" class="header-pill" x-data="{ open: false }" @click.away="open = false">
+                <div class="d-flex align-items-center gap-2" @click="open = !open">
+                    <div class="header-avatar">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <span class="header-username" th:text="${loginMember.username}">사용자</span>
+                    <i class="bi bi-chevron-down header-chevron" :style="open ? 'transform: rotate(180deg)' : ''"></i>
+                </div>
+
+                <div x-show="open" x-transition.opacity x-cloak class="profile-dropdown">
+                    <div class="dropdown-header">
+                        <div class="dropdown-header-name" th:text="${loginMember.username}">사용자</div>
+                        <div class="dropdown-header-sub">계정 관리</div>
+                    </div>
+                    <form th:action="@{/auth/logout}" method="post" class="m-0">
+                        <button type="submit" class="logout-btn">
+                            <i class="bi bi-box-arrow-left"></i>
+                            로그아웃
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 로그인 버튼 -->
+            <div th:if="${loginMember == null}">
+                <a th:href="@{/auth/login}" class="login-btn">
+                    <i class="bi bi-person-plus"></i>
+                    로그인
+                </a>
+            </div>
+        </div>
+    </header>
+</div>
+</html>

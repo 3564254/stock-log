@@ -1,0 +1,198 @@
+from dataclasses import dataclass
+from typing import List, Optional
+
+@dataclass
+class ResponseHeader:
+    content-type: str    #컨텐츠타입
+    tr_id: str    #거래ID
+    tr_cont: Optional[str] = None    #연속 거래 여부
+    gt_uid: Optional[str] = None    #Global UID
+
+@dataclass
+class ResponseBody:
+    rt_cd: str    #성공 실패 여부
+    msg_cd: str    #응답코드
+    msg1: str    #응답메세지
+    output: List[ResponseBodyoutput] = field(default_factory=list)    #응답상세
+
+@dataclass
+class ResponseBodyoutput:
+    stac_yymm: str    #결산 년월
+    cras: str    #유동자산
+    fxas: str    #고정자산
+    total_aset: str    #자산총계
+    flow_lblt: str    #유동부채
+    fix_lblt: str    #고정부채
+    total_lblt: str    #부채총계
+    cpfn: str    #자본금
+    cfp_surp: str    #자본 잉여금
+    prfi_surp: str    #이익 잉여금
+    total_cptl: str    #자본총계
+
+
+
+from dataclasses import dataclass
+from typing import List, Optional
+
+@dataclass
+class ResponseHeader:
+    content-type: str    #컨텐츠타입
+    tr_id: str    #거래ID
+    tr_cont: Optional[str] = None    #연속 거래 여부
+    gt_uid: Optional[str] = None    #Global UID
+
+@dataclass
+class ResponseBody:
+    rt_cd: str    #성공 실패 여부
+    msg_cd: str    #응답코드
+    msg1: str    #응답메세지
+    output: List[ResponseBodyoutput] = field(default_factory=list)    #응답상세
+
+@dataclass
+class ResponseBodyoutput:
+    stac_yymm: str    #결산 년월
+    sale_account: str    #매출액
+    sale_cost: str    #매출 원가
+    sale_totl_prfi: str    #매출 총 이익
+    depr_cost: str    #감가상각비
+    sell_mang: str    #판매 및 관리비
+    bsop_prti: str    #영업 이익
+    bsop_non_ernn: str    #영업 외 수익
+    bsop_non_expn: str    #영업 외 비용
+    op_prfi: str    #경상 이익
+    spec_prfi: str    #특별 이익
+    spec_loss: str    #특별 손실
+    thtr_ntin: str    #당기순이익
+
+
+from dataclasses import dataclass
+from typing import List, Optional
+
+@dataclass
+class ResponseHeader:
+    content-type: str    #컨텐츠타입
+    tr_id: str    #거래ID
+    tr_cont: Optional[str] = None    #연속 거래 여부
+    gt_uid: Optional[str] = None    #Global UID
+
+@dataclass
+class ResponseBody:
+    rt_cd: str    #성공 실패 여부
+    msg_cd: str    #응답코드
+    msg1: str    #응답메세지
+    output: List[ResponseBodyoutput] = field(default_factory=list)    #응답상세
+
+@dataclass
+class ResponseBodyoutput:
+    stac_yymm: str    #결산 년월
+    grs: str    #매출액 증가율
+    bsop_prfi_inrt: str    #영업 이익 증가율
+    ntin_inrt: str    #순이익 증가율
+    roe_val: str    #ROE 값
+    eps: str    #EPS
+    sps: str    #주당매출액
+    bps: str    #BPS
+    rsrv_rate: str    #유보 비율
+    lblt_rate: str    #부채 비율
+
+from dataclasses import dataclass
+from typing import List, Optional
+
+@dataclass
+class ResponseHeader:
+    content-type: str    #컨텐츠타입
+    tr_id: str    #거래ID
+    tr_cont: Optional[str] = None    #연속 거래 여부
+    gt_uid: Optional[str] = None    #Global UID
+
+@dataclass
+class ResponseBody:
+    rt_cd: str    #성공 실패 여부
+    msg_cd: str    #응답코드
+    msg1: str    #응답메세지
+    output: List[ResponseBodyoutput] = field(default_factory=list)    #응답상세
+
+@dataclass
+class ResponseBodyoutput:
+    stac_yymm: str    #결산 년월
+    cptl_ntin_rate: str    #총자본 순이익율
+    self_cptl_ntin_inrt: str    #자기자본 순이익율
+    sale_ntin_rate: str    #매출액 순이익율
+    sale_totl_rate: str    #매출액 총이익율
+
+from dataclasses import dataclass
+from typing import List, Optional
+
+@dataclass
+class ResponseHeader:
+    content-type: str    #컨텐츠타입
+    tr_id: str    #거래ID
+    tr_cont: Optional[str] = None    #연속 거래 여부
+    gt_uid: Optional[str] = None    #Global UID
+
+@dataclass
+class ResponseBody:
+    rt_cd: str    #성공 실패 여부
+    msg_cd: str    #응답코드
+    msg1: str    #응답메세지
+    output: List[ResponseBodyoutput] = field(default_factory=list)    #응답상세
+
+@dataclass
+class ResponseBodyoutput:
+    stac_yymm: str    #결산 년월
+    payout_rate: str    #배당 성향
+    eva: str    #EVA
+    ebitda: str    #EBITDA
+    ev_ebitda: str    #EV_EBITDA
+
+
+from dataclasses import dataclass
+from typing import List, Optional
+
+@dataclass
+class ResponseHeader:
+    content-type: str    #컨텐츠타입
+    tr_id: str    #거래ID
+    tr_cont: Optional[str] = None    #연속 거래 여부
+    gt_uid: Optional[str] = None    #Global UID
+
+@dataclass
+class ResponseBody:
+    rt_cd: str    #성공 실패 여부
+    msg_cd: str    #응답코드
+    msg1: str    #응답메세지
+    output: List[ResponseBodyoutput] = field(default_factory=list)    #응답상세
+
+@dataclass
+class ResponseBodyoutput:
+    stac_yymm: str    #결산 년월
+    lblt_rate: str    #부채 비율
+    bram_depn: str    #차입금 의존도
+    crnt_rate: str    #유동 비율
+    quck_rate: str    #당좌 비율
+
+from dataclasses import dataclass
+from typing import List, Optional
+
+@dataclass
+class ResponseHeader:
+    content-type: str    #컨텐츠타입
+    tr_id: str    #거래ID
+    tr_cont: Optional[str] = None    #연속 거래 여부
+    gt_uid: Optional[str] = None    #Global UID
+
+@dataclass
+class ResponseBody:
+    rt_cd: str    #성공 실패 여부
+    msg_cd: str    #응답코드
+    msg1: str    #응답메세지
+    output: List[ResponseBodyoutput] = field(default_factory=list)    #응답상세
+
+@dataclass
+class ResponseBodyoutput:
+    stac_yymm: str    #결산 년월
+    grs: str    #매출액 증가율
+    bsop_prfi_inrt: str    #영업 이익 증가율
+    equt_inrt: str    #자기자본 증가율
+    totl_aset_inrt: str    #총자산 증가율
+

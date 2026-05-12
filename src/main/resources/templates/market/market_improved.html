@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>시장 동향 대시보드 — StockLog</title>
+
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+
+  <style>
+    :root {
+      --toss-blue: #3182f6;
+      --toss-red: #f04452;
+      --toss-gray-bg: #f2f4f6;
+      --sidebar-width: 250px;
+    }
+    body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: #191f28; }
+    [x-cloak] { display: none !important; }
+    .layout-wrapper { display: flex; min-height: 100vh; }
+    .main-content { flex-grow: 1; margin-left: var(--sidebar-width); padding: 0 60px 80px; transition: 0.3s; }
+    .content-container { width: 100%; max-width: 1100px; margin: 0 auto; padding-top: 32px; }
+
+    /* ── 공통 카드 스타일 ── */
+    .toss-card { background: white; border-radius: 24px; padding: 28px; box-shadow: 0 2px 16px rgba(0,0,0,0.03); border: none; position: relative; margin-bottom: 24px; }
+    .section-title { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+
+    /* ── 시장 기상도 (Market Weather) ── */
+    .weather-card { padding: 36px 40px; color: white; overflow: hidden; }
+    .weather-bull { background: linear-gradient(135deg, #f04452 0%, #d63a48 100%); }
+    .weather-bear { background: linear-gradient(135deg, #3182f6 0%, #1b64da 100%); }
+    .weather-neutral { background: linear-gradient(135deg, #4e5968 0%, #333d4b 100%); }
+    .risk-gauge { background: rgba(255,255,255,0.2); height: 8px; border-radius: 4px; margin-top: 12px; overflow: hidden; }
+    .risk-gauge-fill { background: white; height: 100%; border-radius: 4px; transition: width 1s ease-out; }
+
+    /* ── 지표 미니 카드 (Sparkline) ── */
+    .indicator-card { padding: 20px 16px; border-radius: 20px; background: white; transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden; border: 1px solid #f2f4f6; }
+    .indicator-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
+    .indicator-label { font-size: 13px; font-weight: 700; color: #8b95a1; margin-bottom: 8px; z-index: 1; position: relative; }
+    .indicator-value { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; z-index: 1; position: relative; }
+    .indicator-change { z-index: 1; position: relative; font-size: 13px; font-weight: 700; margin-top: 4px; }
+
+    /* ── 차트 및 탭 ── */
+    #market-chart-container { width: 100%; height: 350px; position: relative; border-radius: 16px; background: white; }
+    .tab-nav { display: flex; gap: 4px; background: #f2f4f6; border-radius: 14px; padding: 4px; flex-wrap: wrap; }
+    .tab-btn { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; color: #8b95a1; border: none; background: none; cursor: pointer; transition: all 0.15s; }
+    .tab-btn.active { background: white; color: #191f28; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+
+    /* ── 섹터 강약 (Sector Strength) ── */
+    .sector-list { display: flex; flex-direction: column; gap: 12px; }
+    .sector-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: #f8fafc; border-radius: 16px; border: 1px solid #edf2f7; transition: 0.2s; text-decoration: none; color: inherit; }
+    .sector-item:hover { background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+    .sector-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .icon-strong { background: rgba(240,68,82,0.1); color: var(--toss-red); }
+    .icon-weak { background: rgba(49,130,246,0.1); color: var(--toss-blue); }
+    .icon-neutral { background: #e2e8f0; color: #4e5968; }
+
+    /* 색상 유틸리티 */
+    .text-up { color: var(--toss-red) !important; }
+    .text-down { color: var(--toss-blue) !important; }
+
+    @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+    .fu { animation: fadeUp 0.4s cubic-bezier(0.22,1,0.36,1) both; }
+    .d1 { animation-delay: 0.05s; } .d2 { animation-delay: 0.1s; } .d3 { animation-delay: 0.15s; }
+  </style>
+</head>
+<body x-data="marketDashboardApp">
+
+<div class="layout-wrapper">
+  <aside th:replace="~{fragments/sidebar :: sidebarFragment('market')}"></aside>
+
+  <main class="main-content">
+    <div th:replace="~{fragments/header :: headerFragment}"></div>
+
+    <div class="content-container">
+
+      <div class="mb-4 fu d1">
+        <h2 class="fw-bold mb-1" style="font-size: 26px; letter-spacing: -0.5px;">시장 동향 대시보드</h2>
+        <p class="text-secondary fw-medium m-0" th:text="${loginMember != null ? loginMember.username + '님, 현재 시장의 핵심 흐름과 주도 섹터입니다. 🌐' : '현재 시장의 핵심 흐름과 주도 섹터입니다. 🌐'}"></p>
+      </div>
+
+      <div class="row g-4 mb-5 fu d2">
+        <div class="col-lg-8" th:if="${dashboard.analysis != null}">
+          <div class="toss-card weather-card h-100 mb-0 position-relative"
+               :class="marketSentiment === 'BULL' ? 'weather-bull' : (marketSentiment === 'BEAR' ? 'weather-bear' : 'weather-neutral')">
+
+            <i class="bi position-absolute"
+               :class="marketSentiment === 'BULL' ? 'bi-brightness-high-fill' : (marketSentiment === 'BEAR' ? 'bi-cloud-rain-heavy-fill' : 'bi-cloud-sun-fill')"
+               style="font-size: 12rem; opacity: 0.15; right: -20px; top: -40px; pointer-events: none;"></i>
+
+            <div class="position-relative z-1">
+              <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                  <div class="fw-bold opacity-75 mb-1" style="font-size: 13px;">AI 시장 종합 진단</div>
+                  <h3 class="fw-bold m-0" style="font-size: 26px;" x-text="marketSentimentText"></h3>
+                </div>
+                <div class="text-end">
+                  <div class="fw-bold opacity-75 mb-1" style="font-size: 13px;">시장 과열/침체 지수</div>
+                  <div class="fw-bold fs-4" th:text="${dashboard.analysis.riskScore} + ' / 100'"></div>
+                </div>
+              </div>
+
+              <div class="risk-gauge">
+                <div class="risk-gauge-fill" th:style="'width: ' + ${dashboard.analysis.riskScore} + '%'"></div>
+              </div>
+              <div class="d-flex justify-content-between mt-2 opacity-75 fw-bold" style="font-size: 12px;">
+                <span>안전 (침체)</span>
+                <span>위험 (과열)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="toss-card h-100 mb-0 d-flex flex-column justify-content-center" style="border: 1px solid #e2e8f0;">
+            <div class="d-flex align-items-center gap-2 mb-3">
+              <div style="width: 32px; height: 32px; background: #f2f4f6; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><i class="bi bi-currency-dollar text-primary"></i></div>
+              <h3 class="fw-bold m-0 text-secondary" style="font-size: 14px;">원/달러 환율</h3>
+            </div>
+            <div class="d-flex align-items-end gap-3">
+              <div class="fw-bold" style="font-size: 32px; letter-spacing: -1px; color: #191f28;">
+                <span th:text="${#numbers.formatDecimal(dashboard.usdKrw.data[dashboard.usdKrw.data.size()-1].value, 1, 2)}"></span><span style="font-size: 18px; color: #8b95a1; margin-left: 4px;">원</span>
+              </div>
+            </div>
+            <div class="fw-bold mt-2" style="font-size: 14px;" th:classappend="${dashboard.usdKrw.changeValue > 0 ? 'text-up' : (dashboard.usdKrw.changeValue < 0 ? 'text-down' : 'text-secondary')}">
+              <i th:class="${dashboard.usdKrw.changeValue > 0 ? 'bi bi-arrow-up' : (dashboard.usdKrw.changeValue < 0 ? 'bi bi-arrow-down' : 'bi bi-dash')}"></i>
+              <span th:text="${#numbers.formatDecimal(dashboard.usdKrw.changeValue, 1, 2)} + ' (' + ${#numbers.formatDecimal(dashboard.usdKrw.changeRate, 1, 2)} + '%)'"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="section-title fu d2"><i class="bi bi-activity text-primary"></i>주요 거시 지표</h3>
+      <div class="row g-3 mb-5 fu d2">
+        <template x-for="type in ['SP500', 'NASDAQ', 'DXY', 'VIX', 'US10Y', 'WTI']" :key="type">
+          <div class="col-6 col-md-4 col-lg-2">
+            <div class="indicator-card">
+              <div class="indicator-label" x-text="getDisplayName(type)"></div>
+              <div class="indicator-value" x-text="formatValue(type)"></div>
+              <div class="indicator-change" :class="getChangeColorClass(type)" x-text="formatChange(type)"></div>
+
+              <svg class="position-absolute bottom-0 start-0 w-100" style="height: 40px; z-index: 0; opacity: 0.1;" preserveAspectRatio="none" viewBox="0 0 100 40">
+                <polygon :fill="getSparklineColorHex(type)" :points="getSparklinePolygon(type)"></polygon>
+                <polyline fill="none" stroke-width="2" :stroke="getSparklineColorHex(type)" :points="getSparklinePoints(type)"></polyline>
+              </svg>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <div class="fu d3 mb-5">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h3 class="section-title m-0"><i class="bi bi-pie-chart text-secondary"></i>섹터 자금 흐름</h3>
+          <span class="text-secondary fw-bold" style="font-size: 13px;">ETF 유니버스 등락률 기준</span>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="toss-card h-100" style="border-top: 4px solid var(--toss-red); border-radius: 16px;">
+              <h4 class="fw-bold mb-4" style="font-size: 16px; color: var(--toss-red);"><i class="bi bi-fire me-2"></i>강세 주도 섹터</h4>
+              <div class="sector-list">
+                <template x-for="sector in strongSectors" :key="sector.code">
+                  <a :href="'/stock/analysis?code=' + sector.code" class="sector-item">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="sector-icon icon-strong"><i :class="getSectorIcon(sector.name)"></i></div>
+                      <div>
+                        <div class="fw-bold text-dark" style="font-size: 15px;" x-text="sector.name"></div>
+                        <div class="text-secondary fw-bold" style="font-size: 12px;" x-text="sector.code"></div>
+                      </div>
+                    </div>
+                    <div class="text-end">
+                      <div class="fw-bold text-dark" style="font-size: 15px;" x-text="'$' + sector.currentPrice"></div>
+                      <div class="fw-bold text-up" style="font-size: 13px;" x-text="'+' + sector.changeRate + '%'"></div>
+                    </div>
+                  </a>
+                </template>
+                <div x-show="strongSectors.length === 0" class="text-center py-4 text-secondary fw-bold" style="font-size: 13px;">현재 뚜렷한 강세 섹터가 없습니다.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="toss-card h-100" style="border-top: 4px solid var(--toss-blue); border-radius: 16px;">
+              <h4 class="fw-bold mb-4" style="font-size: 16px; color: var(--toss-blue);"><i class="bi bi-snow2 me-2"></i>약세 소외 섹터</h4>
+              <div class="sector-list">
+                <template x-for="sector in weakSectors" :key="sector.code">
+                  <a :href="'/stock/analysis?code=' + sector.code" class="sector-item">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="sector-icon icon-weak"><i :class="getSectorIcon(sector.name)"></i></div>
+                      <div>
+                        <div class="fw-bold text-dark" style="font-size: 15px;" x-text="sector.name"></div>
+                        <div class="text-secondary fw-bold" style="font-size: 12px;" x-text="sector.code"></div>
+                      </div>
+                    </div>
+                    <div class="text-end">
+                      <div class="fw-bold text-dark" style="font-size: 15px;" x-text="'$' + sector.currentPrice"></div>
+                      <div class="fw-bold text-down" style="font-size: 13px;" x-text="sector.changeRate + '%'"></div>
+                    </div>
+                  </a>
+                </template>
+                <div x-show="weakSectors.length === 0" class="text-center py-4 text-secondary fw-bold" style="font-size: 13px;">현재 뚜렷한 약세 섹터가 없습니다.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="toss-card fu d3">
+        <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+          <h3 class="fw-bold m-0" style="font-size: 17px;">거시 지표 트렌드</h3>
+          <div class="tab-nav mb-0">
+            <button class="tab-btn" :class="activeTab === 'SP500' ? 'active' : ''" @click="changeTab('SP500')">S&P 500</button>
+            <button class="tab-btn" :class="activeTab === 'NASDAQ' ? 'active' : ''" @click="changeTab('NASDAQ')">나스닥</button>
+            <button class="tab-btn" :class="activeTab === 'DXY' ? 'active' : ''" @click="changeTab('DXY')">달러 인덱스</button>
+            <button class="tab-btn" :class="activeTab === 'US10Y' ? 'active' : ''" @click="changeTab('US10Y')">미 국채 10년물</button>
+          </div>
+        </div>
+        <div id="market-chart-container"></div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script th:inline="javascript">
+  // 서버 연결 전 UI 확인용 임시 섹터 데이터 (단순화 됨)
+  const dummySectorData = [
+      { code: 'XLK', name: '기술', currentPrice: 215.30, changeRate: 1.8 },
+      { code: 'XLE', name: '에너지', currentPrice: 92.40, changeRate: 1.2 },
+      { code: 'XLF', name: '금융', currentPrice: 42.10, changeRate: 0.5 },
+      { code: 'XLY', name: '임의소비재', currentPrice: 180.20, changeRate: 0.2 },
+      { code: 'XLP', name: '필수소비재', currentPrice: 75.10, changeRate: -0.4 },
+      { code: 'XLV', name: '헬스케어', currentPrice: 140.50, changeRate: -1.2 },
+      { code: 'XME', name: '금속/광산', currentPrice: 55.60, changeRate: -1.8 },
+      { code: 'XLU', name: '유틸리티', currentPrice: 65.30, changeRate: -2.1 },
+  ];
+
+  document.addEventListener('alpine:init', () => {
+      Alpine.data('marketDashboardApp', () => ({
+
+          // --- Macro & Chart Data ---
+          activeTab: 'SP500', chart: null, areaSeries: null, toolTip: null,
+          allData: {
+              SP500: /*[[${dashboard.sp500}]]*/ {},
+              NASDAQ: /*[[${dashboard.nasdaq}]]*/ {},
+              DXY: /*[[${dashboard.dxy}]]*/ {},
+              VIX: /*[[${dashboard.vix}]]*/ {},
+              US10Y: /*[[${dashboard.us10y}]]*/ {},
+              WTI: /*[[${dashboard.wti}]]*/ {}
+          },
+
+          // --- Sector Data ---
+          sectors: dummySectorData.sort((a, b) => b.changeRate - a.changeRate), // 등락률 순 정렬
+
+          init() {
+              this.$nextTick(() => { this.createChart(); this.updateChartData(); });
+          },
+
+          // --- Computed Properties ---
+          get marketSentiment() {
+              const risk = /*[[${dashboard.analysis != null ? dashboard.analysis.riskScore : 50}]]*/ 50;
+              if (risk >= 65) return 'BULL'; // 리스크 온 (위험자산 선호)
+              if (risk <= 35) return 'BEAR'; // 리스크 오프 (안전자산 선호)
+              return 'NEUTRAL';
+          },
+          get marketSentimentText() {
+              if (this.marketSentiment === 'BULL') return '위험 자산 선호 (Risk-On)';
+              if (this.marketSentiment === 'BEAR') return '안전 자산 선호 (Risk-Off)';
+              return '방향성 탐색 중 (Neutral)';
+          },
+
+          get strongSectors() { return this.sectors.filter(s => s.changeRate > 0.5).slice(0, 4); }, // +0.5% 이상 상위 4개
+          get weakSectors() { return this.sectors.filter(s => s.changeRate < -0.5).reverse().slice(0, 4); }, // -0.5% 이하 하위 4개 (가장 많이 떨어진 순)
+
+          // --- UI Helpers ---
+          getSectorIcon(name) {
+              const map = { '기술': 'bi-cpu', '에너지': 'bi-lightning-charge', '금융': 'bi-bank', '헬스케어': 'bi-heart-pulse', '금속/광산': 'bi-boxes', '임의소비재': 'bi-cart', '필수소비재': 'bi-basket', '유틸리티': 'bi-plug' };
+              return map[name] || 'bi-pie-chart';
+          },
+          getDisplayName(t) { return {SP500:'S&P 500', NASDAQ:'나스닥', DXY:'달러 인덱스', VIX:'VIX', US10Y:'미 국채 10년물', WTI:'WTI 유가'}[t]; },
+          formatValue(t) {
+              const v = this.allData[t]?.data?.slice(-1)[0]?.value;
+              if (!v) return '-';
+              if (t === 'US10Y') return parseFloat(v).toFixed(2) + '%';
+              if (t === 'WTI') return '$' + parseFloat(v).toFixed(1);
+              return ['SP500','NASDAQ'].includes(t) ? Math.floor(v).toLocaleString() : parseFloat(v).toFixed(2);
+          },
+          getChangeColorClass(t) {
+              const cv = this.allData[t]?.changeValue;
+              // VIX, 국채, 달러 등락의 해석은 자산군마다 다르지만 시각적 통일성을 위해 수치 기준으로만 색상 부여
+              return cv > 0 ? 'text-up' : (cv < 0 ? 'text-down' : 'text-secondary');
+          },
+          formatChange(t) {
+              const cv = this.allData[t]?.changeValue, cr = this.allData[t]?.changeRate;
+              if (cv === undefined) return '-';
+              const sign = cv > 0 ? '+' : '';
+              const valText = t === 'US10Y' ? `${sign}${parseFloat(cv).toFixed(2)}%p` : `${sign}${parseFloat(cv).toFixed(2)}`;
+              return `${valText} (${sign}${parseFloat(cr).toFixed(2)}%)`;
+          },
+
+          // --- Chart & Sparkline Logic ---
+          createChart() {
+              const container = document.getElementById('market-chart-container');
+              this.chart = LightweightCharts.createChart(container, {
+                  layout: { background: { color: 'transparent' }, textColor: '#8b95a1', fontFamily: 'Pretendard' },
+                  grid: { vertLines: { visible: false }, horzLines: { color: '#f2f4f6' } },
+                  timeScale: { borderVisible: false },
+                  crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
+              });
+              this.areaSeries = this.chart.addAreaSeries({ lineColor: '#3182f6', topColor: 'rgba(49, 130, 246, 0.2)', bottomColor: 'rgba(49, 130, 246, 0)', lineWidth: 2 });
+
+              this.toolTip = document.createElement('div');
+              this.toolTip.className = 'lw-tooltip';
+              container.appendChild(this.toolTip);
+
+              this.chart.subscribeCrosshairMove((param) => {
+                  if (!param.point || !param.time || param.point.x < 0 || param.point.x > container.clientWidth || param.point.y < 0 || param.point.y > container.clientHeight) {
+                      this.toolTip.style.display = 'none';
+                  } else {
+                      const data = param.seriesData.get(this.areaSeries);
+                      const price = data.value !== undefined ? data.value : data.close;
+                      this.toolTip.style.display = 'block';
+                      this.toolTip.innerHTML = `<div style="color:#8b95a1;font-size:12px;margin-bottom:4px;">${param.time}</div><div style="font-size:16px;font-weight:700;color:#191f28;">${price.toLocaleString(undefined, {minimumFractionDigits:2})}</div>`;
+
+                      let left = param.point.x + 15, top = param.point.y - 15;
+                      if (left + 120 > container.clientWidth) left = param.point.x - 135;
+                      if (top + 60 > container.clientHeight) top = container.clientHeight - 60;
+                      this.toolTip.style.left = left + 'px';
+                      this.toolTip.style.top = top + 'px';
+                  }
+              });
+          },
+          updateChartData() {
+              const list = this.allData[this.activeTab]?.data || [];
+              const formatted = list.map(d => ({ time: String(d.date), value: parseFloat(d.value) })).sort((a,b) => a.time.localeCompare(b.time));
+              this.areaSeries.setData(formatted);
+              this.chart.timeScale().fitContent();
+          },
+          changeTab(t) { this.activeTab = t; this.updateChartData(); this.toolTip.style.display = 'none'; },
+          getSparklineColorHex(t) { return this.allData[t]?.changeValue > 0 ? '#f04452' : '#3182f6'; },
+          getSparklinePoints(t) {
+              const dataList = this.allData[t]?.data;
+              if (!dataList || dataList.length === 0) return '';
+              const recentData = dataList.slice(-20), values = recentData.map(d => parseFloat(d.value));
+              const min = Math.min(...values), max = Math.max(...values), range = (max - min) || 1;
+              return values.map((val, idx) => `${(idx / (values.length - 1)) * 100},${40 - ((val - min) / range) * 35}`).join(' ');
+          },
+          getSparklinePolygon(t) {
+              const points = this.getSparklinePoints(t);
+              return points ? `${points} 100,40 0,40` : '';
+          }
+      }));
+  });
+</script>
+</body>
+</html>
