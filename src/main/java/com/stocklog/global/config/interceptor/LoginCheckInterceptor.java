@@ -1,6 +1,6 @@
 package com.stocklog.global.config.interceptor;
 
-import com.stocklog.domain.member.entity.session.SessionConst;
+import com.stocklog.modules.member.entity.session.SessionConst;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;

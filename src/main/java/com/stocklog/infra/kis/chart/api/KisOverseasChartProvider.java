@@ -1,11 +1,11 @@
 package com.stocklog.infra.kis.chart.api;
 
-import com.stocklog.domain.stock.chart.dto.request.ChartRequest;
-import com.stocklog.domain.stock.chart.dto.internal.StockChartDto;
-import com.stocklog.domain.stock.chart.dto.response.StockChartResponse;
-import com.stocklog.domain.stock.chart.StockChartProvider;
-import com.stocklog.domain.stock.common.type.MarketType;
-import com.stocklog.domain.stock.common.type.Period;
+import com.stocklog.modules.stock.chart.dto.ChartRequest;
+import com.stocklog.modules.stock.chart.dto.StockChartDto;
+import com.stocklog.modules.stock.chart.dto.StockChartResponse;
+import com.stocklog.modules.stock.chart.StockChartProvider;
+import com.stocklog.modules.stock.domain.type.MarketType;
+import com.stocklog.modules.stock.domain.type.Period;
 import com.stocklog.infra.kis.chart.dto.KisOverseasChartOutput1;
 import com.stocklog.infra.kis.chart.dto.KisOverseasChartOutput2;
 import com.stocklog.infra.kis.common.KisResponseV2;
@@ -37,7 +37,6 @@ public class KisOverseasChartProvider implements StockChartProvider {
 
     @Override
     public StockChartResponse fetchInfo(ChartRequest request, Period period) {
-        log.info("KIS 해외 fetchInfo Period: {}, Code: {}", period.name() ,request.code());
         try {
             List<KisOverseasChartOutput2> output = callApi(request,period);
             if (output == null) return StockChartResponse.createFallback();
@@ -47,7 +46,7 @@ public class KisOverseasChartProvider implements StockChartProvider {
                     .chartDtoList(convertChart(output, period))
                     .build();
         } catch (Exception e) {
-            log.info("해외 종목 정보 조회 중 오류: {}",e.getMessage());
+            log.error("해외 종목 정보 조회 중 오류: {}",e.getMessage());
             return StockChartResponse.createFallback();
         }
     }
@@ -106,6 +105,7 @@ public class KisOverseasChartProvider implements StockChartProvider {
             case DAY -> "0";
             case WEEK -> "1";
             case MONTH -> "2";
+            default -> "";
         };
     }
 

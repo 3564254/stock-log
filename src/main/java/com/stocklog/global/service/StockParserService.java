@@ -1,10 +1,10 @@
 package com.stocklog.global.service;
 
 import com.opencsv.CSVReader; // 단순 split보다 훨씬 안전합니다.
-import com.stocklog.domain.stock.common.StockMasterDto;
-import com.stocklog.domain.stock.common.type.Currency;
-import com.stocklog.domain.stock.common.type.MarketType;
-import com.stocklog.domain.stock.common.type.Nation;
+import com.stocklog.modules.stock.application.response.StockMasterDto;
+import com.stocklog.modules.stock.domain.type.Currency;
+import com.stocklog.modules.stock.domain.type.MarketType;
+import com.stocklog.modules.stock.domain.type.Nation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -47,7 +47,7 @@ public class StockParserService {
 
                     // 필수 값이 null인 경우 로깅 (디버깅용)
                     if (dto.marketType() == null) {
-                        log.info("종목 {} : MarketType 파싱 실패 (입력값: {})", cols[2], cols[3]);
+                        log.error("종목 {} : MarketType 파싱 실패 (입력값: {})", cols[2], cols[3]);
                     }
 
                     list.add(dto);

@@ -1,9 +1,9 @@
 package com.stocklog.infra.alpha.valutaion.api;
 
-import com.stocklog.domain.stock.common.StockRequest;
-import com.stocklog.domain.stock.common.type.MarketType;
-import com.stocklog.domain.stock.valutation.StockValuationProvider;
-import com.stocklog.domain.stock.valutation.dto.response.ValuationResponse;
+import com.stocklog.modules.stock.application.request.StockRequest;
+import com.stocklog.modules.stock.domain.type.MarketType;
+import com.stocklog.modules.stock.valutation.StockValuationProvider;
+import com.stocklog.modules.stock.valutation.dto.ValuationResponse;
 import com.stocklog.infra.alpha.valutaion.config.AlphaProperties;
 import com.stocklog.infra.alpha.valutaion.dto.AlphaValuationOutput;
 import lombok.extern.slf4j.Slf4j;

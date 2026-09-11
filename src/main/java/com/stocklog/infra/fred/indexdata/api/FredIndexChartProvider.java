@@ -1,9 +1,9 @@
 package com.stocklog.infra.fred.indexdata.api;
 
-import com.stocklog.domain.marketdata.index.dto.IndexDto;
-import com.stocklog.domain.marketdata.index.dto.vo.IndexChartData;
-import com.stocklog.domain.marketdata.index.provider.IndexChartProvider;
-import com.stocklog.domain.marketdata.index.type.IndexType;
+import com.stocklog.modules.market.index.dto.IndexDto;
+import com.stocklog.modules.market.index.dto.vo.IndexChartData;
+import com.stocklog.modules.market.index.provider.IndexChartProvider;
+import com.stocklog.modules.market.index.type.IndexType;
 import com.stocklog.infra.fred.config.FredProperties;
 import com.stocklog.infra.fred.indexdata.dto.IndexChartOutput1;
 import lombok.extern.slf4j.Slf4j;
@@ -31,8 +31,6 @@ public class FredIndexChartProvider implements IndexChartProvider {
 
     @Override
     public IndexDto fetchIndexResponse(IndexType type) {
-        log.info("fetchIndexResponse: [{}]", type.getDisplayName());
-
         try {
             IndexChartOutput1 output = callApi(type);
 
@@ -63,8 +61,6 @@ public class FredIndexChartProvider implements IndexChartProvider {
     private IndexChartOutput1 callApi(IndexType type) {
         LocalDate end = LocalDate.now();
         LocalDate start = end.minusYears(1);
-
-        log.info("FRED 데이터 요청 기간: {} ~ {}", start, end);
 
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder

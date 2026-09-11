@@ -4,38 +4,37 @@
     <style>
         .sidebar-main {
             width: var(--sidebar-width); background: white; height: 100vh; position: fixed;
-            top: 0; left: 0; border-right: 1px solid #f2f4f6; display: flex;
+            top: 0; left: 0; border-right: 1px solid #e5e8eb; display: flex;
             flex-direction: column; z-index: 1000;
         }
         .sidebar-logo {
             padding: 32px 24px; display: flex; align-items: center;
-            text-decoration: none; color: #191f28; transition: opacity 0.2s ease;
+            text-decoration: none; color: #191f28; transition: opacity 0.15s ease;
         }
         .sidebar-logo:hover { opacity: 0.8; }
         .menu-item {
             display: flex; align-items: center; padding: 14px 20px;
             color: #4e5968 !important; text-decoration: none !important;
-            font-size: 1.05rem; font-weight: 600; border-radius: 16px; margin: 4px 16px;
-            transition: background-color 0.2s ease, color 0.2s ease;
+            font-size: 15px; font-weight: 600; border-radius: 12px; margin: 4px 16px;
+            transition: background-color 0.15s ease, color 0.15s ease;
         }
-        .menu-item:hover { background-color: var(--toss-gray-bg, #f2f4f6); color: #191f28 !important; }
+        .menu-item:hover { background-color: #f2f4f6; color: #191f28 !important; }
 
-        /* 현재 선택된 메뉴 스타일 (연한 파란색 배경 + 파란 텍스트) */
         .menu-item.active {
-            background-color: rgba(49, 130, 246, 0.1);
+            background-color: #f0f6ff;
             color: var(--toss-blue, #3182f6) !important;
             font-weight: 700;
         }
 
-        .menu-item i { font-size: 1.3rem; margin-right: 14px; width: 24px; text-align: center; }
+        .menu-item i { font-size: 18px; margin-right: 14px; width: 24px; text-align: center; }
         .nav-text { display: block; }
     </style>
 
     <a th:href="@{/}" class="sidebar-logo">
-        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background-color: var(--toss-blue, #3182f6); margin-right: 12px;">
-            <i class="bi bi-bar-chart-fill text-white fs-6"></i>
+        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background-color: var(--toss-blue, #3182f6); margin-right: 10px;">
+            <i class="bi bi-bar-chart-fill text-white" style="font-size: 14px;"></i>
         </div>
-        <span class="fw-bold fs-4 letter-spacing-tight" style="letter-spacing: -0.5px;">StockLog</span>
+        <span class="fw-bold text-dark" style="font-size: 20px; letter-spacing: -0.5px;">StockLog</span>
     </a>
 
     <nav class="flex-grow-1 mt-2">
@@ -46,7 +45,7 @@
 
         <a th:href="@{/market}" class="menu-item" th:classappend="${activeMenu == 'market'} ? 'active' : ''">
             <i class="bi bi-graph-up"></i>
-            <span class="nav-text">시장 대시보드</span>
+            <span class="nav-text">시장 동향·뉴스</span>
         </a>
 
         <a th:href="@{/portfolio}" class="menu-item" th:classappend="${activeMenu == 'portfolio'} ? 'active' : ''">
@@ -57,10 +56,7 @@
             <i class="bi bi-journal-text"></i>
             <span class="nav-text">매매 기록</span>
         </a>
-        <a th:href="@{/news}" class="menu-item" th:classappend="${activeMenu == 'news'} ? 'active' : ''">
-            <i class="bi bi-globe"></i>
-            <span class="nav-text">시황·뉴스</span>
-        </a>
+
         <a th:href="@{/community}" class="menu-item" th:classappend="${activeMenu == 'community'} ? 'active' : ''">
             <i class="bi" th:classappend="${activeMenu == 'community'} ? 'bi-chat-dots-fill' : 'bi-chat-dots'"></i>
             <span class="nav-text">커뮤니티</span>

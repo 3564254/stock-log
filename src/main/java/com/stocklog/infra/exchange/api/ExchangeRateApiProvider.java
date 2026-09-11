@@ -1,17 +1,15 @@
 package com.stocklog.infra.exchange.api;
 
-import com.stocklog.domain.marketdata.exchange.dto.ExchangeRateInfo;
-import com.stocklog.domain.marketdata.exchange.provider.ExchangeRateProvider;
+import com.stocklog.modules.market.exchange.dto.ExchangeRateInfo;
+import com.stocklog.modules.market.exchange.provider.ExchangeRateProvider;
 import com.stocklog.infra.exchange.config.ExchangeProperties;
 import com.stocklog.infra.exchange.dto.ExchangeRateOutput;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -32,7 +30,7 @@ public class ExchangeRateApiProvider implements ExchangeRateProvider {
             BigDecimal usdRate = response.getConversionRates().get("KRW");
 
             return ExchangeRateInfo.builder()
-                    .currencyCode("KRW")
+                    .baseCurrency("KRW")
                     .baseRate(usdRate)
                     .build();
         }

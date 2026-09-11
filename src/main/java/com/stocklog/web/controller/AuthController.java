@@ -1,15 +1,13 @@
 package com.stocklog.web.controller;
 
-import com.stocklog.domain.member.dto.request.*;
-import com.stocklog.domain.member.dto.response.MemberDetailResponse;
-import com.stocklog.domain.member.dto.response.MemberResponse;
+import com.stocklog.modules.member.dto.request.*;
+import com.stocklog.modules.member.dto.response.MemberDetailResponse;
+import com.stocklog.modules.member.dto.response.MemberResponse;
+import com.stocklog.modules.member.service.MemberFacadeService;
 import com.stocklog.global.annotation.LoginUser;
-import com.stocklog.domain.member.entity.session.SessionConst;
-import com.stocklog.domain.member.service.AuthService;
-import com.stocklog.domain.member.service.MemberService;
-import com.stocklog.global.error.member.InvalidPasswordException;
-import com.stocklog.global.error.member.LoginFailureException;
-import com.stocklog.global.error.member.SignUpFailureException;
+import com.stocklog.modules.member.entity.session.SessionConst;
+import com.stocklog.global.error.BusinessException;
+import com.stocklog.global.error.ErrorCode;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/auth")
 public class AuthController {
-    private final AuthService authService;
-    private final MemberService memberService;
+    private final MemberFacadeService memberService;
 
     @GetMapping("/login")
     public String loginForm(Model model) {
@@ -44,11 +41,11 @@ public class AuthController {
             return "auth/login";
         }
         try {
-            MemberResponse member = authService.login(loginRequest);
+            MemberResponse member = memberService.login(loginRequest);
             session.setAttribute(SessionConst.LOGIN_MEMBER, member);
             return "redirect:" + redirectURL;
-        } catch (LoginFailureException e) {
-            model.addAttribute("errorMessage", e.getMessage());
+        } catch (BusinessException e) {
+            bindingResult.reject("loginFail", e.getMessage());
             return "auth/login";
         }
     }
@@ -68,12 +65,13 @@ public class AuthController {
             return "auth/signup";
         }
         try {
-            authService.signUp(signupRequest);
-        } catch (InvalidPasswordException e) {
-            bindingResult.rejectValue("passwordConfirm", "passwordMismatch", e.getMessage());
-            return "auth/signup";
-        } catch (SignUpFailureException e) {
-            model.addAttribute("errorMessage", e.getMessage());
+            memberService.signUp(signupRequest);
+        } catch (BusinessException e) {
+            if (e.getErrorCode() == ErrorCode.DUPLICATE_LOGIN_ID || e.getErrorCode() == ErrorCode.DUPLICATE_EMAIL) {
+                bindingResult.reject("signupFail", e.getMessage());
+            } else {
+                bindingResult.rejectValue("passwordConfirm", "passwordMismatch", e.getMessage());
+            }
             return "auth/signup";
         }
         return "redirect:/auth/login";
@@ -105,7 +103,15 @@ public class AuthController {
             model.addAttribute("passwordRequest", new PasswordRequest());
             return "auth/info";
         }
-        memberService.updateUsername(loginMember.getId(), usernameRequest.getUsername());
+        try {
+            memberService.updateUsername(loginMember.getId(), usernameRequest.getUsername());
+        } catch (BusinessException e) {
+            bindingResult.rejectValue("username", "duplicateUsername", e.getMessage());
+            model.addAttribute("member", memberService.getDetailInfo(loginMember.getId()));
+            model.addAttribute("openUsernameModal", true);
+            model.addAttribute("passwordRequest", new PasswordRequest());
+            return "auth/info";
+        }
         return "redirect:/auth/info";
     }
 
@@ -118,11 +124,12 @@ public class AuthController {
             model.addAttribute("member", memberService.getDetailInfo(loginMember.getId()));
             model.addAttribute("openPasswordModal", true);
             model.addAttribute("usernameRequest", new UsernameRequest());
+            return "auth/info";
         }
         try {
-            authService.updatePassword(loginMember.getId(), passwordRequest);
-        } catch (InvalidPasswordException e) {
-            model.addAttribute("errorMessage", e.getMessage());
+            memberService.updatePassword(loginMember.getId(), passwordRequest);
+        } catch (BusinessException e) {
+            bindingResult.rejectValue("oldPassword", "invalidPassword", e.getMessage());
             model.addAttribute("member", memberService.getDetailInfo(loginMember.getId()));
             model.addAttribute("openPasswordModal", true);
             model.addAttribute("usernameRequest", new UsernameRequest());
@@ -134,8 +141,8 @@ public class AuthController {
     @PostMapping("/info/withdraw")
     public String deleteUser(@LoginUser MemberResponse loginMember,
                              HttpSession session) {
-        if (session != null) session.invalidate();
         memberService.deleteById(loginMember.getId());
+        if (session != null) session.invalidate();
         return "redirect:/";
     }
 }

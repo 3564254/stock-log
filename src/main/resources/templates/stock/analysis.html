@@ -10,147 +10,184 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
 
     <style>
-        :root { --toss-blue: #3182f6; --toss-red: #f04452; --toss-green: #05c072; --toss-orange: #f5a623; --toss-gray-bg: #f2f4f6; --sidebar-width: 250px; }
-        body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: #191f28; }
+        :root {
+            --toss-blue: #3182f6;
+            --toss-red: #f04452;
+            --toss-green: #05c072;
+            --toss-warning: #f5a623;
+            --toss-gray-bg: #f2f4f6;
+            --text-dark: #191f28;
+            --text-secondary: #4e5968;
+            --text-muted: #8b95a1;
+            --sidebar-width: 250px;
+        }
+
+        body {
+            background-color: var(--toss-gray-bg);
+            font-family: 'Pretendard', sans-serif;
+            overflow-x: hidden;
+            margin: 0;
+            color: var(--text-dark);
+            letter-spacing: -0.015em;
+        }
         [x-cloak] { display: none !important; }
+
         .layout-wrapper { display: flex; min-height: 100vh; }
         .main-content { flex-grow: 1; margin-left: var(--sidebar-width); padding: 0 60px 80px; transition: 0.3s; }
         .main-content.expanded { margin-left: 80px; }
         .content-container { width: 100%; max-width: 1100px; margin: 0 auto; padding-top: 32px; }
 
-        /* ── 카드 ── */
-        .toss-card { background: white; border-radius: 24px; padding: 28px 32px; box-shadow: 0 1px 8px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.03); margin-bottom: 20px; border: none; }
-        .toss-card-title { font-size: 15px; font-weight: 800; color: #191f28; letter-spacing: -0.2px; margin-bottom: 20px; }
+        /* ── 프리미엄 카드 ── */
+        .toss-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: none;
+            margin-bottom: 24px;
+            border: 1px solid #e5e8eb;
+        }
+        .card-header-title { font-size: 18px; font-weight: 700; color: var(--text-dark); margin-bottom: 20px; }
 
-        /* ── 프로그레스 ── */
-        .progress-bar-custom { height: 6px; border-radius: 99px; background: #f2f4f6; overflow: hidden; }
-        .progress-fill { height: 100%; border-radius: 99px; transition: width 1.3s cubic-bezier(0.22,1,0.36,1); }
+        /* ── 공통 프로그레스 & 배너 ── */
+        .progress-bar-custom { height: 8px; border-radius: 99px; background: #f2f4f6; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 99px; transition: width 1s ease; }
+        .insight-box { background: #f9fafb; border-radius: 12px; padding: 20px; font-size: 14px; color: var(--text-secondary); line-height: 1.6; border: 1px solid #e5e8eb; }
+        .etf-banner { display: flex; align-items: flex-start; gap: 12px; padding: 16px 20px; border-radius: 12px; background: #f0f6ff; border: 1px solid #dbeafe; margin-bottom: 24px; }
+        .etf-banner i { color: var(--toss-blue); flex-shrink: 0; margin-top: 2px; font-size: 18px; }
+        .etf-banner span { font-size: 14px; font-weight: 600; color: #1b64da; line-height: 1.6; }
+        .back-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-muted); cursor: pointer; text-decoration: none; padding: 8px 12px; border-radius: 8px; transition: all 0.15s; margin-left: -12px; }
+        .back-btn:hover { background: #f2f4f6; color: var(--text-dark); }
 
-        /* ── 인사이트 박스 ── */
-        .insight-box { background: #f8fafc; border-radius: 14px; padding: 18px 20px; font-size: 14px; color: #4e5968; line-height: 1.65; border: 1px solid #edf2f7; }
-
-        /* ── 뒤로가기 ── */
-        .back-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 700; color: #8b95a1; cursor: pointer; text-decoration: none; padding: 7px 12px; border-radius: 10px; transition: background 0.15s, color 0.15s; margin-left: -12px; }
-        .back-btn:hover { background: white; color: #191f28; }
-
-        /* ── ETF 배너 ── */
-        .etf-banner { display: flex; align-items: flex-start; gap: 10px; padding: 14px 18px; border-radius: 14px; background: #eef5ff; border: 1px solid #b5d4f4; margin-bottom: 20px; }
-        .etf-banner i { color: var(--toss-blue); flex-shrink: 0; margin-top: 1px; }
-        .etf-banner span { font-size: 13.5px; font-weight: 700; color: #1a5cb8; line-height: 1.6; }
-
-        /* ── 링 차트 ── */
-        .ring-wrap { position: relative; width: 200px; height: 200px; flex-shrink: 0; }
+        /* ── 링 차트 & 스킬 트리 (종합 점수용) ── */
+        .ring-wrap { position: relative; width: 180px; height: 180px; flex-shrink: 0; }
         .ring-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
-        .ring-score { font-size: 2.8rem; font-weight: 800; letter-spacing: -2px; line-height: 1; }
-        .ring-unit  { font-size: 0.75rem; font-weight: 700; color: #b0b8c1; margin-top: 4px; }
-        .ring-grade { font-size: 1rem; font-weight: 900; margin-top: 5px; }
+        .ring-score { font-size: 3rem; font-weight: 800; letter-spacing: -2px; line-height: 1; }
+        .ring-unit  { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-top: 6px; }
+        .ring-grade { font-size: 15px; font-weight: 700; margin-top: 6px; }
 
-        /* ── 축 행 ── */
-        .axis-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f2f4f6; }
+        .axis-row { display: flex; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 1px solid #f2f4f6; }
         .axis-row:last-child { border-bottom: none; }
-        .axis-dot  { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-        .axis-name-wrap { min-width: 80px; }
-        .axis-name { font-size: 13px; font-weight: 800; color: #191f28; }
-        .axis-sub  { font-size: 10.5px; color: #a0a8b2; font-weight: 600; margin-top: 2px; }
-        .axis-bar-bg { flex: 1; height: 5px; background: #f2f4f6; border-radius: 99px; overflow: hidden; }
-        .axis-bar-fill { height: 100%; border-radius: 99px; transition: width 1.3s cubic-bezier(0.22,1,0.36,1); }
-        .axis-num  { font-size: 14px; font-weight: 900; color: #191f28; min-width: 28px; text-align: right; }
-        .axis-max  { font-size: 11px; color: #c4c9d0; }
+        .axis-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .axis-name-wrap { min-width: 90px; }
+        .axis-name { font-size: 14px; font-weight: 700; color: var(--text-dark); }
+        .axis-sub  { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-top: 2px; }
+        .axis-bar-bg { flex: 1; height: 6px; background: #f2f4f6; border-radius: 99px; overflow: hidden; }
+        .axis-bar-fill { height: 100%; border-radius: 99px; transition: width 1s ease; }
+        .axis-num  { font-size: 15px; font-weight: 700; color: var(--text-dark); min-width: 32px; text-align: right; }
+        .axis-max  { font-size: 12px; color: var(--text-muted); font-weight: 500; }
 
-        /* ── 탭 ── */
-        .tab-nav { display: flex; gap: 4px; background: #f2f4f6; border-radius: 14px; padding: 6px; margin-bottom: 24px; }
-        .tab-btn { flex: 1; text-align: center; font-size: 12.5px; font-weight: 700; padding: 10px 4px; border-radius: 10px; color: #8b95a1; cursor: pointer; transition: all 0.15s; border: none; background: none; line-height: 1.4; }
-        .tab-btn.active { background: white; color: #191f28; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        .tab-score { font-size: 10.5px; margin-top: 2px; }
+        /* ── 탭 및 시그널 카드 ── */
+        .tab-nav { display: flex; gap: 6px; background: #f2f4f6; border-radius: 12px; padding: 4px; margin-bottom: 24px; }
+        .tab-btn { flex: 1; text-align: center; font-size: 14px; font-weight: 600; padding: 10px 6px; border-radius: 8px; color: var(--text-muted); cursor: pointer; transition: all 0.15s; border: none; background: none; }
+        .tab-btn.active { background: white; color: var(--text-dark); box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
 
-        /* ── 탭 인포 배너 ── */
-        .tab-info { display: flex; align-items: flex-start; gap: 10px; padding: 14px 18px; border-radius: 12px; margin-bottom: 24px; }
-        .tab-info i { flex-shrink: 0; margin-top: 1px; }
-        .tab-info span { font-size: 13px; font-weight: 600; line-height: 1.65; }
-
-        /* ── 시그널 카드 (전체 탭 그리드) ── */
-        .signal-card { padding: 18px 20px; border-radius: 16px; height: 100%; display: flex; flex-direction: column; gap: 8px; transition: box-shadow 0.15s, transform 0.15s; cursor: default; }
-        .signal-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); transform: translateY(-1px); }
-        .signal-card.normal { background: #f8fafc; border: 1px solid #f0f4f8; }
-        .signal-card.warn   { background: rgba(240,68,82,0.025); border: 1px solid rgba(240,68,82,0.1); }
+        .signal-card { padding: 20px; border-radius: 12px; height: 100%; display: flex; flex-direction: column; gap: 8px; transition: background 0.15s; background: #f9fafb; border: 1px solid #e5e8eb; }
+        .signal-card:hover { background: #f2f4f6; }
+        .signal-card.warn   { background: #fff4f4; border: 1px solid #ffe5e5; }
         .signal-card-label { display: flex; align-items: center; gap: 8px; }
         .signal-card-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-        .signal-card-dot.warn { background: var(--toss-red); }
-        .signal-card-dot.normal { background: #c4c9d0; }
+        .signal-name { font-size: 15px; font-weight: 700; color: var(--text-dark); line-height: 1.4; word-break: keep-all; }
+        .signal-desc { font-size: 13px; font-weight: 500; color: var(--text-muted); line-height: 1.5; word-break: keep-all; }
 
-        /* ── 시그널 리스트 (탭 내부) ── */
-        .signal-item { display: flex; gap: 14px; padding: 16px 0; border-bottom: 1px solid #f2f4f6; align-items: flex-start; }
-        .signal-item:last-child { border-bottom: none; padding-bottom: 0; }
-        .signal-item-bar { width: 3px; border-radius: 2px; flex-shrink: 0; align-self: stretch; min-height: 18px; }
-        .signal-item-bar.warn { background: var(--toss-red); }
-        .signal-item-bar.normal { background: #e2e8f0; }
-        .signal-name { font-size: 14px; font-weight: 700; color: #333d4b; margin-bottom: 6px; line-height: 1.5; word-break: keep-all; letter-spacing: -0.01em; }
-        .signal-name.warn { color: var(--toss-red); }
-        .signal-desc { font-size: 13.5px; font-weight: 500; color: #8b95a1; line-height: 1.7; word-break: keep-all; letter-spacing: -0.01em; }
+        /* ── 재무 및 미니 데이터 셀 (fin-cell) ── */
+        .fin-cell { background: #f9fafb; border: 1px solid #e5e8eb; border-radius: 12px; padding: 18px; transition: background 0.15s; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+        .fin-cell:hover { background: #f2f4f6; }
+        .fin-cell-label { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
+        .fin-cell-value { font-size: 20px; font-weight: 700; color: var(--text-dark); line-height: 1; }
+        .fin-cell-unit  { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-left: 2px; }
+        .fin-cell.blue-accent { background: #f0f6ff; border-color: #dbeafe; }
+        .fin-cell.blue-accent .fin-cell-value { color: #1b64da; }
+        .fin-cell.red-accent  { background: #fff4f4; border-color: #ffe5e5; }
+        .fin-cell.red-accent  .fin-cell-value { color: #d63a48; }
 
-        /* ── 경고 배너 ── */
-        .warn-banner { padding: 14px 18px; border-radius: 14px; background: rgba(240,68,82,0.06); border: 1px solid rgba(240,68,82,0.15); display: flex; align-items: flex-start; gap: 10px; }
-        .warn-banner i { color: var(--toss-red); flex-shrink: 0; margin-top: 1px; }
-        .warn-banner span { font-size: 13.5px; font-weight: 700; color: var(--toss-red); line-height: 1.6; }
+        /* ── 공통 섹션 헤더 ── */
+        .section-header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+        .section-header-bar { width: 4px; height: 16px; border-radius: 4px; flex-shrink: 0; }
+        .section-header-title { font-size: 15px; font-weight: 700; color: var(--text-dark); }
 
-        /* ── 면책 ── */
-        .disclaimer { font-size: 12px; font-weight: 600; color: #c4c9d0; text-align: center; line-height: 1.8; padding-bottom: 12px; }
+        /* ── 매매 타점 박스 (분할 매수/익절) ── */
+        .entry-box { padding: 24px; border-radius: 16px; height: 100%; display: flex; flex-direction: column; justify-content: space-between;}
+        .entry-box.blue { background: #f0f6ff; border: 1px solid #dbeafe; }
+        .entry-box.red { background: #fff4f4; border: 1px solid #ffe5e5; }
+        .entry-box-title { font-size: 15px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+        .entry-point { text-align: center; flex-grow: 1; }
+        .entry-point-label { font-size: 12px; color: var(--text-muted); font-weight: 600; margin-bottom: 6px; }
+        .entry-point-value { font-size: 18px; font-weight: 800; }
+        .entry-divider { width: 1px; height: 36px; background: rgba(0,0,0,0.06); margin: 0 12px; }
 
-        /* ── 애니메이션 ── */
-        @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
-        .fu { animation: fadeUp 0.42s cubic-bezier(0.22,1,0.36,1) both; }
-        .d1 { animation-delay: 0.04s; } .d2 { animation-delay: 0.10s; }
-        .d3 { animation-delay: 0.18s; } .d4 { animation-delay: 0.25s; }
-        .d5 { animation-delay: 0.32s; }
+        /* =========================================================
+           ✨ 고급 차트 분석 스타일
+           ========================================================= */
+        .mc-box { background: #f9fafb; border-radius: 16px; padding: 20px 24px; margin-bottom: 16px; border: 1px solid #e5e8eb; }
+        .mc-box.premium { background: #f0f6ff; border: 1px solid #dbeafe; }
+        .mc-header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+        .mc-header-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .mc-header-title { font-size: 15px; font-weight: 700; color: #191f28; }
 
-        /* ── AI 코멘트 ── */
-        .ai-comment-box { white-space: pre-line; line-height: 1.8; font-size: 14.5px; color: #333d4b; font-weight: 500; letter-spacing: -0.01em; }
+        .mc-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f2f4f6; }
+        .mc-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .mc-row:first-child { padding-top: 0; }
 
-        /* ── 타이밍 배지 ── */
-        .timing-badge { font-size: 12px; padding: 6px 12px; border-radius: 10px; font-weight: 700; display: inline-block; margin-bottom: 6px; white-space: normal; word-break: keep-all; line-height: 1.5; }
-        .bg-red-soft  { background: rgba(240,68,82,0.07);  color: #d63a48; }
-        .bg-blue-soft { background: rgba(49,130,246,0.10); color: #1e6fd9; }
-        .bg-gray-soft { background: rgba(139,149,161,0.10); color: #8b95a1; }
-        .text-up   { color: var(--toss-red)  !important; }
-        .text-down { color: var(--toss-blue) !important; }
+        .mc-label-wrap { display: flex; flex-direction: column; gap: 2px; }
+        .mc-label { font-size: 14px; font-weight: 700; color: #191f28; }
+        .mc-desc { font-size: 12px; font-weight: 500; color: #8b95a1; }
 
-        /* ── 빈 상태 ── */
+        .mc-value-wrap { display: flex; align-items: center; gap: 10px; }
+        .mc-value { font-size: 16px; font-weight: 800; color: #191f28; text-align: right; }
+        .mc-badge { font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 6px; white-space: nowrap; }
+
+        /* 텍스트 & 배경 컬러 포인트 */
+        .text-up { color: #f04452 !important; }
+        .text-down { color: #3182f6 !important; }
+        .text-neutral { color: #8b95a1 !important; }
+        .bg-up { background: rgba(240,68,82,0.08); color: #d63a48; }
+        .bg-down { background: rgba(49,130,246,0.08); color: #1e6fd9; }
+        .bg-neutral { background: #f2f4f6; color: #6b7684; }
+
+        /* 타이밍/상태 배지 공통 */
+        .timing-badge { font-size: 12px; padding: 6px 12px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; margin-bottom: 6px; white-space: normal; word-break: keep-all; line-height: 1.4; }
+        .bg-red-soft  { background: #fff4f4; color: #be123c; }
+        .bg-blue-soft { background: #f0f6ff; color: #1d4ed8; }
+        .bg-gray-soft { background: #f3f4f6; color: var(--text-secondary); }
+
+        /* 피벗 하이라이트 전용 */
+        .mc-pivot-res { color: #d63a48; }
+        .mc-pivot-sup { color: #1e6fd9; }
+        .mc-pivot-pp { font-size: 20px; color: #191f28; }
+
+        /* ── 애니메이션 & 기타 유틸 ── */
+        @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        .fu { animation: fadeUp 0.3s ease both; }
+        .d1 { animation-delay: 0.05s; } .d2 { animation-delay: 0.1s; } .d3 { animation-delay: 0.15s; } .d4 { animation-delay: 0.2s; }
+
+        .ai-comment-box { white-space: pre-line; line-height: 1.7; font-size: 15px; color: var(--text-dark); font-weight: 500; }
         .fin-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 40px 0; }
-        .fin-placeholder i { font-size: 2.2rem; color: #d1d5db; }
-        .fin-placeholder p { font-size: 14px; font-weight: 700; color: #b0b8c1; margin: 0; }
+        .disclaimer { font-size: 13px; font-weight: 500; color: var(--text-muted); text-align: center; line-height: 1.6; padding-bottom: 24px; }
 
-        /* ── 재무 미니 카드 ── */
-        .fin-cell { background: #f8fafc; border: 1px solid #edf2f7; border-radius: 14px; padding: 16px 18px; transition: border-color 0.15s; }
-        .fin-cell:hover { border-color: #d1d5db; }
-        .fin-cell-label { font-size: 11px; font-weight: 700; color: #8b95a1; margin-bottom: 8px; letter-spacing: 0.01em; }
-        .fin-cell-value { font-size: 18px; font-weight: 800; color: #191f28; letter-spacing: -0.5px; line-height: 1; }
-        .fin-cell-unit  { font-size: 12px; font-weight: 600; color: #b0b8c1; margin-left: 2px; }
-        .fin-cell.blue-accent { border-color: #b5d4f4; background: #f0f7ff; }
-        .fin-cell.blue-accent .fin-cell-value { color: #1a5cb8; }
-        .fin-cell.red-accent  { border-color: #fecaca; background: #fff5f5; }
-        .fin-cell.red-accent  .fin-cell-value { color: #b91c1c; }
+        /* 모바일 대응 (analysis.html) */
+        @media (max-width: 768px) {
+            .sidebar-main { display: none !important; }
+            .main-content { margin-left: 0 !important; padding: 16px !important; }
+            .content-container { padding-top: 16px; }
 
-        /* ── RSI 게이지 ── */
-        .rsi-track { position: relative; height: 6px; border-radius: 99px; overflow: visible; background: linear-gradient(to right, #3182f6 0%, #3182f6 28%, #8b95a1 30%, #8b95a1 62%, #f04452 65%, #f04452 100%); margin: 12px 0 8px; }
-        .rsi-thumb { position: absolute; top: 50%; width: 14px; height: 14px; border-radius: 50%; background: white; border: 2.5px solid #191f28; transform: translate(-50%, -50%); transition: left 1.2s cubic-bezier(0.22,1,0.36,1); box-shadow: 0 1px 5px rgba(0,0,0,0.2); }
-        .rsi-labels { display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 700; color: #b0b8c1; }
+            .toss-card { padding: 20px !important; }
+            .card-header-title { font-size: 16px; }
 
-        /* ── 신호 강도 (독립 바) ── */
-        .strength-row { display: flex; flex-direction: column; gap: 14px; }
-        .strength-item { display: flex; flex-direction: column; gap: 6px; }
-        .strength-header { display: flex; justify-content: space-between; align-items: center; }
-        .strength-label { font-size: 12.5px; font-weight: 700; }
-        .strength-pct   { font-size: 12.5px; font-weight: 800; }
-        .strength-empty { font-size: 12px; font-weight: 600; color: #b0b8c1; padding: 4px 0; }
+            .d-flex.align-items-center.gap-5 { flex-direction: column !important; gap: 20px !important; }
+            .ring-wrap { margin: 0 auto; }
 
-        /* ── 섹션 바 헤더 ── */
-        .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
-        .section-header-bar { width: 4px; height: 16px; border-radius: 2px; flex-shrink: 0; }
-        .section-header-title { font-size: 14px; font-weight: 800; color: #333d4b; }
+            .entry-box { padding: 16px !important; }
+            .mc-box { padding: 16px !important; }
+            .fin-cell { padding: 14px !important; }
+
+            .text-danger { color: var(--toss-red) !important; }
+
+            .tab-nav { flex-wrap: wrap; }
+            .tab-btn { flex: 1 1 40%; padding: 8px 4px; font-size: 13px; }
+        }
     </style>
 </head>
 <body x-data="analysisApp">
@@ -160,7 +197,7 @@
     <main class="main-content">
         <div th:replace="~{fragments/header :: headerFragment}"></div>
 
-        <div class="content-container">
+        <div class="content-container" th:with="isKr=${stockCode != null and stockCode.matches('^[0-9]+$')}">
 
             <div class="mb-4 fu">
                 <a th:href="${backUrl != null ? backUrl : '/'}" class="back-btn">
@@ -168,31 +205,31 @@
                 </a>
             </div>
 
-            <h2 class="fw-bold mb-4 fu d1" style="font-size:24px; letter-spacing:-0.5px;"
+            <h2 class="fw-bold mb-4 fu d1" style="font-size: 24px; color: #191f28;"
                 th:attr="data-code=${stockCode}"
-                th:text="|${stockCode} 주식 분석|"></h2>
+                th:text="|${stockCode} 분석 결과|"></h2>
 
             <div th:if="${isEtf}" class="etf-banner fu d1">
-                <i class="bi bi-info-circle-fill fs-5"></i>
+                <i class="bi bi-info-circle"></i>
                 <span>
-                    해당 자산은 ETF(펀드) 모델이 적용되었습니다.<br>
-                    규모와 유동성, 배당 및 시장의 단기 수급을 위주로 평가가 이루어집니다.
+                    이 자산은 ETF(펀드) 모델로 분석되었습니다.<br>
+                    규모, 유동성, 배당 및 단기 수급을 중심으로 평가합니다.
                 </span>
             </div>
 
             <div class="row g-4 mb-4 fu d2">
                 <div class="col-lg-7">
                     <div class="toss-card h-100 mb-0">
-                        <h3 class="fw-bold mb-4" style="font-size:17px;">종합 점수</h3>
+                        <h3 class="card-header-title">종합 평가 점수</h3>
                         <div class="d-flex align-items-center gap-5 flex-wrap flex-md-nowrap">
                             <div class="ring-wrap">
-                                <svg width="200" height="200" viewBox="0 0 200 200">
-                                    <circle cx="100" cy="100" r="80" fill="none" stroke="#f2f4f6" stroke-width="13"/>
-                                    <circle cx="100" cy="100" r="80" fill="none"
+                                <svg width="180" height="180" viewBox="0 0 190 190">
+                                    <circle cx="95" cy="95" r="80" fill="none" stroke="#f2f4f6" stroke-width="12"/>
+                                    <circle cx="95" cy="95" r="80" fill="none"
                                             th:attr="stroke=${gradeColor}"
-                                            stroke-dasharray="502.7" stroke-width="13" stroke-linecap="round"
-                                            transform="rotate(-90 100 100)"
-                                            th:style="|transition: stroke-dashoffset 1.2s ease-out; stroke-dashoffset: ${ringOffset};|"/>
+                                            stroke-dasharray="502.7" stroke-width="12" stroke-linecap="round"
+                                            transform="rotate(-90 95 95)"
+                                            th:style="|transition: stroke-dashoffset 1s ease; stroke-dashoffset: ${ringOffset};|"/>
                                 </svg>
                                 <div class="ring-center">
                                     <div class="ring-score" th:style="|color: ${gradeColor}|" th:text="${analysis.score}"></div>
@@ -203,7 +240,7 @@
                             <div class="flex-grow-1 w-100">
                                 <div class="axis-row">
                                     <div class="axis-dot" style="background:#3182f6;"></div>
-                                    <div class="axis-name-wrap"><div class="axis-name" th:text="${isEtf ? '규모/배당' : '펀더멘탈/가치'}"></div><div class="axis-sub" th:text="${isEtf ? 'AUM · 분배율' : '수익성 · PER/PBR'}"></div></div>
+                                    <div class="axis-name-wrap"><div class="axis-name" th:text="${isEtf ? '규모 및 배당' : '재무 및 가치'}"></div><div class="axis-sub" th:text="${isEtf ? 'AUM · 분배율' : '수익성 · PER/PBR'}"></div></div>
                                     <div class="axis-bar-bg"><div class="axis-bar-fill" th:style="|background:#3182f6; width: ${valuationPercent}%;|"></div></div>
                                     <div><span class="axis-num" th:text="${analysis.valuation.score}"></span><span class="axis-max">/40</span></div>
                                 </div>
@@ -215,7 +252,7 @@
                                 </div>
                                 <div class="axis-row">
                                     <div class="axis-dot" style="background:#f5a623;"></div>
-                                    <div class="axis-name-wrap"><div class="axis-name">기술적</div><div class="axis-sub">MA · 크로스 · 변동성</div></div>
+                                    <div class="axis-name-wrap"><div class="axis-name">기술적 지표</div><div class="axis-sub">MA · 크로스 · 변동성</div></div>
                                     <div class="axis-bar-bg"><div class="axis-bar-fill" th:style="|background:#f5a623; width: ${technicalPercent}%;|"></div></div>
                                     <div><span class="axis-num" th:text="${analysis.technical.score}"></span><span class="axis-max">/30</span></div>
                                 </div>
@@ -226,41 +263,40 @@
 
                 <div class="col-lg-5">
                     <div class="toss-card h-100 mb-0 d-flex flex-column justify-content-between position-relative overflow-hidden">
-                        <div class="position-absolute" th:style="|top:-40px; right:-40px; width:200px; height:200px; border-radius:50%; filter:blur(60px); opacity:0.12; background: ${gradeColor}|"></div>
-                        <div class="position-relative" style="z-index:1;">
-                            <h3 class="fw-bold mb-4" style="font-size:17px;">분석 요약</h3>
+                        <div class="position-relative z-1">
+                            <h3 class="card-header-title">분석 요약</h3>
                             <div th:if="${isEtf}" class="mb-4">
-                                <div class="text-secondary fw-bold mb-3" style="font-size:12px; letter-spacing:0.04em;">가격 추세 시그널</div>
+                                <div class="text-secondary fw-bold mb-3" style="font-size:13px;">가격 추세 시그널</div>
                                 <th:block th:each="s, stat : ${analysis.signals}">
                                     <div th:if="${stat.index < 3}" class="d-flex align-items-center gap-2 mb-2">
-                                        <i class="bi bi-bar-chart-fill" style="color:#3182f6; font-size:15px; flex-shrink:0;"></i><span class="fw-bold" style="font-size:14px;" th:text="${s}"></span>
+                                        <i class="bi bi-bar-chart-fill" style="color:#3182f6; font-size:15px;"></i><span class="fw-bold" style="font-size:14px; color:var(--text-dark);" th:text="${s}"></span>
                                     </div>
                                 </th:block>
                             </div>
                             <div th:if="${!isEtf}" class="mb-4">
-                                <div class="text-secondary fw-bold mb-3" style="font-size:12px; letter-spacing:0.04em;">주요 시그널</div>
+                                <div class="text-secondary fw-bold mb-3" style="font-size:13px;">주요 시그널</div>
                                 <th:block th:each="s, stat : ${analysis.signals}">
                                     <div th:if="${stat.index < 3 and !#strings.startsWith(s,'[경고]') and !#strings.startsWith(s,'[주의]') and !#strings.startsWith(s,'⚠️')}"
                                          class="d-flex align-items-center gap-2 mb-2">
-                                        <i class="bi bi-check-circle-fill" style="color:#05c072; font-size:15px; flex-shrink:0;"></i><span class="fw-bold" style="font-size:14px;" th:text="${s}"></span>
+                                        <i class="bi bi-check-circle-fill" style="color:#05c072; font-size:15px;"></i><span class="fw-bold" style="font-size:14px; color:var(--text-dark);" th:text="${s}"></span>
                                     </div>
                                 </th:block>
                             </div>
-                            <div th:if="${!isEtf and analysis.grade == 'D'}" class="warn-banner mb-3">
-                                <i class="bi bi-exclamation-triangle-fill fs-6"></i><span>수익성 악화 또는 재무 리스크가 큽니다. 투자에 각별히 주의하세요.</span>
+                            <div th:if="${!isEtf and analysis.grade == 'D'}" class="etf-banner" style="background: #fff4f4; border-color: #ffe5e5; margin-bottom: 16px;">
+                                <i class="bi bi-exclamation-triangle" style="color:var(--toss-red);"></i><span style="color:#d63a48;">수익성 악화 또는 재무 리스크가 큽니다. 투자 주의.</span>
                             </div>
                             <div th:if="${analysis.grade != 'D' or isEtf == true}" class="insight-box">
                                 <div class="d-flex align-items-start gap-2">
-                                    <i class="bi bi-stars fs-5 flex-shrink-0" th:style="|color: ${gradeColor}|"></i><span class="fw-bold text-dark" th:text="${insightMessage}"></span>
+                                    <i class="bi bi-info-circle fs-5 flex-shrink-0" th:style="|color: ${gradeColor}; margin-top: -2px;|"></i><span class="fw-bold text-dark" th:text="${insightMessage}"></span>
                                 </div>
                             </div>
                         </div>
-                        <div class="position-relative mt-4" style="z-index:1;">
+                        <div class="position-relative mt-4 z-1">
                             <div class="d-flex justify-content-between mb-2">
-                                <span class="text-secondary fw-bold" style="font-size:13px;">종합 점수</span><span class="fw-bold" style="font-size:13px;" th:text="|${analysis.score} / 100|"></span>
+                                <span class="text-secondary fw-bold" style="font-size:13px;">진척도</span><span class="fw-bold text-dark" style="font-size:13px;" th:text="|${analysis.score} / 100|"></span>
                             </div>
-                            <div class="progress-bar-custom" style="height:8px; border-radius:4px;">
-                                <div class="progress-fill" th:style="|border-radius:4px; width: ${analysis.score}%; background: ${gradeColor}|"></div>
+                            <div class="progress-bar-custom">
+                                <div class="progress-fill" th:style="|width: ${analysis.score}%; background: ${gradeColor}|"></div>
                             </div>
                         </div>
                     </div>
@@ -269,160 +305,61 @@
 
             <div class="toss-card fu d3 mb-4">
                 <div class="d-flex align-items-center justify-content-between mb-4">
-                    <h3 class="fw-bold m-0" style="font-size:17px;">스마트 타점 및 차트 추세</h3>
-                    <div class="text-secondary fw-bold" style="font-size:13px;">기관급 5단계 상태머신 적용</div>
+                    <h3 class="card-header-title m-0">차트 분석 및 타점</h3>
+                    <div class="text-secondary fw-bold" style="font-size:13px;">규칙 기반 상태머신 적용</div>
                 </div>
 
-                <div style="width: 100%; height: 500px; position: relative; border-radius: 16px; border: 1px solid #f2f4f6; overflow: hidden; background: white; margin-bottom: 24px;">
-                    <div x-show="chartLoading" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: white; z-index: 5;">
+                <div style="width: 100%; height: 460px; position: relative; border-radius: 12px; border: 1px solid #e5e8eb; overflow: hidden; background: white; margin-bottom: 24px;">
+                    <div x-show="chartLoading" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.8); z-index: 5;">
                         <div class="spinner-border text-primary"></div>
                     </div>
                     <div id="tv-chart-container" style="width: 100%; height: 100%;"></div>
                 </div>
 
-                <div th:if="${analysis.entrySignal != null && analysis.entrySignal.verdict != null}" class="mb-4"
-                     th:with="verdict=${analysis.entrySignal.verdict},
-                              isDanger=${#strings.contains(verdict, '🚨')},
-                              isWatch=${#strings.contains(verdict, '⚠️')},
-                              isSetup=${#strings.contains(verdict, '👀') or #strings.contains(verdict, '🌀')},
-                              isEntry=${#strings.contains(verdict, '🎯')},
-                              isHold=${#strings.contains(verdict, '🔥')}">
-
-                    <div class="p-4 rounded-4 d-flex align-items-start gap-3"
-                         th:style="${isEntry or isHold} ? 'background: rgba(240,68,82,0.06); color: #d63a48; border: 1px solid rgba(240,68,82,0.15);' :
-                                  (${isSetup} ? 'background: rgba(245,166,35,0.08); color: #d47100; border: 1px solid rgba(245,166,35,0.25);' :
-                                  (${isWatch} ? 'background: #f8fafc; color: #4e5968; border: 1px solid #e2e8f0;' :
-                                  'background: rgba(49,130,246,0.06); color: #1e6fd9; border: 1px solid rgba(49,130,246,0.15);'))">
-
-                        <i class="bi flex-shrink-0 mt-1"
-                           th:classappend="${isEntry} ? 'bi-bullseye' : (${isHold} ? 'bi-fire' : (${isSetup} ? 'bi-hourglass-split' : (${isWatch} ? 'bi-eye-fill' : 'bi-shield-fill-x')))"
-                           style="font-size: 1.4rem;"></i>
-
-                        <div style="font-size: 14.5px; line-height: 1.75; font-weight: 600; letter-spacing: -0.01em;" th:utext="${verdict}"></div>
+                <div th:if="${analysis.entrySignal != null && analysis.entrySignal.verdict != null}" class="mb-4">
+                    <div class="p-4 rounded-3" style="background: #f9fafb; border: 1px solid #e5e8eb;">
+                        <div th:utext="${analysis.entrySignal.verdict}"></div>
                     </div>
                 </div>
 
-                <div th:if="${analysis.entrySignal != null && analysis.entrySignal.primaryEntry != null}" class="row g-3 mb-4">
+                <div th:if="${analysis.entrySignal != null && analysis.entrySignal.primaryEntry != null}" class="row g-4 mb-2">
                     <div class="col-md-6">
-                        <div class="p-4 rounded-4 h-100" style="background: white; border: 1px solid #b5d4f4; box-shadow: 0 4px 16px rgba(49,130,246,0.06);">
-                            <div class="d-flex align-items-center gap-2 mb-4 px-1">
-                                <i class="bi bi-box-arrow-in-down" style="color: var(--toss-blue); font-size: 1.2rem;"></i>
-                                <span style="font-size: 14px; font-weight: 800; color: #1a5cb8; letter-spacing: -0.3px;">분할 매수 (단기 지지선)</span>
+                        <div class="entry-box blue">
+                            <div class="entry-box-title" style="color: #1b64da;">
+                                <i class="bi bi-box-arrow-in-down"></i> 분할 매수 (단기 지지선)
                             </div>
                             <div class="d-flex justify-content-between align-items-center">
-                                <div class="text-center flex-grow-1">
-                                    <div style="font-size: 12px; color: #8b95a1; font-weight: 600; margin-bottom: 4px;">1차 타점</div>
-                                    <div style="font-size: 16px; font-weight: 800; color: #191f28;" th:text="${#numbers.formatDecimal(analysis.entrySignal.primaryEntry, 0, 'COMMA', 2, 'POINT')}"></div>
+                                <div class="entry-point">
+                                    <div class="entry-point-label">1차 타점</div>
+                                    <div class="entry-point-value" style="color: var(--text-dark);" th:text="${isKr ? #numbers.formatDecimal(analysis.entrySignal.primaryEntry, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(analysis.entrySignal.primaryEntry, 1, 'COMMA', 2, 'POINT')}"></div>
                                 </div>
-                                <div style="width: 1px; height: 32px; background: #e2e8f0;"></div>
-                                <div class="text-center flex-grow-1">
-                                    <div style="font-size: 12px; color: #8b95a1; font-weight: 600; margin-bottom: 4px;">2차 타점</div>
-                                    <div style="font-size: 16px; font-weight: 800; color: var(--toss-blue);" th:text="${#numbers.formatDecimal(analysis.entrySignal.secondaryEntry, 0, 'COMMA', 2, 'POINT')}"></div>
+                                <div class="entry-divider"></div>
+                                <div class="entry-point">
+                                    <div class="entry-point-label">2차 타점</div>
+                                    <div class="entry-point-value" style="color: var(--toss-blue);" th:text="${isKr ? #numbers.formatDecimal(analysis.entrySignal.secondaryEntry, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(analysis.entrySignal.secondaryEntry, 1, 'COMMA', 2, 'POINT')}"></div>
                                 </div>
-                                <div style="width: 1px; height: 32px; background: #e2e8f0;"></div>
-                                <div class="text-center flex-grow-1">
-                                    <div style="font-size: 12px; color: #8b95a1; font-weight: 600; margin-bottom: 4px;">하드 손절가</div>
-                                    <div style="font-size: 16px; font-weight: 800; color: #8b95a1;" th:text="${#numbers.formatDecimal(analysis.entrySignal.stopLoss, 0, 'COMMA', 2, 'POINT')}"></div>
+                                <div class="entry-divider"></div>
+                                <div class="entry-point">
+                                    <div class="entry-point-label">손절가</div>
+                                    <div class="entry-point-value" style="color: var(--text-muted);" th:text="${isKr ? #numbers.formatDecimal(analysis.entrySignal.stopLoss, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(analysis.entrySignal.stopLoss, 1, 'COMMA', 2, 'POINT')}"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="p-4 rounded-4 h-100" style="background: white; border: 1px solid #fecaca; box-shadow: 0 4px 16px rgba(240,68,82,0.06);">
-                            <div class="d-flex align-items-center gap-2 mb-4 px-1">
-                                <i class="bi bi-box-arrow-up" style="color: var(--toss-red); font-size: 1.2rem;"></i>
-                                <span style="font-size: 14px; font-weight: 800; color: #b91c1c; letter-spacing: -0.3px;">분할 익절 (저항선)</span>
+                        <div class="entry-box red">
+                            <div class="entry-box-title" style="color: #d63a48;">
+                                <i class="bi bi-box-arrow-up"></i> 분할 익절 (저항선)
                             </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="text-center flex-grow-1">
-                                    <div style="font-size: 12px; color: #8b95a1; font-weight: 600; margin-bottom: 4px;">1차 (단기 저항)</div>
-                                    <div style="font-size: 16px; font-weight: 800; color: #191f28;" th:text="${#numbers.formatDecimal(analysis.entrySignal.primaryTarget, 0, 'COMMA', 2, 'POINT')}"></div>
+                            <div class="d-flex justify-content-center align-items-center h-100">
+                                <div class="entry-point">
+                                    <div class="entry-point-label">1차 (단기 저항)</div>
+                                    <div class="entry-point-value" style="color: var(--text-dark);" th:text="${isKr ? #numbers.formatDecimal(analysis.entrySignal.primaryTarget, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(analysis.entrySignal.primaryTarget, 1, 'COMMA', 2, 'POINT')}"></div>
                                 </div>
-                                <div style="width: 1px; height: 32px; background: #e2e8f0;"></div>
-                                <div class="text-center flex-grow-1">
-                                    <div style="font-size: 12px; color: #8b95a1; font-weight: 600; margin-bottom: 4px;">2차 (스윙 랠리)</div>
-                                    <div style="font-size: 16px; font-weight: 800; color: var(--toss-red);" th:text="${#numbers.formatDecimal(analysis.entrySignal.secondaryTarget, 0, 'COMMA', 2, 'POINT')}"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div th:if="${analysis.entrySignal != null}">
-                    <div class="row g-4">
-                        <div class="col-md-5">
-                            <div class="p-4 rounded-4 h-100" style="background: #f8fafc; border: 1px solid #edf2f7;">
-                                <div class="mb-4 pb-4" style="border-bottom: 1px solid #e2e8f0;">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <span class="fw-bold" style="font-size:13.5px; color:#4e5968;">RSI (14일)</span>
-                                        <span class="fw-bold" style="font-size:15px;"
-                                              th:classappend="${analysis.entrySignal.marketContext.rsi != null and analysis.entrySignal.marketContext.rsi > 70 ? 'text-up' : (analysis.entrySignal.marketContext.rsi != null and analysis.entrySignal.marketContext.rsi < 30 ? 'text-down' : '')}"
-                                              th:text="${analysis.entrySignal.marketContext.rsi != null ? #numbers.formatDecimal(analysis.entrySignal.marketContext.rsi, 1, 1) : '-'}"></span>
-                                    </div>
-                                    <div class="rsi-track">
-                                        <div class="rsi-thumb" th:style="|left: ${analysis.entrySignal.marketContext.rsi != null ? analysis.entrySignal.marketContext.rsi : 50}%|"></div>
-                                    </div>
-                                    <div class="rsi-labels">
-                                        <span style="color:#3182f6;">과매도</span>
-                                        <span>중립</span>
-                                        <span style="color:#f04452;">과매수</span>
-                                    </div>
-                                </div>
-                                <div class="d-flex justify-content-between mb-4 pb-3" style="border-bottom: 1px solid #e2e8f0;">
-                                    <span class="fw-bold" style="font-size:13.5px; color:#4e5968;">MACD 추세</span>
-                                    <span class="fw-bold" style="font-size:15px;"
-                                          th:classappend="${analysis.entrySignal.marketContext.macd.macd >= 0 ? 'text-up' : 'text-down'}"
-                                          th:text="${#numbers.formatDecimal(analysis.entrySignal.marketContext.macd.macd, 1, 2)}"></span>
-                                </div>
-                                <div class="d-flex justify-content-between">
-                                    <span class="fw-bold" style="font-size:13.5px; color:#4e5968;">볼린저 밴드 (하/상)</span>
-                                    <span class="fw-bold" style="font-size:13.5px;"
-                                          th:text="|${#numbers.formatDecimal(analysis.entrySignal.marketContext.lower, 0, 'COMMA', 0, 'POINT')} / ${#numbers.formatDecimal(analysis.entrySignal.marketContext.upper, 0, 'COMMA', 0, 'POINT')}|"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-7">
-                            <div class="p-4 rounded-4 h-100" style="border: 1px solid #edf2f7;">
-                                <div class="strength-row mb-4">
-                                    <div class="strength-item">
-                                        <div class="strength-header">
-                                            <span class="strength-label" style="color: var(--toss-red);">
-                                                <i class="bi bi-arrow-up-circle-fill me-1" style="font-size:12px;"></i>매수 신호 강도
-                                            </span>
-                                            <span class="strength-pct" style="color: var(--toss-red);" th:text="|${analysis.entrySignal.buyStrength}%|"></span>
-                                        </div>
-                                        <div th:if="${analysis.entrySignal.buyStrength > 0}">
-                                            <div class="progress-bar-custom" style="height: 8px;">
-                                                <div class="progress-fill" th:style="|background: var(--toss-red); width: ${analysis.entrySignal.buyStrength}%|"></div>
-                                            </div>
-                                        </div>
-                                        <div th:if="${analysis.entrySignal.buyStrength == 0}" class="strength-empty">포착된 매수 신호 없음</div>
-                                    </div>
-                                    <div class="strength-item">
-                                        <div class="strength-header">
-                                            <span class="strength-label" style="color: var(--toss-blue);">
-                                                <i class="bi bi-arrow-down-circle-fill me-1" style="font-size:12px;"></i>매도 신호 강도
-                                            </span>
-                                            <span class="strength-pct" style="color: var(--toss-blue);" th:text="|${analysis.entrySignal.sellStrength}%|"></span>
-                                        </div>
-                                        <div th:if="${analysis.entrySignal.sellStrength > 0}">
-                                            <div class="progress-bar-custom" style="height: 8px;">
-                                                <div class="progress-fill" th:style="|background: var(--toss-blue); width: ${analysis.entrySignal.sellStrength}%|"></div>
-                                            </div>
-                                        </div>
-                                        <div th:if="${analysis.entrySignal.sellStrength == 0}" class="strength-empty">포착된 매도 신호 없음</div>
-                                    </div>
-                                </div>
-
-                                <div style="border-top: 1px solid #f2f4f6; padding-top: 16px;">
-                                    <div class="fw-bold mb-3" style="font-size:12px; color:#b0b8c1; letter-spacing:0.03em;">포착된 캔들 / 추세 신호</div>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        <div th:if="${#lists.isEmpty(analysis.entrySignal.buySignals) and #lists.isEmpty(analysis.entrySignal.sellSignals)}"
-                                             class="fw-bold" style="font-size:13px; color:#b0b8c1;">현재 포착된 특이 신호가 없습니다.</div>
-                                        <span th:each="sig : ${analysis.entrySignal.buySignals}" class="timing-badge bg-red-soft" th:text="${sig}"></span>
-                                        <span th:each="sig : ${analysis.entrySignal.sellSignals}" class="timing-badge bg-blue-soft" th:text="${sig}"></span>
-                                    </div>
+                                <div class="entry-divider"></div>
+                                <div class="entry-point">
+                                    <div class="entry-point-label">2차 (스윙 랠리)</div>
+                                    <div class="entry-point-value" style="color: var(--toss-red);" th:text="${isKr ? #numbers.formatDecimal(analysis.entrySignal.secondaryTarget, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(analysis.entrySignal.secondaryTarget, 1, 'COMMA', 2, 'POINT')}"></div>
                                 </div>
                             </div>
                         </div>
@@ -430,288 +367,371 @@
                 </div>
             </div>
 
-            <div class="toss-card fu d4">
-                <h3 class="fw-bold mb-4" style="font-size:17px; letter-spacing:-0.2px;">분석 상세</h3>
+            <div th:if="${analysis.entrySignal != null && analysis.entrySignal.marketContext != null}" class="toss-card fu d4 mb-4">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <h3 class="card-header-title m-0">기술적 지표 및 시장 상황</h3>
+                    <div class="text-secondary fw-bold" style="font-size:13px;">Market Context</div>
+                </div>
 
+                <div class="row g-4" th:with="ctx=${analysis.entrySignal.marketContext}">
+
+                    <div class="col-md-6 d-flex flex-column">
+
+                        <div class="mc-box">
+                            <div class="mc-header">
+                                <div class="mc-header-dot" style="background:#05c072;"></div>
+                                <div class="mc-header-title">추세 및 패턴</div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <span th:if="${ctx.isMacroUptrend}" class="mc-badge bg-up">장기 상승장</span>
+                                <span th:if="${!ctx.isMacroUptrend}" class="mc-badge bg-down">장기 하락장</span>
+                                <span th:if="${ctx.isUptrend}" class="mc-badge bg-up">정배열</span>
+                                <span th:if="${ctx.isHH}" class="mc-badge bg-up">고점 갱신</span>
+                                <span th:if="${ctx.isHL}" class="mc-badge bg-up">저점 방어</span>
+                                <span th:if="${ctx.isLL}" class="mc-badge bg-down">저점 이탈</span>
+                                <span th:if="${ctx.isSqueeze}" class="mc-badge bg-neutral">볼린저 응축</span>
+                            </div>
+                        </div>
+
+                        <div class="mc-box">
+                            <div class="mc-header">
+                                <div class="mc-header-dot" style="background:#3182f6;"></div>
+                                <div class="mc-header-title">이동평균선 (이격도)</div>
+                            </div>
+                            <div class="mc-row">
+                                <div class="mc-label-wrap">
+                                    <div class="mc-label">단기 (MA5)</div>
+                                    <div class="mc-desc" th:text="${isKr ? '기준가: ' + #numbers.formatDecimal(ctx.ma5, 1, 'COMMA', 0, 'POINT') + '원' : '기준가: $' + #numbers.formatDecimal(ctx.ma5, 1, 'COMMA', 2, 'POINT')}"></div>
+                                </div>
+                                <div class="mc-value-wrap">
+                                    <div class="mc-badge" th:classappend="${ctx.isMa5Rising ? 'bg-up' : 'bg-down'}" th:text="${ctx.isMa5Rising ? '상승' : '하락'}"></div>
+                                    <div class="mc-value" th:classappend="${ctx.distFromMa5 > 0 ? 'text-up' : 'text-down'}" th:text="${(ctx.distFromMa5 > 0 ? '+' : '') + #numbers.formatDecimal(ctx.distFromMa5, 1, 2) + '%'}"></div>
+                                </div>
+                            </div>
+                            <div class="mc-row">
+                                <div class="mc-label-wrap">
+                                    <div class="mc-label">스윙 (MA20)</div>
+                                    <div class="mc-desc" th:text="${isKr ? '기준가: ' + #numbers.formatDecimal(ctx.ma20, 1, 'COMMA', 0, 'POINT') + '원' : '기준가: $' + #numbers.formatDecimal(ctx.ma20, 1, 'COMMA', 2, 'POINT')}"></div>
+                                </div>
+                                <div class="mc-value-wrap">
+                                    <div class="mc-badge" th:classappend="${ctx.isMa20Rising ? 'bg-up' : 'bg-down'}" th:text="${ctx.isMa20Rising ? '상승' : '하락'}"></div>
+                                    <div class="mc-value" th:classappend="${ctx.distFromMa20 > 0 ? 'text-up' : 'text-down'}" th:text="${(ctx.distFromMa20 > 0 ? '+' : '') + #numbers.formatDecimal(ctx.distFromMa20, 1, 2) + '%'}"></div>
+                                </div>
+                            </div>
+                            <div class="mc-row">
+                                <div class="mc-label-wrap">
+                                    <div class="mc-label">중기 (MA50)</div>
+                                    <div class="mc-desc" th:text="${isKr ? '기준가: ' + #numbers.formatDecimal(ctx.ma50, 1, 'COMMA', 0, 'POINT') + '원' : '기준가: $' + #numbers.formatDecimal(ctx.ma50, 1, 'COMMA', 2, 'POINT')}"></div>
+                                </div>
+                                <div class="mc-value-wrap">
+                                    <div class="mc-badge bg-neutral">-</div>
+                                    <div class="mc-value" th:classappend="${ctx.distFromMa50 > 0 ? 'text-up' : 'text-down'}" th:text="${(ctx.distFromMa50 > 0 ? '+' : '') + #numbers.formatDecimal(ctx.distFromMa50, 1, 2) + '%'}"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mc-box mb-0">
+                            <div class="mc-header">
+                                <div class="mc-header-dot" style="background:#f5a623;"></div>
+                                <div class="mc-header-title">거래량 및 모멘텀</div>
+                            </div>
+                            <div class="mc-row">
+                                <div class="mc-label-wrap">
+                                    <div class="mc-label">거래량 상태</div>
+                                    <div class="mc-desc" th:text="${ctx.isVolBullish ? '매수세 우위' : (ctx.isVolBearish ? '매도세 우위' : '중립 수준')}"></div>
+                                </div>
+                                <div class="mc-value-wrap">
+                                    <div class="mc-badge" th:classappend="${ctx.isVolBullish ? 'bg-up' : (ctx.isVolBearish ? 'bg-down' : 'bg-neutral')}" th:text="${ctx.isVolBullish ? '증가' : (ctx.isVolBearish ? '감소' : '보통')}"></div>
+                                    <div class="mc-value" th:text="${#numbers.formatDecimal(ctx.currentVolume, 0, 'COMMA', 0, 'POINT')}"></div>
+                                </div>
+                            </div>
+                            <div class="mc-row">
+                                <div class="mc-label-wrap">
+                                    <div class="mc-label">ADX (추세 강도)</div>
+                                    <div class="mc-desc" th:text="${ctx.isStrongTrend ? '강한 추세 진행 중' : (ctx.isWeakTrend ? '비추세/횡보' : '추세 형성 중')}"></div>
+                                </div>
+                                <div class="mc-value-wrap">
+                                    <div class="mc-value" th:text="${#numbers.formatDecimal(ctx.adx, 1, 1)}"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6 d-flex flex-column">
+
+                        <div class="mc-box premium" th:with="vwapDist=${ctx.vwap20 > 0 ? (ctx.currentPrice - ctx.vwap20) / ctx.vwap20 * 100 : 0}, pocDist=${ctx.pocPrice > 0 ? (ctx.currentPrice - ctx.pocPrice) / ctx.pocPrice * 100 : 0}">
+                            <div class="mc-header">
+                                <div class="mc-header-dot" style="background:#3182f6;"></div>
+                                <div class="mc-header-title">주요 지지/저항선</div>
+                            </div>
+
+                            <div class="mc-row">
+                                <div class="mc-label-wrap">
+                                    <div class="mc-label" style="color:#1d4ed8;">세력선 (VWAP)</div>
+                                    <div class="mc-desc" th:text="${isKr ? '20일 가중: ' + #numbers.formatDecimal(ctx.vwap20, 1, 'COMMA', 0, 'POINT') + '원' : '20일 가중: $' + #numbers.formatDecimal(ctx.vwap20, 1, 'COMMA', 2, 'POINT')}"></div>
+                                </div>
+                                <div class="mc-value-wrap">
+                                    <div class="mc-badge" th:classappend="${vwapDist > 0 ? 'bg-up' : 'bg-down'}" th:text="${vwapDist > 0 ? '현재가 상회' : '현재가 하회'}"></div>
+                                    <div class="mc-value" th:classappend="${vwapDist > 0 ? 'text-up' : 'text-down'}" th:text="${(vwapDist > 0 ? '+' : '') + #numbers.formatDecimal(vwapDist, 1, 2) + '%'}"></div>
+                                </div>
+                            </div>
+
+                            <div class="mc-row">
+                                <div class="mc-label-wrap">
+                                    <div class="mc-label" style="color:#5b21b6;">최대 매물대 (POC)</div>
+                                    <div class="mc-desc" th:text="${isKr ? '3개월 누적: ' + #numbers.formatDecimal(ctx.pocPrice, 1, 'COMMA', 0, 'POINT') + '원' : '3개월 누적: $' + #numbers.formatDecimal(ctx.pocPrice, 1, 'COMMA', 2, 'POINT')}"></div>
+                                </div>
+                                <div class="mc-value-wrap">
+                                    <div class="mc-badge" th:classappend="${pocDist > 0 ? 'bg-up' : 'bg-down'}" th:text="${pocDist > 0 ? '매물대 지지' : '매물대 저항'}"></div>
+                                    <div class="mc-value" th:classappend="${pocDist > 0 ? 'text-up' : 'text-down'}" th:text="${(pocDist > 0 ? '+' : '') + #numbers.formatDecimal(pocDist, 1, 2) + '%'}"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mc-box mb-0">
+                            <div class="mc-header">
+                                <div class="mc-header-dot" style="background:#4e5968;"></div>
+                                <div class="mc-header-title">데일리 피벗 가격대</div>
+                            </div>
+
+                            <div th:if="${ctx.dailyPivot != null}">
+                                <div class="mc-row" th:if="${ctx.dailyPivot.r3 != null && !T(java.lang.Double).isNaN(ctx.dailyPivot.r3)}">
+                                    <div class="mc-label-wrap"><div class="mc-label">3차 저항선 (R3)</div></div>
+                                    <div class="mc-value mc-pivot-res" th:text="${isKr ? #numbers.formatDecimal(ctx.dailyPivot.r3, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.dailyPivot.r3, 1, 'COMMA', 2, 'POINT')}"></div>
+                                </div>
+                                <div class="mc-row" th:if="${ctx.dailyPivot.r2 != null && !T(java.lang.Double).isNaN(ctx.dailyPivot.r2)}">
+                                    <div class="mc-label-wrap"><div class="mc-label">2차 저항선 (R2)</div></div>
+                                    <div class="mc-value mc-pivot-res" th:text="${isKr ? #numbers.formatDecimal(ctx.dailyPivot.r2, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.dailyPivot.r2, 1, 'COMMA', 2, 'POINT')}"></div>
+                                </div>
+                                <div class="mc-row" th:if="${ctx.dailyPivot.r1 != null && !T(java.lang.Double).isNaN(ctx.dailyPivot.r1)}">
+                                    <div class="mc-label-wrap"><div class="mc-label">1차 저항선 (R1)</div></div>
+                                    <div class="mc-value mc-pivot-res" th:text="${isKr ? #numbers.formatDecimal(ctx.dailyPivot.r1, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.dailyPivot.r1, 1, 'COMMA', 2, 'POINT')}"></div>
+                                </div>
+
+                                <div class="mc-row" th:if="${ctx.dailyPivot.p != null && !T(java.lang.Double).isNaN(ctx.dailyPivot.p)}">
+                                    <div class="mc-label-wrap"><div class="mc-label" style="color:#1d4ed8;">피벗 기준선 (PP)</div><div class="mc-desc">오늘의 중심 가격</div></div>
+                                    <div class="mc-value mc-pivot-pp" th:text="${isKr ? #numbers.formatDecimal(ctx.dailyPivot.p, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.dailyPivot.p, 1, 'COMMA', 2, 'POINT')}"></div>
+                                </div>
+
+                                <div class="mc-row" th:if="${ctx.dailyPivot.s1 != null && !T(java.lang.Double).isNaN(ctx.dailyPivot.s1)}">
+                                    <div class="mc-label-wrap"><div class="mc-label">1차 지지선 (S1)</div></div>
+                                    <div class="mc-value mc-pivot-sup" th:text="${isKr ? #numbers.formatDecimal(ctx.dailyPivot.s1, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.dailyPivot.s1, 1, 'COMMA', 2, 'POINT')}"></div>
+                                </div>
+                                <div class="mc-row" th:if="${ctx.dailyPivot.s2 != null && !T(java.lang.Double).isNaN(ctx.dailyPivot.s2)}">
+                                    <div class="mc-label-wrap"><div class="mc-label">2차 지지선 (S2)</div></div>
+                                    <div class="mc-value mc-pivot-sup" th:text="${isKr ? #numbers.formatDecimal(ctx.dailyPivot.s2, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.dailyPivot.s2, 1, 'COMMA', 2, 'POINT')}"></div>
+                                </div>
+                                <div class="mc-row" th:if="${ctx.dailyPivot.s3 != null && !T(java.lang.Double).isNaN(ctx.dailyPivot.s3)}">
+                                    <div class="mc-label-wrap"><div class="mc-label">3차 지지선 (S3)</div></div>
+                                    <div class="mc-value mc-pivot-sup" th:text="${isKr ? #numbers.formatDecimal(ctx.dailyPivot.s3, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.dailyPivot.s3, 1, 'COMMA', 2, 'POINT')}"></div>
+                                </div>
+                            </div>
+
+                            <div th:if="${ctx.dailyPivot == null}" class="text-center py-4">
+                                <span class="mc-label text-neutral">피벗 산출 불가</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="col-12 mt-2">
+                        <div class="mc-box mb-0 d-flex flex-column gap-3">
+                            <div class="mc-header mb-0">
+                                <div class="mc-header-dot" style="background:#191f28;"></div>
+                                <div class="mc-header-title">포착된 매매 신호</div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <div th:if="${#lists.isEmpty(analysis.entrySignal.buySignals) and #lists.isEmpty(analysis.entrySignal.sellSignals)}" class="mc-label text-neutral">
+                                    현재 뚜렷하게 포착된 특이 신호 없음
+                                </div>
+                                <span th:each="sig : ${analysis.entrySignal.buySignals}" class="mc-badge bg-up" th:text="${sig}"></span>
+                                <span th:each="sig : ${analysis.entrySignal.sellSignals}" class="mc-badge bg-down" th:text="${sig}"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="toss-card mb-4 p-4 p-md-5">
+
+                <div class="d-flex align-items-center mb-4 gap-2">
+                    <h3 class="fw-bold m-0" style="font-size: 18px; color: #191f28;">분석 상세 리포트</h3>
+                </div>
+
+                <!-- 탭 메뉴 -->
                 <div class="tab-nav">
-                    <button class="tab-btn" :class="tab==='all'?'active':''" @click="tab='all'">전체 시그널</button>
-                    <button class="tab-btn" :class="tab==='val'?'active':''" @click="tab='val'">
+                    <button class="tab-btn" :class="tab==='all' ? 'active' : ''" @click="tab='all'">전체 시그널</button>
+                    <button class="tab-btn" :class="tab==='val' ? 'active' : ''" @click="tab='val'">
                         <span th:text="${isEtf ? '규모/배당' : '재무/가치'}"></span>
-                        <div class="tab-score" style="color:#3182f6;" th:text="|(${analysis.valuation.score}/40)|"></div>
+                        <span style="font-size: 12px; margin-left: 2px;" th:text="|(${analysis.valuation.score}점)|"></span>
                     </button>
-                    <button class="tab-btn" :class="tab==='mom'?'active':''" @click="tab='mom'">
-                        모멘텀
-                        <div class="tab-score" style="color:#05c072;" th:text="|(${analysis.momentum.score}/30)|"></div>
+                    <button class="tab-btn" :class="tab==='mom' ? 'active' : ''" @click="tab='mom'">
+                        모멘텀 <span style="font-size: 12px; margin-left: 2px;" th:text="|(${analysis.momentum.score}점)|"></span>
                     </button>
-                    <button class="tab-btn" :class="tab==='tech'?'active':''" @click="tab='tech'">
-                        기술적
-                        <div class="tab-score" style="color:#f5a623;" th:text="|(${analysis.technical.score}/30)|"></div>
+                    <button class="tab-btn" :class="tab==='tech' ? 'active' : ''" @click="tab='tech'">
+                        기술적 <span style="font-size: 12px; margin-left: 2px;" th:text="|(${analysis.technical.score}점)|"></span>
                     </button>
                 </div>
 
-                <div x-show="tab==='all'">
-                    <div class="row g-4">
+                <!-- 1. 전체 시그널 탭 -->
+                <div x-show="tab==='all'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+                    <div class="row g-3">
                         <th:block th:each="signal : ${analysis.signals}">
-                            <div class="col-md-6 col-lg-4">
-                                <div class="signal-card" th:classappend="${#strings.startsWith(signal,'[경고]') or #strings.startsWith(signal,'[주의]') or #strings.startsWith(signal,'⚠️') or #strings.startsWith(signal,'🚨')} ? ' warn' : ' normal'">
-                                    <div class="signal-card-label">
-                                        <div class="signal-card-dot" th:classappend="${#strings.startsWith(signal,'[경고]') or #strings.startsWith(signal,'[주의]') or #strings.startsWith(signal,'⚠️') or #strings.startsWith(signal,'🚨')} ? ' warn' : ' normal'"></div>
-                                        <div class="signal-name" th:classappend="${#strings.startsWith(signal,'[경고]') or #strings.startsWith(signal,'[주의]') or #strings.startsWith(signal,'⚠️') or #strings.startsWith(signal,'🚨')} ? ' warn' : ''" th:text="${signal}"></div>
+                            <th:block th:with="isWarn=${#strings.startsWith(signal,'[경고]') or #strings.startsWith(signal,'[주의]') or #strings.startsWith(signal,'⚠️') or #strings.startsWith(signal,'🚨')}">
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="signal-card" :class="[[${isWarn}]] ? 'warn' : ''">
+                                        <div class="signal-card-label">
+                                            <div class="signal-card-dot" th:style="${isWarn} ? 'background: var(--toss-red);' : 'background: var(--toss-blue);'"></div>
+                                            <span class="fw-bold" style="font-size: 12px;" th:style="${isWarn} ? 'color: var(--toss-red);' : 'color: var(--toss-blue);'" th:text="${isWarn} ? '주의 필요' : '참고 사항'"></span>
+                                        </div>
+                                        <div class="signal-name" th:text="${signal}"></div>
+                                        <div class="signal-desc" th:text="${signalDescMap != null ? signalDescMap.get(signal) : ''}"></div>
                                     </div>
-                                    <div class="signal-desc" th:text="${signalDescMap != null ? signalDescMap.get(signal) : ''}"></div>
                                 </div>
-                            </div>
+                            </th:block>
                         </th:block>
                     </div>
                 </div>
 
-                <div x-show="tab==='val'" x-cloak>
-                    <div th:if="${isEtf}" class="tab-info" style="background:#eef5ff;">
-                        <i class="bi bi-info-circle-fill" style="color:#3182f6; font-size:16px; flex-shrink:0;"></i>
-                        <span style="color:#1a5cb8;">AUM(시가총액) 규모와 배당(분배금) 수익률을 통해 상품의 안정성과 인컴 매력을 측정합니다.</span>
+                <!-- 2. 재무/가치 탭 -->
+                <div x-show="tab==='val'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+                    <div class="p-3 mb-4" style="background-color: #f0f6ff; border-radius: 12px; border: 1px solid #dbeafe;">
+                        <span class="fw-bold" style="color: #1b64da; font-size: 14px; line-height: 1.5;"
+                              th:text="${isEtf ? 'AUM 규모와 분배율을 통해 상품의 안정성과 인컴 매력을 측정합니다.' : 'ROE, 마진율, PER, PBR 등을 종합하여 내재 가치를 측정합니다.'}"></span>
                     </div>
-
-                    <div th:if="${!isEtf}">
-                        <div class="tab-info" style="background:#eef5ff;">
-                            <i class="bi bi-info-circle-fill" style="color:#3182f6; font-size:16px; flex-shrink:0;"></i>
-                            <span style="color:#1a5cb8;">펀더멘탈(ROE, 마진율, 건전성) 및 밸류에이션(PER, PBR, PEG)을 종합하여 내재 가치를 측정합니다. 상세 지표는 하단에서 확인할 수 있습니다.</span>
-                        </div>
+                    <div>
+                        <th:block th:each="s : ${analysis.valuation.signals}">
+                            <th:block th:with="isWarn=${#strings.startsWith(s,'[경고]') or #strings.startsWith(s,'[주의]') or #strings.startsWith(s,'⚠️') or #strings.startsWith(s,'🚨')}">
+                                <div class="d-flex flex-column py-3 border-bottom" style="border-color: #f2f4f6 !important;">
+                                    <div class="fw-bold text-dark mb-1" style="font-size: 15px;" th:text="${s}"></div>
+                                    <div class="text-secondary fw-medium" style="font-size: 13.5px; line-height: 1.5;" th:text="${signalDescMap != null ? signalDescMap.get(s) : ''}"></div>
+                                </div>
+                            </th:block>
+                        </th:block>
+                        <div th:if="${#lists.isEmpty(analysis.valuation.signals)}" class="text-center py-4 text-secondary fw-bold" style="font-size: 14px;">포착된 시그널이 없습니다.</div>
                     </div>
-
-                    <th:block th:each="s : ${analysis.valuation.signals}">
-                        <div class="signal-item">
-                            <div class="signal-item-bar" th:classappend="${#strings.startsWith(s,'[경고]') or #strings.startsWith(s,'[주의]') or #strings.startsWith(s,'⚠️') or #strings.startsWith(s,'🚨')} ? ' warn' : ' normal'"></div>
-                            <div>
-                                <div class="signal-name" th:classappend="${#strings.startsWith(s,'[경고]') or #strings.startsWith(s,'[주의]') or #strings.startsWith(s,'⚠️') or #strings.startsWith(s,'🚨')} ? ' warn' : ''" th:text="${s}"></div>
-                                <div class="signal-desc" th:text="${signalDescMap != null ? signalDescMap.get(s) : ''}"></div>
-                            </div>
-                        </div>
-                    </th:block>
                 </div>
 
-                <div x-show="tab==='mom'" x-cloak>
-                    <div class="tab-info" style="background:#edfaf4;">
-                        <i class="bi bi-info-circle-fill" style="color:#05c072; font-size:16px; flex-shrink:0;"></i>
-                        <span style="color:#076644;">52주 포지션, RSI 극단값, 거래량 폭발 지표를 통해 시장의 즉각적인 수급과 에너지를 측정합니다.</span>
+                <!-- 3. 모멘텀 탭 -->
+                <div x-show="tab==='mom'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+                    <div class="p-3 mb-4" style="background-color: #f2fcf6; border-radius: 12px; border: 1px solid #d1fae5;">
+                        <span class="fw-bold" style="color: #05c072; font-size: 14px; line-height: 1.5;">52주 포지션, RSI 극단값, 거래량 지표로 단기 수급 에너지를 측정합니다.</span>
                     </div>
-                    <th:block th:each="s : ${analysis.momentum.signals}">
-                        <div class="signal-item">
-                            <div class="signal-item-bar" th:classappend="${#strings.startsWith(s,'[경고]') or #strings.startsWith(s,'[주의]') or #strings.startsWith(s,'⚠️') or #strings.startsWith(s,'🚨')} ? ' warn' : ' normal'"></div>
-                            <div>
-                                <div class="signal-name" th:classappend="${#strings.startsWith(s,'[경고]') or #strings.startsWith(s,'[주의]') or #strings.startsWith(s,'⚠️') or #strings.startsWith(s,'🚨')} ? ' warn' : ''" th:text="${s}"></div>
-                                <div class="signal-desc" th:text="${signalDescMap != null ? signalDescMap.get(s) : ''}"></div>
-                            </div>
-                        </div>
-                    </th:block>
+                    <div>
+                        <th:block th:each="s : ${analysis.momentum.signals}">
+                            <th:block th:with="isWarn=${#strings.startsWith(s,'[경고]') or #strings.startsWith(s,'[주의]') or #strings.startsWith(s,'⚠️') or #strings.startsWith(s,'🚨')}">
+                                <div class="d-flex flex-column py-3 border-bottom" style="border-color: #f2f4f6 !important;">
+                                    <div class="fw-bold text-dark mb-1" style="font-size: 15px;" th:text="${s}"></div>
+                                    <div class="text-secondary fw-medium" style="font-size: 13.5px; line-height: 1.5;" th:text="${signalDescMap != null ? signalDescMap.get(s) : ''}"></div>
+                                </div>
+                            </th:block>
+                        </th:block>
+                        <div th:if="${#lists.isEmpty(analysis.momentum.signals)}" class="text-center py-4 text-secondary fw-bold" style="font-size: 14px;">포착된 시그널이 없습니다.</div>
+                    </div>
                 </div>
 
-                <div x-show="tab==='tech'" x-cloak>
-                    <div th:if="${isEtf}" class="tab-info" style="background:#fff8ed;">
-                        <i class="bi bi-info-circle-fill" style="color:#f5a623; font-size:16px; flex-shrink:0;"></i>
-                        <span style="color:#854F0B;">ETF 종목도 일반 주식과 동일하게 이동평균, 크로스, 변동성을 통해 추세를 파악합니다.</span>
+                <!-- 4. 기술적 탭 -->
+                <div x-show="tab==='tech'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+                    <div class="p-3 mb-4" style="background-color: #fdf8f0; border-radius: 12px; border: 1px solid #fef3c7;">
+                        <span class="fw-bold" style="color: #d97706; font-size: 14px; line-height: 1.5;"
+                              th:text="${isEtf ? '이동평균선과 변동성을 통해 추세를 파악합니다.' : '이동평균 배열, 골든/데드크로스, 볼린저 스퀴즈 등 차트 구조를 분석합니다.'}"></span>
                     </div>
-                    <div th:if="${!isEtf}" class="tab-info" style="background:#fff8ed;">
-                        <i class="bi bi-info-circle-fill" style="color:#f5a623; font-size:16px; flex-shrink:0;"></i>
-                        <span style="color:#854F0B;">이동평균 배열, 골든/데드크로스, 볼린저 스퀴즈 등 차트의 구조적인 추세를 분석합니다.</span>
+                    <div>
+                        <th:block th:each="s : ${analysis.technical.signals}">
+                            <th:block th:with="isWarn=${#strings.startsWith(s,'[경고]') or #strings.startsWith(s,'[주의]') or #strings.startsWith(s,'⚠️') or #strings.startsWith(s,'🚨')}">
+                                <div class="d-flex flex-column py-3 border-bottom" style="border-color: #f2f4f6 !important;">
+                                    <div class="fw-bold text-dark mb-1" style="font-size: 15px;" th:text="${s}"></div>
+                                    <div class="text-secondary fw-medium" style="font-size: 13.5px; line-height: 1.5;" th:text="${signalDescMap != null ? signalDescMap.get(s) : ''}"></div>
+                                </div>
+                            </th:block>
+                        </th:block>
+                        <div th:if="${#lists.isEmpty(analysis.technical.signals)}" class="text-center py-4 text-secondary fw-bold" style="font-size: 14px;">포착된 시그널이 없습니다.</div>
                     </div>
-                    <th:block th:each="s : ${analysis.technical.signals}">
-                        <div class="signal-item">
-                            <div class="signal-item-bar" th:classappend="${#strings.startsWith(s,'[경고]') or #strings.startsWith(s,'[주의]') or #strings.startsWith(s,'⚠️') or #strings.startsWith(s,'🚨')} ? ' warn' : ' normal'"></div>
-                            <div>
-                                <div class="signal-name" th:classappend="${#strings.startsWith(s,'[경고]') or #strings.startsWith(s,'[주의]') or #strings.startsWith(s,'⚠️') or #strings.startsWith(s,'🚨')} ? ' warn' : ''" th:text="${s}"></div>
-                                <div class="signal-desc" th:text="${signalDescMap != null ? signalDescMap.get(s) : ''}"></div>
-                            </div>
-                        </div>
-                    </th:block>
                 </div>
+
             </div>
 
             <div th:if="${!isEtf}" class="toss-card fu d5 mb-4">
-                <h3 class="fw-bold mb-4" style="font-size:17px; letter-spacing:-0.2px;">재무 지표</h3>
+                <h3 class="card-header-title">재무 및 밸류에이션 지표</h3>
 
                 <div th:if="${stockSnapShot.financial != null}" class="mb-5">
-                    <div class="section-header">
-                        <div class="section-header-bar" style="background:#3182f6;"></div>
-                        <div class="section-header-title">수익성 / 성장성 (TTM)</div>
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <div class="section-header mb-0">
+                            <div class="section-header-bar" style="background:var(--toss-blue);"></div>
+                            <div class="section-header-title">수익성 및 성장성 (TTM)</div>
+                        </div>
+                        <span th:if="${stockSnapShot.financial.baseDate != null}" class="fw-bold" style="font-size:12px; color:var(--text-muted);" th:text="|기준일: ${stockSnapShot.financial.baseDate}|"></span>
                     </div>
                     <div class="row g-3 mb-3">
-                        <div class="col-6 col-md-3">
-                            <div class="fin-cell">
-                                <div class="fin-cell-label">매출총이익률</div>
-                                <div class="fin-cell-value" th:text="${stockSnapShot.financial.grossMargin != null ? #numbers.formatDecimal(stockSnapShot.financial.grossMargin, 1, 1) + '%' : '-'}"></div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="fin-cell">
-                                <div class="fin-cell-label">영업이익률</div>
-                                <div class="fin-cell-value" th:text="${stockSnapShot.financial.operatingMargin != null ? #numbers.formatDecimal(stockSnapShot.financial.operatingMargin, 1, 1) + '%' : '-'}"></div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="fin-cell">
-                                <div class="fin-cell-label">순이익률</div>
-                                <div class="fin-cell-value" th:text="${stockSnapShot.financial.netMargin != null ? #numbers.formatDecimal(stockSnapShot.financial.netMargin, 1, 1) + '%' : '-'}"></div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="fin-cell">
-                                <div class="fin-cell-label">ROE</div>
-                                <div class="fin-cell-value" th:text="${stockSnapShot.financial.roe != null ? #numbers.formatDecimal(stockSnapShot.financial.roe, 1, 1) + '%' : '-'}"></div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="fin-cell">
-                                <div class="fin-cell-label">ROA</div>
-                                <div class="fin-cell-value" th:text="${stockSnapShot.financial.roa != null ? #numbers.formatDecimal(stockSnapShot.financial.roa, 1, 1) + '%' : '-'}"></div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="fin-cell">
-                                <div class="fin-cell-label">매출 성장률 (YoY)</div>
-                                <div class="fin-cell-value"
-                                     th:classappend="${revenueGrowthPositive} ? ' text-up' : ' text-down'"
-                                     th:text="${stockSnapShot.financial.revenueGrowth != null ? #numbers.formatDecimal(stockSnapShot.financial.revenueGrowth, 1, 1) + '%' : '-'}"></div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="fin-cell">
-                                <div class="fin-cell-label">EPS 성장률 (YoY)</div>
-                                <div class="fin-cell-value"
-                                     th:classappend="${epsGrowthPositive} ? ' text-up' : ' text-down'"
-                                     th:text="${stockSnapShot.financial.epsGrowth != null ? #numbers.formatDecimal(stockSnapShot.financial.epsGrowth, 1, 1) + '%' : '-'}"></div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="fin-cell">
-                                <div class="fin-cell-label">배당수익률</div>
-                                <div class="fin-cell-value" th:text="${stockSnapShot.financial.dividendYield != null ? #numbers.formatDecimal(stockSnapShot.financial.dividendYield, 1, 2) + '%' : '-'}"></div>
-                            </div>
-                        </div>
+                        <div class="col-6 col-md-3"><div class="fin-cell"><div class="fin-cell-label">매출총이익률</div><div class="fin-cell-value" th:text="${stockSnapShot.financial.grossMargin != null ? #numbers.formatDecimal(stockSnapShot.financial.grossMargin, 1, 1) + '%' : '-'}"></div></div></div>
+                        <div class="col-6 col-md-3"><div class="fin-cell"><div class="fin-cell-label">영업이익률</div><div class="fin-cell-value" th:text="${stockSnapShot.financial.operatingMargin != null ? #numbers.formatDecimal(stockSnapShot.financial.operatingMargin, 1, 1) + '%' : '-'}"></div></div></div>
+                        <div class="col-6 col-md-3"><div class="fin-cell"><div class="fin-cell-label">순이익률</div><div class="fin-cell-value" th:text="${stockSnapShot.financial.netMargin != null ? #numbers.formatDecimal(stockSnapShot.financial.netMargin, 1, 1) + '%' : '-'}"></div></div></div>
+                        <div class="col-6 col-md-3"><div class="fin-cell"><div class="fin-cell-label">ROE</div><div class="fin-cell-value" th:text="${stockSnapShot.financial.roe != null ? #numbers.formatDecimal(stockSnapShot.financial.roe, 1, 1) + '%' : '-'}"></div></div></div>
+                        <div class="col-6 col-md-3"><div class="fin-cell"><div class="fin-cell-label">ROA</div><div class="fin-cell-value" th:text="${stockSnapShot.financial.roa != null ? #numbers.formatDecimal(stockSnapShot.financial.roa, 1, 1) + '%' : '-'}"></div></div></div>
+                        <div class="col-6 col-md-3"><div class="fin-cell"><div class="fin-cell-label">매출 성장률 (YoY)</div><div class="fin-cell-value" th:classappend="${revenueGrowthPositive} ? ' text-up' : ' text-down'" th:text="${stockSnapShot.financial.revenueGrowth != null ? #numbers.formatDecimal(stockSnapShot.financial.revenueGrowth, 1, 1) + '%' : '-'}"></div></div></div>
+                        <div class="col-6 col-md-3"><div class="fin-cell"><div class="fin-cell-label">EPS 성장률 (YoY)</div><div class="fin-cell-value" th:classappend="${epsGrowthPositive} ? ' text-up' : ' text-down'" th:text="${stockSnapShot.financial.epsGrowth != null ? #numbers.formatDecimal(stockSnapShot.financial.epsGrowth, 1, 1) + '%' : '-'}"></div></div></div>
+                        <div class="col-6 col-md-3"><div class="fin-cell"><div class="fin-cell-label">배당수익률</div><div class="fin-cell-value" th:text="${stockSnapShot.financial.dividendYield != null ? #numbers.formatDecimal(stockSnapShot.financial.dividendYield, 1, 2) + '%' : '-'}"></div></div></div>
                     </div>
                     <div class="row g-3">
-                        <div class="col-6 col-md-4">
-                            <div class="fin-cell">
-                                <div class="fin-cell-label">유동비율</div>
-                                <div class="fin-cell-value" th:text="${stockSnapShot.financial.currentRatio != null ? #numbers.formatDecimal(stockSnapShot.financial.currentRatio, 1, 2) : '-'}"></div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <div class="fin-cell">
-                                <div class="fin-cell-label">부채비율 (D/E)</div>
-                                <div class="fin-cell-value" th:text="${stockSnapShot.financial.debtToEquity != null ? #numbers.formatDecimal(stockSnapShot.financial.debtToEquity, 1, 2) : '-'}"></div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <div class="fin-cell">
-                                <div class="fin-cell-label">재고자산회전율</div>
-                                <div class="fin-cell-value" th:text="${stockSnapShot.financial.inventoryTurnover != null ? #numbers.formatDecimal(stockSnapShot.financial.inventoryTurnover, 1, 2) : '-'}"></div>
-                            </div>
-                        </div>
+                        <div class="col-6 col-md-4"><div class="fin-cell"><div class="fin-cell-label">유동비율</div><div class="fin-cell-value" th:text="${stockSnapShot.financial.currentRatio != null ? #numbers.formatDecimal(stockSnapShot.financial.currentRatio, 1, 2) : '-'}"></div></div></div>
+                        <div class="col-6 col-md-4"><div class="fin-cell"><div class="fin-cell-label">부채비율 (D/E)</div><div class="fin-cell-value" th:text="${stockSnapShot.financial.debtToEquity != null ? #numbers.formatDecimal(stockSnapShot.financial.debtToEquity, 1, 2) : '-'}"></div></div></div>
+                        <div class="col-6 col-md-4"><div class="fin-cell"><div class="fin-cell-label">재고자산회전율</div><div class="fin-cell-value" th:text="${stockSnapShot.financial.inventoryTurnover != null ? #numbers.formatDecimal(stockSnapShot.financial.inventoryTurnover, 1, 2) : '-'}"></div></div></div>
                     </div>
                 </div>
 
                 <div th:if="${stockSnapShot.valuation != null}" style="border-top:1px solid #f2f4f6; padding-top:28px;">
                     <div class="d-flex align-items-center justify-content-between mb-4">
                         <div class="section-header mb-0">
-                            <div class="section-header-bar" style="background:#f5a623;"></div>
-                            <div class="section-header-title">주요 가치 지표 (Valuation)</div>
+                            <div class="section-header-bar" style="background:var(--toss-warning);"></div>
+                            <div class="section-header-title">가치 평가 지표 (Valuation)</div>
                         </div>
-                        <span th:if="${stockSnapShot.valuation.baseDate != null}"
-                              class="fw-bold" style="font-size:12px; color:#b0b8c1;"
-                              th:text="|기준일: ${stockSnapShot.valuation.baseDate}|"></span>
+                        <span th:if="${stockSnapShot.valuation.baseDate != null}" class="fw-bold" style="font-size:12px; color:var(--text-muted);" th:text="|기준일: ${stockSnapShot.valuation.baseDate}|"></span>
                     </div>
                     <div class="row g-3">
-                        <div class="col-6 col-md-3">
-                            <div class="fin-cell">
-                                <div class="fin-cell-label">PER (주가수익비율)</div>
-                                <div class="fin-cell-value">
-                                    <span th:text="${stockSnapShot.valuation.per != null ? #numbers.formatDecimal(stockSnapShot.valuation.per, 1, 2) : '-'}"></span>
-                                    <span class="fin-cell-unit" th:if="${stockSnapShot.valuation.per != null}">배</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="fin-cell">
-                                <div class="fin-cell-label">PBR (주가순자산비율)</div>
-                                <div class="fin-cell-value">
-                                    <span th:text="${stockSnapShot.valuation.pbr != null ? #numbers.formatDecimal(stockSnapShot.valuation.pbr, 1, 2) : '-'}"></span>
-                                    <span class="fin-cell-unit" th:if="${stockSnapShot.valuation.pbr != null}">배</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="fin-cell">
-                                <div class="fin-cell-label">PEG (수익성장비율)</div>
-                                <div class="fin-cell-value">
-                                    <span th:text="${stockSnapShot.valuation.peg != null ? #numbers.formatDecimal(stockSnapShot.valuation.peg, 1, 2) : '-'}"></span>
-                                    <span class="fin-cell-unit" th:if="${stockSnapShot.valuation.peg != null}">배</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="fin-cell">
-                                <div class="fin-cell-label">EPS (주당순이익)</div>
-                                <div class="fin-cell-value" th:text="${stockSnapShot.valuation.eps != null ? #numbers.formatDecimal(stockSnapShot.valuation.eps, 0, 'COMMA', 2, 'POINT') : '-'}"></div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="fin-cell blue-accent">
-                                <div class="fin-cell-label" style="color:#3182f6;">12M 추정 PER</div>
-                                <div class="fin-cell-value">
-                                    <span th:text="${stockSnapShot.valuation.fper != null ? #numbers.formatDecimal(stockSnapShot.valuation.fper, 1, 2) : '-'}"></span>
-                                    <span class="fin-cell-unit" th:if="${stockSnapShot.valuation.fper != null}">배</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="fin-cell blue-accent">
-                                <div class="fin-cell-label" style="color:#3182f6;">12M 추정 EPS</div>
-                                <div class="fin-cell-value" th:text="${stockSnapShot.valuation.feps != null ? #numbers.formatDecimal(stockSnapShot.valuation.feps, 0, 'COMMA', 2, 'POINT') : '-'}"></div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-6">
-                            <div class="fin-cell red-accent">
-                                <div class="fin-cell-label" style="color:#f04452;">월가 / 증권사 목표가</div>
-                                <div class="fin-cell-value" th:text="${stockSnapShot.valuation.targetPrice != null ? #numbers.formatDecimal(stockSnapShot.valuation.targetPrice, 0, 'COMMA', 2, 'POINT') : '-'}"></div>
-                            </div>
-                        </div>
+                        <div class="col-6 col-md-3"><div class="fin-cell"><div class="fin-cell-label">PER</div><div class="fin-cell-value"><span th:text="${stockSnapShot.valuation.per != null ? #numbers.formatDecimal(stockSnapShot.valuation.per, 1, 2) : '-'}"></span><span class="fin-cell-unit" th:if="${stockSnapShot.valuation.per != null}">배</span></div></div></div>
+                        <div class="col-6 col-md-3"><div class="fin-cell"><div class="fin-cell-label">PBR</div><div class="fin-cell-value"><span th:text="${stockSnapShot.valuation.pbr != null ? #numbers.formatDecimal(stockSnapShot.valuation.pbr, 1, 2) : '-'}"></span><span class="fin-cell-unit" th:if="${stockSnapShot.valuation.pbr != null}">배</span></div></div></div>
+                        <div class="col-6 col-md-3"><div class="fin-cell"><div class="fin-cell-label">PEG</div><div class="fin-cell-value"><span th:text="${stockSnapShot.valuation.peg != null ? #numbers.formatDecimal(stockSnapShot.valuation.peg, 1, 2) : '-'}"></span><span class="fin-cell-unit" th:if="${stockSnapShot.valuation.peg != null}">배</span></div></div></div>
+                        <div class="col-6 col-md-3"><div class="fin-cell"><div class="fin-cell-label">EPS</div><div class="fin-cell-value" th:text="${stockSnapShot.valuation.eps != null ? (isKr ? #numbers.formatDecimal(stockSnapShot.valuation.eps, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(stockSnapShot.valuation.eps, 1, 'COMMA', 2, 'POINT')) : '-'}"></div></div></div>
+                        <div class="col-6 col-md-3"><div class="fin-cell blue-accent"><div class="fin-cell-label">12M 추정 PER</div><div class="fin-cell-value"><span th:text="${stockSnapShot.valuation.fper != null ? #numbers.formatDecimal(stockSnapShot.valuation.fper, 1, 2) : '-'}"></span><span class="fin-cell-unit" th:if="${stockSnapShot.valuation.fper != null}">배</span></div></div></div>
+                        <div class="col-6 col-md-3"><div class="fin-cell blue-accent"><div class="fin-cell-label">12M 추정 EPS</div><div class="fin-cell-value" th:text="${stockSnapShot.valuation.feps != null ? (isKr ? #numbers.formatDecimal(stockSnapShot.valuation.feps, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(stockSnapShot.valuation.feps, 1, 'COMMA', 2, 'POINT')) : '-'}"></div></div></div>
+                        <div class="col-12 col-md-6"><div class="fin-cell red-accent"><div class="fin-cell-label">증권사 목표가</div><div class="fin-cell-value" th:text="${stockSnapShot.valuation.targetPrice != null ? (isKr ? #numbers.formatDecimal(stockSnapShot.valuation.targetPrice, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(stockSnapShot.valuation.targetPrice, 1, 'COMMA', 2, 'POINT')) : '-'}"></div></div></div>
                     </div>
                 </div>
             </div>
 
             <div class="toss-card fu d5 mb-4">
                 <div class="d-flex align-items-center justify-content-between mb-4">
-                    <h3 class="fw-bold m-0" style="font-size:17px;"><i class="bi bi-stars text-warning me-2"></i>AI 종합 코멘트</h3>
-                    <button @click="requestAiComment()"
-                            class="btn btn-sm fw-bold rounded-pill px-4 py-2"
-                            style="background: #f2f4f6; color: #4e5968; font-size:13px; border:none;"
-                            :disabled="aiLoading || aiCooldown > 0">
-                        <span x-show="!aiLoading && aiCooldown === 0">분석 요청</span>
+                    <h3 class="card-header-title m-0">AI 분석 리포트</h3>
+                    <button @click="requestAiComment()" class="btn btn-sm fw-bold rounded-pill px-4 py-2" style="background: #f2f4f6; color: var(--text-secondary); font-size:14px; border:none; transition: all 0.15s;" :disabled="aiLoading || aiCooldown > 0">
+                        <span x-show="!aiLoading && aiCooldown === 0">분석 시작</span>
                         <span x-show="aiLoading" class="spinner-border spinner-border-sm text-primary"></span>
-                        <span x-show="!aiLoading && aiCooldown > 0" x-text="`${aiCooldown}초 후 재요청`" style="font-size:12px; color:#f04452;"></span>
+                        <span x-show="!aiLoading && aiCooldown > 0" x-text="`${aiCooldown}초 후 재요청`" style="color:var(--toss-red);"></span>
                     </button>
                 </div>
-                <div x-show="!aiComment && !aiLoading" class="fin-placeholder" style="padding: 40px 0;">
-                    <i class="bi bi-chat-dots" style="font-size: 2.2rem; color: #d1d5db;"></i>
-                    <p style="font-size: 14px; font-weight: 700; color: #b0b8c1; margin: 0;">버튼을 눌러 AI의 종합 분석 코멘트를 받아보세요</p>
+                <div x-show="!aiComment && !aiLoading" class="fin-placeholder">
+                    <i class="bi bi-chat-left-text" style="font-size: 2rem; color: #d1d6db;"></i>
+                    <p class="fw-bold" style="font-size: 14px; color: var(--text-muted); margin: 0;">버튼을 눌러 AI의 종합 분석 리포트를 받아보세요</p>
                 </div>
-                <div x-show="aiLoading" class="fin-placeholder" style="padding: 40px 0;">
-                    <div class="spinner-border text-primary"></div>
-                    <p style="font-size: 14px; font-weight: 700; color: #b0b8c1; margin: 0;">AI가 퀀트 데이터를 분석하는 중...</p>
+                <div x-show="aiLoading" class="fin-placeholder">
+                    <div class="spinner-border text-primary" style="width: 2rem; height: 2rem;"></div>
+                    <p class="fw-bold mt-2" style="font-size: 14px; color: var(--text-muted); margin: 0;">AI가 데이터를 분석하는 중이에요</p>
                 </div>
-                <div x-show="aiComment && !aiLoading" style="background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%); border: 1px solid #edf2f7; border-radius: 16px; padding: 24px;" x-cloak>
+                <div x-show="aiComment && !aiLoading" style="background: #f9fafb; border: 1px solid #e5e8eb; border-radius: 12px; padding: 24px;" x-cloak>
                     <div class="ai-comment-box" x-html="aiComment"></div>
                 </div>
             </div>
 
-            <div class="disclaimer fu d5 mt-4">
+            <div class="disclaimer fu d5 mt-5">
                 본 분석은 공개 데이터 기반의 참고용 정보로, 투자 권유가 아닙니다.<br>
-                투자 결정은 반드시 본인의 판단과 책임 하에 이루어야 합니다.
+                투자 결정은 반드시 본인의 판단과 책임 하에 이루어져야 합니다.
             </div>
 
         </div>
     </main>
 </div>
+</body>
 <script th:inline="javascript">
     document.addEventListener('alpine:init', () => {
         Alpine.data('analysisApp', () => ({
@@ -745,7 +765,7 @@
             async renderLightweightChart(container, code) {
                 try {
                     const chart = LightweightCharts.createChart(container, {
-                        autoSize: true, height: 500,
+                        autoSize: true, height: 460,
                         layout: { background: { color: '#ffffff' }, textColor: '#4e5968', fontFamily: 'Pretendard, sans-serif' },
                         grid: { vertLines: { color: 'rgba(242, 244, 246, 0.8)' }, horzLines: { color: 'rgba(242, 244, 246, 0.8)' } },
                         crosshair: { mode: LightweightCharts.CrosshairMode.Normal, vertLine: { width: 1, color: '#3182f6', style: 3 }, horzLine: { width: 1, color: '#3182f6', style: 3 } },
@@ -753,7 +773,7 @@
                         timeScale: { borderVisible: false, fixLeftEdge: true, fixRightEdge: true, timeVisible: true }
                     });
 
-                    const candleSeries = chart.addCandlestickSeries({ upColor: '#ff3b30', downColor: '#007aff', borderUpColor: '#ff3b30', borderDownColor: '#007aff', wickUpColor: '#ff3b30', wickDownColor: '#007aff' });
+                    const candleSeries = chart.addCandlestickSeries({ upColor: '#f04452', downColor: '#3182f6', borderUpColor: '#f04452', borderDownColor: '#3182f6', wickUpColor: '#f04452', wickDownColor: '#3182f6' });
                     const volumeSeries = chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: '' });
 
                     const upperBand = chart.addLineSeries({ color: 'rgba(139, 149, 161, 0.3)', lineWidth: 1, lineStyle: 2, lastValueVisible: false, priceLineVisible: false });
@@ -776,7 +796,7 @@
                                 const close = Number(d.close);
                                 return {
                                     time: chartTime, open: open, high: d.high ? Number(d.high) : close, low: d.low ? Number(d.low) : close, close: close, value: Number(d.volume || 0),
-                                    color: open > close ? 'rgba(0, 122, 255, 0.3)' : 'rgba(255, 59, 48, 0.3)',
+                                    color: open > close ? 'rgba(49, 130, 246, 0.2)' : 'rgba(240, 68, 82, 0.2)',
                                     upper: d.bollingerUpper, mid: d.bollingerMid, lower: d.bollingerLower
                                 };
                             }).sort((a, b) => a.time.localeCompare(b.time));
@@ -798,7 +818,7 @@
                 try {
                     const res = await fetch(`/api/stock/${this.stockCode}/ai-comment`);
                     if (res.ok) { this.aiComment = await res.text(); this.startCooldown(); }
-                } catch (e) { this.aiComment = '서버 통신 오류가 발생했습니다.'; } finally { this.aiLoading = false; }
+                } catch (e) { this.aiComment = '서버 통신 중 오류가 발생했습니다.'; } finally { this.aiLoading = false; }
             },
 
             startCooldown() {
@@ -809,5 +829,4 @@
         }));
     });
 </script>
-</body>
 </html>

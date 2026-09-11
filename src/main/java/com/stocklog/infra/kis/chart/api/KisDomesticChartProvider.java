@@ -1,11 +1,11 @@
 package com.stocklog.infra.kis.chart.api;
 
-import com.stocklog.domain.stock.chart.dto.request.ChartRequest;
-import com.stocklog.domain.stock.chart.dto.internal.StockChartDto;
-import com.stocklog.domain.stock.chart.dto.response.StockChartResponse;
-import com.stocklog.domain.stock.chart.StockChartProvider;
-import com.stocklog.domain.stock.common.type.MarketType;
-import com.stocklog.domain.stock.common.type.Period;
+import com.stocklog.modules.stock.chart.dto.ChartRequest;
+import com.stocklog.modules.stock.chart.dto.StockChartDto;
+import com.stocklog.modules.stock.chart.dto.StockChartResponse;
+import com.stocklog.modules.stock.chart.StockChartProvider;
+import com.stocklog.modules.stock.domain.type.MarketType;
+import com.stocklog.modules.stock.domain.type.Period;
 import com.stocklog.infra.kis.chart.dto.KisDomesticChartOutput1;
 import com.stocklog.infra.kis.chart.dto.KisDomesticChartOutput2;
 import com.stocklog.infra.kis.common.KisResponseV2;
@@ -36,7 +36,6 @@ public class KisDomesticChartProvider implements StockChartProvider {
 
     @Override
     public StockChartResponse fetchInfo(ChartRequest request, Period period) {
-        log.info("KIS 국내 종목  fetchInfo Period: {}, Code: {}", period.name() ,request.code());
         try {
             List<KisDomesticChartOutput2> output = callApi(request, period);
             if (output == null) return StockChartResponse.createFallback();
@@ -107,6 +106,7 @@ public class KisDomesticChartProvider implements StockChartProvider {
             case DAY -> "D";
             case WEEK -> "W";
             case MONTH -> "M";
+            default -> "";
         };
     }
 
@@ -126,6 +126,7 @@ public class KisDomesticChartProvider implements StockChartProvider {
                 case DAY -> LocalDate.now().minusDays(100).format(fmt);
                 case WEEK -> LocalDate.now().minusWeeks(100).format(fmt);
                 case MONTH -> LocalDate.now().minusMonths(100).format(fmt);
+                default -> LocalDate.now().minusWeeks(1).format(fmt);
             };
         }
     }

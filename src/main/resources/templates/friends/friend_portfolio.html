@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="|StockLog - ${friend.username}님의 포트폴리오|">StockLog - 친구 포트폴리오</title>
+    <title th:text="|StockLog - ${friend.username}님의 자산|">StockLog - 친구 포트폴리오</title>
 
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -12,56 +12,68 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
 
     <style>
-        :root { --blue: #3182f6; --red: #f04452; --green: #05c072; --gray-bg: #f2f4f6; --sidebar-width: 250px; }
-        body { background: var(--gray-bg); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: #191f28; }
+        :root {
+            --toss-blue: #3182f6; --toss-red: #f04452; --toss-green: #05c072;
+            --toss-gray-bg: #f2f4f6; --sidebar-width: 250px;
+        }
+        body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: #191f28; }
+
         .layout-wrapper { display: flex; min-height: 100vh; }
         .main-content { flex-grow: 1; margin-left: var(--sidebar-width); padding: 0 60px 80px; transition: 0.3s; }
         .main-content.expanded { margin-left: 80px; }
-        .page-wrap { max-width: 1100px; margin: 0 auto; padding-top: 32px; }
-        .toss-card { background: white; border-radius: 24px; padding: 28px 32px; box-shadow: 0 2px 16px rgba(0,0,0,0.04); margin-bottom: 20px; border: none; }
+        .content-container { max-width: 1100px; margin: 0 auto; padding-top: 32px; }
 
-        .back-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 700; color: #8b95a1; cursor: pointer; text-decoration: none; padding: 8px 12px; border-radius: 10px; transition: background 0.15s, color 0.15s; }
-        .back-btn:hover { background: white; color: #191f28; }
+        .toss-card { background: white; border-radius: 16px; padding: 28px; box-shadow: none; border: 1px solid #e5e8eb; margin-bottom: 24px; }
 
-        .profile-avatar { width: 64px; height: 64px; border-radius: 20px; background: #8b95a1; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 900; color: white; flex-shrink: 0; }
+        .back-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #8b95a1; cursor: pointer; text-decoration: none; padding: 8px 12px; border-radius: 8px; transition: 0.15s; margin-left: -12px; }
+        .back-btn:hover { background: #f2f4f6; color: #191f28; }
 
-        .text-up   { color: var(--red)   !important; }
-        .text-down { color: var(--blue)  !important; }
+        .profile-avatar { width: 56px; height: 56px; border-radius: 16px; background: #8b95a1; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: white; flex-shrink: 0; }
 
-        /* 수익 배지 */
-        .profit-badge { font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 20px; }
-        .badge-profit { background: rgba(240,68,82,0.1);  color: var(--red);   }
-        .badge-loss   { background: rgba(49,130,246,0.1); color: var(--blue);  }
+        .text-up   { color: var(--toss-red)   !important; }
+        .text-down { color: var(--toss-blue)  !important; }
 
-        /* 차트 */
-        .chart-wrap { position: relative; width: 180px; height: 180px; flex-shrink: 0; }
+        .profit-badge { font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 6px; }
+        .badge-profit { background: rgba(240,68,82,0.08);  color: var(--toss-red);   }
+        .badge-loss   { background: rgba(49,130,246,0.08); color: var(--toss-blue);  }
+
+        .chart-wrap { position: relative; width: 160px; height: 160px; flex-shrink: 0; }
         .chart-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; pointer-events: none; }
 
-        /* 비중 바 */
-        .weight-bar-wrap { display: flex; height: 10px; border-radius: 99px; overflow: hidden; gap: 2px; margin-bottom: 14px; }
+        .weight-bar-wrap { display: flex; height: 8px; border-radius: 99px; overflow: hidden; gap: 2px; margin-bottom: 16px; }
         .weight-bar-seg  { border-radius: 99px; height: 100%; }
 
-        /* 범례 */
         .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
-        /* 종목 행 */
-        .stock-row { display: flex; align-items: center; padding: 15px 0; border-bottom: 1px solid #f2f4f6; gap: 14px; }
+        .stock-row { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid #f2f4f6; gap: 14px; }
         .stock-row:last-child { border-bottom: none; }
-        .stock-icon  { width: 40px; height: 40px; border-radius: 12px; background: #eef5ff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; color: var(--blue); flex-shrink: 0; }
-        .stock-name  { font-size: 14px; font-weight: 800; color: #191f28; }
-        .stock-meta  { font-size: 11px; font-weight: 700; color: #a0a8b2; margin-top: 2px; }
-        .stock-value { font-size: 14px; font-weight: 900; color: #191f28; }
+        .stock-icon  { width: 40px; height: 40px; border-radius: 10px; background: #f2f4f6; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #4e5968; flex-shrink: 0; }
+        .stock-name  { font-size: 15px; font-weight: 700; color: #191f28; }
+        .stock-meta  { font-size: 13px; font-weight: 500; color: #8b95a1; margin-top: 2px; }
+        .stock-value { font-size: 15px; font-weight: 700; color: #191f28; }
 
-        /* 빈 상태 */
-        .empty-state { text-align: center; padding: 48px 0; color: #b0b8c1; }
-        .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 12px; opacity: 0.4; }
+        .empty-state { text-align: center; padding: 48px 0; color: #8b95a1; }
+        .empty-state i { font-size: 2rem; display: block; margin-bottom: 12px; color: #d1d6db; }
 
-        /* 애니메이션 */
-        @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
-        .fu { animation: fadeUp 0.4s cubic-bezier(0.22,1,0.36,1) both; }
-        .d1 { animation-delay: 0.04s; }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        .fu { animation: fadeUp 0.3s ease both; }
+        .d1 { animation-delay: 0.05s; }
         .d2 { animation-delay: 0.10s; }
-        .d3 { animation-delay: 0.17s; }
+        .d3 { animation-delay: 0.15s; }
+
+        @media (max-width: 768px) {
+            .sidebar-main { display: none !important; }
+            .main-content { margin-left: 0 !important; padding: 16px !important; }
+            .content-container { padding-top: 16px; }
+            .toss-card { padding: 20px !important; }
+
+            .d-flex.gap-5 { gap: 16px !important; }
+            .d-flex.align-items-center.gap-5 { flex-direction: column !important; gap: 24px !important; }
+            .chart-wrap { margin: 0 auto; }
+            .stock-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+            .stock-row .flex-grow-1 { width: 100%; }
+            .stock-row .text-end { text-align: left !important; display: flex; justify-content: space-between; width: 100%; align-items: center; }
+        }
     </style>
 </head>
 <body x-data="{ sidebarOpen: true }">
@@ -71,16 +83,14 @@
     <main class="main-content" :class="!sidebarOpen ? 'expanded' : ''">
         <div th:replace="~{fragments/header :: headerFragment}"></div>
 
-        <div class="page-wrap">
+        <div class="content-container">
 
-            <!-- 뒤로가기 -->
             <div class="mb-3 fu">
                 <a th:href="@{/friends}" class="back-btn">
-                    <i class="bi bi-chevron-left"></i> 친구 목록
+                    <i class="bi bi-chevron-left"></i> 목록으로 돌아가기
                 </a>
             </div>
 
-            <!-- ① 프로필 + 총 자산 -->
             <div class="toss-card fu d1">
                 <div class="d-flex align-items-start gap-4 flex-wrap">
 
@@ -90,36 +100,32 @@
 
                     <div class="flex-grow-1">
                         <div class="text-secondary fw-bold mb-1"
-                             style="font-size:11px; letter-spacing:0.04em; text-transform:uppercase;">친구 포트폴리오</div>
-                        <div class="fw-bold mb-3"
-                             style="font-size:1.6rem; letter-spacing:-0.5px;"
-                             th:text="${friend.username} + '님'"></div>
+                             style="font-size: 13px;">친구가 보유한 자산</div>
+                        <div class="fw-bold mb-4 text-dark"
+                             style="font-size: 24px;"
+                             th:text="${friend.username}"></div>
 
-                        <!-- 지표 3개 -->
                         <div class="d-flex gap-5 flex-wrap">
                             <div>
-                                <div class="text-secondary fw-bold mb-1" style="font-size:11px;">총 평가자산</div>
-                                <div class="fw-bold" style="font-size:1.4rem; letter-spacing:-0.5px;"
+                                <div style="font-size: 13px; color: #6b7684; font-weight: 500; margin-bottom: 4px;">총 자산</div>
+                                <div class="fw-bold text-dark" style="font-size: 20px;"
                                      th:text="${#numbers.formatDecimal(portfolio.totalAssets, 0, 'COMMA', 0, 'POINT')} + '원'">0원</div>
                             </div>
-                            <div class="vr opacity-10 d-none d-md-block"></div>
                             <div>
-                                <div class="text-secondary fw-bold mb-1" style="font-size:11px;">총 평가손익</div>
-                                <div class="fw-bold" style="font-size:1.4rem; letter-spacing:-0.5px;"
+                                <div style="font-size: 13px; color: #6b7684; font-weight: 500; margin-bottom: 4px;">총 평가손익</div>
+                                <div class="fw-bold" style="font-size: 20px;"
                                      th:classappend="${portfolio.totalProfit >= 0 ? 'text-up' : 'text-down'}"
                                      th:text="${(portfolio.totalProfit >= 0 ? '+' : '') + #numbers.formatDecimal(portfolio.totalProfit, 0, 'COMMA', 0, 'POINT')} + '원'">+0원</div>
                             </div>
-                            <div class="vr opacity-10 d-none d-md-block"></div>
                             <div>
-                                <div class="text-secondary fw-bold mb-1" style="font-size:11px;">총 수익률</div>
-                                <div class="fw-bold" style="font-size:1.4rem; letter-spacing:-0.5px;"
+                                <div style="font-size: 13px; color: #6b7684; font-weight: 500; margin-bottom: 4px;">총 수익률</div>
+                                <div class="fw-bold" style="font-size: 20px;"
                                      th:classappend="${portfolio.totalReturnRate >= 0 ? 'text-up' : 'text-down'}"
                                      th:text="${(portfolio.totalReturnRate >= 0 ? '+' : '') + portfolio.totalReturnRate + '%'}">+0%</div>
                             </div>
-                            <div class="vr opacity-10 d-none d-md-block"></div>
                             <div>
-                                <div class="text-secondary fw-bold mb-1" style="font-size:11px;">보유 종목</div>
-                                <div class="fw-bold" style="font-size:1.4rem; letter-spacing:-0.5px;"
+                                <div style="font-size: 13px; color: #6b7684; font-weight: 500; margin-bottom: 4px;">보유 종목수</div>
+                                <div class="fw-bold text-dark" style="font-size: 20px;"
                                      th:text="${#lists.size(portfolio.myStocks)} + '개'">0개</div>
                             </div>
                         </div>
@@ -127,35 +133,31 @@
                 </div>
             </div>
 
-            <!-- ② 자산 구성 차트 -->
             <div class="toss-card fu d2" th:if="${!#lists.isEmpty(portfolio.myStocks)}">
-                <h3 class="fw-bold mb-4" style="font-size:15px;">자산 구성</h3>
+                <h3 class="fw-bold mb-4 text-dark" style="font-size: 18px;">자산 구성</h3>
 
                 <div class="d-flex align-items-center gap-5 flex-wrap flex-md-nowrap">
-
-                    <!-- 도넛 차트 -->
                     <div class="chart-wrap">
                         <canvas id="pieChart"></canvas>
                         <div class="chart-center">
-                            <div class="text-secondary fw-bold" style="font-size:10px;">보유</div>
-                            <div class="fw-bold" style="font-size:17px; letter-spacing:-0.5px;"
-                                 th:text="${#lists.size(portfolio.myStocks)} + '종목'"></div>
+                            <div style="font-size: 12px; color: #8b95a1; font-weight: 500;">보유</div>
+                            <div class="fw-bold text-dark" style="font-size: 16px;"
+                                 th:text="${#lists.size(portfolio.myStocks)} + '개'"></div>
                         </div>
                     </div>
 
-                    <!-- 비중 바 + 범례 -->
                     <div class="flex-grow-1 w-100">
                         <div class="weight-bar-wrap" id="weightBar"></div>
                         <div class="d-flex flex-column gap-2">
                             <th:block th:each="stock, stat : ${portfolio.myStocks}">
-                                <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center justify-content-between p-2 rounded-2" onmouseover="this.style.backgroundColor='#f9fafb'" onmouseout="this.style.backgroundColor='transparent'">
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="legend-dot" th:attr="data-idx=${stat.index}"></div>
-                                        <span class="fw-bold" style="font-size:13px;"
+                                        <span class="fw-bold text-dark" style="font-size: 14px;"
                                               th:text="${stock.korName}"></span>
                                     </div>
                                     <div class="text-end">
-                                        <span class="fw-bold" style="font-size:12px; color:#191f28;"
+                                        <span class="fw-bold" style="font-size: 14px; color: #4e5968;"
                                               th:text="${#numbers.formatDecimal(stock.getCurrentValueKrw(), 0, 'COMMA', 0, 'POINT')} + '원'"></span>
                                         <span class="ms-2 profit-badge"
                                               th:classappend="${stock.profitRate >= 0 ? 'badge-profit' : 'badge-loss'}"
@@ -168,9 +170,8 @@
                 </div>
             </div>
 
-            <!-- ③ 보유 종목 상세 -->
             <div class="toss-card fu d3">
-                <h3 class="fw-bold mb-4" style="font-size:15px;">보유 종목 상세</h3>
+                <h3 class="fw-bold mb-4 text-dark" style="font-size: 18px;">보유 종목 상세</h3>
 
                 <th:block th:each="stock : ${portfolio.myStocks}">
                     <div class="stock-row">
@@ -180,7 +181,7 @@
                             <div class="stock-name" th:text="${stock.korName}"></div>
                             <div class="stock-meta">
                                 <span th:text="${#numbers.formatDecimal(stock.quantity, 0, 'COMMA', 0, 'POINT')} + '주'"></span>
-                                <span class="mx-1 opacity-25">|</span>
+                                <span class="mx-1" style="color: #d1d6db;">|</span>
                                 <span>평균
                                     <span th:text="${stock.currency.toString() == 'USD' ? '$' : ''}
                                                  + ${#numbers.formatDecimal(stock.purchasePrice, 0, 'COMMA', (stock.currency.toString() == 'USD' ? 2 : 0), 'POINT')}
@@ -195,7 +196,7 @@
                                 <span class="profit-badge"
                                       th:classappend="${stock.profitRate >= 0 ? 'badge-profit' : 'badge-loss'}"
                                       th:text="${(stock.profitRate >= 0 ? '+' : '') + stock.profitRate + '%'}"></span>
-                                <span class="text-secondary fw-bold ms-1" style="font-size:11px;"
+                                <span style="font-size: 12px; color: #8b95a1; font-weight: 500; margin-left: 4px;"
                                       th:text="'(' + #numbers.formatDecimal(stock.profit, 0, 'COMMA', 0, 'POINT') + '원)'"></span>
                             </div>
                         </div>
@@ -203,8 +204,7 @@
                 </th:block>
 
                 <div th:if="${#lists.isEmpty(portfolio.myStocks)}" class="empty-state">
-                    <i class="bi bi-folder-x"></i>
-                    <div class="fw-bold" style="font-size:14px;">보유 중인 종목이 없습니다.</div>
+                    <div style="font-size: 14px; font-weight: 500;">현재 보유 중인 종목이 없어요</div>
                 </div>
             </div>
 
@@ -227,7 +227,6 @@
         if (!stockValues.length) return;
         const total = stockValues.reduce((a, b) => a + b, 0);
 
-        // 도넛 차트
         const ctx = document.getElementById('pieChart')?.getContext('2d');
         if (ctx) {
             new Chart(ctx, {
@@ -238,11 +237,11 @@
                         data: stockValues,
                         backgroundColor: COLORS.slice(0, stockValues.length),
                         borderWidth: 0,
-                        hoverOffset: 6
+                        hoverOffset: 4
                     }]
                 },
                 options: {
-                    cutout: '70%',
+                    cutout: '75%',
                     plugins: {
                         legend: { display: false },
                         tooltip: {
@@ -251,12 +250,11 @@
                             }
                         }
                     },
-                    animation: { animateRotate: true, duration: 800 }
+                    animation: { animateRotate: true, duration: 600 }
                 }
             });
         }
 
-        // 비중 바
         const bar = document.getElementById('weightBar');
         if (bar) {
             stockValues.forEach((v, i) => {
@@ -268,7 +266,6 @@
             });
         }
 
-        // 범례 도트 색상
         document.querySelectorAll('.legend-dot[data-idx]').forEach(dot => {
             const i = parseInt(dot.getAttribute('data-idx'));
             dot.style.background = COLORS[i % COLORS.length];

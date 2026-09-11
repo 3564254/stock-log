@@ -1,9 +1,9 @@
 package com.stocklog.infra.kis.price.api;
 
-import com.stocklog.domain.stock.common.StockRequest;
-import com.stocklog.domain.stock.price.dto.response.StockPriceResponse;
-import com.stocklog.domain.stock.price.StockPriceProvider;
-import com.stocklog.domain.stock.common.type.MarketType;
+import com.stocklog.modules.stock.application.request.StockRequest;
+import com.stocklog.modules.stock.price.dto.StockPriceResponse;
+import com.stocklog.modules.stock.price.StockPriceProvider;
+import com.stocklog.modules.stock.domain.type.MarketType;
 import com.stocklog.infra.kis.common.KisResponseV1;
 import com.stocklog.infra.kis.config.client.KisTokenManager;
 import com.stocklog.infra.kis.config.KisProperties;

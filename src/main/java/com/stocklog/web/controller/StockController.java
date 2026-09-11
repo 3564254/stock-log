@@ -3,13 +3,13 @@
 
 package com.stocklog.web.controller;
 
-import com.stocklog.domain.member.dto.response.MemberResponse;
-import com.stocklog.domain.stock.analysis.StockAnalysisService;
-import com.stocklog.domain.stock.analysis.result.StockAnalysisResult;
-import com.stocklog.domain.stock.analysis.result.SignalDescription;
-import com.stocklog.domain.application.StockFacadeService;
-import com.stocklog.domain.application.dto.stock.StockSnapshot;
+import com.stocklog.modules.member.dto.response.MemberResponse;
+import com.stocklog.modules.stock.analysis.StockAnalysisService;
+import com.stocklog.modules.stock.analysis.result.StockAnalysisResult;
+import com.stocklog.modules.stock.analysis.result.SignalDescription;
+import com.stocklog.modules.stock.application.response.StockSnapshot;
 import com.stocklog.global.annotation.LoginUser;
+import com.stocklog.modules.stock.application.usecase.StockSnapshotUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -27,8 +27,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/stock")
 public class StockController {
 
-    private final StockFacadeService stockFacadeService;
-    private final StockAnalysisService stockAnalysisService;
+    private final StockSnapshotUseCase snapshotUseCase;
+    private final StockAnalysisService analysisService;
 
     @GetMapping("/analysis")
     public String analysisPage(@RequestParam String code,
@@ -36,9 +36,9 @@ public class StockController {
                                Model model) {
         if (loginMember == null) return "redirect:/auth/login";
 
-        StockSnapshot stockSnapShot = stockFacadeService.getStockSnapShot(code);
+        StockSnapshot stockSnapshot = snapshotUseCase.getStockSnapshot(code);
 
-        StockAnalysisResult analysisResult = stockAnalysisService.getAnalysisResult(stockSnapShot);
+        StockAnalysisResult analysisResult =  analysisService.getAnalysisResult(stockSnapshot);
 
         Map<String, String> signalDescMap = analysisResult.getSignals().stream()
                 .collect(Collectors.toMap(
@@ -55,14 +55,14 @@ public class StockController {
 
 
         model.addAttribute("revenueGrowthPositive",
-                stockSnapShot.financial() != null &&
-                        stockSnapShot.financial().revenueGrowth() != null &&
-                        stockSnapShot.financial().revenueGrowth().compareTo(BigDecimal.ZERO) >= 0);
+                stockSnapshot.financial() != null &&
+                        stockSnapshot.financial().revenueGrowth() != null &&
+                        stockSnapshot.financial().revenueGrowth().compareTo(BigDecimal.ZERO) >= 0);
 
         model.addAttribute("epsGrowthPositive",
-                stockSnapShot.financial() != null &&
-                        stockSnapShot.financial().epsGrowth() != null &&
-                        stockSnapShot.financial().epsGrowth().compareTo(BigDecimal.ZERO) >= 0);
+                stockSnapshot.financial() != null &&
+                        stockSnapshot.financial().epsGrowth() != null &&
+                        stockSnapshot.financial().epsGrowth().compareTo(BigDecimal.ZERO) >= 0);
 
         model.addAttribute("stockCode", code);
         model.addAttribute("valuationPercent", valuationPercent);
@@ -73,7 +73,7 @@ public class StockController {
         model.addAttribute("isEtf", analysisResult.isEtf());
         model.addAttribute("loginMember", loginMember);
         model.addAttribute("analysis", analysisResult);
-        model.addAttribute("stockSnapShot", stockSnapShot);
+        model.addAttribute("stockSnapShot", stockSnapshot);
         model.addAttribute("signalDescMap", signalDescMap);
         model.addAttribute("gradeColor", gradeColor(analysisResult.getGrade()));
         model.addAttribute("insightMessage", insightMessage(analysisResult.getGrade()));

@@ -11,95 +11,118 @@
 
   <style>
     :root {
-      --blue: #3182f6; --red: #f04452; --green: #05c072;
-      --gray-bg: #f2f4f6; --sidebar-width: 250px;
+      --toss-blue: #3182f6; --toss-red: #f04452; --toss-green: #05c072;
+      --toss-warning: #f5a623; --toss-gray-bg: #f2f4f6; --sidebar-width: 250px;
     }
-    body { background: var(--gray-bg); font-family: 'Pretendard', sans-serif; margin: 0; color: #191f28; overflow-x: hidden; }
+    body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: #191f28; }
     [x-cloak] { display: none !important; }
+
     .layout-wrapper { display: flex; min-height: 100vh; }
-    .main-content { flex-grow: 1; margin-left: var(--sidebar-width); padding: 0 56px 80px; transition: 0.3s; }
-    .main-content.expanded { margin-left: 80px; }
-    .page-wrap { max-width: 1000px; margin: 0 auto; padding-top: 32px; }
+    .main-content {
+      flex-grow: 1; margin-left: var(--sidebar-width); padding: 0 60px 80px 60px;
+      transition: 0.3s; width: calc(100% - var(--sidebar-width)); min-width: 0;
+    }
+    .main-content.expanded { margin-left: 80px; width: calc(100% - 80px); }
+    .content-container { width: 100%; max-width: 1200px; margin: 0 auto; padding-top: 32px; }
 
-    /* ── 카드 ── */
-    .card { background: white; border-radius: 24px; padding: 28px 32px; box-shadow: 0 2px 16px rgba(0,0,0,0.04); margin-bottom: 20px; border: none; }
+    .toss-card { background: white; border-radius: 16px; padding: 28px; box-shadow: none; margin-bottom: 24px; border: 1px solid #e5e8eb; }
+    .toss-banner { background: #f9fafb; border-radius: 16px; padding: 20px 24px; margin-bottom: 24px; border: 1px solid #e5e8eb; }
 
-    /* ── 월 네비 ── */
     .month-nav { display: flex; align-items: center; gap: 16px; }
     .nav-btn { background: #f2f4f6; border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s; color: #4e5968; }
     .nav-btn:hover { background: #e4e8ec; }
     .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-    .month-title { font-size: 1.4rem; font-weight: 900; letter-spacing: -0.5px; min-width: 130px; text-align: center; }
+    .month-title { font-size: 1.25rem; font-weight: 700; color: #191f28; min-width: 130px; text-align: center; }
 
-    /* ── 요약 지표 ── */
     .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 24px; }
-    .summary-item { background: #f8fafc; border-radius: 16px; padding: 18px 20px; border: 1px solid #edf2f7; }
-    .summary-label { font-size: 11px; font-weight: 800; color: #a0a8b2; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 6px; }
-    .summary-value { font-size: 1.5rem; font-weight: 900; letter-spacing: -0.5px; }
-    .text-up   { color: var(--red)   !important; }
-    .text-down { color: var(--blue)  !important; }
-    .text-green { color: var(--green) !important; }
+    .summary-item { background: #f9fafb; border-radius: 12px; padding: 18px 20px; border: 1px solid #e5e8eb; }
+    .summary-label { font-size: 13px; font-weight: 600; color: #8b95a1; margin-bottom: 6px; }
+    .summary-value { font-size: 1.25rem; font-weight: 700; color: #191f28; }
 
-    /* ── 바 차트 ── */
-    .chart-wrap { position: relative; height: 140px; margin-top: 4px; }
+    .chart-wrap { position: relative; height: 140px; margin-top: 4px; width: 100%; }
 
-    /* ── 캘린더 ── */
     .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 16px; }
-    .cal-day-label { text-align: center; font-size: 11px; font-weight: 800; color: #a0a8b2; padding: 4px 0 8px; }
-    .cal-day-label.sun { color: var(--red); }
-    .cal-day-label.sat { color: var(--blue); }
+    .cal-day-label { text-align: center; font-size: 12px; font-weight: 600; color: #8b95a1; padding: 4px 0 8px; }
+    .cal-day-label.sun { color: var(--toss-red); }
+    .cal-day-label.sat { color: var(--toss-blue); }
 
-    .cal-cell { border-radius: 12px; min-height: 72px; padding: 8px 10px; background: #f8fafc; border: 1.5px solid transparent; cursor: default; transition: border 0.15s, background 0.15s; position: relative; display: flex; flex-direction: column; }
+    .cal-cell { border-radius: 10px; min-height: 72px; padding: 8px 10px; background: #f9fafb; border: 1px solid #e5e8eb; cursor: default; transition: background 0.15s; position: relative; display: flex; flex-direction: column; }
     .cal-cell.empty { background: transparent; border-color: transparent; }
-    .cal-cell.today { border-color: var(--blue) !important; }
+    .cal-cell.today { border-color: var(--toss-blue) !important; }
     .cal-cell.has-log { cursor: pointer; }
-    .cal-cell.has-log:hover { background: #eef5ff; border-color: #b5d4f4; }
-    .cal-cell.active { background: #eef5ff; border-color: var(--blue); }
-    .cal-cell.profit { background: rgba(5,192,114,0.06); }
-    .cal-cell.loss   { background: rgba(240,68,82,0.05); }
+    .cal-cell.has-log:hover { background: #f2f4f6; }
+    .cal-cell.active { background: #f0f6ff; border-color: var(--toss-blue); }
+    .cal-cell.profit { background: rgba(5,192,114,0.04); }
+    .cal-cell.loss   { background: rgba(240,68,82,0.04); }
 
-    .cal-num { font-size: 12px; font-weight: 800; color: #4e5968; margin-bottom: 4px; }
-    .cal-num.sun { color: var(--red); }
-    .cal-num.sat { color: var(--blue); }
+    .cal-num { font-size: 13px; font-weight: 600; color: #4e5968; margin-bottom: 4px; }
+    .cal-num.sun { color: var(--toss-red); }
+    .cal-num.sat { color: var(--toss-blue); }
     .cal-dot-wrap { display: flex; flex-wrap: wrap; gap: 3px; margin-top: auto; }
     .cal-dot { width: 6px; height: 6px; border-radius: 50%; }
-    .cal-amount { font-size: 10px; font-weight: 800; margin-top: 2px; }
+    .cal-amount { font-size: 11px; font-weight: 600; margin-top: 2px; }
 
-    /* ── 로그 리스트 ── */
-    .log-date-label { font-size: 11px; font-weight: 800; color: #a0a8b2; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 10px; margin-top: 4px; }
-    .log-item { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid #f2f4f6; gap: 14px; }
+    .log-date-label { font-size: 12px; font-weight: 600; color: #8b95a1; margin-bottom: 10px; margin-top: 4px; }
+    .log-item { display: flex; align-items: center; padding: 14px 0; border-bottom: 1px solid #f2f4f6; gap: 14px; }
     .log-item:last-child { border-bottom: none; }
-    .log-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 900; flex-shrink: 0; }
-    .log-icon.profit { background: rgba(5,192,114,0.1); color: var(--green); }
-    .log-icon.loss   { background: rgba(240,68,82,0.1); color: var(--red); }
-    .log-name { font-size: 14px; font-weight: 800; color: #191f28; }
-    .log-code { font-size: 11px; font-weight: 700; color: #a0a8b2; margin-top: 1px; }
-    .log-qty  { font-size: 12px; font-weight: 700; color: #8b95a1; margin-left: auto; margin-right: 20px; flex-shrink: 0; }
-    .log-profit { font-size: 14px; font-weight: 900; text-align: right; flex-shrink: 0; min-width: 90px; }
-    .badge-pill { font-size: 10px; font-weight: 800; padding: 3px 9px; border-radius: 20px; }
-    .badge-profit { background: rgba(5,192,114,0.1); color: var(--green); }
-    .badge-loss   { background: rgba(240,68,82,0.1); color: var(--red); }
+    .log-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; flex-shrink: 0; }
+    .log-icon.profit { background: rgba(5,192,114,0.08); color: var(--toss-green); }
+    .log-icon.loss   { background: rgba(240,68,82,0.08); color: var(--toss-red); }
+    .log-name { font-size: 15px; font-weight: 700; color: #191f28; }
+    .log-code { font-size: 12px; font-weight: 500; color: #8b95a1; margin-top: 2px; }
+    .log-qty  { font-size: 13px; font-weight: 500; color: #8b95a1; margin-left: auto; margin-right: 20px; flex-shrink: 0; }
+    .log-profit { font-size: 15px; font-weight: 700; text-align: right; flex-shrink: 0; min-width: 90px; }
 
-    /* ── 빈 상태 ── */
-    .empty-state { text-align: center; padding: 48px 0; color: #b0b8c1; }
-    .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 12px; opacity: 0.4; }
+    .review-feed-item { background: #f9fafb; border: 1px solid #e5e8eb; border-radius: 12px; padding: 18px; margin-bottom: 12px; transition: background 0.15s; position: relative; }
+    .review-feed-item:hover { background: #f2f4f6; }
+    .action-btn-hover:hover { background-color: rgba(0,0,0,0.06); }
 
-    /* ── 모달 ── */
-    .modal-backdrop-custom { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(6px); }
-    .modal-sheet { background: white; width: 100%; max-width: 480px; border-radius: 28px; padding: 36px; animation: slideUp 0.28s cubic-bezier(0.22,1,0.36,1); }
-    @keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-    .toss-input { width: 100%; border: none; background: #f2f4f6; border-radius: 14px; padding: 16px 18px; outline: none; margin-bottom: 14px; font-size: 14px; font-weight: 600; transition: 0.2s; font-family: 'Pretendard', sans-serif; }
-    .toss-input:focus { outline: 2px solid var(--blue); background: white; }
-    .search-item { transition: background 0.15s; cursor: pointer; border-radius: 12px; padding: 14px 16px; margin-bottom: 6px; }
-    .search-item:hover { background: #f2f4f6; }
+    .emotion-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px; }
+    .emo-plan { background: rgba(5,192,114,0.08); color: var(--toss-green); }
+    .emo-impulse { background: rgba(240,68,82,0.08); color: var(--toss-red); }
+    .emo-anxiety { background: rgba(245,166,35,0.08); color: var(--toss-warning); }
+
+    .text-up { color: var(--toss-red) !important; }
+    .text-down { color: var(--toss-blue) !important; }
+    .text-green { color: var(--toss-green) !important; }
+    .badge-profit { background: rgba(5,192,114,0.08); color: var(--toss-green); font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; }
+    .badge-loss { background: rgba(240,68,82,0.08); color: var(--toss-red); font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; }
+
+    .modal-backdrop-custom { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+    .modal-sheet { background: white; width: 100%; max-width: 480px; border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    .toss-input { width: 100%; border: 1px solid #e5e8eb; background: #f9fafb; border-radius: 12px; padding: 14px 16px; outline: none; margin-bottom: 14px; font-size: 15px; font-weight: 500; transition: 0.15s; font-family: 'Pretendard', sans-serif; }
+    .toss-input:focus { border-color: var(--toss-blue); background: white; }
+    .search-item { transition: background 0.15s; cursor: pointer; border-radius: 8px; padding: 12px 14px; margin-bottom: 4px; }
+    .search-item:hover { background: #f9fafb; }
     .spinner-wrap { display: flex; justify-content: center; padding: 20px; }
 
-    /* ── 애니메이션 ── */
-    @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-    .fu  { animation: fadeUp 0.38s cubic-bezier(0.22,1,0.36,1) both; }
-    .d1  { animation-delay: 0.04s; }
-    .d2  { animation-delay: 0.10s; }
-    .d3  { animation-delay: 0.17s; }
+    .empty-state { text-align: center; padding: 48px 0; color: #8b95a1; }
+    .empty-state i { font-size: 2rem; display: block; margin-bottom: 12px; color: #d1d6db; }
+
+    @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    .fu  { animation: fadeUp 0.3s ease both; }
+    .d1  { animation-delay: 0.05s; }
+    .d2  { animation-delay: 0.1s; }
+    .d3  { animation-delay: 0.15s; }
+
+    @media (max-width: 992px) {
+      .col-lg-6 { width: 100% !important; }
+    }
+    @media (max-width: 768px) {
+      .sidebar-main { display: none !important; }
+      .main-content { margin-left: 0 !important; width: 100% !important; padding: 16px !important; }
+      .content-container { padding-top: 16px; }
+      .toss-card, .modal-sheet { padding: 20px !important; }
+      .summary-grid { grid-template-columns: 1fr !important; gap: 8px; }
+      .summary-item { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+      .summary-label { margin-bottom: 0; }
+      .cal-cell { min-height: 50px; padding: 4px; }
+      .cal-num { font-size: 10px; margin-bottom: 2px; }
+      .cal-amount { font-size: 8px; }
+      .cal-dot { width: 4px; height: 4px; }
+      .log-item { gap: 10px; }
+      .log-qty { margin-right: 0; }
+    }
   </style>
 </head>
 
@@ -110,25 +133,42 @@
   <main class="main-content" :class="!sidebarOpen ? 'expanded' : ''">
     <div th:replace="~{fragments/header :: headerFragment}"></div>
 
-    <div class="page-wrap">
-      <h2 class="fw-bold mb-4 fu" style="font-size:22px; letter-spacing:-0.3px;">매매 기록</h2>
+    <div class="content-container">
 
-      <!-- ① 월 요약 + 바 차트 -->
-      <div class="card fu d1">
+      <div class="toss-banner d-flex align-items-center gap-3 mb-4 fu">
+        <div class="d-inline-flex align-items-center justify-content-center bg-white border" style="width: 40px; height: 40px; border-radius: 10px; border-color: #e5e8eb !important;">
+          <i class="bi bi-graph-up-arrow text-dark fs-5"></i>
+        </div>
+        <div>
+          <div class="fw-bold text-dark" style="font-size: 16px;">매매 기록 및 복기 노트</div>
+          <div style="color: #6b7684; font-size: 13px; font-weight: 500; margin-top: 2px;">수익과 손실을 기록하고 매매 당시의 생각을 되짚어보는 공간</div>
+        </div>
+      </div>
+
+      <h2 class="fw-bold mb-4 fu d1" style="font-size: 20px; color: #191f28;">매매 기록 대시보드</h2>
+
+      <div class="toss-card fu d1">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
           <div class="month-nav">
             <button class="nav-btn" @click="changeDate(-1)"><i class="bi bi-chevron-left"></i></button>
             <span class="month-title" x-text="displayDate"></span>
             <button class="nav-btn" @click="changeDate(1)" :disabled="!canGoNext()"><i class="bi bi-chevron-right"></i></button>
           </div>
-          <button class="btn btn-primary rounded-pill px-4 fw-bold border-0"
-                  style="background:var(--blue); font-size:13px;"
-                  @click="openModal()">
-            <i class="bi bi-plus me-1"></i>기록 추가
-          </button>
+
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary rounded-pill px-3 fw-bold"
+                    style="font-size: 13px; border-color: #e5e8eb; color: #4e5968;"
+                    @click="openReviewModal()">
+              <i class="bi bi-journal-text me-1"></i>복기 노트 작성
+            </button>
+            <button class="btn btn-primary rounded-pill px-4 fw-bold border-0"
+                    style="background: var(--toss-blue); font-size: 13px;"
+                    @click="openModal()">
+              <i class="bi bi-plus me-1"></i>매매 기록 추가
+            </button>
+          </div>
         </div>
 
-        <!-- 요약 지표 -->
         <div class="summary-grid">
           <div class="summary-item">
             <div class="summary-label">월 실현 손익</div>
@@ -142,25 +182,22 @@
                  x-text="(data?.successRate||0).toFixed(1) + '%'"></div>
           </div>
           <div class="summary-item">
-            <div class="summary-label">매매 횟수</div>
+            <div class="summary-label">매매 건수</div>
             <div class="summary-value" x-text="totalTrades() + '건'"></div>
           </div>
         </div>
 
-        <!-- 일별 손익 바 차트 -->
         <div class="chart-wrap mt-4">
           <canvas id="dailyChart"></canvas>
         </div>
       </div>
 
-      <!-- ② 캘린더 -->
-      <div class="card fu d2">
+      <div class="toss-card fu d2">
         <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="fw-bold" style="font-size:14px;">월간 캘린더</span>
-          <span class="text-secondary fw-bold" style="font-size:11px;">날짜 클릭 시 상세 보기</span>
+          <span class="fw-bold" style="font-size: 15px; color: #191f28;">월별 매매 현황</span>
+          <span style="font-size: 13px; color: #8b95a1; font-weight: 500;">날짜를 누르면 해당 일자의 기록만 모아볼 수 있어요</span>
         </div>
 
-        <!-- 요일 헤더 -->
         <div class="cal-grid">
           <div class="cal-day-label sun">일</div>
           <div class="cal-day-label">월</div>
@@ -170,21 +207,19 @@
           <div class="cal-day-label">금</div>
           <div class="cal-day-label sat">토</div>
 
-          <!-- 빈 셀 -->
           <template x-for="_ in firstDayOffset()" :key="'e'+_">
             <div class="cal-cell empty"></div>
           </template>
 
-          <!-- 날짜 셀 -->
           <template x-for="day in daysInMonth()" :key="day">
             <div class="cal-cell"
                  :class="{
-                   'has-log':  getLogsForDay(day).length > 0,
-                   'active':   selectedDay === day,
-                   'today':    isToday(day),
-                   'profit':   getDayProfit(day) > 0,
-                   'loss':     getDayProfit(day) < 0 && getLogsForDay(day).length > 0
-                 }"
+                                 'has-log':  getLogsForDay(day).length > 0,
+                                 'active':   selectedDay === day,
+                                 'today':    isToday(day),
+                                 'profit':   getDayProfit(day) > 0,
+                                 'loss':     getDayProfit(day) < 0 && getLogsForDay(day).length > 0
+                             }"
                  @click="getLogsForDay(day).length > 0 && (selectedDay = selectedDay === day ? null : day)">
               <div class="cal-num"
                    :class="{ 'sun': getDayOfWeek(day) === 0, 'sat': getDayOfWeek(day) === 6 }"
@@ -206,52 +241,80 @@
         </div>
       </div>
 
-      <!-- ③ 선택일 or 전체 로그 리스트 -->
-      <div class="card fu d3">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-          <span class="fw-bold" style="font-size:14px;"
-                x-text="selectedDay ? formatSelectedDay(selectedDay) + ' 매매 기록' : '이번 달 전체 기록'"></span>
-          <button x-show="selectedDay" @click="selectedDay = null"
-                  class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold"
-                  style="font-size:11px;">전체 보기</button>
-        </div>
+      <div class="row g-4 fu d3">
+        <div class="col-lg-6">
+          <div class="toss-card h-100 mb-0">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                            <span class="fw-bold" style="font-size: 15px; color: #191f28;"
+                                  x-text="selectedDay ? formatSelectedDay(selectedDay) + ' 매매 기록' : '이번 달 전체 기록'"></span>
+              <button x-show="selectedDay" @click="selectedDay = null"
+                      class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold"
+                      style="font-size: 12px; border-color: #e5e8eb; color: #4e5968;">전체 보기</button>
+            </div>
 
-        <!-- 로그 없을 때 -->
-        <div class="empty-state"
-             x-show="!data?.dailyLogs || Object.keys(data.dailyLogs).length === 0">
-          <i class="bi bi-calendar-x"></i>
-          <div class="fw-bold" style="font-size:14px;">이번 달 매매 기록이 없습니다.</div>
-          <div class="text-secondary fw-bold mt-1" style="font-size:12px;">상단 버튼으로 기록을 추가해보세요.</div>
-        </div>
+            <div class="empty-state" x-show="!data?.dailyLogs || Object.keys(data.dailyLogs).length === 0">
+              <div style="font-size: 14px; font-weight: 500;">이번 달 기록된 매매 정보가 없어요</div>
+            </div>
 
-        <!-- 로그 있을 때 -->
-        <div x-show="data?.dailyLogs && Object.keys(data.dailyLogs).length > 0">
-          <template x-for="date in filteredDates()" :key="date">
-            <div class="mb-3">
-              <div class="log-date-label" x-text="formatDisplayDate(date)"></div>
-              <template x-for="log in data.dailyLogs[date]" :key="log.id">
-                <div class="log-item">
-                  <div class="log-icon" :class="log.isProfit ? 'profit' : 'loss'">
-                    <i class="bi" :class="log.isProfit ? 'bi-arrow-up' : 'bi-arrow-down'"></i>
-                  </div>
-                  <div>
-                    <div class="log-name" x-text="log.korName"></div>
-                    <div class="log-code" x-text="log.stockCode"></div>
-                  </div>
-                  <div class="log-qty" x-text="formatNumber(log.quantity) + '주'"></div>
-                  <div>
-                    <div class="log-profit"
-                         :class="log.isProfit ? 'text-up' : 'text-down'"
-                         x-text="(log.profit >= 0 ? '+' : '') + formatNumber(log.profit) + '원'"></div>
-                    <div class="text-end mt-1">
-                      <span class="badge-pill" :class="log.isProfit ? 'badge-profit' : 'badge-loss'"
-                            x-text="log.isProfit ? '수익' : '손실'"></span>
+            <div style="max-height: 500px; overflow-y: auto; padding-right: 4px;">
+              <template x-for="date in filteredDates()" :key="date">
+                <div class="mb-4">
+                  <div class="log-date-label" x-text="formatDisplayDate(date)"></div>
+                  <template x-for="log in data.dailyLogs[date]" :key="log.id">
+                    <div class="log-item">
+                      <div class="log-icon" :class="log.isProfit ? 'profit' : 'loss'">
+                        <i class="bi" :class="log.isProfit ? 'bi-arrow-up' : 'bi-arrow-down'"></i>
+                      </div>
+                      <div class="flex-grow-1">
+                        <div class="log-name" x-text="log.korName"></div>
+                        <div class="log-code" x-text="log.stockCode"></div>
+                      </div>
+                      <div class="log-qty" x-text="formatNumber(log.quantity) + '주'"></div>
+                      <div class="text-end">
+                        <div class="log-profit" :class="log.isProfit ? 'text-up' : 'text-down'"
+                             x-text="(log.profit >= 0 ? '+' : '') + formatNumber(log.profit) + '원'"></div>
+                        <span class="mt-1 d-inline-block" :class="log.isProfit ? 'badge-profit' : 'badge-loss'"
+                              x-text="log.isProfit ? '수익' : '손실'"></span>
+                      </div>
                     </div>
-                  </div>
+                  </template>
                 </div>
               </template>
             </div>
-          </template>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="toss-card h-100 mb-0">
+            <h3 class="fw-bold mb-3" style="font-size: 15px; color: #191f28;">투자 복기 노트</h3>
+
+            <div class="empty-state" x-show="reviewFeeds.length === 0">
+              <div style="font-size: 14px; font-weight: 500;">작성된 투자 복기 메모가 없어요</div>
+            </div>
+
+            <div style="max-height: 500px; overflow-y: auto; padding-right: 4px;" x-show="reviewFeeds.length > 0">
+              <template x-for="review in reviewFeeds" :key="review.id">
+                <div class="review-feed-item">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                      <span class="emotion-tag" :class="getEmotionClass(review.emotion)" x-text="review.emotionDescription || '일반 메모'"></span>
+                      <span style="font-size: 12px; color: #8b95a1; font-weight: 500; margin-left: 8px;" x-text="formatShortDate(review.createdAt)"></span>
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                      <button @click.stop="openEditReviewModal(review)" class="btn btn-sm text-secondary p-1 rounded-2 action-btn-hover" style="border:none;" title="수정">
+                        <i class="bi bi-pencil-square" style="font-size:13px;"></i>
+                      </button>
+                      <button @click.stop="deleteReview(review.id)" class="btn btn-sm text-danger p-1 rounded-2 action-btn-hover" style="border:none;" title="삭제">
+                        <i class="bi bi-trash3" style="font-size:13px;"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <h4 class="fw-bold text-dark mb-2" style="font-size: 15px;" x-text="review.title || '제목 없는 복기'"></h4>
+                  <p class="text-secondary m-0" style="font-size: 14px; line-height: 1.6; white-space: pre-line;" x-text="review.content"></p>
+                </div>
+              </template>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -259,84 +322,105 @@
   </main>
 </div>
 
-<!-- 기록 추가 모달 -->
+<div x-show="showReviewModal" class="modal-backdrop-custom" x-cloak @click.self="closeReviewModal()">
+  <div class="modal-sheet" @click.stop>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h4 class="fw-bold m-0 text-dark" style="font-size: 18px;" x-text="isEditMode ? '복기 메모 수정' : '복기 노트 작성'"></h4>
+        <div class="mt-1" style="font-size: 13px; color: #8b95a1; font-weight: 500;">매매 당시의 생각과 심리 상태를 기록해 보세요</div>
+      </div>
+      <button @click="closeReviewModal()" class="btn-close shadow-none"></button>
+    </div>
+
+    <div class="text-start mb-3">
+      <label class="fw-bold mb-2 d-block" style="font-size: 13px; color: #4e5968;">제목</label>
+      <input type="text" x-model="reviewForm.title" class="toss-input" placeholder="제목을 입력해 주세요">
+    </div>
+
+    <div class="text-start mb-3">
+      <label class="fw-bold mb-2 d-block" style="font-size: 13px; color: #4e5968;">감정 상태</label>
+      <select x-model="reviewForm.emotion" class="toss-input" style="cursor: pointer;">
+        <option value="" disabled selected>심리 상태 선택</option>
+        <option value="DISCIPLINED">원칙 준수 (계획 매매)</option>
+        <option value="PATIENT_WAIT">인내심 매매 (타점 대기)</option>
+        <option value="FOMO">포모/소외감 (추격 매수)</option>
+        <option value="GREED">욕심 매매 (익절 실패)</option>
+        <option value="ANXIETY_SELL">조기 익절 (불안감)</option>
+        <option value="IMPULSE_BUY">뇌동 매매 (충동적)</option>
+        <option value="WATERING_DOWN">무계획 물타기</option>
+        <option value="PANIC_SELL">공포 투매 (패닉셀)</option>
+        <option value="REVENGE_TRADE">복수심 매매</option>
+      </select>
+    </div>
+
+    <div class="text-start mb-4">
+      <label class="fw-bold mb-2 d-block" style="font-size: 13px; color: #4e5968;">상세 내용</label>
+      <textarea x-model="reviewForm.content" class="toss-input" style="height: 120px; resize: none;" placeholder="매매 배경, 배운 점 등을 자유롭게 적어주세요"></textarea>
+    </div>
+
+    <button @click="submitReview()" class="btn border-0 w-100 fw-bold" style="background: var(--toss-blue); color: white; font-size: 16px; padding: 16px 0; border-radius: 8px;" :disabled="reviewSubmitting">
+      <span x-show="!reviewSubmitting" x-text="isEditMode ? '수정 완료' : '저장하기'"></span>
+      <span x-show="reviewSubmitting" class="spinner-border spinner-border-sm"></span>
+    </button>
+  </div>
+</div>
+
 <div x-show="showModal" class="modal-backdrop-custom" x-cloak @click.self="closeModal()">
   <div class="modal-sheet" @click.stop>
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h4 class="fw-bold m-0" style="font-size:18px;"
-          x-text="step === 1 ? '어떤 종목을 매매하셨나요?' : '매매 정보 입력'"></h4>
+      <h4 class="fw-bold m-0 text-dark" style="font-size: 18px;"
+          x-text="step === 1 ? '종목 선택' : '매매 정보 입력'"></h4>
       <button @click="closeModal()" class="btn-close shadow-none"></button>
     </div>
 
-    <!-- Step 1: 종목 검색 -->
     <div x-show="step === 1">
       <input type="text" x-model="searchQuery"
              @input.debounce.400ms="searchNew()"
-             class="toss-input" placeholder="종목명 또는 코드 검색" autofocus>
+             class="toss-input" placeholder="종목명이나 코드를 검색해 보세요" autofocus>
       <div x-show="isLoading" class="spinner-wrap">
-        <div class="spinner-border text-primary" style="width:1.4rem; height:1.4rem;"></div>
+        <div class="spinner-border text-primary" style="width: 1.4rem; height: 1.4rem;"></div>
       </div>
       <div style="max-height: 38vh; overflow-y: auto;">
-
-        <!-- ✨ 에러 원인 수정: item.stock -> item.info 로 변경 및 옵셔널 체이닝 추가 -->
         <template x-for="item in searchResults" :key="item.info?.code">
           <div @click="selectStock(item)" class="search-item d-flex justify-content-between align-items-center">
             <div>
-              <div class="fw-bold" style="font-size:14px;" x-text="item.info?.name"></div>
-              <div class="text-secondary fw-bold" style="font-size:11px;" x-text="item.info?.code"></div>
+              <div class="fw-bold text-dark" style="font-size: 15px;" x-text="item.info?.name"></div>
+              <div class="small mt-1" style="color: #8b95a1; font-weight: 500;" x-text="item.info?.code"></div>
             </div>
-            <i class="bi bi-chevron-right text-secondary"></i>
+            <div style="font-size: 13px; font-weight: 600; color: #4e5968;">
+              선택 <i class="bi bi-chevron-right"></i>
+            </div>
           </div>
         </template>
-
         <div x-show="hasMore && !isLoading && searchResults.length > 0" class="text-center mt-2">
-          <button @click="fetchStocks(false)"
-                  class="btn btn-link text-decoration-none fw-bold text-secondary"
-                  style="font-size:12px;">더 보기</button>
-        </div>
-        <div x-show="!isLoading && searchResults.length === 0 && searchQuery.length > 0"
-             class="text-center py-4 text-secondary fw-bold" style="font-size:13px;">
-          검색 결과가 없습니다.
+          <button @click="fetchStocks(false)" class="btn btn-link text-decoration-none fw-bold text-secondary" style="font-size: 12px;">더 보기</button>
         </div>
       </div>
     </div>
 
-    <!-- Step 2: 매매 정보 입력 -->
     <div x-show="step === 2">
       <form th:action="@{/trade/add}" method="post">
         <input type="hidden" name="stockCode" :value="selectedStock.code">
-
-        <!-- 선택 종목 -->
-        <div class="d-flex align-items-center justify-content-between p-4 rounded-3 mb-4"
-             style="background:#f8fafc; border:1px solid #edf2f7;">
+        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 mb-4" style="background: #f0f6ff; border: 1px solid #dbeafe;">
           <div>
-            <div class="fw-bold" style="font-size:16px; color:var(--blue);" x-text="selectedStock.name"></div>
-            <div class="text-secondary fw-bold" style="font-size:11px;" x-text="selectedStock.code"></div>
+            <div class="fw-bold text-dark" style="font-size: 15px;" x-text="selectedStock.name"></div>
+            <div class="small mt-1" style="color: #8b95a1; font-weight: 500;" x-text="selectedStock.code"></div>
           </div>
-          <button type="button" @click="step = 1"
-                  class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold"
-                  style="font-size:11px;">변경</button>
-        </div>
-
-        <div class="text-start">
-          <label class="fw-bold mb-2 d-block ms-1" style="font-size:12px;">매매 수량</label>
-          <input type="number" step="0.0001" name="quantity" class="toss-input" placeholder="0.0000" required>
+          <button type="button" @click="step = 1" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold" style="font-size: 12px; border-color: #e5e8eb; color: #4e5968;">변경</button>
         </div>
         <div class="text-start">
-          <label class="fw-bold mb-2 d-block ms-1" style="font-size:12px;">실현 손익 (원)</label>
-          <input type="number" step="0.01" name="profit" class="toss-input" placeholder="수익이면 +, 손실이면 -" required>
+          <label class="fw-bold mb-2 d-block" style="font-size: 13px; color: #4e5968;">수량</label>
+          <input type="number" step="0.0001" name="quantity" class="toss-input" placeholder="수량을 입력해 주세요" required>
         </div>
         <div class="text-start">
-          <label class="fw-bold mb-2 d-block ms-1" style="font-size:12px;">매매 일자</label>
-          <input type="date" name="tradeDate" class="toss-input"
-                 th:value="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" required>
+          <label class="fw-bold mb-2 d-block" style="font-size: 13px; color: #4e5968;">실현 손익 (원)</label>
+          <input type="number" step="0.01" name="profit" class="toss-input" placeholder="수익 또는 손실 금액을 입력해 주세요" required>
         </div>
-
-        <button type="submit"
-                class="btn btn-primary w-100 rounded-pill py-3 fw-bold mt-2 border-0"
-                style="background:var(--blue); font-size:14px;">
-          기록 저장하기
-        </button>
+        <div class="text-start">
+          <label class="fw-bold mb-2 d-block" style="font-size: 13px; color: #4e5968;">매매 일자</label>
+          <input type="date" name="tradeDate" class="toss-input" th:value="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" required>
+        </div>
+        <button type="submit" class="btn border-0 w-100 fw-bold mt-2" style="background: var(--toss-blue); color: white; font-size: 16px; padding: 16px 0; border-radius: 8px;">저장하기</button>
       </form>
     </div>
   </div>
@@ -368,45 +452,120 @@
       hasMore: true,
       chart: null,
 
-      get displayDate() {
-        return `${this.currDate.getFullYear()}년 ${String(this.currDate.getMonth()+1).padStart(2,'0')}월`;
+      reviewFeeds: [],
+      showReviewModal: false,
+      reviewSubmitting: false,
+      isEditMode: false,
+      currentReviewId: null,
+      reviewForm: { title: '', content: '', emotion: '' },
+
+      openReviewModal() {
+        this.isEditMode = false;
+        this.currentReviewId = null;
+        this.reviewForm = { title: '', content: '', emotion: '' };
+        this.showReviewModal = true;
+      },
+      openEditReviewModal(review) {
+        this.isEditMode = true;
+        this.currentReviewId = review.id;
+        this.reviewForm = {
+          title: review.title || '',
+          content: review.content || '',
+          emotion: review.emotion || ''
+        };
+        this.showReviewModal = true;
+      },
+      closeReviewModal() { this.showReviewModal = false; },
+
+      async submitReview() {
+        if (!this.reviewForm.content) {
+          alert('상세 내용을 입력해 주세요.');
+          return;
+        }
+        this.reviewSubmitting = true;
+        try {
+          const url = this.isEditMode ? `/api/trade-review/${this.currentReviewId}/update` : '/api/trade-review';
+
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(this.reviewForm)
+          });
+
+          if (res.ok) {
+            alert(this.isEditMode ? '복기 수정 완료' : '복기 기록 완료');
+            this.closeReviewModal();
+            await this.loadReviewFeeds();
+          } else {
+            alert('복기 저장 중 오류 발생');
+          }
+        } catch (e) {
+          console.error(e);
+        } finally {
+          this.reviewSubmitting = false;
+        }
       },
 
-      // ── 날짜 유틸 ──
+      async deleteReview(id) {
+        if (!confirm('복기 노트를 삭제하시겠습니까?')) return;
+        try {
+          const res = await fetch(`/api/trade-review/${id}/delete`, { method: 'POST' });
+          if (res.ok) {
+            alert('복기 삭제 완료');
+            await this.loadReviewFeeds();
+          } else {
+            alert('삭제 중 오류 발생');
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      },
+
+      async loadReviewFeeds() {
+        const y = this.currDate.getFullYear();
+        const m = String(this.currDate.getMonth()+1).padStart(2,'0');
+        try {
+          const res = await fetch(`/api/trade-review?date=${y}-${m}-01`);
+          if (res.ok) { this.reviewFeeds = await res.json(); }
+        } catch(e) {
+          this.reviewFeeds = [
+            { id: 1, title: '원칙 준수 매매', content: '계획한 지지선 반등을 확인하고 진입해 목표가 익절 달성', emotion: 'DISCIPLINED', emotionDescription: '원칙 준수', createdAt: '2026-06-11T10:00:00' },
+            { id: 2, title: '추격 매수 반성', content: '급등하는 종목에 조급하게 따라 들어갔다가 손실 확대', emotion: 'IMPULSE_BUY', emotionDescription: '뇌동 매매', createdAt: '2026-06-08T15:30:00' }
+          ];
+        }
+      },
+
+      getEmotionClass(emo) {
+        if(['DISCIPLINED','PATIENT_WAIT'].includes(emo)) return 'emo-plan';
+        if(['FOMO','GREED','ANXIETY_SELL'].includes(emo)) return 'emo-anxiety';
+        return 'emo-impulse';
+      },
+      getdisplayDate() { return `${this.currDate.getFullYear()}년 ${String(this.currDate.getMonth()+1).padStart(2,'0')}월`; },
+      displayDate: '',
+
       daysInMonth() {
         const y = this.currDate.getFullYear(), m = this.currDate.getMonth();
         return Array.from({ length: new Date(y, m+1, 0).getDate() }, (_, i) => i+1);
       },
       firstDayOffset() {
         const y = this.currDate.getFullYear(), m = this.currDate.getMonth();
-        const offset = new Date(y, m, 1).getDay();
-        return Array.from({ length: offset }, (_, i) => i);
+        return Array.from({ length: new Date(y, m, 1).getDay() }, (_, i) => i);
       },
-      getDayOfWeek(day) {
-        return new Date(this.currDate.getFullYear(), this.currDate.getMonth(), day).getDay();
-      },
+      getDayOfWeek(day) { return new Date(this.currDate.getFullYear(), this.currDate.getMonth(), day).getDay(); },
       isToday(day) {
         const t = this.today;
-        return this.currDate.getFullYear() === t.getFullYear()
-            && this.currDate.getMonth()    === t.getMonth()
-            && day === t.getDate();
+        return this.currDate.getFullYear() === t.getFullYear() && this.currDate.getMonth() === t.getMonth() && day === t.getDate();
       },
       canGoNext() {
         const t = this.today;
-        return this.currDate.getFullYear() < t.getFullYear()
-            || (this.currDate.getFullYear() === t.getFullYear()
-                && this.currDate.getMonth() < t.getMonth());
+        return this.currDate.getFullYear() < t.getFullYear() || (this.currDate.getFullYear() === t.getFullYear() && this.currDate.getMonth() < t.getMonth());
       },
-
-      // ── 로그 유틸 ──
       getLogsForDay(day) {
         if (!this.data?.dailyLogs) return [];
         const key = `${this.currDate.getFullYear()}-${String(this.currDate.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
         return this.data.dailyLogs[key] || [];
       },
-      getDayProfit(day) {
-        return this.getLogsForDay(day).reduce((s, l) => s + (l.profit || 0), 0);
-      },
+      getDayProfit(day) { return this.getLogsForDay(day).reduce((s, l) => s + (l.profit || 0), 0); },
       totalTrades() {
         if (!this.data?.dailyLogs) return 0;
         return Object.values(this.data.dailyLogs).reduce((s, arr) => s + arr.length, 0);
@@ -419,80 +578,61 @@
         return allDates.filter(d => d === key);
       },
 
-      // ── 포맷 ──
       formatMoney(val) { return (val >= 0 ? '+' : '') + this.formatNumber(val) + '원'; },
       formatNumber(val) { return new Intl.NumberFormat('ko-KR').format(Math.floor(val || 0)); },
       formatCompact(val) {
-        const abs = Math.abs(val);
-        const sign = val >= 0 ? '+' : '-';
+        const abs = Math.abs(val); const sign = val >= 0 ? '+' : '-';
         if (abs >= 1_000_000) return sign + (abs/1_000_000).toFixed(1) + 'M';
         if (abs >= 10_000)    return sign + Math.round(abs/10_000) + '만';
         return sign + this.formatNumber(abs);
       },
       formatDisplayDate(dateStr) {
-        const d = new Date(dateStr + 'T00:00:00');
-        const days = ['일','월','화','수','목','금','토'];
+        const d = new Date(dateStr + 'T00:00:00'); const days = ['일','월','화','수','목','금','토'];
         return `${d.getMonth()+1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
       },
       formatSelectedDay(day) {
         const days = ['일','월','화','수','목','금','토'];
-        const dow = this.getDayOfWeek(day);
-        return `${this.currDate.getMonth()+1}월 ${day}일 (${days[dow]})`;
+        return `${this.currDate.getMonth()+1}월 ${day}일 (${days[this.getDayOfWeek(day)]})`;
+      },
+      formatShortDate(dtStr) {
+        if(!dtStr) return ''; const d = new Date(dtStr);
+        return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
       },
 
-      // ── 차트 ──
       buildChart() {
-        const ctx = document.getElementById('dailyChart');
-        if (!ctx) return;
+        const ctx = document.getElementById('dailyChart'); if (!ctx) return;
         if (this.chart) { this.chart.destroy(); this.chart = null; }
-
-        const dim = this.daysInMonth();
-        const labels = dim.map(d => d + '일');
-        const values = dim.map(d => this.getDayProfit(d));
-        const colors = values.map(v => v > 0 ? 'rgba(240,68,82,0.7)' : v < 0 ? 'rgba(49,130,246,0.7)' : 'rgba(200,200,200,0.3)');
-
+        const dim = this.daysInMonth(); const labels = dim.map(d => d + '일'); const values = dim.map(d => this.getDayProfit(d));
+        const colors = values.map(v => v > 0 ? '#f04452' : v < 0 ? '#3182f6' : '#e5e8eb');
         this.chart = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels,
-            datasets: [{ data: values, backgroundColor: colors, borderRadius: 4, borderSkipped: false }]
-          },
+          type: 'bar', data: { labels, datasets: [{ data: values, backgroundColor: colors, borderRadius: 4, borderSkipped: false }] },
           options: {
             responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false }, tooltip: {
-              callbacks: {
-                label: ctx => (ctx.raw >= 0 ? '+' : '') + new Intl.NumberFormat('ko-KR').format(Math.floor(ctx.raw)) + '원'
-              }
-            }},
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => (ctx.raw >= 0 ? '+' : '') + this.formatNumber(ctx.raw) + '원' } } },
             scales: {
-              x: { grid: { display: false }, ticks: { font: { size: 10, weight: '700' }, color: '#a0a8b2',
-                    callback: (_, i) => (i % 5 === 0 ? labels[i] : '') } },
-              y: { grid: { color: '#f2f4f6' }, border: { display: false },
-                   ticks: { font: { size: 10 }, color: '#a0a8b2',
-                     callback: v => v === 0 ? '0' : (Math.abs(v) >= 10000 ? (v/10000).toFixed(0)+'만' : v) } }
+              x: { grid: { display: false }, ticks: { font: { size: 10, weight: '600' }, color: '#8b95a1', callback: (_, i) => (i % 5 === 0 ? labels[i] : '') } },
+              y: { grid: { color: '#f2f4f6' }, border: { display: false }, ticks: { font: { size: 10 }, color: '#8b95a1', callback: v => v === 0 ? '0' : (Math.abs(v) >= 10000 ? (v/10000).toFixed(0)+'만' : v) } }
             }
           }
         });
       },
 
-      // ── 데이터 로드 ──
       async changeDate(offset) {
         this.currDate = new Date(this.currDate.getFullYear(), this.currDate.getMonth() + offset, 1);
-        this.selectedDay = null;
+        this.selectedDay = null; this.displayDate = this.getdisplayDate();
         await this.loadData();
       },
       async loadData() {
-        const y = this.currDate.getFullYear();
-        const m = String(this.currDate.getMonth()+1).padStart(2,'0');
+        const y = this.currDate.getFullYear(); const m = String(this.currDate.getMonth()+1).padStart(2,'0');
         try {
           const res = await fetch(`/trade/api?date=${y}-${m}-01`);
           if (res.ok) { this.data = await res.json(); }
         } catch(e) { console.error(e); }
+        await this.loadReviewFeeds();
         await this.$nextTick();
         this.buildChart();
       },
 
-      // ── 검색 ──
       searchNew() { this.page = 0; this.hasMore = true; this.searchResults = []; this.fetchStocks(true); },
       async fetchStocks(isNew = false) {
         if (this.searchQuery.length < 1) return;
@@ -500,8 +640,7 @@
         try {
           const res = await fetch(`/api/stock/search?name=${encodeURIComponent(this.searchQuery)}&page=${this.page}`);
           if (res.ok) {
-            const d = await res.json();
-            this.searchResults = isNew ? d : [...this.searchResults, ...d];
+            const d = await res.json(); this.searchResults = isNew ? d : [...this.searchResults, ...d];
             if (d.length < 5) this.hasMore = false;
             this.page++;
           }
@@ -509,16 +648,13 @@
         finally { this.isLoading = false; }
       },
 
-      // ✨ 수정: item.stock -> item.info
-      selectStock(item) {
-          this.selectedStock = { name: item.info?.name, code: item.info?.code };
-          this.step = 2;
-      },
+      selectStock(item) { this.selectedStock = { name: item.info?.name, code: item.info?.code }; this.step = 2; },
       openModal()  { this.step = 1; this.searchQuery = ''; this.searchResults = []; this.page = 0; this.hasMore = true; this.showModal = true; },
       closeModal() { this.showModal = false; },
 
-      // ── 초기화 ──
-      init() {
+      async init() {
+        this.displayDate = this.getdisplayDate();
+        await this.loadReviewFeeds();
         this.$nextTick(() => this.buildChart());
       }
     }));

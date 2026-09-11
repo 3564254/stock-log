@@ -1,16 +1,18 @@
 package com.stocklog.infra.finnhub.fundamental.api;
 
-import com.stocklog.domain.stock.financial.dto.internal.StockFinancialDto;
-import com.stocklog.domain.stock.financial.dto.response.StockEarningResponse;
-import com.stocklog.domain.stock.financial.dto.response.StockFinancialsResponse;
-import com.stocklog.domain.stock.financial.StockFinanceProvider;
-import com.stocklog.domain.stock.common.type.MarketType;
+import com.stocklog.modules.stock.financial.dto.internal.StockFinancialDto;
+import com.stocklog.modules.stock.financial.dto.response.StockEarningResponse;
+import com.stocklog.modules.stock.financial.dto.response.StockFinancialsResponse;
+import com.stocklog.modules.stock.financial.StockFinanceProvider;
+import com.stocklog.modules.stock.domain.type.MarketType;
 import com.stocklog.infra.finnhub.config.FinProperties;
 import com.stocklog.infra.finnhub.fundamental.dto.FinStockFinancialsOutput;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import java.time.LocalDate;
 
 @Component
 @Slf4j
@@ -27,7 +29,6 @@ public class FinOverseasFinanceProvider implements StockFinanceProvider {
 
     @Override
     public StockFinancialsResponse fetchFinancial(String symbol) {
-        log.info("FIN 해외 Financials [{}]", symbol);
         try {
             FinStockFinancialsOutput output = callFinancialsApi(symbol);
             if (output == null) return StockFinancialsResponse.createFallback();
@@ -37,7 +38,7 @@ public class FinOverseasFinanceProvider implements StockFinanceProvider {
             }
             return getFinancialsResponse(output);
         } catch (Exception e) {
-            log.info("FIN 해외 Financials 정보 조회 중 오류 {}", e.getMessage());
+            log.error("FIN 해외 Financials 정보 조회 중 오류 {}", e.getMessage());
         }
         return StockFinancialsResponse.createFallback();
     }
@@ -69,6 +70,7 @@ public class FinOverseasFinanceProvider implements StockFinanceProvider {
     private StockFinancialsResponse getFinancialsResponse(FinStockFinancialsOutput output) {
         // 1. Metric 레코드 빌더를 통한 데이터 매핑
         StockFinancialDto stockFinancialDto = StockFinancialDto.builder()
+                .baseDate(LocalDate.now())
                 // --- 수익성 ---
                 .grossMargin(output.getMetric().getGrossMarginTTM())
                 .operatingMargin(output.getMetric().getOperatingMarginTTM())

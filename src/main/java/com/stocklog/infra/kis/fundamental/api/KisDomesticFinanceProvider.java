@@ -1,11 +1,10 @@
 package com.stocklog.infra.kis.fundamental.api;
 
-import com.stocklog.domain.stock.common.type.MarketType;
-import com.stocklog.domain.stock.financial.StockFinanceProvider;
-import com.stocklog.domain.stock.financial.dto.internal.StockFinancialDto;
-import com.stocklog.domain.stock.financial.dto.response.StockEarningResponse;
-import com.stocklog.domain.stock.financial.dto.response.StockFinancialsResponse;
-import com.stocklog.global.util.FinancialConst;
+import com.stocklog.modules.stock.domain.type.MarketType;
+import com.stocklog.modules.stock.financial.StockFinanceProvider;
+import com.stocklog.modules.stock.financial.dto.internal.StockFinancialDto;
+import com.stocklog.modules.stock.financial.dto.response.StockEarningResponse;
+import com.stocklog.modules.stock.financial.dto.response.StockFinancialsResponse;
 import com.stocklog.infra.kis.common.KisResponseV1;
 import com.stocklog.infra.kis.config.KisProperties;
 import com.stocklog.infra.kis.config.client.KisTokenManager;
@@ -18,6 +17,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.List;
 
 import static com.stocklog.global.util.FinancialUtils.isAvailable;
@@ -44,7 +44,6 @@ public class KisDomesticFinanceProvider implements StockFinanceProvider {
 
     @Override
     public StockFinancialsResponse fetchFinancial(String symbol) {
-        log.info("[KIS-Finance] 국내 재무 데이터 수집 시작 - 종목코드: {}", symbol);
 
         try {
             // 1. API 호출 로그는 callApi 내부에서 수행되므로 결과 확인에 집중
@@ -76,10 +75,9 @@ public class KisDomesticFinanceProvider implements StockFinanceProvider {
                         .setScale(2, RoundingMode.HALF_UP);
             }
 
-            log.info("[KIS-Finance] 계산 완료 - 종목: {}, 매출: {}, 영업이익: {}, 영업이익률: {}%",
-                    symbol, revenue, operatingIncome, operatingMargin);
 
             StockFinancialDto financialDto = StockFinancialDto.builder()
+                    .baseDate(LocalDate.now())
                     .grossMargin((profit != null) ? safeParse(profit.getGrossProfitMargin()) : BigDecimal.ZERO)
                     .operatingMargin(operatingMargin)
                     .roe((profit != null) ? safeParse(profit.getReturnOnEquity()) : BigDecimal.ZERO)
@@ -92,8 +90,6 @@ public class KisDomesticFinanceProvider implements StockFinanceProvider {
                     .debtToEquity((financial != null) ? safeParse(financial.getDebtRatio()) : BigDecimal.ZERO)
                     .inventoryTurnover(BigDecimal.ZERO)
                     .build();
-
-            log.info("[KIS-Finance] 국내 재무 데이터 매핑 완료 - 종목코드: {}", symbol);
 
             return StockFinancialsResponse.builder()
                     .symbol(symbol)

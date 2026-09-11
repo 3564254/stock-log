@@ -1,56 +1,37 @@
 package com.stocklog.web.controller;
 
-import com.stocklog.domain.member.dto.response.MemberResponse;
-import com.stocklog.domain.portfolio.dto.response.PortfolioAnalysisResponse;
-import com.stocklog.domain.portfolio.dto.response.PortfolioResponse;
-import com.stocklog.domain.portfolio.service.PortfolioAnalysisService;
+import com.stocklog.modules.purchase.application.PortfolioDashboardResponse;
+import com.stocklog.modules.member.dto.response.MemberResponse;
+import com.stocklog.modules.purchase.application.service.PortfolioDashboardService;
 import com.stocklog.global.annotation.LoginUser;
-import com.stocklog.domain.portfolio.dto.request.AddPortfolioStockRequest;
-import com.stocklog.domain.portfolio.dto.request.HoldingUpdateRequest;
-import com.stocklog.domain.portfolio.service.PortfolioService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/portfolio")
 public class PortfolioController {
-    private final PortfolioService portfolioService;
-    private final PortfolioAnalysisService portfolioAnalysisService;
+
+    private final PortfolioDashboardService portfolioDashboardService;
 
     @GetMapping()
     public String portfolioPage(@LoginUser MemberResponse loginMember, Model model) {
         if (loginMember == null) return "redirect:/auth/login";
 
-        PortfolioResponse portfolio = portfolioService.getMyPortfolio(loginMember.getId());
-        model.addAttribute("portfolio", portfolio);
         model.addAttribute("loginMember", loginMember);
-        model.addAttribute("analysis", portfolioAnalysisService.analyzePortfolio(portfolio));
+
+        // 서비스 계층에서 필요한 모든 초기 데이터를 긁어옴 (가벼운 조회)
+        PortfolioDashboardResponse dashboardData = portfolioDashboardService.getDashboardData(loginMember.getId());
+
+        model.addAttribute("portfolio", dashboardData.portfolio());
+
+        // 타임리프가 객체 리스트를 자동으로 자바스크립트 배열로 직렬화하도록 그대로 넘김
+        model.addAttribute("watchList", dashboardData.watchList().itemResponseList());
+        model.addAttribute("rulesList", dashboardData.tradingRules().ruleList());
+
         return "portfolio/portfolio";
     }
-
-    @PostMapping("/add")
-    public String addStock(@LoginUser MemberResponse loginMember, @Valid AddPortfolioStockRequest request) {
-        if (loginMember == null) return "redirect:/auth/login";
-        portfolioService.updateHolding(loginMember.getId(), HoldingUpdateRequest.stockToHoldings(request));
-        return "redirect:/";
-    }
-
-    @PostMapping("/update")
-    public String updateStock(@LoginUser MemberResponse loginMember, @ModelAttribute HoldingUpdateRequest request) {
-        if (loginMember == null) return "redirect:/auth/login";
-        portfolioService.updateHolding(loginMember.getId(), request); //
-        return "redirect:/";
-    }
-
-    @PostMapping("/delete")
-    public String deleteStock(@LoginUser MemberResponse loginMember, @RequestParam String code) {
-        if (loginMember == null) return "redirect:/auth/login";
-        portfolioService.deleteHolding(loginMember.getId(), code); //
-        return "redirect:/";
-    }
-
 }

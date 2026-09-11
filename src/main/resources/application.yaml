@@ -11,15 +11,25 @@ spring:
     username: sa
     password:
   jpa:
+    # TODO(JPA): 개발 편의의 ddl-auto:update는 운영 스키마 변경을 안전하게 관리하지 못한다.
+    # profile별로 validate를 사용하고 Flyway/Liquibase 같은 migration 도구로 스키마 변경 이력을 관리해 보자.
     show-sql: false
     hibernate:
       ddl-auto: update
+
+
+    # TODO(JPA): OSIV의 사용 여부를 명시적으로 결정하자. false로 두면 Controller/View에서의 지연 로딩을 막아
+    # N+1을 빨리 발견할 수 있지만, 필요한 데이터는 Service 트랜잭션 안에서 DTO로 완성해야 한다.
+    # open-in-view: false
   thymeleaf:
     encoding: UTF-8
     mode: HTML
     cache: false
-  session:
-    tracking-modes: cookie
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+      enabled: true
 
 
 
@@ -52,11 +62,12 @@ alpha:
   api:
     key: {ALPHA_API_KEY}
 
+toss:
+  api:
+    key: {TOSS_API_KEY}
+    secret: {TOSS_SECRET}
+
 server:
   servlet:
-    encoding:
-      charset: UTF-8
-      force: true
-      enabled: true
-    session:   
+    session:
       tracking-modes: cookie

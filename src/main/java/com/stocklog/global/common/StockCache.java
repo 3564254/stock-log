@@ -1,6 +1,6 @@
 package com.stocklog.global.common;
 
-import com.stocklog.domain.stock.common.StockMasterDto;
+import com.stocklog.modules.stock.application.response.StockMasterDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

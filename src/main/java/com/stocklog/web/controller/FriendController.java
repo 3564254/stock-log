@@ -1,14 +1,14 @@
 package com.stocklog.web.controller;
 
 
-import com.stocklog.domain.member.dto.response.FriendResponse;
-import com.stocklog.domain.member.dto.response.MemberResponse;
-import com.stocklog.domain.member.dto.response.PendingResponse;
-import com.stocklog.domain.member.service.FriendshipService;
-import com.stocklog.domain.member.service.MemberService;
-import com.stocklog.domain.portfolio.dto.response.PortfolioResponse;
-import com.stocklog.domain.portfolio.service.PortfolioService;
+import com.stocklog.modules.member.dto.response.FriendResponse;
+import com.stocklog.modules.member.dto.response.MemberResponse;
+import com.stocklog.modules.member.dto.response.PendingResponse;
+import com.stocklog.modules.member.service.MemberFacadeService;
+import com.stocklog.modules.purchase.portfolio.dto.response.PortfolioResponse;
+import com.stocklog.modules.purchase.portfolio.service.PortfolioFacadeService;
 import com.stocklog.global.annotation.LoginUser;
+import com.stocklog.global.error.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,16 +23,15 @@ import java.util.List;
 @RequestMapping("/friends")
 public class FriendController {
 
-    private final FriendshipService friendshipService;
-    private final MemberService memberService;
-    private final PortfolioService portfolioService;
+    private final MemberFacadeService memberService;
+    private final PortfolioFacadeService portfolioService;
 
 
     @GetMapping()
     public String friendsPage(@LoginUser MemberResponse loginMember, Model model) {
         if (loginMember == null) return "redirect:/auth/login";
-        List<FriendResponse> myFriends = friendshipService.findMyFriends(loginMember.getId());
-        List<PendingResponse> pendingRequests = friendshipService.findPendingRequest(loginMember.getId());
+        List<FriendResponse> myFriends = memberService.findMyFriends(loginMember.getId());
+        List<PendingResponse> pendingRequests = memberService.findPendingRequest(loginMember.getId());
 
         model.addAttribute("me", loginMember);
         model.addAttribute("loginMember", loginMember);
@@ -52,7 +51,7 @@ public class FriendController {
         try {
             MemberResponse member = memberService.getMemberResponseByLoginId(loginId);
             return ResponseEntity.ok(member);
-        } catch (Exception e) {
+        } catch (BusinessException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("에러 발생: " + e.getMessage());
         }
@@ -71,11 +70,11 @@ public class FriendController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("해당 사용자를 찾을 수 없습니다.");
             }
 
-            friendshipService.sendRequest(loginMember.getId(), targetMember.getId());
+            memberService.sendRequest(loginMember.getId(), targetMember.getId());
 
             return ResponseEntity.ok().build();
 
-        } catch (IllegalStateException e) {
+        } catch (BusinessException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("요청 중 오류가 발생했습니다.");
@@ -85,13 +84,13 @@ public class FriendController {
 
     @PostMapping("/accept")
     public String acceptFriend(@RequestParam Long friendshipId, @LoginUser MemberResponse loginMember) {
-        friendshipService.acceptFriend(friendshipId, loginMember.getId());
+        memberService.acceptFriend(friendshipId, loginMember.getId());
         return "redirect:/friends";
     }
 
     @PostMapping("/reject")
     public String rejectFriend(@RequestParam Long friendshipId, @LoginUser MemberResponse loginMember) {
-        friendshipService.removeFriend(friendshipId);
+        memberService.removeFriend(friendshipId);
         return "redirect:/friends";
     }
 
@@ -102,7 +101,7 @@ public class FriendController {
     ) {
         if (loginMember == null) return "redirect:/auth/login";
 
-        if (!friendshipService.isFriend(loginMember.getId(), friendId)) return "redirect:/friends?error=not-friend";
+        if (!memberService.isFriend(loginMember.getId(), friendId)) return "redirect:/friends?error=not-friend";
         MemberResponse friendInfo = memberService.getInfo(friendId);
         PortfolioResponse friendPortfolio = portfolioService.getMyPortfolio(friendId);
 

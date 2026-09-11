@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
+  <link rel="icon" href="data:,">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>시장 동향 대시보드 — StockLog</title>
 
+  <!-- 폰트 및 라이브러리 -->
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -13,78 +15,84 @@
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
 
   <style>
+    /* ── 디자인 토큰 ── */
     :root {
-      --toss-blue: #3182f6;
-      --toss-red: #f04452;
-      --toss-gray-bg: #f2f4f6;
-      --sidebar-width: 250px;
+      --toss-blue: #3182f6; --toss-blue-light: rgba(49, 130, 246, 0.08);
+      --toss-red: #f04452; --toss-red-light: rgba(240, 68, 82, 0.08);
+      --bg-color: #f2f4f6; --card-bg: #ffffff;
+      --text-main: #191f28; --text-sub: #8b95a1;
+      --border-color: #e5e8eb; --sidebar-width: 250px;
     }
-    body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: #191f28; }
+
+    body { background-color: var(--bg-color); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: var(--text-main); -webkit-font-smoothing: antialiased; }
     [x-cloak] { display: none !important; }
+
     .layout-wrapper { display: flex; min-height: 100vh; }
-    .main-content { flex-grow: 1; margin-left: var(--sidebar-width); padding: 0 60px 80px; transition: 0.3s; }
-    .content-container { width: 100%; max-width: 1100px; margin: 0 auto; padding-top: 32px; }
+    .main-content { flex-grow: 1; margin-left: var(--sidebar-width); padding: 0 40px 100px; transition: 0.3s; }
 
-    /* ── 공통 카드 스타일 ── */
-    .toss-card { background: white; border-radius: 24px; padding: 28px; box-shadow: 0 2px 16px rgba(0,0,0,0.03); border: none; position: relative; margin-bottom: 24px; }
-    .section-title { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+    /* 화면 컨테이너 폭을 넓혀 여백 최적화 */
+    .content-container { width: 100%; max-width: 1680px; margin: 0 auto; padding-top: 40px; }
 
-    /* ── 시장 기상도 (Market Weather) ── */
-    .weather-card { padding: 36px 40px; color: white; overflow: hidden; }
-    .weather-bull { background: linear-gradient(135deg, #f04452 0%, #d63a48 100%); }
-    .weather-bear { background: linear-gradient(135deg, #3182f6 0%, #1b64da 100%); }
-    .weather-neutral { background: linear-gradient(135deg, #4e5968 0%, #333d4b 100%); }
-    .risk-gauge { background: rgba(255,255,255,0.2); height: 8px; border-radius: 4px; margin-top: 12px; overflow: hidden; }
-    .risk-gauge-fill { background: white; height: 100%; border-radius: 4px; transition: width 1s ease-out; }
+    /* ── 공통 카드 ── */
+    .toss-card { background: var(--card-bg); border-radius: 16px; padding: 24px; box-shadow: none; border: 1px solid var(--border-color); position: relative; margin-bottom: 24px; }
+    .section-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text-main); }
 
-    /* ── AI 시그널 카드 ── */
-    .signal-card {
-        background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px 20px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.02); transition: all 0.2s; height: 100%;
-        display: flex; align-items: center; font-size: 14.5px; font-weight: 700; color: #333d4b;
-        line-height: 1.5; word-break: keep-all; letter-spacing: -0.3px;
-    }
-    .signal-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.05); border-color: #cbd5e1; }
+    /* ── 종합 진단 기상도 ── */
+    .weather-card { padding: 24px; transition: 0.2s; display: flex; flex-direction: column; justify-content: center;}
+    .weather-bull { background: #fff4f4; border-color: #ffe5e5; }
+    .weather-bear { background: #f0f6ff; border-color: #e5f0ff; }
+    .weather-neutral { background: #f9fafb; border-color: #e5e8eb; }
 
-    /* ── 지표 미니 카드 (Sparkline) ── */
-    .indicator-card { padding: 20px 16px; border-radius: 20px; background: white; transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden; border: 1px solid #f2f4f6; }
-    .indicator-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
-    .indicator-label { font-size: 13px; font-weight: 700; color: #8b95a1; margin-bottom: 8px; z-index: 1; position: relative; }
-    .indicator-value { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; z-index: 1; position: relative; }
-    .indicator-change { z-index: 1; position: relative; font-size: 13px; font-weight: 700; margin-top: 4px; }
+    .weather-bull .text-theme { color: var(--toss-red); }
+    .weather-bear .text-theme { color: var(--toss-blue); }
+    .weather-neutral .text-theme { color: var(--text-main); }
+
+    .risk-gauge { background: rgba(0, 0, 0, 0.05); height: 8px; border-radius: 4px; margin-top: 16px; overflow: hidden; position: relative;}
+    .weather-bull .risk-gauge-fill { background: var(--toss-red); height: 100%; border-radius: 4px; transition: width 1.2s ease-out; }
+    .weather-bear .risk-gauge-fill { background: var(--toss-blue); height: 100%; border-radius: 4px; transition: width 1.2s ease-out; }
+    .weather-neutral .risk-gauge-fill { background: #8b95a1; height: 100%; border-radius: 4px; transition: width 1.2s ease-out; }
+
+    /* ── 컴팩트 인디케이터 리스트 (글자 짤림 방지 개선) ── */
+    .compact-indicator-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-color); text-decoration: none !important; transition: background-color 0.15s; margin: 0 -12px; padding-left: 12px; padding-right: 12px; border-radius: 8px; }
+    .compact-indicator-row:hover { background-color: #f9fafb; }
+    .compact-indicator-row:last-child { border-bottom: none; }
+
+    /* 이름이 길면 말줄임 대신 자연스럽게 줄바꿈되도록 허용 */
+    .compact-name { font-size: 14px; font-weight: 600; color: var(--text-main); line-height: 1.3; word-break: keep-all; }
+    .compact-date { font-size: 11px; color: var(--text-sub); font-weight: 500; margin-top: 2px; }
+
+    .compact-value { font-size: 15px; font-weight: 700; text-align: right; line-height: 1.2; }
+    .compact-change { font-size: 11.5px; font-weight: 600; text-align: right; margin-top: 3px; letter-spacing: -0.2px; }
+    .compact-sparkline { width: 50px; height: 24px; flex-shrink: 0; }
+
+    /* ── 뉴스 그리드 ── */
+    .news-row { display: flex; gap: 20px; transition: background 0.15s ease, transform 0.15s ease; cursor: pointer; text-decoration: none; color: inherit; }
+    .news-row:hover { background-color: #f9fafb; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+    .news-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+    .news-title { font-size: 16px; font-weight: 700; color: #191f28; line-height: 1.5; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .news-summary { font-size: 14px; color: #6b7684; font-weight: 500; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 12px; }
+    .news-meta { font-size: 13px; font-weight: 500; color: #8b95a1; }
+    .news-thumbnail { width: 120px; height: 84px; border-radius: 8px; object-fit: cover; flex-shrink: 0; border: 1px solid #f2f4f6; }
 
     /* ── 차트 및 탭 ── */
-    #market-chart-container { width: 100%; height: 350px; position: relative; border-radius: 16px; background: white; }
-    .tab-nav { display: flex; gap: 4px; background: #f2f4f6; border-radius: 14px; padding: 4px; flex-wrap: wrap; }
-    .tab-btn { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; color: #8b95a1; border: none; background: none; cursor: pointer; transition: all 0.15s; }
-    .tab-btn.active { background: white; color: #191f28; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+    #market-chart-container { width: 100%; height: 320px; position: relative; border-radius: 12px; background: transparent; }
+    .tab-nav { display: flex; gap: 4px; background: var(--bg-color); border-radius: 10px; padding: 4px; flex-wrap: wrap; }
+    .tab-btn { padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--text-sub); border: none; background: transparent; cursor: pointer; transition: all 0.15s; }
+    .tab-btn:hover { color: var(--text-main); }
+    .tab-btn.active { background: white; color: var(--text-main); box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
 
-    /* ── Market Phase 뱃지 ── */
-    .phase-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 10px; font-size: 11.5px; font-weight: 800; letter-spacing: -0.2px; white-space: nowrap; }
-    .phase-DANGER_ZONE { background: rgba(49,130,246,0.1); color: #1b64da; }
-    .phase-RECOVERY_WATCH { background: #f2f4f6; color: #4e5968; }
-    .phase-WATCH { background: #f2f4f6; color: #4e5968; }
-    .phase-SETUP { background: rgba(245,166,35,0.15); color: #d47100; }
-    .phase-ENTRY_READY { background: rgba(240,68,82,0.1); color: var(--toss-red); }
-    .phase-STRONG_HOLD { background: var(--toss-red); color: white; box-shadow: 0 2px 8px rgba(240,68,82,0.3); }
-    .phase-WARNING_ZONE { background: rgba(142,68,240,0.1); color: #7b2cbf; }
-    .phase-SCALE_OUT { background: rgba(5,192,114,0.1); color: #049658; }
-    .phase-COOLDOWN { background: #d1d6db; color: white; }
-
-    /* ── 섹터 강약 (Sector List) ── */
-    .sector-list { display: flex; flex-direction: column; gap: 12px; }
-    .sector-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: #f8fafc; border-radius: 16px; border: 1px solid #edf2f7; transition: 0.2s; text-decoration: none; color: inherit; }
-    .sector-item:hover { background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transform: translateY(-2px); border-color: #d1d6db; }
-    .sector-icon { width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; background: #e2e8f0; color: #4e5968; }
-    .icon-strong { background: rgba(240,68,82,0.1); color: var(--toss-red); }
-    .icon-weak { background: rgba(49,130,246,0.1); color: var(--toss-blue); }
-
-    /* 색상 유틸리티 */
     .text-up { color: var(--toss-red) !important; }
     .text-down { color: var(--toss-blue) !important; }
+    .text-neutral { color: var(--text-sub) !important; }
 
-    @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
-    .fu { animation: fadeUp 0.4s cubic-bezier(0.22,1,0.36,1) both; }
+    .news-pagination { display: flex; justify-content: center; align-items: center; gap: 4px; padding: 24px 0 8px; }
+    .page-num-btn, .page-nav-btn { display: flex; align-items: center; justify-content: center; min-width: 32px; height: 32px; border-radius: 8px; font-size: 14px; font-weight: 500; color: #8b95a1; text-decoration: none; transition: background-color 0.15s ease, color 0.15s ease; }
+    .page-num-btn:hover, .page-nav-btn:hover { background-color: #f2f4f6; }
+    .page-num-btn.active { background-color: #3182f6; color: #ffffff; font-weight: 700; }
+    .lw-tooltip { position: absolute; display: none; background: rgba(255, 255, 255, 0.95); padding: 12px 16px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); border: 1px solid #e5e8eb; pointer-events: none; z-index: 10; }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .fu { animation: fadeUp 0.4s ease both; }
     .d1 { animation-delay: 0.05s; } .d2 { animation-delay: 0.1s; } .d3 { animation-delay: 0.15s; } .d4 { animation-delay: 0.2s; }
   </style>
 </head>
@@ -97,170 +105,274 @@
     <div th:replace="~{fragments/header :: headerFragment}"></div>
 
     <div class="content-container">
+      <div class="mb-4 fu d1 d-flex justify-content-between align-items-end flex-wrap gap-3">
+        <div>
+          <h2 class="fw-bold mb-2" style="font-size: 26px; color: #191f28;">시장 동향</h2>
+          <p class="m-0" style="font-size: 15px; color: #6b7684; font-weight: 500;"
+             th:text="${loginMember != null ? loginMember.username + '님, 오늘 시장의 흐름과 주요 뉴스를 모아봤어요' : '오늘 시장의 흐름과 주요 뉴스를 모아봤어요'}"></p>
+        </div>
 
-      <div class="mb-4 fu d1">
-        <h2 class="fw-bold mb-1" style="font-size: 26px; letter-spacing: -0.5px;">시장 동향 대시보드</h2>
-        <p class="text-secondary fw-medium m-0" th:text="${loginMember != null ? loginMember.username + '님, 현재 시장의 핵심 흐름과 섹터별 국면입니다. 🌐' : '현재 시장의 핵심 흐름과 섹터별 국면입니다. 🌐'}"></p>
+        <!-- 세그먼트 컨트롤 탭 -->
+        <div class="d-flex p-1" style="background-color: #e5e8eb; border-radius: 10px; width: 240px;">
+          <button class="flex-fill border-0 fw-bold d-flex justify-content-center align-items-center gap-1"
+                  style="border-radius: 8px; padding: 10px 14px; font-size: 14px; transition: 0.15s;"
+                  :style="mainTab === 'market' ? 'background: white; color: #191f28; box-shadow: 0 1px 4px rgba(0,0,0,0.05);' : 'background: transparent; color: #8b95a1;'"
+                  @click="mainTab = 'market'; $nextTick(() => { if(!chartInitialzed) { createChart(); updateChartData(); chartInitialzed=true; } })">
+            거시 경제
+          </button>
+          <button class="flex-fill border-0 fw-bold d-flex justify-content-center align-items-center gap-1"
+                  style="border-radius: 8px; padding: 10px 14px; font-size: 14px; transition: 0.15s;"
+                  :style="mainTab === 'news' ? 'background: white; color: #191f28; box-shadow: 0 1px 4px rgba(0,0,0,0.05);' : 'background: transparent; color: #8b95a1;'"
+                  @click="mainTab = 'news'">
+            뉴스 속보
+          </button>
+        </div>
       </div>
 
-      <div class="row g-4 mb-4 fu d2">
-        <div class="col-lg-8" th:if="${marketTrendResult != null}">
-          <div class="toss-card weather-card h-100 mb-0 position-relative"
-               :class="marketSentiment === 'BULL' ? 'weather-bull' : (marketSentiment === 'BEAR' ? 'weather-bear' : 'weather-neutral')">
+      <!-- ========================================== -->
+      <!-- 1. 거시 경제 탭 영역 (Dashboard Grid) -->
+      <!-- ========================================== -->
+      <div x-show="mainTab === 'market'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
 
-            <i class="bi position-absolute"
-               :class="marketSentiment === 'BULL' ? 'bi-brightness-high-fill' : (marketSentiment === 'BEAR' ? 'bi-cloud-rain-heavy-fill' : 'bi-cloud-sun-fill')"
-               style="font-size: 12rem; opacity: 0.15; right: -20px; top: -40px; pointer-events: none;"></i>
+        <!-- Top Row: AI Briefing & Market Sentiment -->
+        <div class="row g-4 mb-4 fu d2">
+          <!-- AI 브리핑 (좌측 70% 차지) -->
+          <div class="col-xl-8 col-lg-12" th:if="${marketAnalysisResultResponse != null and marketAnalysisResultResponse.verdict != null and marketAnalysisResultResponse.verdict != ''}">
+            <div class="toss-card h-100 mb-0 d-flex flex-column">
+              <h3 class="section-title"><i class="bi bi-robot text-primary me-2"></i>AI 퀀트 진단</h3>
+              <div style="flex-grow: 1; line-height: 1.6; font-weight: 500; font-size: 15px; color: #4e5968;">
+                <th:block th:utext="${marketAnalysisResultResponse.verdict}"></th:block>
+              </div>
+            </div>
+          </div>
 
-            <div class="position-relative z-1">
+          <!-- 탐욕과 공포 (우측 30% 차지) -->
+          <div class="col-xl-4 col-lg-12" th:if="${marketAnalysisResultResponse != null}">
+            <div class="toss-card weather-card h-100 mb-0" :class="weatherClass">
               <div class="d-flex justify-content-between align-items-start mb-4">
                 <div>
-                  <div class="fw-bold opacity-75 mb-1" style="font-size: 13px;">AI 시장 종합 진단</div>
-                  <h3 class="fw-bold m-0" style="font-size: 26px;" x-text="marketSentimentText"></h3>
+                  <div style="font-size: 14px; color: #6b7684; font-weight: 600; margin-bottom: 6px;">시장 분위기</div>
+                  <h3 class="fw-bold m-0 text-theme" style="font-size: 24px;" x-text="sentimentLabel"></h3>
                 </div>
                 <div class="text-end">
-                  <div class="fw-bold opacity-75 mb-1" style="font-size: 13px;">시장 종합 점수</div>
-                  <div class="fw-bold fs-4" th:text="${marketTrendResult.score} + ' / 100'"></div>
+                  <div style="font-size: 14px; color: #6b7684; font-weight: 600; margin-bottom: 6px;">심리 지수</div>
+                  <div class="fw-bold text-theme" style="font-size: 24px;" th:text="${marketAnalysisResultResponse.fearAndGreedScore} + ' / 100'"></div>
                 </div>
               </div>
-
-              <div class="risk-gauge">
-                <div class="risk-gauge-fill" th:style="'width: ' + ${marketTrendResult.score} + '%'"></div>
-              </div>
-              <div class="d-flex justify-content-between mt-2 opacity-75 fw-bold" style="font-size: 12px;">
-                <span>위험 (Risk-Off)</span>
-                <span>안전 (Risk-On)</span>
+              <div class="mt-auto">
+                <div class="risk-gauge"><div class="risk-gauge-fill" th:style="'width: ' + ${marketAnalysisResultResponse.fearAndGreedScore} + '%'"></div></div>
+                <div class="d-flex justify-content-between mt-3" style="font-size: 13px; color: #8b95a1; font-weight: 600;">
+                  <span>공포 (0)</span><span>탐욕 (100)</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="col-lg-4">
-          <div class="toss-card h-100 mb-0 d-flex flex-column justify-content-center" style="border: 1px solid #e2e8f0;">
-            <div class="d-flex align-items-center gap-2 mb-3">
-              <div style="width: 32px; height: 32px; background: #f2f4f6; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><i class="bi bi-currency-dollar text-primary"></i></div>
-              <h3 class="fw-bold m-0 text-secondary" style="font-size: 14px;">원/달러 환율</h3>
-            </div>
-            <div class="d-flex align-items-end gap-3">
-              <div class="fw-bold" style="font-size: 32px; letter-spacing: -1px; color: #191f28;">
-                <span th:text="${index != null and index.usdKrw != null and !index.usdKrw.data.isEmpty() ? #numbers.formatDecimal(index.usdKrw.data[index.usdKrw.data.size()-1].value, 1, 2) : '-'}"></span><span style="font-size: 18px; color: #8b95a1; margin-left: 4px;">원</span>
+        <!-- Middle Row: 메인 차트 -->
+        <div class="row g-4 mb-4 fu d3">
+          <div class="col-12">
+            <div class="toss-card mb-0">
+              <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+                <h3 class="fw-bold m-0" style="font-size: 18px; color: #191f28;">주요 자산 흐름 (최근 1년)</h3>
+                <div class="tab-nav mb-0">
+                  <button class="tab-btn" :class="activeTab === 'SP500' ? 'active' : ''" @click="changeTab('SP500')">S&P 500</button>
+                  <button class="tab-btn" :class="activeTab === 'NASDAQ100' ? 'active' : ''" @click="changeTab('NASDAQ100')">나스닥 100</button>
+                  <button class="tab-btn" :class="activeTab === 'DOLLAR_INDEX' ? 'active' : ''" @click="changeTab('DOLLAR_INDEX')">달러 인덱스</button>
+                  <button class="tab-btn" :class="activeTab === 'US10Y' ? 'active' : ''" @click="changeTab('US10Y')">미 국채 10년물</button>
+                  <button class="tab-btn" :class="activeTab === 'WTI' ? 'active' : ''" @click="changeTab('WTI')">WTI 유가</button>
+                </div>
               </div>
-            </div>
-            <div th:if="${index != null and index.usdKrw != null}" class="fw-bold mt-2" style="font-size: 14px;" th:classappend="${index.usdKrw.changeValue > 0 ? 'text-up' : (index.usdKrw.changeValue < 0 ? 'text-down' : 'text-secondary')}">
-              <i th:class="${index.usdKrw.changeValue > 0 ? 'bi bi-arrow-up' : (index.usdKrw.changeValue < 0 ? 'bi bi-arrow-down' : 'bi bi-dash')}"></i>
-              <span th:text="${#numbers.formatDecimal(index.usdKrw.changeValue, 1, 2)} + ' (' + ${#numbers.formatDecimal(index.usdKrw.changeRate, 1, 2)} + '%)'"></span>
+              <div id="market-chart-container"></div>
             </div>
           </div>
         </div>
+
+        <!-- Bottom Row: 4개의 패널 배치를 col-xxl-6 또는 col-xl-6로 변경하여 짤림 원천 방지 -->
+        <div class="row g-4 mb-4 fu d4">
+
+          <!-- Panel 1: 주식 & 변동성 -->
+          <div class="col-xxl-6 col-xl-6 col-12">
+            <div class="toss-card h-100 mb-0 p-4">
+              <h4 class="section-title mb-3"><i class="bi bi-graph-up text-primary me-2"></i>증시 & 변동성</h4>
+              <div class="d-flex flex-column">
+                <template x-for="type in ['SP500', 'NASDAQ100', 'DOW_JONES', 'PHLX_SEMI', 'NASDAQ_AI', 'VIX']" :key="type">
+                  <div class="compact-indicator-row">
+                    <div style="flex: 1; min-width: 0; padding-right: 12px;">
+                      <div class="compact-name" x-text="getDisplayName(type)"></div>
+                      <div class="compact-date" x-text="formatDate(type)"></div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3 flex-shrink-0">
+                      <svg class="compact-sparkline" preserveAspectRatio="none" viewBox="0 0 100 40">
+                        <polyline fill="none" stroke-width="2.5" :stroke="getSparklineColorHex(type)" :points="getSparklinePoints(type)"></polyline>
+                      </svg>
+                      <div class="text-end" style="width: 100px;">
+                        <div class="compact-value" x-text="formatValue(type)"></div>
+                        <div class="compact-change" :class="getChangeColorClass(type)" x-text="formatChange(type)"></div>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel 2: 금리 & 채권 -->
+          <div class="col-xxl-6 col-xl-6 col-12">
+            <div class="toss-card h-100 mb-0 p-4">
+              <h4 class="section-title mb-3"><i class="bi bi-bank text-primary me-2"></i>금리 & 채권</h4>
+              <div class="d-flex flex-column">
+                <template x-for="type in ['FED_FUNDS_RATE', 'US10Y', 'US2Y', 'T10Y2Y', 'DOLLAR_INDEX', 'USD_JPY']" :key="type">
+                  <div class="compact-indicator-row">
+                    <div style="flex: 1; min-width: 0; padding-right: 12px;">
+                      <div class="compact-name" x-text="getDisplayName(type)"></div>
+                      <div class="compact-date" x-text="formatDate(type)"></div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3 flex-shrink-0">
+                      <svg class="compact-sparkline" preserveAspectRatio="none" viewBox="0 0 100 40">
+                        <polyline fill="none" stroke-width="2.5" :stroke="getSparklineColorHex(type)" :points="getSparklinePoints(type)"></polyline>
+                      </svg>
+                      <div class="text-end" style="width: 100px;">
+                        <div class="compact-value" x-text="formatValue(type)"></div>
+                        <div class="compact-change" :class="getChangeColorClass(type)" x-text="formatChange(type)"></div>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel 3: 거시 경제 & 물가 -->
+          <div class="col-xxl-6 col-xl-6 col-12">
+            <div class="toss-card h-100 mb-0 p-4">
+              <h4 class="section-title mb-3"><i class="bi bi-briefcase text-primary me-2"></i>거시 경제 & 물가</h4>
+              <div class="d-flex flex-column">
+                <template x-for="type in ['CPI', 'CORE_PCE', 'UNEMPLOYMENT', 'NONFARM', 'INITIAL_CLAIMS', 'GDP', 'RETAIL_SALES']" :key="type">
+                  <div class="compact-indicator-row">
+                    <div style="flex: 1; min-width: 0; padding-right: 12px;">
+                      <div class="compact-name" x-text="getDisplayName(type)"></div>
+                      <div class="compact-date" x-text="formatDate(type)"></div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3 flex-shrink-0">
+                      <svg class="compact-sparkline" preserveAspectRatio="none" viewBox="0 0 100 40">
+                        <polyline fill="none" stroke-width="2.5" :stroke="getSparklineColorHex(type)" :points="getSparklinePoints(type)"></polyline>
+                      </svg>
+                      <div class="text-end" style="width: 100px;">
+                        <div class="compact-value" x-text="formatValue(type)"></div>
+                        <div class="compact-change" :class="getChangeColorClass(type)" x-text="formatChange(type)"></div>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel 4: 원자재 & 리스크 -->
+          <div class="col-xxl-6 col-xl-6 col-12">
+            <div class="toss-card h-100 mb-0 p-4">
+              <h4 class="section-title mb-3"><i class="bi bi-shield-exclamation text-primary me-2"></i>원자재 & 리스크</h4>
+              <div class="d-flex flex-column">
+                <template x-for="type in ['WTI', 'BITCOIN', 'HIGH_YIELD_SPREAD', 'FINANCIAL_STRESS', 'M2', 'IND_SEMI']" :key="type">
+                  <div class="compact-indicator-row">
+                    <div style="flex: 1; min-width: 0; padding-right: 12px;">
+                      <div class="compact-name" x-text="getDisplayName(type)"></div>
+                      <div class="compact-date" x-text="formatDate(type)"></div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3 flex-shrink-0">
+                      <svg class="compact-sparkline" preserveAspectRatio="none" viewBox="0 0 100 40">
+                        <polyline fill="none" stroke-width="2.5" :stroke="getSparklineColorHex(type)" :points="getSparklinePoints(type)"></polyline>
+                      </svg>
+                      <div class="text-end" style="width: 100px;">
+                        <div class="compact-value" x-text="formatValue(type)"></div>
+                        <div class="compact-change" :class="getChangeColorClass(type)" x-text="formatChange(type)"></div>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+        </div> <!-- End of Panels -->
       </div>
 
-      <div class="mb-5 fu d3" th:if="${marketTrendResult != null and !marketTrendResult.signals.isEmpty()}">
-        <h3 class="section-title m-0 mb-3"><i class="bi bi-broadcast text-primary"></i>핵심 시장 시그널</h3>
-        <div class="row g-3">
-          <th:block th:each="signal : ${marketTrendResult.signals}">
-            <div class="col-md-6 col-lg-4">
-              <div class="signal-card" th:text="${signal}"></div>
+      <!-- ========================================== -->
+      <!-- 2. 뉴스 속보 탭 영역 (2단 와이드 그리드) -->
+      <!-- ========================================== -->
+      <div x-show="mainTab === 'news'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+
+        <!-- 2개의 컬럼으로 나누어 가로 공간 확보 -->
+        <div class="row g-4">
+          <!-- 실제 데이터 바인딩 부분 -->
+          <th:block th:if="${news != null and !#lists.isEmpty(news.newsList)}">
+            <div class="col-xxl-6 col-12" th:each="item : ${news.newsList}">
+              <a th:href="${item.url}" target="_blank" class="toss-card news-row h-100 mb-0 p-4 d-flex">
+                <div class="news-content pe-3">
+                  <div>
+                    <h4 class="news-title" th:text="${item.headline}">뉴스 제목</h4>
+                    <p class="news-summary" th:text="${item.summary}">뉴스 요약 내용</p>
+                  </div>
+                  <div class="news-meta">
+                    <span th:text="${item.source}">언론사</span> ·
+                    <span th:text="${#temporals.format(item.dateTime, 'yyyy-MM-dd HH:mm')}">시간</span>
+                  </div>
+                </div>
+                <img th:if="${item.image != null and !item.image.isEmpty()}" th:src="${item.image}" class="news-thumbnail" alt="뉴스 썸네일">
+                <img th:unless="${item.image != null and !item.image.isEmpty()}" src="https://placehold.co/120x84/f2f4f6/8b95a1?text=News" class="news-thumbnail" alt="기본 썸네일">
+              </a>
+            </div>
+          </th:block>
+
+          <!-- 데이터가 없을 때 보여줄 예시(Mock) 데이터 -->
+          <th:block th:if="${news == null or #lists.isEmpty(news.newsList)}">
+            <div class="col-xxl-6 col-12">
+              <a href="#" class="toss-card news-row h-100 mb-0 p-4 d-flex">
+                <div class="news-content pe-3">
+                  <div>
+                    <h4 class="news-title">파월 의장 "금리 인하, 물가 둔화 확신 필요해"</h4>
+                    <p class="news-summary">제롬 파월 미 연준 의장이 연내 금리 인하 가능성을 열어두면서도 물가 안정에 대한 확실한 지표가 필요하다고 강조했습니다.</p>
+                  </div>
+                  <div class="news-meta">매일경제 · 2시간 전</div>
+                </div>
+                <img src="https://placehold.co/120x84/f2f4f6/8b95a1?text=Economy" class="news-thumbnail" alt="news">
+              </a>
+            </div>
+            <div class="col-xxl-6 col-12">
+              <a href="#" class="toss-card news-row h-100 mb-0 p-4 d-flex">
+                <div class="news-content pe-3">
+                  <div>
+                    <h4 class="news-title">엔비디아, 새로운 AI 칩 공개하며 기술주 상승 견인</h4>
+                    <p class="news-summary">엔비디아가 기존 대비 처리 속도가 30배 빠른 차세대 인공지능(AI) 칩을 공개하며 시장의 기대를 모았습니다.</p>
+                  </div>
+                  <div class="news-meta">한국경제 · 4시간 전</div>
+                </div>
+                <img src="https://placehold.co/120x84/f2f4f6/8b95a1?text=Tech" class="news-thumbnail" alt="news">
+              </a>
             </div>
           </th:block>
         </div>
-      </div>
 
-      <h3 class="section-title fu d4"><i class="bi bi-activity text-primary"></i>주요 거시 지표</h3>
-      <div class="row g-3 mb-5 fu d4">
-        <template x-for="type in ['SP500', 'NASDAQ', 'DXY', 'VIX', 'US10Y', 'WTI']" :key="type">
-          <div class="col-6 col-md-4 col-lg-2">
-            <div class="indicator-card">
-              <div class="indicator-label" x-text="getDisplayName(type)"></div>
-              <div class="indicator-value" x-text="formatValue(type)"></div>
-              <div class="indicator-change" :class="getChangeColorClass(type)" x-text="formatChange(type)"></div>
-
-              <svg class="position-absolute bottom-0 start-0 w-100" style="height: 40px; z-index: 0; opacity: 0.1;" preserveAspectRatio="none" viewBox="0 0 100 40">
-                <polygon :fill="getSparklineColorHex(type)" :points="getSparklinePolygon(type)"></polygon>
-                <polyline fill="none" stroke-width="2" :stroke="getSparklineColorHex(type)" :points="getSparklinePoints(type)"></polyline>
-              </svg>
-            </div>
-          </div>
-        </template>
-      </div>
-
-      <div class="fu d4 mb-5">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-          <h3 class="section-title m-0"><i class="bi bi-crosshair text-secondary"></i>섹터 국면 레이더</h3>
-          <span class="text-secondary fw-bold" style="font-size: 13px;">ETF 유니버스 가격 추세 기반</span>
+        <!-- 페이지네이션 -->
+        <div class="news-pagination" th:if="${news != null and !#lists.isEmpty(news.newsList) and news.totalPages > 1}">
+          <a th:if="${news.page > 0}"
+             th:href="@{/market(mainTab='news', page=${news.page - 1})}"
+             class="page-nav-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a th:each="i : ${#numbers.sequence(0, news.totalPages - 1)}"
+             th:href="@{/market(mainTab='news', page=${i})}"
+             th:text="${i + 1}"
+             th:classappend="${i == news.page} ? ' active'"
+             class="page-num-btn"></a>
+          <a th:if="${news.hasNext}"
+             th:href="@{/market(mainTab='news', page=${news.page + 1})}"
+             class="page-nav-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
         </div>
 
-        <div class="row g-4">
-          <div class="col-md-6">
-            <div class="toss-card h-100" style="border-top: 4px solid var(--toss-red); border-radius: 16px;">
-              <h4 class="fw-bold mb-4" style="font-size: 16px; color: var(--toss-red);"><i class="bi bi-fire me-2"></i>강세 주도 및 진입 준비</h4>
-              <div class="sector-list">
-                <template x-for="sector in strongPhases" :key="sector.code">
-                  <a :href="'/stock/analysis?code=' + sector.code" class="sector-item">
-                    <div class="d-flex align-items-center gap-3">
-                      <div class="sector-icon icon-strong"><i :class="getSectorIcon(sector.name)"></i></div>
-                      <div>
-                        <div class="fw-bold text-dark" style="font-size: 15px;" x-text="sector.name"></div>
-                        <div class="text-secondary fw-bold" style="font-size: 12px;" x-text="sector.code"></div>
-                      </div>
-                    </div>
-                    <div class="d-flex align-items-center gap-3">
-                      <div class="text-end d-none d-sm-block">
-                        <div class="fw-bold text-dark" style="font-size: 15px;" x-text="'$' + formatNumber(sector.currentPrice)"></div>
-                        <div class="fw-bold" style="font-size: 13px;" :class="sector.changeRate > 0 ? 'text-up' : (sector.changeRate < 0 ? 'text-down' : 'text-secondary')" x-text="(sector.changeRate > 0 ? '+' : '') + sector.changeRate + '%'"></div>
-                      </div>
-                      <div style="width: 105px; text-align: right;">
-                        <span class="phase-badge" :class="'phase-' + sector.phase" x-html="getPhaseConfig(sector.phase).label"></span>
-                      </div>
-                    </div>
-                  </a>
-                </template>
-                <div x-show="strongPhases.length === 0" class="text-center py-4 text-secondary fw-bold" style="font-size: 13px;">현재 진입 및 강세 국면인 섹터가 없습니다.</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <div class="toss-card h-100" style="border-top: 4px solid var(--toss-blue); border-radius: 16px;">
-              <h4 class="fw-bold mb-4" style="font-size: 16px; color: var(--toss-blue);"><i class="bi bi-snow2 me-2"></i>약세 소외 및 관망 대기</h4>
-              <div class="sector-list">
-                <template x-for="sector in weakPhases" :key="sector.code">
-                  <a :href="'/stock/analysis?code=' + sector.code" class="sector-item">
-                    <div class="d-flex align-items-center gap-3">
-                      <div class="sector-icon icon-weak"><i :class="getSectorIcon(sector.name)"></i></div>
-                      <div>
-                        <div class="fw-bold text-dark" style="font-size: 15px;" x-text="sector.name"></div>
-                        <div class="text-secondary fw-bold" style="font-size: 12px;" x-text="sector.code"></div>
-                      </div>
-                    </div>
-                    <div class="d-flex align-items-center gap-3">
-                      <div class="text-end d-none d-sm-block">
-                        <div class="fw-bold text-dark" style="font-size: 15px;" x-text="'$' + formatNumber(sector.currentPrice)"></div>
-                        <div class="fw-bold" style="font-size: 13px;" :class="sector.changeRate > 0 ? 'text-up' : (sector.changeRate < 0 ? 'text-down' : 'text-secondary')" x-text="(sector.changeRate > 0 ? '+' : '') + sector.changeRate + '%'"></div>
-                      </div>
-                      <div style="width: 105px; text-align: right;">
-                        <span class="phase-badge" :class="'phase-' + sector.phase" x-html="getPhaseConfig(sector.phase).label"></span>
-                      </div>
-                    </div>
-                  </a>
-                </template>
-                <div x-show="weakPhases.length === 0" class="text-center py-4 text-secondary fw-bold" style="font-size: 13px;">현재 약세 및 관망 국면인 섹터가 없습니다.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="toss-card fu d4">
-        <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
-          <h3 class="fw-bold m-0" style="font-size: 17px;">거시 지표 트렌드 (최근 1년)</h3>
-          <div class="tab-nav mb-0">
-            <button class="tab-btn" :class="activeTab === 'SP500' ? 'active' : ''" @click="changeTab('SP500')">S&P 500</button>
-            <button class="tab-btn" :class="activeTab === 'NASDAQ' ? 'active' : ''" @click="changeTab('NASDAQ')">나스닥</button>
-            <button class="tab-btn" :class="activeTab === 'DXY' ? 'active' : ''" @click="changeTab('DXY')">달러 인덱스</button>
-            <button class="tab-btn" :class="activeTab === 'US10Y' ? 'active' : ''" @click="changeTab('US10Y')">미 국채 10년물</button>
-          </div>
-        </div>
-        <div id="market-chart-container"></div>
       </div>
 
     </div>
@@ -269,147 +381,192 @@
 
 <script th:inline="javascript">
   document.addEventListener('alpine:init', () => {
-      Alpine.data('marketDashboardApp', () => {
-          // 서버 데이터 매핑
-          const rawUniverse = /*[[${universe}]]*/ {};
-          const mappedSectors = Object.values(rawUniverse).filter(s => s && s.code);
+    Alpine.data('marketDashboardApp', () => {
+      return {
+        mainTab: new URLSearchParams(window.location.search).get('mainTab') || 'market',
+        activeTab: 'SP500', chart: null, areaSeries: null, toolTip: null, chartInitialzed: false,
 
-          return {
-              activeTab: 'SP500', chart: null, areaSeries: null, toolTip: null,
-              allData: {
-                  SP500: /*[[${index != null ? index.sp500 : null}]]*/ {},
-                  NASDAQ: /*[[${index != null ? index.nasdaq : null}]]*/ {},
-                  DXY: /*[[${index != null ? index.dxy : null}]]*/ {},
-                  VIX: /*[[${index != null ? index.vix : null}]]*/ {},
-                  US10Y: /*[[${index != null ? index.us10y : null}]]*/ {},
-                  WTI: /*[[${index != null ? index.wti : null}]]*/ {}
-              },
+        allData: {
+          USD_JPY: /*[[${indexDashboard != null ? indexDashboard.usdJpy : null}]]*/ null,
+          DOLLAR_INDEX: /*[[${indexDashboard != null ? indexDashboard.dollarIndex : null}]]*/ null,
+          SP500: /*[[${indexDashboard != null ? indexDashboard.sp500 : null}]]*/ null,
+          NASDAQ100: /*[[${indexDashboard != null ? indexDashboard.nasdaq100 : null}]]*/ null,
+          DOW_JONES: /*[[${indexDashboard != null ? indexDashboard.dowJones : null}]]*/ null,
+          VIX: /*[[${indexDashboard != null ? indexDashboard.vix : null}]]*/ null,
+          HIGH_YIELD_SPREAD: /*[[${indexDashboard != null ? indexDashboard.highYieldSpread : null}]]*/ null,
+          FINANCIAL_STRESS: /*[[${indexDashboard != null ? indexDashboard.financialStressIndex : null}]]*/ null,
+          US10Y: /*[[${indexDashboard != null ? indexDashboard.us10y : null}]]*/ null,
+          US2Y: /*[[${indexDashboard != null ? indexDashboard.us2y : null}]]*/ null,
+          T10Y2Y: /*[[${indexDashboard != null ? indexDashboard.yieldCurve10y2y : null}]]*/ null,
+          FED_FUNDS_RATE: /*[[${indexDashboard != null ? indexDashboard.fedFundsRate : null}]]*/ null,
+          WTI: /*[[${indexDashboard != null ? indexDashboard.wti : null}]]*/ null,
+          BITCOIN: /*[[${indexDashboard != null ? indexDashboard.bitcoin : null}]]*/ null,
+          CPI: /*[[${indexDashboard != null ? indexDashboard.cpi : null}]]*/ null,
+          CORE_PCE: /*[[${indexDashboard != null ? indexDashboard.corePce : null}]]*/ null,
+          UNEMPLOYMENT: /*[[${indexDashboard != null ? indexDashboard.unemploymentRate : null}]]*/ null,
+          NONFARM: /*[[${indexDashboard != null ? indexDashboard.nonfarmPayrolls : null}]]*/ null,
+          INITIAL_CLAIMS: /*[[${indexDashboard != null ? indexDashboard.initialClaims : null}]]*/ null,
+          GDP: /*[[${indexDashboard != null ? indexDashboard.gdp : null}]]*/ null,
+          RETAIL_SALES: /*[[${indexDashboard != null ? indexDashboard.retailSales : null}]]*/ null,
+          M2: /*[[${indexDashboard != null ? indexDashboard.m2 : null}]]*/ null,
+          PHLX_SEMI: /*[[${indexDashboard != null ? indexDashboard.phlxSemi : null}]]*/ null,
+          NASDAQ_AI: /*[[${indexDashboard != null ? indexDashboard.nasdaqAiBigdata : null}]]*/ null,
+          IND_SEMI: /*[[${indexDashboard != null ? indexDashboard.indSemi : null}]]*/ null
+        },
 
-              sectors: mappedSectors,
+        init() {
+          this.$nextTick(() => {
+            if (this.mainTab === 'market') {
+              this.createChart();
+              this.updateChartData();
+              this.chartInitialzed = true;
+            }
+          });
+        },
 
-              init() {
-                  this.$nextTick(() => { this.createChart(); this.updateChartData(); });
-              },
+        get rawSentiment() { return /*[[${marketAnalysisResultResponse != null ? marketAnalysisResultResponse.marketSentiment : 'NEUTRAL'}]]*/ 'NEUTRAL'; },
 
-              get marketSentiment() {
-                  const score = /*[[${marketTrendResult != null ? marketTrendResult.score : 50}]]*/ 50;
-                  if (score >= 65) return 'BULL';
-                  if (score <= 35) return 'BEAR';
-                  return 'NEUTRAL';
-              },
-              get marketSentimentText() {
-                  if (this.marketSentiment === 'BULL') return '위험 자산 선호 (Risk-On)';
-                  if (this.marketSentiment === 'BEAR') return '안전 자산 선호 (Risk-Off)';
-                  return '방향성 탐색 중 (Neutral)';
-              },
+        get sentimentLabel() {
+          const s = this.rawSentiment;
+          if (s === 'EXTREME_GREED') return '강력한 매수 (극단적 탐욕)';
+          if (s === 'GREED') return '매수 우위 (탐욕)';
+          if (s === 'FEAR') return '방어적 (공포)';
+          if (s === 'EXTREME_FEAR') return '패닉 상태 (극단적 공포)';
+          return '방향성 탐색 (중립)';
+        },
 
-              get strongPhases() {
-                  const targets = ['SETUP', 'ENTRY_READY', 'STRONG_HOLD', 'SCALE_OUT'];
-                  return this.sectors.filter(s => targets.includes(s.phase)).sort((a,b) => b.changeRate - a.changeRate);
-              },
-              get weakPhases() {
-                  const targets = ['DANGER_ZONE', 'RECOVERY_WATCH', 'WATCH', 'WARNING_ZONE', 'COOLDOWN'];
-                  return this.sectors.filter(s => targets.includes(s.phase)).sort((a,b) => a.changeRate - b.changeRate);
-              },
+        get weatherClass() {
+          const s = this.rawSentiment;
+          if (s.includes('GREED')) return 'weather-bull';
+          if (s.includes('FEAR')) return 'weather-bear';
+          return 'weather-neutral';
+        },
 
-              getPhaseConfig(phase) {
-                  const configs = {
-                      'DANGER_ZONE': { label: '<i class="bi bi-chevron-double-down"></i> 역배열 하락' },
-                      'RECOVERY_WATCH': { label: '<i class="bi bi-arrow-up-right-square"></i> 반등 관망' },
-                      'WATCH': { label: '<i class="bi bi-eye"></i> 정배열 초입' },
-                      'SETUP': { label: '<i class="bi bi-hourglass-split"></i> 눌림목 대기' },
-                      'ENTRY_READY': { label: '<i class="bi bi-box-arrow-in-right"></i> 돌파 진입' },
-                      'STRONG_HOLD': { label: '<i class="bi bi-fire"></i> 강세 보유' },
-                      'WARNING_ZONE': { label: '<i class="bi bi-exclamation-triangle"></i> 과열 경고' },
-                      'SCALE_OUT': { label: '<i class="bi bi-pie-chart"></i> 분할 익절' },
-                      'COOLDOWN': { label: '<i class="bi bi-pause-circle"></i> 매매 휴식' }
-                  };
-                  return configs[phase] || { label: phase };
-              },
-              getSectorIcon(name) {
-                  if (!name) return 'bi-bar-chart';
-                  if (name.includes('기술') || name.includes('반도체')) return 'bi-cpu';
-                  if (name.includes('소비재')) return 'bi-cart';
-                  if (name.includes('헬스')) return 'bi-heart-pulse';
-                  if (name.includes('에너지')) return 'bi-lightning-charge';
-                  if (name.includes('금융')) return 'bi-bank';
-                  if (name.includes('금속') || name.includes('산업')) return 'bi-boxes';
-                  if (name.includes('유틸리티')) return 'bi-plug';
-                  return 'bi-bar-chart';
-              },
-              formatNumber(v) { return v ? parseFloat(v).toFixed(2) : '-'; },
-              getDisplayName(t) { return {SP500:'S&P 500', NASDAQ:'나스닥', DXY:'달러 인덱스', VIX:'VIX', US10Y:'미 국채 10년물', WTI:'WTI 유가'}[t]; },
-              formatValue(t) {
-                  const v = this.allData[t]?.data?.slice(-1)[0]?.value;
-                  if (!v) return '-';
-                  if (t === 'US10Y') return parseFloat(v).toFixed(2) + '%';
-                  if (t === 'WTI') return '$' + parseFloat(v).toFixed(1);
-                  return ['SP500','NASDAQ'].includes(t) ? Math.floor(v).toLocaleString() : parseFloat(v).toFixed(2);
-              },
-              getChangeColorClass(t) { return this.allData[t]?.changeValue > 0 ? 'text-up' : (this.allData[t]?.changeValue < 0 ? 'text-down' : 'text-secondary'); },
-              formatChange(t) {
-                  const cv = this.allData[t]?.changeValue, cr = this.allData[t]?.changeRate;
-                  if (cv === undefined) return '-';
-                  const sign = cv > 0 ? '+' : '';
-                  const valText = t === 'US10Y' ? `${sign}${parseFloat(cv).toFixed(2)}%p` : `${sign}${parseFloat(cv).toFixed(2)}`;
-                  return `${valText} (${sign}${parseFloat(cr).toFixed(2)}%)`;
-              },
-
-              createChart() {
-                  const container = document.getElementById('market-chart-container');
-                  if (!container) return;
-                  this.chart = LightweightCharts.createChart(container, {
-                      layout: { background: { color: 'transparent' }, textColor: '#8b95a1', fontFamily: 'Pretendard' },
-                      grid: { vertLines: { visible: false }, horzLines: { color: '#f2f4f6' } },
-                      timeScale: { borderVisible: false },
-                      crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
-                  });
-                  this.areaSeries = this.chart.addAreaSeries({ lineColor: '#3182f6', topColor: 'rgba(49, 130, 246, 0.2)', bottomColor: 'rgba(49, 130, 246, 0)', lineWidth: 2 });
-
-                  this.toolTip = document.createElement('div');
-                  this.toolTip.className = 'lw-tooltip';
-                  container.appendChild(this.toolTip);
-
-                  this.chart.subscribeCrosshairMove((param) => {
-                      if (!param.point || !param.time || param.point.x < 0 || param.point.x > container.clientWidth || param.point.y < 0 || param.point.y > container.clientHeight) {
-                          this.toolTip.style.display = 'none';
-                      } else {
-                          const data = param.seriesData.get(this.areaSeries);
-                          const price = data.value !== undefined ? data.value : data.close;
-                          this.toolTip.style.display = 'block';
-                          this.toolTip.innerHTML = `<div style="color:#8b95a1;font-size:12px;margin-bottom:4px;">${param.time}</div><div style="font-size:16px;font-weight:700;color:#191f28;">${price.toLocaleString(undefined, {minimumFractionDigits:2})}</div>`;
-
-                          let left = param.point.x + 15, top = param.point.y - 15;
-                          if (left + 120 > container.clientWidth) left = param.point.x - 135;
-                          if (top + 60 > container.clientHeight) top = container.clientHeight - 60;
-                          this.toolTip.style.left = left + 'px';
-                          this.toolTip.style.top = top + 'px';
-                      }
-                  });
-              },
-              updateChartData() {
-                  const list = this.allData[this.activeTab]?.data || [];
-                  const formatted = list.map(d => ({ time: String(d.date), value: parseFloat(d.value) })).sort((a,b) => a.time.localeCompare(b.time));
-                  if (this.areaSeries && formatted.length > 0) {
-                      this.areaSeries.setData(formatted);
-                      this.chart.timeScale().fitContent();
-                  }
-              },
-              changeTab(t) { this.activeTab = t; this.updateChartData(); if (this.toolTip) this.toolTip.style.display = 'none'; },
-              getSparklineColorHex(t) { return this.allData[t]?.changeValue > 0 ? '#f04452' : '#3182f6'; },
-              getSparklinePoints(t) {
-                  const dataList = this.allData[t]?.data;
-                  if (!dataList || dataList.length === 0) return '';
-                  const recentData = dataList.slice(-20), values = recentData.map(d => parseFloat(d.value));
-                  const min = Math.min(...values), max = Math.max(...values), range = (max - min) || 1;
-                  return values.map((val, idx) => `${(idx / (values.length - 1)) * 100},${40 - ((val - min) / range) * 35}`).join(' ');
-              },
-              getSparklinePolygon(t) {
-                  const points = this.getSparklinePoints(t);
-                  return points ? `${points} 100,40 0,40` : '';
-              }
+        getDisplayName(t) {
+          const names = {
+            SP500: 'S&P 500', NASDAQ100: '나스닥 100', DOW_JONES: '다우존스', PHLX_SEMI: '필라델피아 반도체', NASDAQ_AI: '나스닥 AI&빅데이터',
+            VIX: 'VIX (공포지수)', FINANCIAL_STRESS: '금융 스트레스', HIGH_YIELD_SPREAD: '하이일드 스프레드',
+            US10Y: '미 국채 10년물', US2Y: '미 국채 2년물', T10Y2Y: '장단기 금리차 (10-2)', FED_FUNDS_RATE: '미 기준금리',
+            WTI: 'WTI 유가', BITCOIN: '비트코인', USD_JPY: '엔/달러 환율', DOLLAR_INDEX: '달러 인덱스',
+            CPI: '소비자물가 (CPI)', CORE_PCE: '근원 PCE 물가', UNEMPLOYMENT: '미국 실업률', NONFARM: '비농업 고용 (NFP)', INITIAL_CLAIMS: '신규 실업수당 청구',
+            GDP: '미국 실질 GDP', M2: 'M2 통화량', RETAIL_SALES: '소매판매 지수', IND_SEMI: '반도체 생산지수'
           };
-      });
+          return names[t] || t;
+        },
+
+        formatDate(t) {
+          const dataList = this.allData[t]?.data;
+          if (!Array.isArray(dataList) || dataList.length === 0) return '업데이트 대기';
+          return dataList[dataList.length - 1]?.date || '업데이트 대기';
+        },
+
+        getLatestValue(t) {
+          const dataList = this.allData[t]?.data;
+          if (!Array.isArray(dataList) || dataList.length === 0) return null;
+          const value = dataList[dataList.length - 1]?.value;
+          if (value === undefined || value === null || value === '') return null;
+          const parsed = Number(value);
+          return Number.isFinite(parsed) ? parsed : null;
+        },
+
+        formatValue(t) {
+          const v = this.getLatestValue(t);
+          if (v === null) return '-';
+
+          const percentTypes = ['US10Y','US2Y','FED_FUNDS_RATE','CPI','CORE_PCE','UNEMPLOYMENT'];
+          const integerTypes = ['SP500','NASDAQ100','DOW_JONES','PHLX_SEMI','NASDAQ_AI','BITCOIN','NONFARM','INITIAL_CLAIMS'];
+
+          if (percentTypes.includes(t)) return v.toFixed(2) + '%';
+          if (integerTypes.includes(t)) return Math.round(v).toLocaleString();
+          return v.toFixed(2);
+        },
+
+        getChangeColorClass(t) {
+          const cv = this.allData[t]?.changeValue;
+          if (cv === undefined || cv === null || cv === 0) return 'text-neutral';
+          return cv > 0 ? 'text-up' : 'text-down';
+        },
+
+        formatChange(t) {
+          const cv = this.allData[t]?.changeValue;
+          const cr = this.allData[t]?.changeRate;
+          if (cv === undefined || cv === null || !Number.isFinite(Number(cv))) return '-';
+
+          const changeValue = Number(cv);
+          const changeRate = Number(cr);
+          const sign = changeValue > 0 ? '▲ ' : (changeValue < 0 ? '▼ ' : '');
+          const absCv = Math.abs(changeValue);
+          const absCr = Number.isFinite(changeRate) ? Math.abs(changeRate) : null;
+
+          const rateTypes = ['US10Y','US2Y','FED_FUNDS_RATE','CPI','CORE_PCE','UNEMPLOYMENT'];
+          const integerTypes = ['SP500','NASDAQ100','DOW_JONES','PHLX_SEMI','NASDAQ_AI','BITCOIN','NONFARM','INITIAL_CLAIMS'];
+
+          let valText;
+          if (rateTypes.includes(t)) {
+            valText = `${sign}${absCv.toFixed(2)}%p`;
+          } else if (integerTypes.includes(t)) {
+            valText = `${sign}${Math.round(absCv).toLocaleString()}`;
+          } else {
+            valText = `${sign}${absCv.toFixed(2)}`;
+          }
+
+          if (!Number.isFinite(changeRate)) return valText;
+          return `${valText} (${changeRate > 0 ? '+' : ''}${changeRate.toFixed(2)}%)`;
+        },
+
+        createChart() {
+          const container = document.getElementById('market-chart-container');
+          if (!container) return;
+          this.chart = LightweightCharts.createChart(container, {
+            layout: { background: { color: 'transparent' }, textColor: '#8b95a1', fontFamily: 'Pretendard' },
+            grid: { vertLines: { visible: false }, horzLines: { color: '#f2f4f6' } },
+            timeScale: { borderVisible: false, rightOffset: 5 },
+            crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
+          });
+          this.areaSeries = this.chart.addAreaSeries({ lineColor: '#3182f6', topColor: 'rgba(49, 130, 246, 0.15)', bottomColor: 'rgba(49, 130, 246, 0.01)', lineWidth: 2 });
+          this.toolTip = document.createElement('div');
+          this.toolTip.className = 'lw-tooltip';
+          container.appendChild(this.toolTip);
+
+          this.chart.subscribeCrosshairMove((param) => {
+            if (!param.point || !param.time || param.point.x < 0 || param.point.x > container.clientWidth || param.point.y < 0 || param.point.y > container.clientHeight) {
+              this.toolTip.style.display = 'none';
+            } else {
+              const data = param.seriesData.get(this.areaSeries);
+              if (!data) return;
+              const price = data.value !== undefined ? data.value : data.close;
+              this.toolTip.style.display = 'block';
+              this.toolTip.innerHTML = `
+                <div style="color: #8b95a1; font-size: 13px; font-weight: 500; margin-bottom: 4px;">${param.time}</div>
+                <div style="font-size: 16px; font-weight: 700; color: #191f28;">${price.toLocaleString(undefined, {minimumFractionDigits:2})}</div>`;
+              let left = param.point.x + 15, top = param.point.y - 15;
+              if (left + 140 > container.clientWidth) left = param.point.x - 140;
+              if (top + 80 > container.clientHeight) top = container.clientHeight - 80;
+              this.toolTip.style.left = left + 'px';
+              this.toolTip.style.top = top + 'px';
+            }
+          });
+        },
+        updateChartData() {
+          const list = this.allData[this.activeTab]?.data || [];
+          const formatted = list.map(d => ({ time: String(d.date), value: Number(d.value) })).filter(d => Number.isFinite(d.value)).sort((a,b) => a.time.localeCompare(b.time));
+          if (this.areaSeries && formatted.length > 0) {
+            this.areaSeries.setData(formatted);
+            this.chart.timeScale().fitContent();
+          }
+        },
+        changeTab(t) { this.activeTab = t; this.updateChartData(); if (this.toolTip) this.toolTip.style.display = 'none'; },
+        getSparklineColorHex(t) { const cv = this.allData[t]?.changeValue; return (cv === undefined || cv === null || cv === 0) ? '#8b95a1' : (cv > 0 ? '#f04452' : '#3182f6'); },
+        getSparklinePoints(t) {
+          const dataList = this.allData[t]?.data;
+          if (!dataList || dataList.length === 0) return '';
+          const recentData = dataList.slice(-20), values = recentData.map(d => parseFloat(d.value));
+          const min = Math.min(...values), max = Math.max(...values), range = (max - min) || 1;
+          if (values.length === 1) return `0,22 100,22`;
+          return values.map((val, idx) => `${(idx / (values.length - 1)) * 100},${40 - ((val - min) / range) * 35}`).join(' ');
+        }
+      };
+    });
   });
 </script>
 </body>

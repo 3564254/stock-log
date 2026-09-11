@@ -3,56 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockLog - 대시보드</title>
+    <title>StockLog - 대시보드 홈</title>
 
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+
     <style>
-        :root { --toss-blue: #3182f6; --toss-red: #f04452; --toss-gray-bg: #f2f4f6; --sidebar-width: 250px; }
-        body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: #191f28; }
+        :root {
+            --toss-blue: #3182f6; --toss-red: #f04452; --toss-green: #05c072;
+            --toss-gray-bg: #f2f4f6; --sidebar-width: 250px;
+        }
+        body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: #333d4b; }
         [x-cloak] { display: none !important; }
+
         .layout-wrapper { display: flex; min-height: 100vh; }
-        .main-content { flex-grow: 1; margin-left: var(--sidebar-width); padding: 0 60px 60px 60px; transition: 0.3s; }
-        .main-content.expanded { margin-left: 80px; }
-        .content-container { width: 100%; max-width: 1400px; margin: 0 auto; }
-        .toss-card { background: white; border-radius: 28px; padding: 36px; box-shadow: 0 4px 24px rgba(0,0,0,0.03); margin-bottom: 30px; border: none; position: relative; }
-        .toss-input { width: 100%; border: none; background: #f2f4f6; border-radius: 16px; padding: 18px; outline: none; margin-bottom: 20px; transition: 0.2s; }
-        .toss-input:focus { outline: 2px solid var(--toss-blue); background: white; }
-        .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(6px); }
-        .modal-sheet { background: white; width: 100%; max-width: 540px; border-radius: 32px; padding: 40px; }
-        .stock-detail-sheet { background: white; width: 100%; max-width: 760px; border-radius: 32px; overflow: hidden; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
-        .detail-header { padding: 36px 40px 28px; border-bottom: 1px solid #f2f4f6; position: sticky; top: 0; background: white; z-index: 10; }
-        .detail-body { padding: 32px 40px 40px; }
-        .stat-pill { background: #f8fafc; border-radius: 14px; padding: 14px 18px; display: flex; flex-direction: column; gap: 4px; flex: 1; border: 1px solid #f1f5f9; }
-        .stat-pill .label { font-size: 0.75rem; font-weight: 700; color: #8b95a1; }
-        .stat-pill .value { font-size: 1rem; font-weight: 800; color: #191f28; }
-        .section-label { font-size: 0.8rem; font-weight: 800; color: #8b95a1; margin-bottom: 12px; letter-spacing: 0.05em; text-transform: uppercase; }
-        .info-grid { background: white; border-radius: 16px; overflow: hidden; border: 1px solid #f2f4f6; }
-        .info-row { display: flex; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid #f2f4f6; }
-        .info-row:last-child { border-bottom: none; }
-        .spinner-container { display: flex; justify-content: center; padding: 20px; width: 100%; }
+        .main-content { flex-grow: 1; margin-left: var(--sidebar-width); padding: 0 60px 80px 60px; transition: 0.2s; width: calc(100% - var(--sidebar-width)); min-width: 0; }
+        .main-content.expanded { margin-left: 80px; width: calc(100% - 80px); }
+        .content-container { width: 100%; max-width: 1200px; margin: 0 auto; padding-top: 24px; }
+
+        .toss-card { background: white; border-radius: 16px; padding: 28px; box-shadow: none; margin-bottom: 24px; border: 1px solid #e5e8eb; }
+        .toss-banner { background: #f9fafb; border-radius: 16px; padding: 20px 24px; margin-bottom: 24px; border: 1px solid #e5e8eb; }
+
+        .widget-placeholder { background: #f9fafb; border: 1px solid #e5e8eb; border-radius: 12px; padding: 32px 20px; text-align: center; color: #8b95a1; transition: 0.15s ease; }
+        .widget-placeholder:hover { background: #f2f4f6; border-color: #d1d6db; }
+        .widget-icon { font-size: 1.5rem; margin-bottom: 12px; color: #b0b8c1; }
+
+        .watch-item {
+            display: flex; align-items: center; padding: 16px 20px;
+            background: #ffffff; border: 1px solid #f2f4f6;
+            border-radius: 12px; margin-bottom: 12px;
+            gap: 16px; transition: 0.15s ease;
+        }
+        .watch-item:hover { border-color: #e5e8eb; background-color: #f9fafb; }
+        .target-price-badge {
+            background: #f2f4f6; color: #4e5968; font-size: 12px;
+            font-weight: 600; padding: 4px 10px; border-radius: 6px; border: none;
+        }
+
+        .stock-row { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid #f2f4f6; gap: 14px; }
+        .stock-row:last-child { border-bottom: none; }
+        .stock-icon  { width: 40px; height: 40px; border-radius: 10px; background: #f2f4f6; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #4e5968; flex-shrink: 0; }
+        .stock-name  { font-size: 15px; font-weight: 700; color: #191f28; }
+        .stock-meta  { font-size: 13px; font-weight: 500; color: #8b95a1; margin-top: 2px; }
+
+        .profit-badge { font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 8px; }
+        .badge-profit { background: rgba(240,68,82,0.08); color: var(--toss-red); }
+        .badge-loss   { background: rgba(49,130,246,0.08); color: var(--toss-blue); }
+
         .text-up { color: var(--toss-red) !important; }
         .text-down { color: var(--toss-blue) !important; }
-        .badge-profit { background-color: rgba(240, 68, 82, 0.1); color: var(--toss-red); padding: 4px 10px; border-radius: 8px; }
-        .badge-loss { background-color: rgba(49, 130, 246, 0.1); color: var(--toss-blue); padding: 4px 10px; border-radius: 8px; }
-        .stock-row-clickable { cursor: pointer; transition: background 0.2s; }
-        .stock-row-clickable:hover { background-color: var(--toss-gray-bg) !important; }
-        .search-item { transition: background-color 0.2s ease; cursor: pointer; }
-        .search-item:hover { background-color: var(--toss-gray-bg); }
-        .btn-add { background: none; border: none; color: var(--toss-blue); font-weight: 700; font-size: 0.9rem; padding: 8px 16px; cursor: pointer; transition: 0.2s; }
-        .btn-add:hover { background: rgba(49, 130, 246, 0.1); border-radius: 8px; }
-        .stock-detail-sheet::-webkit-scrollbar { width: 4px; }
-        .stock-detail-sheet::-webkit-scrollbar-track { background: transparent; }
-        .stock-detail-sheet::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
-        .stock-detail-sheet::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
-        .hover-up { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .hover-up:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(0,0,0,0.06); }
+
+        .modal-backdrop-custom { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
+        .modal-sheet { background: white; width: 100%; max-width: 520px; border-radius: 16px; padding: 0; max-height: 90vh; overflow-y: auto; animation: fadeIn 0.2s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+
+        .empty-state { text-align: center; padding: 48px 0; color: #8b95a1; }
+        .empty-state i { font-size: 2rem; display: block; margin-bottom: 12px; color: #d1d6db; }
+
+        .hover-up { transition: background-color 0.15s ease, opacity 0.15s ease; }
+        .hover-up:hover { opacity: 0.85; }
+
+        @media (max-width: 768px) {
+            .sidebar-main { display: none !important; }
+            .main-content { margin-left: 0 !important; padding: 16px !important; width: 100%; }
+            .content-container { padding-top: 16px; }
+            .toss-card, .modal-sheet { padding: 20px !important; }
+            .stock-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+            .stock-row .text-end { text-align: left !important; width: 100%; display: flex; justify-content: space-between; align-items: center; }
+        }
     </style>
 </head>
-<body x-data="dashboardApp">
+<body x-data="unifiedDashboardApp">
 
 <div class="layout-wrapper">
     <aside th:replace="~{fragments/sidebar :: sidebarFragment('home')}"></aside>
@@ -62,418 +85,487 @@
 
         <div class="content-container">
 
-            <!-- 1. 상단 글로벌 검색 -->
-            <div th:if="${loginMember != null}" class="position-relative mb-4" @click.outside="isGlobalSearchOpen = false">
-                <div class="d-flex align-items-center bg-white rounded-pill px-4 py-3 shadow-sm border"
-                     style="transition: 0.2s;"
-                     :style="isGlobalSearchOpen ? 'border-color: var(--toss-blue) !important; box-shadow: 0 0 0 3px rgba(49,130,246,0.1) !important;' : 'border-color: #f2f4f6 !important;'">
-                    <i class="bi bi-search text-secondary fs-5 me-3"></i>
-                    <input type="text" class="border-0 bg-transparent w-100 fs-6 fw-bold text-dark" style="outline: none;"
-                           placeholder="어떤 종목을 찾으시나요?" x-model="globalSearchQuery"
-                           @input.debounce.500ms="globalSearchNew()" @focus="isGlobalSearchOpen = true">
-                </div>
-
-                <div x-show="isGlobalSearchOpen && globalSearchQuery.length > 0" class="position-absolute w-100 bg-white shadow-lg rounded-4 mt-2 p-3 border" style="z-index: 1050; max-height: 400px; overflow-y: auto; border-color: #f2f4f6 !important;" x-cloak x-transition.opacity.duration.200ms>
-                    <div x-show="isGlobalLoading" class="text-center p-4"><div class="spinner-border text-primary" style="width: 1.5rem; height: 1.5rem;"></div></div>
-
-                    <!-- ✨ 변경: StockDashBoard 구조에 맞게 item.stock 및 Flat Price 변수로 매핑 -->
-                    <template x-for="item in globalSearchResults" :key="item.stock?.code">
-                        <div @click="openStockDetailFromSearch(item)" class="search-item p-3 mb-1 d-flex justify-content-between align-items-center rounded-4" style="cursor: pointer;">
-                            <div>
-                                <div class="fw-bold fs-5 text-dark" x-text="item.stock?.name"></div>
-                                <div class="text-secondary small fw-bold" x-text="item.stock?.code"></div>
-                            </div>
-                            <div class="text-end">
-                                <div class="fw-bold fs-6 text-dark" x-text="formatCurrency(item.currentPrice, item.stock?.currency)"></div>
-                                <div class="small fw-bold" :class="item.changeRate > 0 ? 'text-up' : (item.changeRate < 0 ? 'text-down' : 'text-secondary')"
-                                     x-text="(item.changeRate > 0 ? '+' : '') + (item.changeRate || 0) + '%'"></div>
-                            </div>
-                        </div>
-                    </template>
-                    <div x-show="globalSearchHasMore && !isGlobalLoading && globalSearchResults.length > 0" class="text-center mt-2 mb-2"><button @click.stop="fetchGlobalStocks(false)" class="btn btn-link text-decoration-none fw-bold text-secondary small">검색 결과 더 보기</button></div>
-                    <div x-show="!isGlobalLoading && globalSearchResults.length === 0 && globalSearchQuery.length > 0" class="p-4 text-center text-secondary fw-bold">검색 결과가 없습니다.</div>
-                </div>
-            </div>
-
+            <!-- 비로그인 상태 안내 (Landing) -->
             <div th:if="${loginMember == null}" class="mt-2">
-                <!-- 랜딩 페이지 (로그인 안함) -->
-                <div class="toss-card text-center position-relative overflow-hidden mb-4" style="min-height: 420px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);">
-                    <div class="position-absolute rounded-circle" style="width: 400px; height: 400px; background: rgba(49, 130, 246, 0.03); top: -100px; right: -100px;"></div>
-                    <div class="position-absolute rounded-circle" style="width: 300px; height: 300px; background: rgba(49, 130, 246, 0.02); bottom: -50px; left: -100px;"></div>
-                    <div class="position-relative z-1">
-                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4 shadow-sm" style="width: 88px; height: 88px; background: white;"><i class="bi bi-graph-up-arrow" style="font-size: 2.5rem; color: var(--toss-blue);"></i></div>
-                        <h1 class="fw-bold mb-3 text-dark display-6" style="letter-spacing: -1px;">나만의 주식 포트폴리오,<br>한눈에 똑똑하게 관리하세요</h1>
-                        <p class="text-secondary mb-5 fw-bold" style="font-size: 1.1rem; line-height: 1.6;">실시간 주가 확인부터 수익률 분석, 친구와의 투자 기록 공유까지.<br>StockLog에서 스마트한 투자를 시작해보세요.</p>
-                        <a th:href="@{/auth/login}" class="btn btn-primary rounded-pill px-5 py-3 fw-bold shadow-sm border-0 hover-up" style="background: var(--toss-blue); font-size: 1.1rem;">3초 만에 시작하기</a>
+                <div class="toss-card text-center mb-4" style="min-height: 320px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: none; background: #ffffff;">
+                    <div class="mb-3">
+                        <i class="bi bi-shield-check" style="font-size: 2rem; color: var(--toss-blue);"></i>
                     </div>
+                    <h1 class="fw-bold mb-3 text-dark" style="font-size: 28px; letter-spacing: -0.5px;">AI로 지키는<br>나만의 투자 원칙</h1>
+                    <p class="mb-5" style="color: #4e5968; font-size: 16px; line-height: 1.6;">감정에 휘둘리지 않도록, 내가 설정한 규칙에<br>맞는 타이밍인지 AI가 미리 확인해 드려요</p>
+                    <a th:href="@{/auth/login}" class="btn border-0 hover-up fw-bold" style="background: var(--toss-blue); color: white; border-radius: 10px; padding: 14px 40px; font-size: 16px;">시작하기</a>
                 </div>
-                <div class="row g-4">
-                    <div class="col-md-4"><div class="toss-card h-100 p-4 text-start hover-up mb-0"><div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 56px; height: 56px; background: rgba(49, 130, 246, 0.1); color: var(--toss-blue);"><i class="bi bi-pie-chart-fill fs-4"></i></div><h4 class="fw-bold fs-5 mb-2 text-dark">직관적인 자산 분석</h4><p class="text-secondary small fw-bold m-0" style="line-height: 1.5;">흩어진 내 주식을 한곳에 모아<br>총 자산과 실시간 수익률을 쉽게 확인하세요.</p></div></div>
-                    <div class="col-md-4"><div class="toss-card h-100 p-4 text-start hover-up mb-0"><div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 56px; height: 56px; background: rgba(240, 68, 82, 0.1); color: var(--toss-red);"><i class="bi bi-people-fill fs-4"></i></div><h4 class="fw-bold fs-5 mb-2 text-dark">투자 친구와 함께</h4><p class="text-secondary small fw-bold m-0" style="line-height: 1.5;">친구를 추가하고 서로의 포트폴리오를<br>참고하며 성공적인 투자를 계획하세요.</p></div></div>
-                    <div class="col-md-4"><div class="toss-card h-100 p-4 text-start hover-up mb-0"><div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 56px; height: 56px; background: rgba(139, 149, 161, 0.1); color: #4e5968;"><i class="bi bi-newspaper fs-4"></i></div><h4 class="fw-bold fs-5 mb-2 text-dark">실시간 시황·뉴스</h4><p class="text-secondary small fw-bold m-0" style="line-height: 1.5;">주요 증시 지표와 최신 금융 뉴스를<br>앱 이동 없이 발 빠르게 확인할 수 있습니다.</p></div></div>
+
+                <div class="row g-4 mt-2">
+                    <div class="col-md-4">
+                        <div class="toss-card h-100 text-start">
+                            <div class="mb-3" style="color: #4e5968;">
+                                <i class="bi bi-crosshair fs-4"></i>
+                            </div>
+                            <h4 class="fw-bold mb-2 text-dark" style="font-size: 17px;">관심 종목 대기열</h4>
+                            <p class="mb-0" style="color: #6b7684; font-size: 14px; line-height: 1.5; word-break: keep-all;">원하는 타이밍이 올 때까지 종목을 보관하고 흐름을 지켜보는 공간</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="toss-card h-100 text-start">
+                            <div class="mb-3" style="color: #4e5968;">
+                                <i class="bi bi-robot fs-4"></i>
+                            </div>
+                            <h4 class="fw-bold mb-2 text-dark" style="font-size: 17px;">AI 매수 타점 검증</h4>
+                            <p class="mb-0" style="color: #6b7684; font-size: 14px; line-height: 1.5; word-break: keep-all;">매수하기 직전, 내 기준에 딱 맞는 자리인지 AI가 한 번 더 객관적으로 분석해요</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="toss-card h-100 text-start">
+                            <div class="mb-3" style="color: #4e5968;">
+                                <i class="bi bi-pie-chart fs-4"></i>
+                            </div>
+                            <h4 class="fw-bold mb-2 text-dark" style="font-size: 17px;">포트폴리오 분산 점검</h4>
+                            <p class="mb-0" style="color: #6b7684; font-size: 14px; line-height: 1.5; word-break: keep-all;">투자금이 한 곳에 쏠리지 않도록, 종목들이 안전하게 분산되어 있는지 확인해요</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- 보유 현황 및 리스트 -->
+            <!-- 로그인 상태 대시보드 -->
             <div th:if="${loginMember != null}">
-                <div class="row g-4 mb-4">
-                    <div class="col-lg-8">
-                        <section class="toss-card h-100 mb-0">
-                            <div class="text-secondary fw-bold small mb-2">총 자산</div>
-                            <h1 class="display-4 fw-bold mb-4" x-text="formatNumber(totalAssets) + '원'"></h1>
-                            <div class="d-flex gap-5">
-                                <div>
-                                    <div class="text-secondary small fw-bold mb-1">총 수익</div>
-                                    <div class="fw-bold fs-3" th:classappend="${portfolio.totalProfit >= 0 ? 'text-up' : 'text-down'}" th:text="${(portfolio.totalProfit >= 0 ? '+' : '') + #numbers.formatDecimal(portfolio.totalProfit, 0, 'COMMA', 0, 'POINT')} + '원'"></div>
-                                </div>
-                                <div class="vr opacity-10"></div>
-                                <div>
-                                    <div class="text-secondary small fw-bold mb-1">수익률</div>
-                                    <div class="fw-bold fs-3" th:classappend="${portfolio.totalReturnRate >= 0 ? 'text-up' : 'text-down'}" th:text="${(portfolio.totalReturnRate >= 0 ? '+' : '') + portfolio.totalReturnRate + '%'}"></div>
-                                </div>
-                            </div>
-                        </section>
+
+                <div class="position-relative mb-4" @click.outside="isGlobalSearchOpen = false">
+                    <div class="d-flex align-items-center bg-white px-4 py-3 border"
+                         style="border-radius: 12px; transition: 0.15s;"
+                         :style="isGlobalSearchOpen ? 'border-color: var(--toss-blue) !important;' : 'border-color: #e5e8eb !important;'">
+                        <i class="bi bi-search text-secondary fs-5 me-3"></i>
+                        <input type="text" class="border-0 bg-transparent w-100 fs-6 fw-bold text-dark" style="outline: none;"
+                               placeholder="종목명이나 코드를 검색해 보세요" x-model="globalSearchQuery"
+                               @input.debounce.500ms="globalSearchNew()" @focus="isGlobalSearchOpen = true">
                     </div>
-                    <div class="col-lg-4">
-                        <section class="toss-card h-100 text-white border-0 shadow-sm" style="background: linear-gradient(135deg, #3182f6 0%, #1b64da 100%);">
-                            <h3 class="fw-bold fs-5 mb-4 opacity-80">환율 정보</h3>
-                            <div class="mb-4">
-                                <div class="opacity-75 small fw-bold">USD/KRW</div>
-                                <div class="display-5 fw-bold" th:text="${exchangeRate.baseRate}"></div>
+
+                    <div x-show="isGlobalSearchOpen && globalSearchQuery.length > 0" @scroll="onSearchScroll" class="position-absolute w-100 bg-white shadow-sm mt-2 p-2 border" style="z-index: 1050; max-height: 400px; overflow-y: auto; border-color: #e5e8eb !important; border-radius: 12px;" x-cloak>
+                        <div x-show="isGlobalLoading" class="text-center p-4"><div class="spinner-border text-primary" style="width: 1.5rem; height: 1.5rem;"></div></div>
+                        <template x-for="item in globalSearchResults" :key="item.stock?.code">
+                            <div class="search-item p-3 mb-1 d-flex justify-content-between align-items-center"
+                                 style="cursor: pointer; background: #ffffff; border-radius: 8px;"
+                                 @click="window.location.href = '/stock/analysis?code=' + item.stock?.code"
+                                 onmouseover="this.style.backgroundColor='#f9fafb'" onmouseout="this.style.backgroundColor='#ffffff'">
+
+                                <div>
+                                    <div class="fw-bold text-dark" style="font-size: 15px;" x-text="item.stock?.name"></div>
+                                    <div class="small mt-1" style="color: #8b95a1; font-weight: 500;" x-text="item.stock?.code"></div>
+                                </div>
+
+                                <div style="font-size: 13px; font-weight: 600; color: #4e5968;">
+                                    분석 보기 <i class="bi bi-chevron-right"></i>
+                                </div>
                             </div>
-                        </section>
+                        </template>
+                        <div x-show="!isGlobalLoading && globalSearchResults.length === 0 && globalSearchQuery.length > 0" class="p-4 text-center fw-bold" style="color: #8b95a1;">검색 결과 없음</div>
                     </div>
                 </div>
 
-                <section class="toss-card h-100">
-                    <div class="d-flex justify-content-between align-items-center mb-5">
-                        <h3 class="fw-bold fs-5 m-0">보유 종목</h3>
-                        <div class="d-flex gap-2">
-                            <button class="btn-add shadow-none" @click="isManaging = !isManaging" x-text="isManaging ? '완료' : '편집'"></button>
-                            <button class="btn btn-primary rounded-pill px-4 fw-bold border-0 shadow-sm" style="background: var(--toss-blue);" x-show="!isManaging" @click="openAddModal()">종목 추가</button>
+                <div class="toss-banner d-flex align-items-center gap-3 mb-4">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-white border" style="width: 44px; height: 44px; border-radius: 10px; border-color: #e5e8eb !important;">
+                        <i class="bi bi-bar-chart-fill text-dark fs-5"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark" style="font-size: 16px;">시장 모니터링 홈</div>
+                        <div style="color: #6b7684; font-size: 14px; font-weight: 500; margin-top: 2px;">시장의 흐름과 내 종목 상태를 한눈에 파악하는 대시보드</div>
+                    </div>
+                </div>
+
+                <div class="row g-4 d-flex align-items-stretch">
+
+                    <div class="col-lg-7 d-flex flex-column gap-4">
+
+                        <div class="toss-card mb-0">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div>
+                                    <h3 class="fw-bold m-0 text-dark" style="font-size: 18px;">관심 종목</h3>
+                                    <div class="mt-1" style="color: #8b95a1; font-size: 14px; font-weight: 500;">원하는 매수 타이밍을 기다리고 있는 종목</div>
+                                </div>
+                                <a th:href="@{/portfolio}" class="btn btn-sm hover-up fw-bold" style="background:#f2f4f6; color:#4e5968; font-size:13px; border-radius: 6px; padding: 8px 14px;">
+                                    편집
+                                </a>
+                            </div>
+
+                            <div class="watch-list">
+                                <template x-for="item in watchList" :key="item.stockCode">
+                                    <div class="watch-item">
+                                        <div class="flex-grow-1" style="min-width: 0;">
+                                            <div class="d-flex align-items-center gap-2 mb-1">
+                                                <span class="fw-bold text-dark text-truncate" style="font-size: 16px; max-width: 70%;" x-text="item.stockName"></span>
+                                                <span class="small flex-shrink-0" style="color: #8b95a1; font-weight: 500;" x-text="item.stockCode"></span>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2 mt-2">
+                                                <span class="badge flex-shrink-0"
+                                                      style="font-size:12px; padding: 4px 8px; font-weight: 600; border-radius: 6px;"
+                                                      :style="
+                                                        ['DANGER_ZONE', 'WARNING_ZONE', 'COOLDOWN'].includes(item.marketPhase)
+                                                          ? 'background:rgba(240,68,82,0.08); color:var(--toss-red);'
+                                                        : ['SCALE_OUT'].includes(item.marketPhase)
+                                                          ? 'background:rgba(5,192,114,0.08); color:var(--toss-green);'
+                                                        : ['ENTRY_READY', 'STRONG_HOLD'].includes(item.marketPhase)
+                                                          ? 'background:rgba(49,130,246,0.08); color:var(--toss-blue);'
+                                                        : 'background:#f2f4f6; color:#4e5968;'
+                                                      "
+                                                      x-text="item.marketPhase === 'DANGER_ZONE' ? '하락 지속' :
+                                                              item.marketPhase === 'RECOVERY_WATCH' ? '반등 관망' :
+                                                              item.marketPhase === 'WATCH' ? '방향 탐색' :
+                                                              item.marketPhase === 'SETUP' ? '진입 대기' :
+                                                              item.marketPhase === 'ENTRY_READY' ? '진입 타이밍' :
+                                                              item.marketPhase === 'STRONG_HOLD' ? '강세 지속' :
+                                                              item.marketPhase === 'WARNING_ZONE' ? '과열 경고' :
+                                                              item.marketPhase === 'SCALE_OUT' ? '분할 익절' :
+                                                              item.marketPhase === 'COOLDOWN' ? '매매 휴식' :
+                                                              item.marketPhase ? item.marketPhase : '분석 대기'">
+                                                </span>
+                                                <span x-show="item.targetPrice" class="target-price-badge text-truncate flex-shrink-0" style="white-space: nowrap;"
+                                                      x-text="'목표 ' + formatPrice(item.targetPrice, item.stockCode)"></span>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-sm hover-up text-nowrap flex-shrink-0"
+                                                style="font-size: 13px; font-weight: 600; color: #4e5968; background: #f2f4f6; border-radius: 6px; padding: 8px 14px; border: none;" @click="openAiVerifyModal(item)">
+                                            AI 검증
+                                        </button>
+                                    </div>
+                                </template>
+
+                                <div class="empty-state" x-show="watchList.length === 0">
+                                    <div style="font-size: 14px; font-weight: 500;">현재 대기 중인 관심 종목이 없어요</div>
+                                </div>
+                            </div>
                         </div>
+
+                        <div class="toss-card mb-0 flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div>
+                                    <h3 class="fw-bold m-0 text-dark" style="font-size: 18px;">내 포트폴리오</h3>
+                                    <div class="mt-1" style="color: #8b95a1; font-size: 14px; font-weight: 500;">현재 보유 중인 종목의 수익률과 매도 타이밍 관리</div>
+                                </div>
+                                <div th:if="${dashboard.portfolioResponse != null and dashboard.portfolioResponse.averageReturnRate != null}">
+                                    <span class="me-2" style="font-size: 13px; color: #6b7684; font-weight: 500;">계좌 평균</span>
+                                    <span class="profit-badge"
+                                          th:classappend="${dashboard.portfolioResponse.averageReturnRate >= 0 ? 'badge-profit' : 'badge-loss'}"
+                                          th:text="${(dashboard.portfolioResponse.averageReturnRate >= 0 ? '+' : '') + #numbers.formatDecimal(dashboard.portfolioResponse.averageReturnRate, 1, 2) + '%'}"></span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <th:block th:if="${dashboard.portfolioResponse != null and !#lists.isEmpty(dashboard.portfolioResponse.myStocks)}">
+                                    <th:block th:each="stock : ${dashboard.portfolioResponse.myStocks}">
+                                        <div class="stock-row">
+                                            <div class="stock-icon flex-shrink-0" th:text="${#strings.substring(stock.korName, 0, 1)}"></div>
+                                            <div class="flex-grow-1" style="min-width: 0;">
+                                                <div class="stock-name text-truncate" th:text="${stock.korName}"></div>
+                                                <div class="stock-meta mt-1 text-truncate">
+                                                    <th:block th:if="${stock.averagePrice != null}">
+                                                        <span>전략 평단가:
+                                                            <span class="fw-bold text-dark"
+                                                                  th:text="${stock.stockCode != null and stock.stockCode.matches('^[0-9]+$') ?
+                                                                            #numbers.formatDecimal(stock.averagePrice, 1, 'COMMA', 0, 'POINT') + '원' :
+                                                                            '$' + #numbers.formatDecimal(stock.averagePrice, 1, 'COMMA', 2, 'POINT')}"></span>
+                                                        </span>
+                                                    </th:block>
+                                                    <th:block th:unless="${stock.averagePrice != null}">
+                                                        <span>전략 설정 대기</span>
+                                                    </th:block>
+                                                </div>
+                                            </div>
+                                            <div class="text-end ms-2 flex-shrink-0" style="min-width:70px;">
+                                                <span class="profit-badge"
+                                                      th:classappend="${stock.returnRate >= 0 ? 'badge-profit' : 'badge-loss'}"
+                                                      th:text="${(stock.returnRate >= 0 ? '+' : '') + #numbers.formatDecimal(stock.returnRate, 1, 2) + '%'}"></span>
+                                            </div>
+                                            <button class="btn btn-sm hover-up text-nowrap flex-shrink-0"
+                                                    style="font-size: 13px; font-weight: 600; color: var(--toss-red); background: rgba(240,68,82,0.08); border-radius: 6px; padding: 8px 14px; border: none;"
+                                                    th:data-code="${stock.stockCode}"
+                                                    th:data-name="${stock.korName}"
+                                                    @click="openSellVerifyModal({ stockCode: $el.dataset.code, stockName: $el.dataset.name })">
+                                                매도 검증
+                                            </button>
+                                        </div>
+                                    </th:block>
+                                </th:block>
+
+                                <div th:if="${dashboard.portfolioResponse == null or #lists.isEmpty(dashboard.portfolioResponse.myStocks)}" class="empty-state">
+                                    <div style="font-size: 14px; font-weight: 500;">현재 보유 중인 종목이 없어요</div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
-                    <div th:each="stock : ${portfolio.myStocks}" class="d-flex align-items-center p-4 mb-3 bg-light bg-opacity-50 rounded-4 transition-all stock-row-clickable" th:attr="data-code=${stock.stockCode}, data-name=${stock.korName}, data-qty=${stock.quantity.toPlainString()}, data-price=${stock.purchasePrice.toPlainString()}, data-curr-price=${stock.currentPrice}, data-currency=${stock.currency}, data-profit-rate=${stock.profitRate}, data-profit=${stock.profit}" @click="openStockDetail($el)">
-                        <div class="flex-grow-1">
-                            <div class="fw-bold fs-5" th:text="${stock.korName}"></div>
-                            <div class="text-secondary small fw-bold mt-1">
-                                <span th:text="${#numbers.formatDecimal(stock.quantity, 0, 'COMMA', 0, 'POINT')} + '주'"></span><span class="mx-1 text-opacity-25">|</span>
-                                <span>내 평균 <span th:text="${stock.currency.toString() == 'USD' ? '$' : ''} + ${#numbers.formatDecimal(stock.purchasePrice, 0, 'COMMA', (stock.currency.toString() == 'USD' ? 2 : 0), 'POINT')} + ${stock.currency.toString() == 'KRW' ? '원' : ''}"></span></span>
+                    <div class="col-lg-5 d-flex flex-column gap-4">
+
+                        <div class="toss-card mb-0">
+                            <h3 class="fw-bold mb-3 text-dark" style="font-size: 17px;">거시 경제 지표</h3>
+                            <div class="widget-placeholder">
+                                <i class="bi bi-currency-dollar widget-icon"></i>
+                                <div class="fw-bold text-dark" style="font-size: 15px;">환율 및 주요국 증시</div>
+                                <div class="mt-1" style="font-size: 14px; color: #8b95a1; font-weight: 500;">곧 데이터를 준비해 드릴게요</div>
                             </div>
                         </div>
-                        <div class="text-end" style="min-width: 150px;">
-                            <div class="fw-bold fs-5 text-dark mb-1" th:text="${#numbers.formatDecimal(stock.currentPrice * stock.quantity * stock.currentExchangeRate, 0, 'COMMA', 0, 'POINT')} + '원'"></div>
-                            <div class="small fw-bold d-inline-block" th:classappend="${stock.profitRate >= 0 ? 'badge-profit' : 'badge-loss'}">
-                                <span th:text="${(stock.profitRate >= 0 ? '+' : '') + stock.profitRate + '%'}"></span> (<span th:text="${#numbers.formatDecimal(stock.profit, 0, 'COMMA', 0, 'POINT')} + '원'"></span>)
+
+                        <div class="toss-card mb-0">
+                            <h3 class="fw-bold mb-3 text-dark" style="font-size: 17px;">주도주 및 거래대금</h3>
+                            <div class="widget-placeholder">
+                                <i class="bi bi-bar-chart-line widget-icon"></i>
+                                <div class="fw-bold text-dark" style="font-size: 15px;">당일 시장 주도주 순위</div>
+                                <div class="mt-1" style="font-size: 14px; color: #8b95a1; font-weight: 500;">곧 데이터를 준비해 드릴게요</div>
                             </div>
                         </div>
-                        <div x-show="isManaging" x-cloak class="ms-3" @click.stop>
-                            <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold" @click="openEditModal($el.closest('.stock-row-clickable').dataset.code, $el.closest('.stock-row-clickable').dataset.name, $el.closest('.stock-row-clickable').dataset.qty, $el.closest('.stock-row-clickable').dataset.price, $el.closest('.stock-row-clickable').dataset.currPrice, $el.closest('.stock-row-clickable').dataset.currency)">수정</button>
-                                <form th:action="@{/portfolio/delete}" method="post" class="m-0" onsubmit="return confirm('이 종목을 삭제하시겠습니까?');">
-                                    <input type="hidden" name="code" th:value="${stock.stockCode}">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold">삭제</button>
-                                </form>
+
+                        <div class="toss-card mb-0 flex-grow-1 d-flex flex-column">
+                            <h3 class="fw-bold mb-3 text-dark" style="font-size: 17px;">실시간 핵심 뉴스</h3>
+                            <div class="widget-placeholder flex-grow-1 d-flex flex-column justify-content-center align-items-center" style="min-height: 200px;">
+                                <i class="bi bi-newspaper widget-icon"></i>
+                                <div class="fw-bold text-dark" style="font-size: 15px;">경제 및 특징주 속보</div>
+                                <div class="mt-1" style="font-size: 14px; color: #8b95a1; font-weight: 500;">곧 데이터를 준비해 드릴게요</div>
                             </div>
                         </div>
+
                     </div>
-                    <div th:if="${#lists.isEmpty(portfolio.myStocks)}" class="py-5 text-center" style="color: #b0b8c1;">
-                        <i class="bi bi-file-earmark-x" style="font-size: 3rem; margin-bottom: 1rem; display: block; opacity: 0.5;"></i><div class="fw-bold">보유 중인 종목이 없습니다.</div>
-                    </div>
-                </section>
+                </div>
             </div>
+
         </div>
     </main>
 
-    <!-- 2. 종목 추가 모달 (검색) -->
-    <div x-show="showModal" class="modal-backdrop" x-cloak @click.self="closeModal()">
-        <div class="modal-sheet" @click.stop>
-            <div class="d-flex justify-content-between align-items-center mb-5">
-                <h4 class="fw-bold m-0 fs-4" x-text="isEditMode ? '정보 수정' : (step === 1 ? '어떤 종목인가요?' : '상세 정보 입력')"></h4>
-                <button @click="closeModal()" class="btn-close shadow-none"></button>
-            </div>
+    <!-- AI 검증 모달 -->
+    <div x-show="showVerifyModal" class="modal-backdrop-custom" x-cloak @click.self="closeAiVerifyModal()">
+        <div class="modal-sheet" @click.stop style="display: flex; flex-direction: column;">
 
-            <div x-show="step === 1">
-                <input type="text" x-model="searchQuery" @input.debounce.500ms="searchNew()" class="toss-input" placeholder="종목명 검색" autofocus>
-                <div x-show="isLoading" class="spinner-container" x-cloak><div class="spinner-border text-primary"></div></div>
-                <div class="mt-2" style="max-height: 45vh; overflow-y: auto;">
-
-                    <!-- ✨ 변경: StockDashBoard 구조에 맞게 item.stock 및 Flat Price 변수로 매핑 -->
-                    <template x-for="item in searchResults" :key="item.stock?.code">
-                        <div @click="selectStock(item)" class="search-item p-4 mb-2 d-flex justify-content-between align-items-center rounded-4">
-                            <div>
-                                <div class="fw-bold fs-5 text-dark" x-text="item.stock?.name"></div>
-                                <div class="text-secondary small fw-bold" x-text="item.stock?.code"></div>
-                            </div>
-                            <div class="text-end">
-                                <div class="search-price fw-bold text-dark" x-text="formatCurrency(item.currentPrice, item.stock?.currency)"></div>
-                                <div class="small fw-bold" :class="item.changeRate > 0 ? 'text-up' : (item.changeRate < 0 ? 'text-down' : 'text-secondary')" x-text="(item.changeRate > 0 ? '+' : '') + (item.changeRate || 0) + '%'"></div>
-                            </div>
-                        </div>
-                    </template>
-                    <div x-show="hasMore && !isLoading && searchResults.length > 0" class="text-center mt-3"><button @click="fetchStocks(false)" class="btn btn-link text-decoration-none fw-bold text-secondary">검색 결과 더 보기</button></div>
+            <!-- 모달 헤더 -->
+            <div class="d-flex justify-content-between align-items-center px-4 py-4 border-bottom sticky-top bg-white" style="border-radius: 16px 16px 0 0; border-color: #f2f4f6 !important;">
+                <div>
+                    <div style="font-size: 14px; color: #8b95a1; font-weight: 500; margin-bottom: 4px;"
+                         x-text="(selectedWatchItem?.stockName || '') + ' 현재 시점 분석'"></div>
+                    <h4 class="fw-bold m-0 text-dark" style="font-size: 20px;"
+                        x-text="verifyType === 'BUY' ? '진입 타점 검증' : '매도 타점 검증'"></h4>
                 </div>
+                <button @click="closeAiVerifyModal()" class="btn-close shadow-none"></button>
             </div>
 
-            <div x-show="step === 2">
-                <form :action="isEditMode ? '/portfolio/update' : '/portfolio/add'" method="post">
-                    <input type="hidden" name="code" :value="selectedStock.code">
-                    <input type="hidden" name="name" :value="selectedStock.name">
-                    <div class="p-4 bg-light rounded-4 mb-4 d-flex justify-content-between align-items-center">
-                        <div><div class="fw-bold fs-4 text-primary" x-text="selectedStock.name"></div><div class="text-secondary small fw-bold" x-text="selectedStock.code"></div></div>
-                        <div class="text-end"><div class="text-secondary small fw-bold mb-1">현재가</div><div class="fw-bold fs-5 text-dark" x-text="formatCurrency(selectedStock.currentPrice, selectedStock.currency)"></div></div>
+            <!-- 모달 콘텐츠 -->
+            <div style="overflow-y: auto; padding: 24px;">
+
+                <!-- 1. 로딩 전 대기 상태 -->
+                <div x-show="!aiResult && !aiLoading" class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="bi bi-cpu text-secondary" style="font-size: 48px; opacity: 0.5;"></i>
                     </div>
-                    <div class="text-start mb-3"><label class="small fw-bold mb-2 d-block ms-1">수량</label><input type="number" step="0.0001" name="quantity" x-model="selectedStock.quantity" class="toss-input" required></div>
-                    <div class="text-start mb-3"><label class="small fw-bold mb-2 d-block ms-1">매수 평단가</label><input type="number" step="0.01" name="purchasePrice" x-model="selectedStock.purchasePrice" class="toss-input" required></div>
-                    <div class="text-start mb-3" x-show="selectedStock.nation !== 'KR'"><label class="small fw-bold mb-2 d-block ms-1">매수 환율</label><input type="number" step="0.01" name="purchaseExchangeRate" x-model="selectedStock.purchaseExchangeRate" class="toss-input"></div>
-                    <button type="submit" class="btn btn-primary w-100 rounded-pill py-3 fw-bold mt-4" style="background: var(--toss-blue); border: none;" x-text="isEditMode ? '수정하기' : '저장하기'"></button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- 상세정보 모달 -->
-    <div x-show="showStockDetail" class="modal-backdrop" x-cloak @click.self="closeStockDetail()">
-        <div class="stock-detail-sheet" @click.stop>
-            <div x-show="detailLoading" class="p-5 text-center position-relative">
-                <button @click="closeStockDetail()" class="btn-close shadow-none position-absolute" style="top: 20px; right: 20px;"></button>
-                <div class="spinner-border text-primary mb-3"></div>
-                <div class="text-secondary small fw-bold">정보 불러오는 중...</div>
-            </div>
-
-            <div x-show="!detailLoading">
-                <div class="detail-header">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
-                                <h4 class="fw-bold m-0 fs-3" x-text="detailStock.name"></h4>
-                                <span class="badge rounded-pill px-3 py-2 fw-bold" style="background:#edf2fb;color:#3182f6;font-size:0.75rem;" x-text="detailStock.code"></span>
-                                <span x-show="detailStock.sector" class="badge rounded-pill px-3 py-2 fw-bold" style="background:#f2f4f6;color:#4e5968;font-size:0.75rem;" x-text="detailStock.sector"></span>
-                            </div>
-                        </div>
-                        <button @click="closeStockDetail()" class="btn-close shadow-none mt-1"></button>
-                    </div>
+                    <p class="mb-4 fw-bold" style="color: #333d4b; font-size: 18px; line-height: 1.5; white-space: pre-line;"
+                       x-text="(selectedWatchItem?.stockName || '') + '의\n데이터를 분석할까요?'"></p>
+                    <button class="btn border-0 w-100 fw-bold hover-up"
+                            style="background-color: var(--toss-blue); color: white; border-radius: 10px; padding: 16px; font-size: 16px;"
+                            @click="requestAiAnalysis()">
+                        분석 시작하기
+                    </button>
                 </div>
 
-                <div class="detail-body">
-                    <div x-show="!isFromGlobalSearch" class="mb-5">
-                        <div class="section-label">내 보유 현황</div>
-                        <div class="d-flex gap-3">
-                            <div class="stat-pill"><span class="label">보유 수량</span><span class="value" x-text="formatNumber(detailStock.quantity) + '주'"></span></div>
-                            <div class="stat-pill"><span class="label">평균 매수가</span><span class="value" x-text="formatCurrency(detailStock.purchasePrice, detailStock.currency)"></span></div>
-                            <div class="stat-pill"><span class="label">평가손익</span><span class="value fw-bold" :class="detailStock.profit >= 0 ? 'text-up' : 'text-down'" x-text="(detailStock.profit >= 0 ? '+' : '') + formatNumber(detailStock.profit) + '원'"></span></div>
+                <!-- 2. 로딩 상태 -->
+                <div x-show="aiLoading" class="text-center py-5">
+                    <div class="spinner-border" style="color: #b0b8c1; width: 2.5rem; height: 2.5rem; border-width: 3px;" role="status"></div>
+                    <div class="mt-4 fw-bold" style="color: #4e5968; font-size: 16px;">차트와 매매 규칙을 분석하고 있어요</div>
+                    <div class="mt-2" style="color: #8b95a1; font-size: 14px; font-weight: 500;">잠시만 기다려주세요</div>
+                </div>
+
+                <!-- 3. 분석 완료 리포트 -->
+                <div x-show="aiResult">
+                    <div class="d-flex justify-content-between align-items-center p-4 mb-4" style="background-color: #f9fafb; border-radius: 12px; border: 1px solid #e5e8eb;">
+                        <span class="fw-bold" style="font-size: 16px; color: #191f28;">최종 승인 여부</span>
+                        <span class="badge fw-bold"
+                              style="padding: 8px 12px; font-size: 14px; border-radius: 8px;"
+                              :style="aiResult?.decision === 'PASS' ? 'background: rgba(49,130,246,0.08); color: var(--toss-blue);' : 'background: rgba(240,68,82,0.08); color: var(--toss-red);'"
+                              x-text="aiResult?.decision === 'PASS' ? '승인 (PASS)' : '반려 (FAIL)'"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="fw-bold mb-3" style="font-size: 16px; color: #4e5968;">규칙 검증 결과</div>
+                        <div style="border: 1px solid #e5e8eb; border-radius: 12px;">
+                            <template x-for="(detail, index) in aiResult?.details" :key="detail.ruleId || index">
+                                <div class="d-flex justify-content-between align-items-center p-3"
+                                     :style="index !== (aiResult?.details?.length - 1) ? 'border-bottom: 1px solid #f2f4f6;' : ''">
+                                    <div class="d-flex align-items-center gap-3" style="max-width: 75%;">
+                                        <span class="badge flex-shrink-0 fw-bold" style="background-color: #f2f4f6; color: #4e5968; font-size: 13px; padding: 4px 8px; border-radius: 6px;"
+                                              x-text="getIndicatorName(detail.indicatorType)"></span>
+                                        <span class="fw-bold text-truncate" style="font-size: 14px; color: #333d4b;" x-text="detail.ruleTitle"></span>
+                                    </div>
+                                    <div class="flex-shrink-0 fw-bold" style="font-size: 14px;">
+                                        <span x-show="detail.passed" style="color: var(--toss-blue);">통과</span>
+                                        <span x-show="!detail.passed" style="color: var(--toss-red);">미달</span>
+                                    </div>
+                                </div>
+                            </template>
+                            <div x-show="!aiResult?.details || aiResult?.details.length === 0" class="py-4 text-center" style="color: #8b95a1; font-size: 14px; font-weight: 500;">
+                                적용된 매매 규칙이 없어요
+                            </div>
                         </div>
                     </div>
 
                     <div class="mb-5">
-                        <div class="section-label">주가 흐름</div>
-                        <div style="width: 100%; height: 300px; position: relative; border-radius: 16px; border: 1px solid #f2f4f6;">
-                            <div x-show="chartLoading" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: white; z-index: 5; border-radius: 16px;"><div class="spinner-border text-primary spinner-border-sm"></div></div>
-                            <div id="tv-chart-container" style="width: 100%; height: 100%;"></div>
+                        <div class="fw-bold mb-3" style="font-size: 16px; color: #191f28;">AI 종합 분석 리포트</div>
+                        <div class="p-4"
+                             style="background-color: #f9fafb; border-radius: 12px; font-size: 15px; font-weight: 500; line-height: 1.6; color: #4e5968; white-space: pre-line; word-break: keep-all; border: 1px solid #e5e8eb;"
+                             x-html="formatAiReport(aiResult?.verdictComment || aiResult?.verdict)">
                         </div>
                     </div>
 
-                    <div class="row g-4 mb-4">
-                        <div class="col-md-6">
-                            <div class="section-label">시장 지표</div>
-                            <div class="info-grid">
-                                <div class="info-row"><span>시가총액</span><span class="fw-bold" x-text="formatBigNum(detailPrice.marketCap, detailStock.currency)"></span></div>
-                                <div class="info-row"><span>52주 최고</span><span class="text-up fw-bold" x-text="formatCurrency(detailPrice.w52High, detailStock.currency)"></span></div>
-                                <div class="info-row"><span>52주 최저</span><span class="text-down fw-bold" x-text="formatCurrency(detailPrice.w52Low, detailStock.currency)"></span></div>
-                                <div class="info-row"><span>거래량</span><span class="fw-bold" x-text="formatNumber(detailPrice.volume) + '주'"></span></div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="section-label">밸류에이션</div>
-                            <div class="info-grid">
-                                <div class="info-row"><span>PER</span><span class="fw-bold" x-text="(detailPrice.per || '-') + '배'"></span></div>
-                                <div class="info-row"><span>PBR</span><span class="fw-bold" x-text="(detailPrice.pbr || '-') + '배'"></span></div>
-                                <div class="info-row"><span>EPS</span><span class="fw-bold" x-text="formatEps(detailPrice.eps, detailStock.currency)"></span></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="d-grid mt-2">
-                        <a :href="'/stock/analysis?code=' + detailStock.code" class="btn btn-primary rounded-pill py-3 fw-bold border-0 shadow-sm" style="background: var(--toss-blue); font-size: 1rem;"><i class="bi bi-bar-chart-line me-2"></i>세부 분석 보기</a>
-                    </div>
+                    <button class="btn border-0 w-100 fw-bold hover-up"
+                            style="background-color: #f2f4f6; color: #4e5968; border-radius: 10px; padding: 16px; font-size: 16px;"
+                            @click="closeAiVerifyModal()">닫기</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
 <script th:inline="javascript">
-    const _targetAssets = parseFloat([[${portfolio?.totalAssets?.toPlainString() ?: '0'}]]);
-
     document.addEventListener('alpine:init', () => {
-        Alpine.data('dashboardApp', () => ({
-            sidebarOpen: true, isManaging: false, showModal: false, isEditMode: false, step: 1,
-            showStockDetail: false, detailLoading: false, detailStock: {}, detailPrice: {}, detailInfo: {},
-            chartLoading: false, tvChart: null, areaSeries: null,
-            globalSearchQuery: '', globalSearchResults: [], isGlobalSearchOpen: false, isGlobalLoading: false, globalSearchPage: 0, globalSearchHasMore: true, isFromGlobalSearch: false,
-            searchQuery: '', searchResults: [], isLoading: false, page: 0, hasMore: true,
-            selectedStock: { name: '', code: '', nation: '', quantity: '', purchasePrice: '', purchaseExchangeRate: '1.0', currentPrice: 0, currency: '' },
-            totalAssets: 0, targetAssets: _targetAssets,
+        const initialWatchList = /*[[${dashboard?.watchListResponse}]]*/ [];
 
-            init() {
-                let int = setInterval(() => {
-                    if (this.totalAssets < this.targetAssets) this.totalAssets += Math.ceil(this.targetAssets / 50);
-                    else { this.totalAssets = this.targetAssets; clearInterval(int); }
-                }, 20);
+        Alpine.data('unifiedDashboardApp', () => ({
+            sidebarOpen: true,
+
+            globalSearchQuery: '',
+            globalSearchResults: [],
+            isGlobalSearchOpen: false,
+            isGlobalLoading: false,
+            globalSearchPage: 0,
+            isGlobalLastPage: false,
+
+            watchList: initialWatchList,
+
+            async init() { },
+
+            showVerifyModal: false,
+            verifyType: 'BUY',
+            selectedWatchItem: null,
+            aiLoading: false,
+            aiResult: null,
+
+            openAiVerifyModal(item) {
+                this.verifyType = 'BUY';
+                this.selectedWatchItem = item;
+                this.aiResult = null;
+                this.showVerifyModal = true;
+            },
+
+            openSellVerifyModal(stock) {
+                this.verifyType = 'SELL';
+                this.selectedWatchItem = stock;
+                this.aiResult = null;
+                this.showVerifyModal = true;
+            },
+
+            closeAiVerifyModal() {
+                this.showVerifyModal = false;
+            },
+
+            getIndicatorName(type) {
+                const names = {
+                    'MACD': 'MACD',
+                    'RSI': 'RSI',
+                    'BOLLINGER': '볼린저밴드',
+                    'MA': '이동평균선',
+                    'VOLUME': '거래량',
+                    'PRICE': '가격/캔들'
+                };
+                return names[type] || type || '지표';
+            },
+
+            formatAiReport(text) {
+                if (!text) return '';
+                return text
+                    .replace(/\[(.*?)\]/g, '<strong style="color: #191f28; font-size: 16px;">[$1]</strong>')
+                    .replace(/-{5,}/g, '<hr style="border: none; border-top: 1px solid #e5e8eb; margin: 16px 0;">');
+            },
+
+            async requestAiAnalysis() {
+                this.aiLoading = true;
+                this.aiResult = null;
+                const endpoint = this.verifyType === 'BUY' ? '/api/portfolio/verify/buy' : '/api/portfolio/verify/sell';
+
+                try {
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            targetId: this.selectedWatchItem?.stockCode
+                        })
+                    });
+
+                    if (response.ok) {
+                        this.aiResult = await response.json();
+                    } else {
+                        alert('분석에 실패했습니다.');
+                    }
+                } catch (error) {
+                    console.error('검증 통신 오류:', error);
+                    alert('서버와 통신 중 오류가 발생했습니다.');
+                } finally {
+                    this.aiLoading = false;
+                }
             },
 
             globalSearchNew() {
-                this.globalSearchPage = 0; this.globalSearchHasMore = true; this.globalSearchResults = [];
+                this.globalSearchPage = 0;
+                this.globalSearchResults = [];
+                this.isGlobalLastPage = false;
+
                 if (this.globalSearchQuery.length < 1) return;
-                this.fetchGlobalStocks(true);
+                this.fetchGlobalStocks();
             },
 
-            async fetchGlobalStocks(isNewSearch = false) {
-                this.isGlobalLoading = true; this.isGlobalSearchOpen = true;
+            async fetchGlobalStocks() {
+                if (this.isGlobalLastPage) return;
+
+                this.isGlobalLoading = true;
+                this.isGlobalSearchOpen = true;
+
                 try {
                     const res = await fetch(`/api/stock/search?name=${encodeURIComponent(this.globalSearchQuery)}&page=${this.globalSearchPage}`);
                     if (res.ok) {
-                        const data = await res.json();
-                        if (isNewSearch) this.globalSearchResults = data;
-                        else this.globalSearchResults = [...this.globalSearchResults, ...data];
-                        if (data.length < 5) this.globalSearchHasMore = false;
-                        this.globalSearchPage++;
-                    } else {
-                        console.error("서버에서 오류를 반환했습니다.");
+                        const newData = await res.json();
+
+                        if (newData.length < 5) {
+                            this.isGlobalLastPage = true;
+                        }
+
+                        if (this.globalSearchPage === 0) {
+                            this.globalSearchResults = newData;
+                        } else {
+                            this.globalSearchResults.push(...newData);
+                        }
                     }
-                } catch (error) { console.error("Global search failed:", error); }
-                finally { this.isGlobalLoading = false; }
-            },
-
-            openStockDetailFromSearch(item) {
-                this.isGlobalSearchOpen = false; this.isFromGlobalSearch = true;
-                // ✨ 안전하게 평탄화된 변수로 매핑
-                this.detailStock = {
-                    code: item.stock?.code,
-                    name: item.stock?.name,
-                    currentPrice: item.currentPrice || 0,
-                    currency: item.stock?.currency,
-                    sector: item.stock?.sector || null,
-                    profitRate: 0, profit: 0, quantity: 0, purchasePrice: 0
-                };
-                this.detailLoading = true; this.showStockDetail = true;
-                this.fetchStockDetail(this.detailStock.code);
-            },
-
-            openAddModal() {
-                this.isEditMode = false; this.step = 1; this.searchQuery = ''; this.searchResults = []; this.page = 0; this.hasMore = true;
-                this.selectedStock = { name: '', code: '', nation: '', quantity: '', purchasePrice: '', purchaseExchangeRate: '1.0', currentPrice: 0, currency: '' };
-                this.showModal = true;
-            },
-
-            openEditModal(code, name, qty, price, currPrice, currency) {
-                this.isEditMode = true; this.step = 2;
-                const nation = code.length === 6 ? 'KR' : 'US';
-                this.selectedStock = { name: name, code: code, quantity: qty, purchasePrice: price, nation: nation, currency: currency, currentPrice: currPrice, purchaseExchangeRate: '1.0' };
-                this.showModal = true;
-            },
-
-            openStockDetail(el) {
-                if (this.isManaging) return;
-                this.isFromGlobalSearch = false;
-                this.detailStock = { code: el.dataset.code, name: el.dataset.name, currentPrice: parseFloat(el.dataset.currPrice), currency: el.dataset.currency, profitRate: parseFloat(el.dataset.profitRate), profit: parseFloat(el.dataset.profit), quantity: parseFloat(el.dataset.qty), purchasePrice: parseFloat(el.dataset.price) };
-                this.detailLoading = true; this.showStockDetail = true;
-                this.fetchStockDetail(this.detailStock.code);
-            },
-
-            async fetchStockDetail(code) {
-                try {
-                    // detail 엔드포인트는 여전히 StockSnapshot (info 포함)을 반환하므로 info 유지
-                    const res = await fetch(`/api/stock/${encodeURIComponent(code)}/detail`);
-                    const data = await res.json();
-                    this.detailInfo = data.info || {};
-                    this.detailPrice = data.price || {};
-                    this.detailStock.sector = data.info?.sector || null;
-                } catch (e) {
-                    this.detailInfo = {}; this.detailPrice = {};
+                } catch (error) {
+                    console.error(error);
                 } finally {
-                    this.detailLoading = false; await this.$nextTick();
-                    await new Promise(resolve => setTimeout(resolve, 350));
-                    this.loadChart(code);
+                    this.isGlobalLoading = false;
                 }
             },
 
-            async loadChart(code) {
-                this.chartLoading = true;
-                const container = document.getElementById('tv-chart-container');
-                if (!container) return;
-                if (this.tvChart) { this.tvChart.remove(); this.tvChart = null; }
-                this.tvChart = LightweightCharts.createChart(container, { autoSize: true, height: 300, layout: { background: { color: '#ffffff' }, textColor: '#8b95a1' }, grid: { vertLines: { visible: false }, horzLines: { color: '#f2f4f6' } }, rightPriceScale: { borderVisible: false }, timeScale: { borderVisible: false } });
-                this.areaSeries = this.tvChart.addAreaSeries({ lineColor: '#3182f6', topColor: 'rgba(49, 130, 246, 0.4)', bottomColor: 'rgba(49, 130, 246, 0.0)', lineWidth: 2, priceFormat: { type: 'price', precision: 0, minMove: 1 } });
-                try {
-                    const res = await fetch(`/api/stock/${encodeURIComponent(code)}/chart?period=DAY`);
-                    const response = await res.json();
-                    if (response && response.chartDtoList && response.chartDtoList.length > 0) {
-                    const formattedData = response.chartDtoList.map(d => ({
-                        time: d.time,
-                        value: Number(d.close)
-                    })).sort((a, b) => a.time.localeCompare(b.time));
-                        this.areaSeries.setData(formattedData);
-                        this.tvChart.timeScale().fitContent();
+            onSearchScroll(e) {
+                const el = e.target;
+                if (el.scrollHeight - el.scrollTop <= el.clientHeight + 10) {
+                    if (!this.isGlobalLoading && !this.isGlobalLastPage) {
+                        this.globalSearchPage++;
+                        this.fetchGlobalStocks();
                     }
-                } catch (e) {} finally { this.chartLoading = false; }
+                }
             },
 
-            closeStockDetail() { this.showStockDetail = false; this.isFromGlobalSearch = false; this.detailLoading = false; if (this.tvChart) { this.tvChart.remove(); this.tvChart = null; } },
-            closeModal() { this.showModal = false; setTimeout(() => { this.step = 1; this.isEditMode = false; this.searchQuery = ''; this.searchResults = []; }, 200); },
+            formatPrice(val, code) {
+                if (!val || val === 0) return '0';
 
-            searchNew() { this.page = 0; this.hasMore = true; this.searchResults = []; this.fetchStocks(true); },
+                const isKr = /^\d+$/.test(code);
 
-            async fetchStocks(isNewSearch = false) {
-                if (this.searchQuery.length < 1) return;
-                this.isLoading = true;
-                try {
-                    const res = await fetch(`/api/stock/search?name=${encodeURIComponent(this.searchQuery)}&page=${this.page}`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (isNewSearch) this.searchResults = data; else this.searchResults = [...this.searchResults, ...data];
-                        if (data.length < 5) this.hasMore = false;
-                        this.page++;
-                    }
-                } catch (error) {} finally { this.isLoading = false; }
-            },
-
-            selectStock(item) {
-                // ✨ 안전하게 평탄화된 변수로 매핑
-                this.selectedStock.name = item.stock?.name;
-                this.selectedStock.code = item.stock?.code;
-                this.selectedStock.nation = item.stock?.nation;
-                this.selectedStock.currentPrice = item.currentPrice || 0;
-                this.selectedStock.currency = item.stock?.currency;
-                this.step = 2;
-            },
-
-            formatBigNum(val, currency) {
-                if (!val || isNaN(val)) return '-';
-                const n = Number(val);
-                if (currency === 'KRW') {
-                    const won = n * 1_000_000;
-                    if (won >= 1_000_000_000_000) return (won / 1_000_000_000_000).toFixed(1) + '조원';
-                    if (won >= 100_000_000) return Math.round(won / 100_000_000).toLocaleString() + '억원';
-                    return won.toLocaleString() + '원';
+                if (!isKr) {
+                    return '$' + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
                 } else {
-                    if (n >= 1_000_000_000_000) return '$' + (n / 1_000_000_000_000).toFixed(2) + 'T';
-                    if (n >= 1_000_000_000) return '$' + (n / 1_000_000_000).toFixed(1) + 'B';
-                    return '$' + n.toLocaleString();
+                    return new Intl.NumberFormat('ko-KR').format(val) + '원';
                 }
-            },
-            formatCurrency(val, currency) {
-                if (val === null || val === undefined || isNaN(val)) return '-';
-                if (currency === 'USD') return '$' + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
-                return new Intl.NumberFormat('ko-KR').format(Math.floor(val)) + '원';
-            },
-            formatNumber(val) { return (val === null || val === undefined || isNaN(val)) ? '0' : new Intl.NumberFormat('ko-KR').format(Math.floor(val)); },
-            formatEps(val, currency) {
-                if (val === null || val === undefined || isNaN(val)) return '-';
-                if (currency === 'USD') return '$' + Number(val).toFixed(2);
-                return new Intl.NumberFormat('ko-KR').format(Math.floor(val)) + '원';
             }
         }));
     });

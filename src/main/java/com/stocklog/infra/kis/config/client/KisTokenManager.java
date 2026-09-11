@@ -23,7 +23,7 @@ public class KisTokenManager {
     public String getAccessToken() {
         if (accessToken == null) {
             accessToken = issueAccessToken();
-            log.info("KIS Access Token 발급 완료: {}", accessToken);
+            log.debug("KIS Access Token 발급 완료: {}", accessToken);
         }
         return accessToken;
     }

@@ -19,7 +19,6 @@ public class WebClientConfig {
 
     @Bean
     public WebClient webClient() {
-        // 1. 커넥션 풀 설정 (PrematureCloseException 방지의 핵심)
         ConnectionProvider provider = ConnectionProvider.builder("kis-pool")
                 .maxConnections(500)
                 .maxIdleTime(Duration.ofSeconds(20)) // 서버가 끊기 전에 유휴 연결 먼저 정리
@@ -28,7 +27,6 @@ public class WebClientConfig {
                 .evictInBackground(Duration.ofSeconds(120))
                 .build();
 
-        // 2. HttpClient 설정
         HttpClient httpClient = HttpClient.create(provider)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
                 .responseTimeout(Duration.ofSeconds(10))
@@ -36,7 +34,6 @@ public class WebClientConfig {
                         conn.addHandlerLast(new ReadTimeoutHandler(10))
                                 .addHandlerLast(new WriteTimeoutHandler(10)));
 
-        // 3. WebClient 빈 생성
         return WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .baseUrl("https://openapi.koreainvestment.com:9443")

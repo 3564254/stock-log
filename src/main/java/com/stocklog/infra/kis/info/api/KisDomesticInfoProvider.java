@@ -1,11 +1,11 @@
 package com.stocklog.infra.kis.info.api;
 
-import com.stocklog.domain.stock.common.StockRequest;
-import com.stocklog.domain.stock.info.dto.response.StockInfoResponse;
-import com.stocklog.domain.stock.info.StockInfoProvider;
-import com.stocklog.domain.stock.common.type.AssetType;
-import com.stocklog.domain.stock.common.type.MarketType;
-import com.stocklog.domain.stock.common.type.TradingStatus;
+import com.stocklog.modules.stock.application.request.StockRequest;
+import com.stocklog.modules.stock.info.dto.StockInfoResponse;
+import com.stocklog.modules.stock.info.StockInfoProvider;
+import com.stocklog.modules.stock.domain.type.AssetType;
+import com.stocklog.modules.stock.domain.type.MarketType;
+import com.stocklog.modules.stock.domain.type.TradingStatus;
 import com.stocklog.infra.kis.common.KisResponseV1;
 import com.stocklog.infra.kis.config.KisProperties;
 import com.stocklog.infra.kis.config.client.KisTokenManager;
@@ -29,14 +29,12 @@ public class KisDomesticInfoProvider implements StockInfoProvider {
     private final KisTokenManager tokenManager;
 
     public StockInfoResponse fetchInfo(StockRequest request) {
-        log.info("KIS 국내 fetchInfo: [{}]", request.code());
 
         try {
             KisDomesticInfoOutput output = callApi(request.code());
             if (output == null) return StockInfoResponse.createFallback(); // 상세 전용 폴백 호출
 
 
-            log.info("국내 getIsEtf: {}", output.getIsEtf());
             return StockInfoResponse.builder()
                     .code(output.getCode())
                     .name(output.getName())

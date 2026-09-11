@@ -1,9 +1,9 @@
 package com.stocklog.infra.kis.valuation.api;
 
-import com.stocklog.domain.stock.common.StockRequest;
-import com.stocklog.domain.stock.common.type.MarketType;
-import com.stocklog.domain.stock.valutation.StockValuationProvider;
-import com.stocklog.domain.stock.valutation.dto.response.ValuationResponse;
+import com.stocklog.modules.stock.application.request.StockRequest;
+import com.stocklog.modules.stock.domain.type.MarketType;
+import com.stocklog.modules.stock.valutation.StockValuationProvider;
+import com.stocklog.modules.stock.valutation.dto.ValuationResponse;
 import com.stocklog.infra.kis.config.KisProperties;
 import com.stocklog.infra.kis.config.client.KisTokenManager;
 import com.stocklog.infra.kis.valuation.dto.KisDomesticTargetPriceOutput;
@@ -31,7 +31,6 @@ public class KisDomesticValuationProvider implements StockValuationProvider {
 
     @Override
     public ValuationResponse fetchValuation(StockRequest request) {
-        log.info("[KIS-Valuation] 국내 주식 가치 평가 데이터 수집 시작 - 코드: {}", request.code());
 
         KisDomesticValuationOutput output = callApi(request.code());
         KisDomesticTargetPriceOutput targetPrice = getTargetPrice(request.code());
@@ -42,13 +41,6 @@ public class KisDomesticValuationProvider implements StockValuationProvider {
         }
 
         try {
-            // 원본 데이터 로그 (디버깅용)
-            log.info("[KIS-Valuation] Raw Data - Code: {}, F-EPS: {}, Growth: {}, F-PER: {}",
-                    request.code(),
-                    output.getOutput3().get(1).getData4(),
-                    output.getOutput3().get(2).getData4(),
-                    output.getOutput3().get(3).getData4());
-
             String fepsStr = output.getOutput3().get(1).getData4();
             String epsGrowthStr = output.getOutput3().get(2).getData4();
             String fperStr = output.getOutput3().get(3).getData4();
@@ -67,10 +59,8 @@ public class KisDomesticValuationProvider implements StockValuationProvider {
 
             if (targetPrice != null && targetPrice.getOutputs() != null && !targetPrice.getOutputs().isEmpty()) {
                 target = getAvgPrice(targetPrice);
-                log.info("[KIS-Valuation] 목표주가 계산 완료 (기관수: {}, 평균가: {})", targetPrice.getOutputs().size(), target);
             }
 
-            log.info("[KIS-Valuation] 분석 성공 - 코드: {}, PEG: {}, Target: {}", request.code(), peg, target);
 
             return ValuationResponse.builder()
                     .feps(feps)
@@ -92,7 +82,6 @@ public class KisDomesticValuationProvider implements StockValuationProvider {
     }
 
     private KisDomesticValuationOutput callApi(String code) {
-        log.info("[KIS-Valuation] 가치평가 API 호출 - SHT_CD: {}", code);
         try {
             return webClient.get()
                     .uri(uriBuilder -> uriBuilder.path("/uapi/domestic-stock/v1/quotations/estimate-perform")
@@ -115,7 +104,6 @@ public class KisDomesticValuationProvider implements StockValuationProvider {
     }
 
     private KisDomesticTargetPriceOutput getTargetPrice(String code) {
-        log.info("[KIS-Valuation] 목표주가 API 호출 - 코드: {}", code);
         LocalDate today = LocalDate.now();
         LocalDate past = today.minusMonths(3);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("'00'yyyyMMdd");
