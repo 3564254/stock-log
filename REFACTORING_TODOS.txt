@@ -1,0 +1,114 @@
+StockLog 학습용 리팩토링 TODO 목록
+====================================
+
+이 문서는 코드에 추가한 TODO(학습), TODO(아키텍처), TODO(JPA), TODO(패턴)를
+공부 순서대로 모아 둔 것이다. 구현 전에는 각 항목의 테스트와 현재 호출 경로를 먼저 확인한다.
+
+
+1. 아키텍처 구조
+----------------
+
+[PurchaseStockReader]
+- purchase 컨텍스트의 port가 stock 컨텍스트의 Entity와 dto.internal 타입을 직접 반환한다.
+- purchase에 필요한 최소 조회 모델을 별도로 정의해, stock 내부 변경의 전파를 줄인다.
+
+[StockDomainAdapter]
+- 다른 컨텍스트용 Adapter가 StockFacadeService에 의존한다.
+- port의 기능별 query/use-case를 직접 의존할지 검토해 Facade 비대화를 막는다.
+
+[PurchaseApplicationService]
+- 화면/API가 여러 도메인 데이터를 조합하는 진입점을 이 계층으로 통일할지 결정한다.
+- 화면별 조합 규칙을 Controller에 중복하지 않도록 한다.
+
+[MainController]
+- Controller가 포트폴리오 조회, 분석, 섹터 집계, 관심종목 조합을 모두 알고 있다.
+- 화면 단위 Application Service로 조합을 이동하고 Controller는 HTTP와 Model 변환에 집중한다.
+
+[FacadeService]
+- 비어 있는 공통 Facade는 시간이 지나면 God Service가 되기 쉽다.
+- 실제 use-case별 Application Service로 나누거나, 사용하지 않으면 제거 후보로 관리한다.
+
+[IndexService]
+- getMarketDashboard 내부의 같은 클래스 호출은 getIndexDto의 @Transactional 프록시를 거치지 않는다.
+- 캐시 미스 때 readOnly 트랜잭션 안에서 저장이 발생할 수 있으므로 조회와 갱신 흐름을 분리한다.
+- 요청 중 sleep, 외부 API 호출, DB 저장을 하나의 트랜잭션으로 묶지 않도록 트랜잭션 범위를 DB 작업으로 좁힌다.
+
+[StockFacadeService]
+- 여러 서비스의 순차 조회로 서로 다른 시점의 스냅샷이 만들어질 수 있다.
+- 필요한 일관성 수준과 Snapshot 조회의 트랜잭션 경계를 설계한다.
+- getStockSnapshot이 PEG를 계산하고 저장한다. 조회와 갱신 use-case를 분리한다.
+
+
+2. JPA / 데이터 접근
+--------------------
+
+[PortfolioService]
+- HoldingRepository의 EntityGraph는 holding -> stock N+1을 줄이지만, 보유 종목마다 stockReader를 호출한다.
+- 현재가를 벌크 조회해 외부 호출/쿼리 횟수를 측정하고 개선한다.
+- StockInfoDto.toEntity로 만든 새 엔티티를 Holding 연관관계에 넣지 않는다.
+- 기존 StockInfo의 managed reference(getReferenceById 등)를 사용하고 transient/detached entity 상태를 이해한다.
+
+[Holding]
+- 평균 매입가는 동시 수정될 수 있다.
+- @Version 기반 낙관적 락과 충돌 시 재시도 또는 사용자 안내 정책을 설계한다.
+
+[FriendshipRepository]
+- 친구 목록 DTO 변환 과정에서 fromMember/toMember의 LAZY 로딩이 N+1을 만들 수 있다.
+- 실제 화면의 접근 필드를 기준으로 @EntityGraph, fetch join, DTO projection을 비교하고 쿼리 수를 검증한다.
+
+[IndexService]
+- saveAll이 JDBC batch INSERT를 자동으로 보장하지 않는다.
+- 대량 적재 시 hibernate.jdbc.batch_size, ID 생성 전략, flush/clear 주기를 확인한다.
+
+[application.yaml]
+- ddl-auto:update는 운영 스키마 변경 이력을 안전하게 관리하지 못한다.
+- 운영에서는 validate와 Flyway 또는 Liquibase 기반 migration을 검토한다.
+- OSIV 정책을 명시적으로 선택한다. false를 선택한다면 Service 트랜잭션 안에서 DTO를 완성한다.
+
+
+3. 디자인 패턴 구조
+-------------------
+
+[VixAnalysisStrategy]
+- MacroScoringStrategy 구현체지만 Spring Bean으로 등록되지 않아 Strategy 목록에 포함되지 않는다.
+- 새 전략이 실제 조립되는지 확인하는 컨텍스트 테스트를 만들고, 등록 방식을 통일한다.
+
+[MarketRegimeAnalyzer]
+- Strategy List의 주입 순서가 signal과 로그의 순서를 결정한다.
+- @Order 또는 StrategyRegistry로 순서와 활성화 정책을 명시하고 테스트한다.
+
+[EntrySignalAnalyzer]
+- SignalRule Strategy의 실행 순서와 매수/매도 신호 동시 발생 시 충돌 해결 규칙이 암묵적이다.
+- @Order, 정책 객체, 설정 중 한 방식을 선택해 우선순위를 명시한다.
+
+[SignalResultBuilder]
+- 이름은 Builder이지만 최종 객체를 build하는 Builder보다 상태 누적 accumulator에 가깝다.
+- 최종 결과 생성 책임을 이 객체에 둘지, 역할에 맞게 이름을 바꿀지 결정한다.
+
+[StockFacadeAnalyzer]
+- 분석기를 조합해 StockAnalysisResult를 만드는 책임은 Facade에 적합하다.
+- 단순 위임 메서드가 계속 늘지 않도록 Facade에는 조합 use-case만 둘지 기준을 정한다.
+
+[GeminiAiProvider]
+- AiProvider를 구현해 외부 HTTP를 숨기는 Adapter 구조는 적절하다.
+- 모든 예외를 문자열로 바꾸지 말고 Result 또는 도메인 예외로 변환한다.
+- timeout, retry, fallback 정책을 Adapter 경계에 모은다.
+
+
+4. 코드 설계 / 분석 규칙
+----------------------
+
+[EntrySignalAnalyzer]
+- analyzeMini의 null 반환을 전용 응답 DTO, Optional, 예외 중 API 계약에 맞는 방식으로 통일한다.
+- ATR 배수, 변동성 7%, 최소 손절폭 1.5% 같은 전략 수치를 이름 있는 상수 또는 설정으로 분리한다.
+- 경계값을 검증하는 단위 테스트를 작성한다.
+- 분석 도메인에서 HTML을 조립하지 않고 구조화된 메시지/코드를 반환해 표현 계층에서 렌더링한다.
+
+
+권장 학습 순서
+--------------
+1) PortfolioService의 managed entity와 N+1 문제를 테스트로 재현한다.
+2) IndexService의 조회/갱신 트랜잭션 경계를 분리하는 설계를 그려 본다.
+3) Strategy 등록과 실행 순서를 테스트로 고정한다.
+4) Controller -> Application Service -> Domain/Port 흐름으로 화면 조합을 한 곳에 모은다.
+5) Flyway/Liquibase와 @Version을 작은 기능부터 적용한다.
