@@ -1,5 +1,5 @@
 package com.stocklog.modules.market.index.entity;
-import com.stocklog.modules.market.index.type.IndexType;
+import com.stocklog.modules.market.domain.type.IndexType;
 import jakarta.persistence.*;
 import lombok.*;
 

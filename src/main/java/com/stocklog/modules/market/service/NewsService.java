@@ -40,6 +40,12 @@ public class NewsService {
         return NewsResponse.createMarketNews(newsDtoPage);
     }
 
+    public List<NewsDto> getMarketNewsDESCTopN(int n) {
+        return newsRepository.findNewsDESCTopN(n).stream()
+                .map(NewsDto::from).toList();
+    }
+
+
 
 
     public NewsResponse fetchStockNews(StockDto stockDto, Pageable pageable) {

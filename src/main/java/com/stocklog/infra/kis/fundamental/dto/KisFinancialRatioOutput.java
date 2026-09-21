@@ -30,7 +30,7 @@ public class KisFinancialRatioOutput {
     private String netIncomeGrowthRate; // 순이익 증가율
 
     @JsonProperty("roe_val")
-    private String roe;              // ROE 값 (Return On Equity)
+    private String roe;              // ROE 값 (Returns On Equity)
 
     @JsonProperty("eps")
     private String eps;              // EPS (주당순이익)

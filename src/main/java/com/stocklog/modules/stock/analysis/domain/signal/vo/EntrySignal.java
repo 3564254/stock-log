@@ -9,7 +9,7 @@ public record EntrySignal(
         List<String> sellSignals,
         int buyStrength,
         int sellStrength,
-        MarketPhase phase,
+        StockPhase phase,
         MarketContext marketContext,
         double primaryEntry,
         double secondaryEntry,

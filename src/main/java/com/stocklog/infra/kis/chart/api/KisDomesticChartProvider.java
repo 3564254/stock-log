@@ -90,7 +90,7 @@ public class KisDomesticChartProvider implements StockChartProvider {
             if (data.getValue() == null || data.getValue().isBlank()) continue;
 
             result.add(StockChartDto.builder()
-                    .time(parsedDate(data.getTime()))
+                    .date(parsedDate(data.getTime()))
                     .close(new BigDecimal(data.getValue()))
                     .open(safeParse(data.getOpen()))
                     .high(safeParse(data.getHigh()))

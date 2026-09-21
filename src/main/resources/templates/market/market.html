@@ -19,6 +19,7 @@
     :root {
       --toss-blue: #3182f6; --toss-blue-light: rgba(49, 130, 246, 0.08);
       --toss-red: #f04452; --toss-red-light: rgba(240, 68, 82, 0.08);
+      --toss-green: #05c072; --toss-warning: #f5a623;
       --bg-color: #f2f4f6; --card-bg: #ffffff;
       --text-main: #191f28; --text-sub: #8b95a1;
       --border-color: #e5e8eb; --sidebar-width: 250px;
@@ -29,35 +30,51 @@
 
     .layout-wrapper { display: flex; min-height: 100vh; }
     .main-content { flex-grow: 1; margin-left: var(--sidebar-width); padding: 0 40px 100px; transition: 0.3s; }
-
-    /* 화면 컨테이너 폭을 넓혀 여백 최적화 */
     .content-container { width: 100%; max-width: 1680px; margin: 0 auto; padding-top: 40px; }
 
     /* ── 공통 카드 ── */
     .toss-card { background: var(--card-bg); border-radius: 16px; padding: 24px; box-shadow: none; border: 1px solid var(--border-color); position: relative; margin-bottom: 24px; }
-    .section-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text-main); }
 
-    /* ── 종합 진단 기상도 ── */
-    .weather-card { padding: 24px; transition: 0.2s; display: flex; flex-direction: column; justify-content: center;}
-    .weather-bull { background: #fff4f4; border-color: #ffe5e5; }
-    .weather-bear { background: #f0f6ff; border-color: #e5f0ff; }
-    .weather-neutral { background: #f9fafb; border-color: #e5e8eb; }
+    /* ── 타이틀 위계: 히어로(진단)는 크고 진하게, 하위 패널은 조용하게 ── */
+    .section-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: var(--text-sub); letter-spacing: -0.1px; }
+    .section-title i { color: var(--text-sub); font-size: 14px; margin-right: 6px; font-weight: 400; }
+    .section-title.hero-title { font-size: 19px; color: var(--text-main); letter-spacing: -0.3px; }
+    .section-title.hero-title i { color: var(--toss-blue); font-size: 18px; }
 
-    .weather-bull .text-theme { color: var(--toss-red); }
-    .weather-bear .text-theme { color: var(--toss-blue); }
-    .weather-neutral .text-theme { color: var(--text-main); }
+    /* ── 투자 나침반 ── */
+    .compass-card { padding: 24px; transition: 0.2s; display: flex; flex-direction: column; justify-content: center; }
 
-    .risk-gauge { background: rgba(0, 0, 0, 0.05); height: 8px; border-radius: 4px; margin-top: 16px; overflow: hidden; position: relative;}
-    .weather-bull .risk-gauge-fill { background: var(--toss-red); height: 100%; border-radius: 4px; transition: width 1.2s ease-out; }
-    .weather-bear .risk-gauge-fill { background: var(--toss-blue); height: 100%; border-radius: 4px; transition: width 1.2s ease-out; }
-    .weather-neutral .risk-gauge-fill { background: #8b95a1; height: 100%; border-radius: 4px; transition: width 1.2s ease-out; }
+    /* ── 진단 카드 테두리 하이라이트 ── */
+    .diagnosis-card { border-left-width: 3px; transition: border-color 0.2s; }
+    .diagnosis-card.compass-bull { background: var(--card-bg); border-left-color: var(--toss-red); }
+    .diagnosis-card.compass-bear { background: var(--card-bg); border-left-color: var(--toss-blue); }
+    .diagnosis-card.compass-neutral { background: var(--card-bg); border-left-color: #c7cdd6; }
 
-    /* ── 컴팩트 인디케이터 리스트 (글자 짤림 방지 개선) ── */
+    .confidence-gauge { background: rgba(0, 0, 0, 0.05); height: 8px; border-radius: 4px; overflow: hidden; position: relative; cursor: help;}
+    .gauge-fill { height: 100%; border-radius: 4px; transition: width 1s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.5s ease; }
+
+    /* ── AI 퀀트 진단 뱃지 ── */
+    .regime-badge { display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-right: 8px; margin-bottom: 8px; }
+    .badge-macro { background: #f3f0ff; color: #7048e8; }
+    .badge-liquidity { background: #e2f9ec; color: var(--toss-green); }
+    .badge-credit { background: #fff6e5; color: var(--toss-warning); }
+
+    .bg-up { background: rgba(240,68,82,0.08); color: var(--toss-red); }
+    .bg-down { background: rgba(49,130,246,0.08); color: var(--toss-blue); }
+    .bg-neutral { background: #f2f4f6; color: #6b7684; }
+    .bg-green-soft { background: rgba(5,192,114,0.08); }
+    .text-green { color: var(--toss-green); }
+    .bg-orange-soft { background: rgba(245,166,35,0.08); }
+    .text-orange { color: var(--toss-warning); }
+    .text-up { color: var(--toss-red) !important; }
+    .text-down { color: var(--toss-blue) !important; }
+    .text-dark { color: var(--text-main) !important; }
+
+    /* ── 컴팩트 인디케이터 리스트 ── */
     .compact-indicator-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-color); text-decoration: none !important; transition: background-color 0.15s; margin: 0 -12px; padding-left: 12px; padding-right: 12px; border-radius: 8px; }
     .compact-indicator-row:hover { background-color: #f9fafb; }
     .compact-indicator-row:last-child { border-bottom: none; }
 
-    /* 이름이 길면 말줄임 대신 자연스럽게 줄바꿈되도록 허용 */
     .compact-name { font-size: 14px; font-weight: 600; color: var(--text-main); line-height: 1.3; word-break: keep-all; }
     .compact-date { font-size: 11px; color: var(--text-sub); font-weight: 500; margin-top: 2px; }
 
@@ -81,8 +98,6 @@
     .tab-btn:hover { color: var(--text-main); }
     .tab-btn.active { background: white; color: var(--text-main); box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
 
-    .text-up { color: var(--toss-red) !important; }
-    .text-down { color: var(--toss-blue) !important; }
     .text-neutral { color: var(--text-sub) !important; }
 
     .news-pagination { display: flex; justify-content: center; align-items: center; gap: 4px; padding: 24px 0 8px; }
@@ -92,7 +107,7 @@
     .lw-tooltip { position: absolute; display: none; background: rgba(255, 255, 255, 0.95); padding: 12px 16px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); border: 1px solid #e5e8eb; pointer-events: none; z-index: 10; }
 
     @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .fu { animation: fadeUp 0.4s ease both; }
+    .fu { animation: fadeUp 0.3s ease both; }
     .d1 { animation-delay: 0.05s; } .d2 { animation-delay: 0.1s; } .d3 { animation-delay: 0.15s; } .d4 { animation-delay: 0.2s; }
   </style>
 </head>
@@ -107,13 +122,12 @@
     <div class="content-container">
       <div class="mb-4 fu d1 d-flex justify-content-between align-items-end flex-wrap gap-3">
         <div>
-          <h2 class="fw-bold mb-2" style="font-size: 26px; color: #191f28;">시장 동향</h2>
+          <h2 class="fw-bold mb-2 text-dark" style="font-size: 24px;">시장 동향</h2>
           <p class="m-0" style="font-size: 15px; color: #6b7684; font-weight: 500;"
              th:text="${loginMember != null ? loginMember.username + '님, 오늘 시장의 흐름과 주요 뉴스를 모아봤어요' : '오늘 시장의 흐름과 주요 뉴스를 모아봤어요'}"></p>
         </div>
 
-        <!-- 세그먼트 컨트롤 탭 -->
-        <div class="d-flex p-1" style="background-color: #e5e8eb; border-radius: 10px; width: 240px;">
+        <div class="d-flex p-1" style="background-color: #f2f4f6; border-radius: 10px; width: 240px;">
           <button class="flex-fill border-0 fw-bold d-flex justify-content-center align-items-center gap-1"
                   style="border-radius: 8px; padding: 10px 14px; font-size: 14px; transition: 0.15s;"
                   :style="mainTab === 'market' ? 'background: white; color: #191f28; box-shadow: 0 1px 4px rgba(0,0,0,0.05);' : 'background: transparent; color: #8b95a1;'"
@@ -130,40 +144,126 @@
       </div>
 
       <!-- ========================================== -->
-      <!-- 1. 거시 경제 탭 영역 (Dashboard Grid) -->
+      <!-- 1. 거시 경제 탭 영역 -->
       <!-- ========================================== -->
       <div x-show="mainTab === 'market'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
 
-        <!-- Top Row: AI Briefing & Market Sentiment -->
-        <div class="row g-4 mb-4 fu d2">
-          <!-- AI 브리핑 (좌측 70% 차지) -->
-          <div class="col-xl-8 col-lg-12" th:if="${marketAnalysisResultResponse != null and marketAnalysisResultResponse.verdict != null and marketAnalysisResultResponse.verdict != ''}">
-            <div class="toss-card h-100 mb-0 d-flex flex-column">
-              <h3 class="section-title"><i class="bi bi-robot text-primary me-2"></i>AI 퀀트 진단</h3>
-              <div style="flex-grow: 1; line-height: 1.6; font-weight: 500; font-size: 15px; color: #4e5968;">
-                <th:block th:utext="${marketAnalysisResultResponse.verdict}"></th:block>
-              </div>
+        <!-- Top Row: AI 퀀트 진단 & 시장 나침반 -->
+        <div class="row g-4 mb-4 fu d2" th:if="${marketAnalysis != null}">
+
+          <!-- AI 퀀트 진단 리포트 (좌측 70%) -->
+          <div class="col-xl-8 col-lg-12">
+            <div class="toss-card diagnosis-card h-100 mb-0 d-flex flex-column" :class="getCompassClass()">
+              <h3 class="section-title hero-title"><i class="bi bi-cpu"></i>AI 퀀트 진단</h3>
+
+              <!-- th:with를 사용하여 하위 DTO를 'dto' 변수로 짧게 매핑 -->
+              <div th:with="dto=${marketAnalysis.marketRegimeDto}">
+
+                <!-- 배지 요약 영역 -->
+                <div class="mb-3 border-bottom pb-3" style="border-color: #f2f4f6 !important;">
+          <span class="regime-badge badge-macro" th:if="${dto.macroRegime != null}">
+              경기: <span class="ms-1" th:text="${dto.macroRegime}"></span>
+          </span>
+                  <span class="regime-badge badge-liquidity" th:if="${dto.liquidityRegime != null}">
+              유동성: <span class="ms-1" th:text="${dto.liquidityRegime}"></span>
+          </span>
+                  <span class="regime-badge badge-credit" th:if="${dto.creditRegime != null}">
+              신용: <span class="ms-1" th:text="${dto.creditRegime}"></span>
+          </span>
+                </div>
+
+                <!-- 2D 기반 해석 -->
+                <div class="fw-bold mb-3" style="font-size: 18px; color: var(--text-main); line-height: 1.5; letter-spacing: -0.3px;"
+                     th:text="${dto.regimeDescription}">
+                </div>
+
+                <!-- 주도 및 경고 리스트 -->
+                <div class="d-flex flex-column gap-3 mt-2" style="font-size: 14px; font-weight: 500;">
+                  <div th:if="${!#lists.isEmpty(dto.leadership)}">
+                    <span class="fw-bold text-dark me-2">주도 섹터:</span>
+                    <span style="color: var(--text-sub);" th:each="item, stat : ${dto.leadership}" th:text="${!stat.last ? item + ', ' : item}"></span>
+                  </div>
+
+                  <div th:if="${#lists.isEmpty(dto.warnings) or (#lists.size(dto.warnings) == 1 and dto.warnings[0] == 'None')}" style="color: var(--text-sub);">
+                    <span class="fw-bold me-2">시장 경고:</span>특이사항 없음
+                  </div>
+                  <div th:if="${not #lists.isEmpty(dto.warnings) and not (#lists.size(dto.warnings) == 1 and dto.warnings[0] == 'None')}"
+                       class="p-3 rounded-3" style="background: #fff4f4; border: 1px solid #ffe5e5;">
+                    <div class="fw-bold text-danger mb-1" style="font-size: 13px;"><i class="bi bi-exclamation-triangle-fill me-1"></i>시장 경고</div>
+                    <div style="color: #d63a48;">
+                      <span th:each="item, stat : ${dto.warnings}" th:text="${!stat.last ? item + ', ' : item}"></span>
+                    </div>
+                  </div>
+
+                  <div th:if="${#lists.isEmpty(dto.divergences) or (#lists.size(dto.divergences) == 1 and dto.divergences[0] == 'None')}" style="color: var(--text-sub);">
+                    <span class="fw-bold me-2">특이 동향:</span>특이사항 없음
+                  </div>
+                  <div th:if="${not #lists.isEmpty(dto.divergences) and not (#lists.size(dto.divergences) == 1 and dto.divergences[0] == 'None')}"
+                       class="p-3 rounded-3" style="background: #fff8eb; border: 1px solid #ffeed1;">
+                    <div class="fw-bold mb-1" style="font-size: 13px; color: #f5a623;"><i class="bi bi-exclamation-circle-fill me-1"></i>특이 동향</div>
+                    <div style="color: #d97706;">
+                      <span th:each="item, stat : ${dto.divergences}" th:text="${!stat.last ? item + ', ' : item}"></span>
+                    </div>
+                  </div>
+                </div>
+
+              </div> <!-- // th:with 블록 종료 -->
+
             </div>
           </div>
 
-          <!-- 탐욕과 공포 (우측 30% 차지) -->
-          <div class="col-xl-4 col-lg-12" th:if="${marketAnalysisResultResponse != null}">
-            <div class="toss-card weather-card h-100 mb-0" :class="weatherClass">
-              <div class="d-flex justify-content-between align-items-start mb-4">
-                <div>
-                  <div style="font-size: 14px; color: #6b7684; font-weight: 600; margin-bottom: 6px;">시장 분위기</div>
-                  <h3 class="fw-bold m-0 text-theme" style="font-size: 24px;" x-text="sentimentLabel"></h3>
+          <!-- 투자 나침반 (우측 30%) -->
+          <div class="col-xl-4 col-lg-12">
+            <div class="toss-card compass-card h-100 mb-0 d-flex flex-column" th:with="dto=${marketAnalysis.marketRegimeDto}">
+              <h3 class="section-title mb-0"><i class="bi bi-compass"></i>시장 나침반</h3>
+
+              <!-- 중앙 엠블럼 및 상태 -->
+              <div class="flex-grow-1 d-flex flex-column justify-content-center align-items-center text-center py-4">
+                <div class="rounded-circle d-flex align-items-center justify-content-center mb-3"
+                     :class="getRegimeBgClass()" style="width: 80px; height: 80px;">
+                  <i class="bi" :class="getRegimeIcon() + ' ' + getRegimeTextClass()" style="font-size: 36px;"></i>
                 </div>
-                <div class="text-end">
-                  <div style="font-size: 14px; color: #6b7684; font-weight: 600; margin-bottom: 6px;">심리 지수</div>
-                  <div class="fw-bold text-theme" style="font-size: 24px;" th:text="${marketAnalysisResultResponse.fearAndGreedScore} + ' / 100'"></div>
+                <div style="font-size: 13px; color: #8b95a1; font-weight: 600; margin-bottom: 4px;">현재 시장의 방향성</div>
+                <h4 class="fw-bold m-0" :class="getRegimeTextClass()" style="font-size: 24px; letter-spacing: -0.5px;" th:text="${dto.trendLevel != null ? dto.trendLevel : dto.regime}"></h4>
+                <p class="mt-3 mb-0 px-2" style="font-size: 14px; color: var(--text-sub); font-weight: 500; line-height: 1.5; word-break: keep-all;" x-text="getCompassDescription()"></p>
+              </div>
+
+              <!-- 하단 선호도 & 신뢰도 통합 박스 -->
+              <div class="p-3 rounded-4 mt-auto" style="background: #f8fafc; border: 1px solid #f2f4f6;">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom" style="border-color: #e5e8eb !important;">
+                  <span style="font-size: 13px; color: var(--text-sub); font-weight: 600;">투자자 선호도 (Risk)</span>
+                  <div class="d-inline-flex align-items-center gap-1 px-2 py-1 rounded-2" :class="getRiskBadgeClass()">
+                    <i class="bi" :class="getRiskIcon()"></i>
+                    <span class="fw-bold" style="font-size: 13px;" th:text="${dto.risk}"></span>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="d-flex justify-content-between align-items-end mb-2">
+                    <span style="font-size: 13px; color: var(--text-sub); font-weight: 600;">분석 신뢰도</span>
+                    <span class="fw-bold" :style="{ color: getConfidenceColor() }" style="font-size: 15px;" th:text="${dto.confidence} + ' / 100'"></span>
+                  </div>
+                  <div class="confidence-gauge mt-0" title="수치가 낮을수록 지표 간 의견이 엇갈림을 의미해요">
+                    <div class="gauge-fill" :style="{ width: (regimeData?.confidence || 0) + '%', backgroundColor: getConfidenceColor() }"></div>
+                  </div>
                 </div>
               </div>
-              <div class="mt-auto">
-                <div class="risk-gauge"><div class="risk-gauge-fill" th:style="'width: ' + ${marketAnalysisResultResponse.fearAndGreedScore} + '%'"></div></div>
-                <div class="d-flex justify-content-between mt-3" style="font-size: 13px; color: #8b95a1; font-weight: 600;">
-                  <span>공포 (0)</span><span>탐욕 (100)</span>
-                </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- AI 수석 전략가 종합 시황 (내러티브 — 별도 행으로 분리해 진단 카드와 높이 균형을 맞춤) -->
+        <div class="row g-4 mb-4 fu d3" th:if="${marketAnalysis != null and marketAnalysis.comment != null}">
+          <div class="col-12">
+            <div class="toss-card mb-0 d-flex flex-column" style="background-color: #f9fafb;">
+              <div class="d-flex align-items-center mb-3">
+                <i class="bi bi-magic me-2" style="color: #3182f6; font-size: 16px;"></i>
+                <span class="fw-bold text-dark" style="font-size: 15px;">AI 수석 전략가 종합 시황</span>
+              </div>
+              <!-- white-space: pre-wrap을 적용하여 AI가 생성한 줄바꿈(\n)을 그대로 화면에 렌더링합니다. -->
+              <div style="font-size: 14.5px; color: #333d4b; line-height: 1.75; white-space: pre-wrap; word-break: keep-all;"
+                   th:text="${marketAnalysis.comment}">
               </div>
             </div>
           </div>
@@ -174,7 +274,7 @@
           <div class="col-12">
             <div class="toss-card mb-0">
               <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
-                <h3 class="fw-bold m-0" style="font-size: 18px; color: #191f28;">주요 자산 흐름 (최근 1년)</h3>
+                <h3 class="fw-bold m-0 text-dark" style="font-size: 18px;">주요 자산 흐름 (최근 1년)</h3>
                 <div class="tab-nav mb-0">
                   <button class="tab-btn" :class="activeTab === 'SP500' ? 'active' : ''" @click="changeTab('SP500')">S&P 500</button>
                   <button class="tab-btn" :class="activeTab === 'NASDAQ100' ? 'active' : ''" @click="changeTab('NASDAQ100')">나스닥 100</button>
@@ -188,15 +288,14 @@
           </div>
         </div>
 
-        <!-- Bottom Row: 4개의 패널 배치를 col-xxl-6 또는 col-xl-6로 변경하여 짤림 원천 방지 -->
+        <!-- Bottom Row: 4개의 패널 -->
         <div class="row g-4 mb-4 fu d4">
 
-          <!-- Panel 1: 주식 & 변동성 -->
           <div class="col-xxl-6 col-xl-6 col-12">
             <div class="toss-card h-100 mb-0 p-4">
-              <h4 class="section-title mb-3"><i class="bi bi-graph-up text-primary me-2"></i>증시 & 변동성</h4>
+              <h4 class="section-title mb-3"><i class="bi bi-graph-up"></i>증시 & 변동성</h4>
               <div class="d-flex flex-column">
-                <template x-for="type in ['SP500', 'NASDAQ100', 'DOW_JONES', 'PHLX_SEMI', 'NASDAQ_AI', 'VIX']" :key="type">
+                <template x-for="type in ['SP500', 'NASDAQ100', 'DOW_JONES', 'PHLX_SEMI', 'VIX']" :key="type">
                   <div class="compact-indicator-row">
                     <div style="flex: 1; min-width: 0; padding-right: 12px;">
                       <div class="compact-name" x-text="getDisplayName(type)"></div>
@@ -217,12 +316,11 @@
             </div>
           </div>
 
-          <!-- Panel 2: 금리 & 채권 -->
           <div class="col-xxl-6 col-xl-6 col-12">
             <div class="toss-card h-100 mb-0 p-4">
-              <h4 class="section-title mb-3"><i class="bi bi-bank text-primary me-2"></i>금리 & 채권</h4>
+              <h4 class="section-title mb-3"><i class="bi bi-bank"></i>금리 & 채권</h4>
               <div class="d-flex flex-column">
-                <template x-for="type in ['FED_FUNDS_RATE', 'US10Y', 'US2Y', 'T10Y2Y', 'DOLLAR_INDEX', 'USD_JPY']" :key="type">
+                <template x-for="type in ['FED_FUNDS_RATE', 'US10Y', 'US2Y', 'T10Y2Y', 'DOLLAR_INDEX']" :key="type">
                   <div class="compact-indicator-row">
                     <div style="flex: 1; min-width: 0; padding-right: 12px;">
                       <div class="compact-name" x-text="getDisplayName(type)"></div>
@@ -243,12 +341,11 @@
             </div>
           </div>
 
-          <!-- Panel 3: 거시 경제 & 물가 -->
           <div class="col-xxl-6 col-xl-6 col-12">
             <div class="toss-card h-100 mb-0 p-4">
-              <h4 class="section-title mb-3"><i class="bi bi-briefcase text-primary me-2"></i>거시 경제 & 물가</h4>
+              <h4 class="section-title mb-3"><i class="bi bi-briefcase"></i>거시 경제 & 물가</h4>
               <div class="d-flex flex-column">
-                <template x-for="type in ['CPI', 'CORE_PCE', 'UNEMPLOYMENT', 'NONFARM', 'INITIAL_CLAIMS', 'GDP', 'RETAIL_SALES']" :key="type">
+                <template x-for="type in ['CPI', 'UNEMPLOYMENT', 'GDP', 'RETAIL_SALES', 'M2']" :key="type">
                   <div class="compact-indicator-row">
                     <div style="flex: 1; min-width: 0; padding-right: 12px;">
                       <div class="compact-name" x-text="getDisplayName(type)"></div>
@@ -269,12 +366,11 @@
             </div>
           </div>
 
-          <!-- Panel 4: 원자재 & 리스크 -->
           <div class="col-xxl-6 col-xl-6 col-12">
             <div class="toss-card h-100 mb-0 p-4">
-              <h4 class="section-title mb-3"><i class="bi bi-shield-exclamation text-primary me-2"></i>원자재 & 리스크</h4>
+              <h4 class="section-title mb-3"><i class="bi bi-shield-exclamation"></i>원자재 & 리스크</h4>
               <div class="d-flex flex-column">
-                <template x-for="type in ['WTI', 'BITCOIN', 'HIGH_YIELD_SPREAD', 'FINANCIAL_STRESS', 'M2', 'IND_SEMI']" :key="type">
+                <template x-for="type in ['WTI', 'BITCOIN', 'HIGH_YIELD_SPREAD', 'FINANCIAL_STRESS']" :key="type">
                   <div class="compact-indicator-row">
                     <div style="flex: 1; min-width: 0; padding-right: 12px;">
                       <div class="compact-name" x-text="getDisplayName(type)"></div>
@@ -295,17 +391,14 @@
             </div>
           </div>
 
-        </div> <!-- End of Panels -->
+        </div>
       </div>
 
       <!-- ========================================== -->
-      <!-- 2. 뉴스 속보 탭 영역 (2단 와이드 그리드) -->
+      <!-- 2. 뉴스 속보 탭 영역 -->
       <!-- ========================================== -->
       <div x-show="mainTab === 'news'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
-
-        <!-- 2개의 컬럼으로 나누어 가로 공간 확보 -->
         <div class="row g-4">
-          <!-- 실제 데이터 바인딩 부분 -->
           <th:block th:if="${news != null and !#lists.isEmpty(news.newsList)}">
             <div class="col-xxl-6 col-12" th:each="item : ${news.newsList}">
               <a th:href="${item.url}" target="_blank" class="toss-card news-row h-100 mb-0 p-4 d-flex">
@@ -325,54 +418,24 @@
             </div>
           </th:block>
 
-          <!-- 데이터가 없을 때 보여줄 예시(Mock) 데이터 -->
           <th:block th:if="${news == null or #lists.isEmpty(news.newsList)}">
             <div class="col-xxl-6 col-12">
-              <a href="#" class="toss-card news-row h-100 mb-0 p-4 d-flex">
-                <div class="news-content pe-3">
-                  <div>
-                    <h4 class="news-title">파월 의장 "금리 인하, 물가 둔화 확신 필요해"</h4>
-                    <p class="news-summary">제롬 파월 미 연준 의장이 연내 금리 인하 가능성을 열어두면서도 물가 안정에 대한 확실한 지표가 필요하다고 강조했습니다.</p>
-                  </div>
-                  <div class="news-meta">매일경제 · 2시간 전</div>
-                </div>
-                <img src="https://placehold.co/120x84/f2f4f6/8b95a1?text=Economy" class="news-thumbnail" alt="news">
-              </a>
-            </div>
-            <div class="col-xxl-6 col-12">
-              <a href="#" class="toss-card news-row h-100 mb-0 p-4 d-flex">
-                <div class="news-content pe-3">
-                  <div>
-                    <h4 class="news-title">엔비디아, 새로운 AI 칩 공개하며 기술주 상승 견인</h4>
-                    <p class="news-summary">엔비디아가 기존 대비 처리 속도가 30배 빠른 차세대 인공지능(AI) 칩을 공개하며 시장의 기대를 모았습니다.</p>
-                  </div>
-                  <div class="news-meta">한국경제 · 4시간 전</div>
-                </div>
-                <img src="https://placehold.co/120x84/f2f4f6/8b95a1?text=Tech" class="news-thumbnail" alt="news">
-              </a>
+              <div class="toss-card news-row h-100 mb-0 p-4 d-flex justify-content-center align-items-center">
+                <span class="fw-bold" style="color: #8b95a1;">최신 뉴스를 불러오지 못했습니다.</span>
+              </div>
             </div>
           </th:block>
         </div>
 
-        <!-- 페이지네이션 -->
         <div class="news-pagination" th:if="${news != null and !#lists.isEmpty(news.newsList) and news.totalPages > 1}">
-          <a th:if="${news.page > 0}"
-             th:href="@{/market(mainTab='news', page=${news.page - 1})}"
-             class="page-nav-btn">
+          <a th:if="${news.page > 0}" th:href="@{/market(mainTab='news', page=${news.page - 1})}" class="page-nav-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </a>
-          <a th:each="i : ${#numbers.sequence(0, news.totalPages - 1)}"
-             th:href="@{/market(mainTab='news', page=${i})}"
-             th:text="${i + 1}"
-             th:classappend="${i == news.page} ? ' active'"
-             class="page-num-btn"></a>
-          <a th:if="${news.hasNext}"
-             th:href="@{/market(mainTab='news', page=${news.page + 1})}"
-             class="page-nav-btn">
+          <a th:each="i : ${#numbers.sequence(0, news.totalPages - 1)}" th:href="@{/market(mainTab='news', page=${i})}" th:text="${i + 1}" th:classappend="${i == news.page} ? ' active'" class="page-num-btn"></a>
+          <a th:if="${news.hasNext}" th:href="@{/market(mainTab='news', page=${news.page + 1})}" class="page-nav-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </a>
         </div>
-
       </div>
 
     </div>
@@ -386,32 +449,35 @@
         mainTab: new URLSearchParams(window.location.search).get('mainTab') || 'market',
         activeTab: 'SP500', chart: null, areaSeries: null, toolTip: null, chartInitialzed: false,
 
+        // MarketRegimeDto 매핑
+        regimeData: /*[[${marketAnalysis}]]*/ null,
+
+        // IndexDashboardDto 매핑
         allData: {
           USD_JPY: /*[[${indexDashboard != null ? indexDashboard.usdJpy : null}]]*/ null,
           DOLLAR_INDEX: /*[[${indexDashboard != null ? indexDashboard.dollarIndex : null}]]*/ null,
           SP500: /*[[${indexDashboard != null ? indexDashboard.sp500 : null}]]*/ null,
           NASDAQ100: /*[[${indexDashboard != null ? indexDashboard.nasdaq100 : null}]]*/ null,
           DOW_JONES: /*[[${indexDashboard != null ? indexDashboard.dowJones : null}]]*/ null,
+          PHLX_SEMI: /*[[${indexDashboard != null ? indexDashboard.phlxSemi : null}]]*/ null,
+
           VIX: /*[[${indexDashboard != null ? indexDashboard.vix : null}]]*/ null,
-          HIGH_YIELD_SPREAD: /*[[${indexDashboard != null ? indexDashboard.highYieldSpread : null}]]*/ null,
           FINANCIAL_STRESS: /*[[${indexDashboard != null ? indexDashboard.financialStressIndex : null}]]*/ null,
+          HIGH_YIELD_SPREAD: /*[[${indexDashboard != null ? indexDashboard.highYieldSpread : null}]]*/ null,
+
           US10Y: /*[[${indexDashboard != null ? indexDashboard.us10y : null}]]*/ null,
           US2Y: /*[[${indexDashboard != null ? indexDashboard.us2y : null}]]*/ null,
           T10Y2Y: /*[[${indexDashboard != null ? indexDashboard.yieldCurve10y2y : null}]]*/ null,
           FED_FUNDS_RATE: /*[[${indexDashboard != null ? indexDashboard.fedFundsRate : null}]]*/ null,
+
           WTI: /*[[${indexDashboard != null ? indexDashboard.wti : null}]]*/ null,
           BITCOIN: /*[[${indexDashboard != null ? indexDashboard.bitcoin : null}]]*/ null,
+
           CPI: /*[[${indexDashboard != null ? indexDashboard.cpi : null}]]*/ null,
-          CORE_PCE: /*[[${indexDashboard != null ? indexDashboard.corePce : null}]]*/ null,
           UNEMPLOYMENT: /*[[${indexDashboard != null ? indexDashboard.unemploymentRate : null}]]*/ null,
-          NONFARM: /*[[${indexDashboard != null ? indexDashboard.nonfarmPayrolls : null}]]*/ null,
-          INITIAL_CLAIMS: /*[[${indexDashboard != null ? indexDashboard.initialClaims : null}]]*/ null,
           GDP: /*[[${indexDashboard != null ? indexDashboard.gdp : null}]]*/ null,
-          RETAIL_SALES: /*[[${indexDashboard != null ? indexDashboard.retailSales : null}]]*/ null,
           M2: /*[[${indexDashboard != null ? indexDashboard.m2 : null}]]*/ null,
-          PHLX_SEMI: /*[[${indexDashboard != null ? indexDashboard.phlxSemi : null}]]*/ null,
-          NASDAQ_AI: /*[[${indexDashboard != null ? indexDashboard.nasdaqAiBigdata : null}]]*/ null,
-          IND_SEMI: /*[[${indexDashboard != null ? indexDashboard.indSemi : null}]]*/ null
+          RETAIL_SALES: /*[[${indexDashboard != null ? indexDashboard.retailSales : null}]]*/ null
         },
 
         init() {
@@ -424,82 +490,174 @@
           });
         },
 
-        get rawSentiment() { return /*[[${marketAnalysisResultResponse != null ? marketAnalysisResultResponse.marketSentiment : 'NEUTRAL'}]]*/ 'NEUTRAL'; },
+        // 💡 1. 신뢰도(Confidence) 동적 컬러
+        getConfidenceColor() {
+          const conf = this.regimeData?.confidence || 0;
+          if (conf <= 20) return '#8b95a1'; // 회색 (관망)
+          if (conf <= 60) return '#f5a623'; // 주황색 (주의)
 
-        get sentimentLabel() {
-          const s = this.rawSentiment;
-          if (s === 'EXTREME_GREED') return '강력한 매수 (극단적 탐욕)';
-          if (s === 'GREED') return '매수 우위 (탐욕)';
-          if (s === 'FEAR') return '방어적 (공포)';
-          if (s === 'EXTREME_FEAR') return '패닉 상태 (극단적 공포)';
-          return '방향성 탐색 (중립)';
+          const r = this.regimeData?.regime;
+          if (r === 'BEAR') return '#3182f6'; // 푸른색 (하락장)
+          return '#f04452'; // 붉은색 (상승장/기본)
         },
 
-        get weatherClass() {
-          const s = this.rawSentiment;
-          if (s.includes('GREED')) return 'weather-bull';
-          if (s.includes('FEAR')) return 'weather-bear';
-          return 'weather-neutral';
+        // 💡 2. 상태 뱃지 (방향성 & 선호도) 디자인 로직
+        getRegimeBgClass() {
+          const r = this.regimeData?.regime;
+          if (r === 'BULL') return 'bg-up';
+          if (r === 'BEAR') return 'bg-down';
+          return 'bg-neutral';
+        },
+        getRegimeTextClass() {
+          const r = this.regimeData?.regime;
+          if (r === 'BULL') return 'text-up';
+          if (r === 'BEAR') return 'text-down';
+          return 'text-dark';
+        },
+        getRegimeIcon() {
+          const r = this.regimeData?.regime;
+          if (r === 'BULL') return 'bi-graph-up-arrow';
+          if (r === 'BEAR') return 'bi-graph-down-arrow';
+          return 'bi-dash-circle';
+        },
+
+        getRiskBadgeClass() {
+          const r = this.regimeData?.risk;
+          if (r === 'RISK-ON') return 'bg-green-soft text-green';
+          if (r === 'RISK-OFF') return 'bg-orange-soft text-orange';
+          return 'bg-neutral';
+        },
+        getRiskIcon() {
+          const r = this.regimeData?.risk;
+          if (r === 'RISK-ON') return 'bi-shield-check';
+          if (r === 'RISK-OFF') return 'bi-shield-exclamation';
+          return 'bi-shield';
+        },
+
+        getCompassClass() {
+          if (!this.regimeData) return 'compass-neutral';
+          const regime = this.regimeData.regime;
+          if (regime === 'BULL') return 'compass-bull';
+          if (regime === 'BEAR') return 'compass-bear';
+          return 'compass-neutral';
+        },
+
+        // 💡 중앙 나침반 동적 코멘트
+        getCompassDescription() {
+          if (!this.regimeData) return '데이터를 불러오는 중입니다.';
+          const r = this.regimeData.regime;
+          const risk = this.regimeData.risk;
+          const conf = this.regimeData.confidence;
+
+          let desc = '';
+          if (r === 'BULL') {
+            desc = risk === 'RISK-ON' ? '상승 추세 속에서 위험 자산 선호 심리가 강해요.' : '상승 추세이지만 투자자들은 다소 신중한 모습이에요.';
+          } else if (r === 'BEAR') {
+            desc = risk === 'RISK-OFF' ? '하락 추세가 이어지며 안전 자산 쏠림이 뚜렷해요.' : '하락 추세 속에서도 일부 위험 자산에 매수세가 있어요.';
+          } else {
+            desc = '뚜렷한 방향성 없이 시장이 눈치를 보고 있어요.';
+          }
+
+          if (conf <= 40) {
+            desc += ' 다만, 지표 간 의견이 엇갈려 불확실성이 높습니다.';
+          }
+          return desc;
         },
 
         getDisplayName(t) {
           const names = {
-            SP500: 'S&P 500', NASDAQ100: '나스닥 100', DOW_JONES: '다우존스', PHLX_SEMI: '필라델피아 반도체', NASDAQ_AI: '나스닥 AI&빅데이터',
+            SP500: 'S&P 500', NASDAQ: '나스닥 종합', NASDAQ100: '나스닥 100', DOW_JONES: '다우존스', PHLX_SEMI: '필라 반도체',
             VIX: 'VIX (공포지수)', FINANCIAL_STRESS: '금융 스트레스', HIGH_YIELD_SPREAD: '하이일드 스프레드',
             US10Y: '미 국채 10년물', US2Y: '미 국채 2년물', T10Y2Y: '장단기 금리차 (10-2)', FED_FUNDS_RATE: '미 기준금리',
             WTI: 'WTI 유가', BITCOIN: '비트코인', USD_JPY: '엔/달러 환율', DOLLAR_INDEX: '달러 인덱스',
-            CPI: '소비자물가 (CPI)', CORE_PCE: '근원 PCE 물가', UNEMPLOYMENT: '미국 실업률', NONFARM: '비농업 고용 (NFP)', INITIAL_CLAIMS: '신규 실업수당 청구',
-            GDP: '미국 실질 GDP', M2: 'M2 통화량', RETAIL_SALES: '소매판매 지수', IND_SEMI: '반도체 생산지수'
+            CPI: '소비자물가 (CPI)', UNEMPLOYMENT: '미국 실업률',
+            GDP: '실질 GDP', M2: 'M2 통화량', RETAIL_SALES: '소매판매'
           };
           return names[t] || t;
         },
 
+        extractNumber(val) {
+          if (val === undefined || val === null || val === '') return NaN;
+          const parsed = parseFloat(String(val).replace(/,/g, '').trim());
+          return isNaN(parsed) ? NaN : parsed;
+        },
+
+        _getVal(obj) {
+          if (!obj) return NaN;
+          if (typeof obj !== 'object') return this.extractNumber(obj);
+
+          let v = obj.close !== undefined ? obj.close : (obj.value !== undefined ? obj.value : obj.price);
+
+          if (v === undefined || v === null) {
+            for (const k in obj) {
+              if (k.toLowerCase().includes('date') || k.toLowerCase().includes('time')) continue;
+              const n = this.extractNumber(obj[k]);
+              if (Number.isFinite(n)) return n;
+            }
+          }
+          return this.extractNumber(v);
+        },
+
+        _getDate(obj) {
+          if (!obj) return '';
+          return obj.date || obj.time || obj.baseDate || '';
+        },
+
         formatDate(t) {
-          const dataList = this.allData[t]?.data;
+          const obj = this.allData[t];
+          if (!obj) return '업데이트 대기';
+          if (obj.date) return obj.date;
+
+          const dataList = obj.data;
           if (!Array.isArray(dataList) || dataList.length === 0) return '업데이트 대기';
-          return dataList[dataList.length - 1]?.date || '업데이트 대기';
+
+          const lastItem = dataList[dataList.length - 1];
+          return this._getDate(lastItem) || '업데이트 대기';
         },
 
         getLatestValue(t) {
-          const dataList = this.allData[t]?.data;
-          if (!Array.isArray(dataList) || dataList.length === 0) return null;
-          const value = dataList[dataList.length - 1]?.value;
-          if (value === undefined || value === null || value === '') return null;
-          const parsed = Number(value);
-          return Number.isFinite(parsed) ? parsed : null;
+          const obj = this.allData[t];
+          if (!obj) return null;
+
+          if (typeof obj !== 'object') return this.extractNumber(obj);
+
+          const dataList = obj.data;
+          if (Array.isArray(dataList) && dataList.length > 0) {
+            const parsedList = this._getVal(dataList[dataList.length - 1]);
+            if (Number.isFinite(parsedList)) return parsedList;
+          }
+          return null;
         },
 
         formatValue(t) {
           const v = this.getLatestValue(t);
           if (v === null) return '-';
 
-          const percentTypes = ['US10Y','US2Y','FED_FUNDS_RATE','CPI','CORE_PCE','UNEMPLOYMENT'];
-          const integerTypes = ['SP500','NASDAQ100','DOW_JONES','PHLX_SEMI','NASDAQ_AI','BITCOIN','NONFARM','INITIAL_CLAIMS'];
+          const percentTypes = ['US10Y','US2Y','FED_FUNDS_RATE','CPI','UNEMPLOYMENT'];
+          const integerTypes = ['SP500','NASDAQ100','DOW_JONES','PHLX_SEMI','BITCOIN'];
 
           if (percentTypes.includes(t)) return v.toFixed(2) + '%';
           if (integerTypes.includes(t)) return Math.round(v).toLocaleString();
-          return v.toFixed(2);
+          return v.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
         },
 
         getChangeColorClass(t) {
-          const cv = this.allData[t]?.changeValue;
-          if (cv === undefined || cv === null || cv === 0) return 'text-neutral';
+          const cv = this.extractNumber(this.allData[t]?.changeValue);
+          if (isNaN(cv) || cv === 0) return 'text-neutral';
           return cv > 0 ? 'text-up' : 'text-down';
         },
 
         formatChange(t) {
-          const cv = this.allData[t]?.changeValue;
-          const cr = this.allData[t]?.changeRate;
-          if (cv === undefined || cv === null || !Number.isFinite(Number(cv))) return '-';
+          const cv = this.extractNumber(this.allData[t]?.changeValue);
+          const cr = this.extractNumber(this.allData[t]?.changeRate);
+          if (isNaN(cv)) return '-';
 
-          const changeValue = Number(cv);
-          const changeRate = Number(cr);
-          const sign = changeValue > 0 ? '▲ ' : (changeValue < 0 ? '▼ ' : '');
-          const absCv = Math.abs(changeValue);
-          const absCr = Number.isFinite(changeRate) ? Math.abs(changeRate) : null;
+          const sign = cv > 0 ? '▲ ' : (cv < 0 ? '▼ ' : '');
+          const absCv = Math.abs(cv);
+          const absCr = Number.isFinite(cr) ? Math.abs(cr) : null;
 
-          const rateTypes = ['US10Y','US2Y','FED_FUNDS_RATE','CPI','CORE_PCE','UNEMPLOYMENT'];
-          const integerTypes = ['SP500','NASDAQ100','DOW_JONES','PHLX_SEMI','NASDAQ_AI','BITCOIN','NONFARM','INITIAL_CLAIMS'];
+          const rateTypes = ['US10Y','US2Y','FED_FUNDS_RATE','CPI','UNEMPLOYMENT'];
+          const integerTypes = ['SP500','NASDAQ100','DOW_JONES','PHLX_SEMI','BITCOIN'];
 
           let valText;
           if (rateTypes.includes(t)) {
@@ -507,23 +665,38 @@
           } else if (integerTypes.includes(t)) {
             valText = `${sign}${Math.round(absCv).toLocaleString()}`;
           } else {
-            valText = `${sign}${absCv.toFixed(2)}`;
+            valText = `${sign}${absCv.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
           }
 
-          if (!Number.isFinite(changeRate)) return valText;
-          return `${valText} (${changeRate > 0 ? '+' : ''}${changeRate.toFixed(2)}%)`;
+          if (absCr === null) return valText;
+          return `${valText} (${cr > 0 ? '+' : ''}${cr.toFixed(2)}%)`;
         },
 
         createChart() {
           const container = document.getElementById('market-chart-container');
           if (!container) return;
+
+          // 💡 4. 차트 백그라운드 셰이딩 (신뢰도/방향성 연동)
+          let chartBgColor = 'transparent';
+          const conf = this.regimeData?.confidence || 0;
+          const regime = this.regimeData?.regime;
+
+          if (conf <= 20) {
+            chartBgColor = 'rgba(139, 149, 161, 0.03)'; // 신뢰도 낮을 시 회색 셰이딩
+          } else if (conf > 60) {
+            if (regime === 'BULL') chartBgColor = 'rgba(240, 68, 82, 0.02)'; // 상승장 붉은 셰이딩
+            else if (regime === 'BEAR') chartBgColor = 'rgba(49, 130, 246, 0.02)'; // 하락장 푸른 셰이딩
+          }
+
           this.chart = LightweightCharts.createChart(container, {
-            layout: { background: { color: 'transparent' }, textColor: '#8b95a1', fontFamily: 'Pretendard' },
+            layout: { background: { type: 'solid', color: chartBgColor }, textColor: '#8b95a1', fontFamily: 'Pretendard' },
             grid: { vertLines: { visible: false }, horzLines: { color: '#f2f4f6' } },
             timeScale: { borderVisible: false, rightOffset: 5 },
             crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
           });
+
           this.areaSeries = this.chart.addAreaSeries({ lineColor: '#3182f6', topColor: 'rgba(49, 130, 246, 0.15)', bottomColor: 'rgba(49, 130, 246, 0.01)', lineWidth: 2 });
+
           this.toolTip = document.createElement('div');
           this.toolTip.className = 'lw-tooltip';
           container.appendChild(this.toolTip);
@@ -547,21 +720,61 @@
             }
           });
         },
+
         updateChartData() {
-          const list = this.allData[this.activeTab]?.data || [];
-          const formatted = list.map(d => ({ time: String(d.date), value: Number(d.value) })).filter(d => Number.isFinite(d.value)).sort((a,b) => a.time.localeCompare(b.time));
+          const obj = this.allData[this.activeTab];
+          if (!obj) return;
+          const list = obj.data || [];
+
+          const formatted = list.map(d => ({
+            time: String(this._getDate(d)),
+            value: this._getVal(d)
+          })).filter(d => Number.isFinite(d.value) && d.time !== 'undefined' && d.time !== '')
+                  .sort((a,b) => a.time.localeCompare(b.time));
+
           if (this.areaSeries && formatted.length > 0) {
             this.areaSeries.setData(formatted);
             this.chart.timeScale().fitContent();
           }
         },
-        changeTab(t) { this.activeTab = t; this.updateChartData(); if (this.toolTip) this.toolTip.style.display = 'none'; },
-        getSparklineColorHex(t) { const cv = this.allData[t]?.changeValue; return (cv === undefined || cv === null || cv === 0) ? '#8b95a1' : (cv > 0 ? '#f04452' : '#3182f6'); },
+
+        // 💡 4. 차트 탭 변경 시 부드러운 애니메이션 효과
+        changeTab(t) {
+          if(this.activeTab === t) return;
+          this.activeTab = t;
+
+          const container = document.getElementById('market-chart-container');
+          container.style.transition = 'opacity 0.2s ease-in-out';
+          container.style.opacity = '0.3';
+
+          setTimeout(() => {
+            this.updateChartData();
+            if (this.toolTip) this.toolTip.style.display = 'none';
+            container.style.opacity = '1';
+          }, 200);
+        },
+
+        getSparklineColorHex(t) {
+          const cv = this.extractNumber(this.allData[t]?.changeValue);
+          if (isNaN(cv) || cv === 0) return '#8b95a1';
+          return cv > 0 ? '#f04452' : '#3182f6';
+        },
+
         getSparklinePoints(t) {
-          const dataList = this.allData[t]?.data;
-          if (!dataList || dataList.length === 0) return '';
-          const recentData = dataList.slice(-20), values = recentData.map(d => parseFloat(d.value));
-          const min = Math.min(...values), max = Math.max(...values), range = (max - min) || 1;
+          const obj = this.allData[t];
+          if (!obj) return '';
+
+          const dataList = obj.data;
+          if (!Array.isArray(dataList) || dataList.length === 0) return '';
+
+          const recentData = dataList.slice(-20);
+          const values = recentData.map(d => this._getVal(d)).filter(v => Number.isFinite(v));
+
+          if (values.length === 0) return '';
+          const min = Math.min(...values);
+          const max = Math.max(...values);
+          const range = (max - min) || 1;
+
           if (values.length === 1) return `0,22 100,22`;
           return values.map((val, idx) => `${(idx / (values.length - 1)) * 100},${40 - ((val - min) / range) * 35}`).join(' ');
         }

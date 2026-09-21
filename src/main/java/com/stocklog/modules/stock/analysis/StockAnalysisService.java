@@ -2,7 +2,7 @@ package com.stocklog.modules.stock.analysis;
 
 
 import com.stocklog.modules.stock.analysis.domain.signal.vo.MarketContext;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.MarketPhase;
+import com.stocklog.modules.stock.analysis.domain.signal.vo.StockPhase;
 import com.stocklog.modules.stock.analysis.domain.signal.vo.MiniSignalDto;
 import com.stocklog.modules.stock.analysis.service.*;
 import com.stocklog.modules.stock.analysis.domain.signal.vo.EntrySignal;
@@ -34,7 +34,7 @@ public class StockAnalysisService {
         return facadeAnalyzer.entrySignalAnalyze(dailyCharts, weeklyCharts);
     }
 
-    public MarketPhase getMarketPhase(MarketContext marketContext) {
+    public StockPhase getMarketPhase(MarketContext marketContext) {
         return facadeAnalyzer.getMarketPhase(marketContext);
     }
 

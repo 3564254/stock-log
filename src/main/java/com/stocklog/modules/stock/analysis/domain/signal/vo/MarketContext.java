@@ -1,5 +1,7 @@
 package com.stocklog.modules.stock.analysis.domain.signal.vo;
 
+import com.stocklog.modules.common.finance.vo.MacdResult;
+import com.stocklog.modules.common.finance.vo.Pivot;
 import com.stocklog.modules.stock.analysis.utils.IndicatorCalculator;
 import com.stocklog.modules.stock.chart.dto.StockChartDto;
 import lombok.Builder;
@@ -126,7 +128,7 @@ public record MarketContext(
         // ── 거래량 연산 ──
         double currentVolume = volumes.get(lastIdx);
         double yesterdayVolume = volumes.get(lastIdx - 1);
-        LocalDate chartDate = dailyCharts.get(lastIdx).time();
+        LocalDate chartDate = dailyCharts.get(lastIdx).date();
 
         double projectedVolume = IndicatorCalculator.calculateProjectedVolume(currentVolume,yesterdayVolume, chartDate);
         double volumeMa5 = IndicatorCalculator.sma(volumes, lastIdx - 1, 5);
@@ -182,8 +184,8 @@ public record MarketContext(
         Pivot weeklyPivot = null;
         if (weeklyCharts != null && weeklyCharts.size() >= 2) {
             StockChartDto lastWeek = weeklyCharts.get(weeklyCharts.size() - 2);
-            double wyh = lastWeek.high() != null ? lastWeek.high().doubleValue() : prev;
-            double wyl = lastWeek.low() != null ? lastWeek.low().doubleValue() : prev;
+            double wyh = lastWeek.high() != null ? lastWeek.high().doubleValue() : lastWeek.close().doubleValue();
+            double wyl = lastWeek.low() != null ? lastWeek.low().doubleValue() : lastWeek.close().doubleValue();
             double wyc = lastWeek.close().doubleValue();
             weeklyPivot = IndicatorCalculator.calcPivot(wyh, wyl, wyc);
         }
@@ -206,7 +208,7 @@ public record MarketContext(
                 .build();
     }
 
-    public static String generateVerdict(MarketContext ctx, MarketPhase phase) {
+    public static String generateVerdict(MarketContext ctx, StockPhase phase) {
         StringBuilder verdict = new StringBuilder();
 
         // ── 1. 헤더 및 현재가 ──
@@ -366,7 +368,7 @@ public record MarketContext(
         return verdict.toString();
     }
 
-    public static String generateEntryVerdict(MarketContext ctx, MarketPhase phase) {
+    public static String generateEntryVerdict(MarketContext ctx, StockPhase phase) {
         StringBuilder verdict = new StringBuilder();
 
         // ── 1. 진입 타점 헤더 (신호등 직관적 표기) ──
@@ -465,7 +467,7 @@ public record MarketContext(
 
         // ── 4. 기준가 가이드라인 (스마트 타점) ──
         verdict.append("\n🛡️ [단기 매매 기준선]\n");
-        if (phase == MarketPhase.SETUP || phase == MarketPhase.ENTRY_READY) {
+        if (phase == StockPhase.SETUP || phase == StockPhase.ENTRY_READY) {
             // 매수하기 좋은 구간일 경우: 지지선을 '매수 목표가'로 제시
             verdict.append(String.format("· 1차 매수 타점(VWAP 세력선): %,.0f원 부근\n", ctx.vwap20()));
             verdict.append(String.format("· 2차 매수 타점(최대 매물대): %,.0f원 부근\n", ctx.pocPrice()));
@@ -480,7 +482,7 @@ public record MarketContext(
     }
 
 
-    public static String generateExitVerdict(MarketContext ctx, MarketPhase phase) {
+    public static String generateExitVerdict(MarketContext ctx, StockPhase phase) {
         StringBuilder verdict = new StringBuilder();
 
         // ── 1. 매도 타점 헤더 (신호등 직관적 표기) ──
@@ -562,7 +564,7 @@ public record MarketContext(
         // ── 4. 기준가 가이드라인 (스마트 매도 타점) ──
         verdict.append("\n🛡️ [매도 기준선 가이드]\n");
 
-        if (phase == MarketPhase.SCALE_OUT || phase == MarketPhase.WARNING_ZONE) {
+        if (phase == StockPhase.SCALE_OUT || phase == StockPhase.WARNING_ZONE) {
             // 매도(익절) 해야 할 구간: 위쪽 저항선과 짧은 방어선을 제시
             verdict.append(String.format("· 1차 익절 목표가(볼린저 밴드 상단): %,.0f원 부근\n", ctx.upper()));
             if (ctx.pocPrice() > ctx.currentPrice()) {

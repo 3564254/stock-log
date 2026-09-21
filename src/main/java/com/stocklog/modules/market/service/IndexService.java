@@ -2,16 +2,15 @@ package com.stocklog.modules.market.service;
 
 import com.stocklog.modules.market.index.dto.IndexDto;
 import com.stocklog.modules.market.index.dto.IndexDashboardDto;
-import com.stocklog.modules.market.index.dto.vo.IndexChartData;
+import com.stocklog.modules.market.index.dto.IndexChartDto;
 import com.stocklog.modules.market.index.entity.MarketIndex;
 import com.stocklog.modules.market.index.entity.MarketIndexHistory;
 import com.stocklog.modules.market.index.provider.IndexChartProvider;
 import com.stocklog.modules.market.index.repository.MarketIndexHistoryRepository;
 import com.stocklog.modules.market.index.repository.MarketIndexRepository;
-import com.stocklog.modules.market.index.type.IndexType;
+import com.stocklog.modules.market.domain.type.IndexType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -54,7 +53,7 @@ public class IndexService {
         MarketIndex marketIndex = marketIndexRepository.findById(seriesId).orElse(null);
         List<MarketIndexHistory> histories = marketIndexHistoryRepository.findBySymbolOrderByDateAsc(seriesId);
 
-        List<IndexChartData> chartDataList = getIndexChartDataList(histories);
+        List<IndexChartDto> chartDataList = getIndexChartDataList(histories);
 
         return IndexDto.builder()
                 .seriesId(seriesId)
@@ -69,7 +68,7 @@ public class IndexService {
     @Transactional
     public void saveIndexHistory(IndexDto indexDto) {
         String seriesId = indexDto.seriesId();
-        List<IndexChartData> indexChartData = indexDto.data();
+        List<IndexChartDto> indexChartData = indexDto.data();
 
         if (indexChartData == null || indexChartData.size() < 2) {
             return;
@@ -79,11 +78,11 @@ public class IndexService {
                 .orElse(LocalDate.of(1900, 1, 1));
 
         List<MarketIndexHistory> newHistories = indexChartData.stream()
-                .filter(data -> data.getDate().isAfter(latestSavedDate))
+                .filter(data -> data.date().isAfter(latestSavedDate))
                 .map(data -> MarketIndexHistory.builder()
                         .symbol(seriesId)
-                        .date(data.getDate())
-                        .closeValue(data.getValue())
+                        .date(data.date())
+                        .closeValue(data.close())
                         .build())
                 .collect(Collectors.toList());
 
@@ -93,8 +92,8 @@ public class IndexService {
         }
 
         int lastIdx = indexChartData.size() - 1;
-        BigDecimal todayValue = indexChartData.get(lastIdx).getValue();
-        BigDecimal yesterdayValue = indexChartData.get(lastIdx - 1).getValue();
+        BigDecimal todayValue = indexChartData.get(lastIdx).close();
+        BigDecimal yesterdayValue = indexChartData.get(lastIdx - 1).close();
 
         BigDecimal changeValue = getChangeValue(todayValue, yesterdayValue);
         BigDecimal changeRate = getChangeRate(todayValue, yesterdayValue);
@@ -196,7 +195,7 @@ public class IndexService {
                 // 10. 기타 섹터
                 .nasdaqIseCybersecurity(getIndexDtoFromDb(IndexType.NASDAQ_ISE_CYBERSECURITY.getSeriesId()))
                 .nasdaqBiotech(getIndexDtoFromDb(IndexType.NASDAQ_BIOTECH.getSeriesId()))
-                .dowJonesUtility(getIndexDtoFromDb(IndexType.DOW_JONES_UTILITY.getSeriesId()))
+                //.dowJonesUtility(getIndexDtoFromDb(IndexType.DOW_JONES_UTILITY.getSeriesId()))
                 .nasdaqConsumerStaples(getIndexDtoFromDb(IndexType.NASDAQ_CONSUMER_STAPLES.getSeriesId()))
                 .nasdaqCleanEnergy(getIndexDtoFromDb(IndexType.NASDAQ_CLEAN_ENERGY.getSeriesId()))
                 .phlxGoldSilver(getIndexDtoFromDb(IndexType.PHLX_GOLD_SILVER.getSeriesId()))
@@ -208,11 +207,11 @@ public class IndexService {
                 .build();
     }
 
-    private static List<IndexChartData> getIndexChartDataList(List<MarketIndexHistory> histories) {
+    private static List<IndexChartDto> getIndexChartDataList(List<MarketIndexHistory> histories) {
         return histories.stream()
-                .map(history -> IndexChartData.builder()
+                .map(history -> IndexChartDto.builder()
                         .date(history.getDate())
-                        .value(history.getCloseValue())
+                        .close(history.getCloseValue())
                         .build())
                 .collect(Collectors.toList());
     }

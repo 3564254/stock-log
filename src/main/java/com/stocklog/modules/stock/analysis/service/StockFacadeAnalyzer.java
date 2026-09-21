@@ -1,10 +1,7 @@
 package com.stocklog.modules.stock.analysis.service;
 
 import com.stocklog.modules.stock.analysis.domain.momentum.MomentumScore;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.EntrySignal;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.MarketContext;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.MarketPhase;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.MiniSignalDto;
+import com.stocklog.modules.stock.analysis.domain.signal.vo.*;
 import com.stocklog.modules.stock.analysis.domain.technical.TechnicalScore;
 import com.stocklog.modules.stock.analysis.domain.valuation.ValuationScore;
 import com.stocklog.modules.stock.analysis.result.StockAnalysisResult;
@@ -54,7 +51,7 @@ public class StockFacadeAnalyzer {
         return entrySignalAnalyzer.analyzeMini(dailyCharts);
     }
 
-    public MarketPhase getMarketPhase(MarketContext context) {
+    public StockPhase getMarketPhase(MarketContext context) {
         return entrySignalAnalyzer.getPhase(context);
     }
 

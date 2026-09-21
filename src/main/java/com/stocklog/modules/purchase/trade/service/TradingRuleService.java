@@ -7,7 +7,7 @@ import com.stocklog.modules.purchase.trade.entity.TradingRule;
 import com.stocklog.modules.purchase.trade.repository.TradingRuleRepository;
 import com.stocklog.modules.purchase.trade.type.IndicatorType;
 import com.stocklog.modules.stock.analysis.domain.signal.vo.MarketContext;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.MarketPhase;
+import com.stocklog.modules.stock.analysis.domain.signal.vo.StockPhase;
 import com.stocklog.global.error.BusinessException;
 import com.stocklog.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -64,7 +64,7 @@ public class TradingRuleService {
     /**
      * 💡 변경: 검증 시 MarketContext 객체를 직접 주입받아 실시간 데이터를 대조합니다.
      */
-    public TradingRuleCheckResponse evaluateBuySignal(Long memberId, MarketContext ctx, MarketPhase phase) {
+    public TradingRuleCheckResponse evaluateBuySignal(Long memberId, MarketContext ctx, StockPhase phase) {
         List<TradingRule> activeRules = tradingRuleRepository.findAllByMemberIdAndIsActiveTrue(memberId);
 
         List<TradingRuleCheckResponse.RuleDetail> details = new ArrayList<>();
@@ -92,7 +92,7 @@ public class TradingRuleService {
         return new TradingRuleCheckResponse(decision, details, verdict);
     }
 
-    public TradingRuleCheckResponse evaluateSellSignal(Long memberId, MarketContext ctx, MarketPhase phase) {
+    public TradingRuleCheckResponse evaluateSellSignal(Long memberId, MarketContext ctx, StockPhase phase) {
 
         return null;
     }

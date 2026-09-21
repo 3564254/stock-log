@@ -89,7 +89,7 @@ public class KisOverseasChartProvider implements StockChartProvider {
             if (data.getClose() == null || data.getClose().isBlank()) continue;
 
             result.add(StockChartDto.builder()
-                    .time(parsedDate(data.getTime()))
+                    .date(parsedDate(data.getTime()))
                     .open(parseSafe(data.getOpen()))
                     .close(parseSafe(data.getClose()))
                     .high(parseSafe(data.getHigh()))

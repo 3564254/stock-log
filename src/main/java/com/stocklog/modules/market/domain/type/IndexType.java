@@ -1,7 +1,9 @@
-package com.stocklog.modules.market.index.type;
+package com.stocklog.modules.market.domain.type;
 import com.stocklog.modules.stock.domain.type.Period;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
 
 @Getter
 @RequiredArgsConstructor
@@ -60,7 +62,7 @@ public enum IndexType {
     // ── 10. 기타 섹터 (수급/가격 기준, 넓게 커버) ──
     NASDAQ_ISE_CYBERSECURITY("NASDAQHXR", "ISE 사이버 시큐리티 지수 (HACK 벤치마크)", Period.DAY),
     NASDAQ_BIOTECH("NASDAQNBI", "나스닥 바이오테크놀로지 지수", Period.DAY),
-    DOW_JONES_UTILITY("DJU", "다우존스 유틸리티 평균지수", Period.DAY),
+    //DOW_JONES_UTILITY("DJU", "다우존스 유틸리티 평균지수", Period.DAY), // 정보없음
     NASDAQ_CONSUMER_STAPLES("NASDAQNQUSB45", "나스닥 미국 필수소비재 지수", Period.DAY),
     NASDAQ_CLEAN_ENERGY("NASDAQCELS", "나스닥 클린 엣지 그린 에너지 지수", Period.DAY),
     PHLX_GOLD_SILVER("NASDAQXAU", "필라델피아 금·은 광업 지수 (XAU)", Period.DAY),
@@ -71,10 +73,12 @@ public enum IndexType {
     US_INDPRO("INDPRO", "미국 전체 산업생산지수 (경기 총괄)", Period.MONTH);
 
 
+    private static final List<IndexType> ALL_INDEX_TYPES = List.of(values());
 
     private final String seriesId;
     private final String displayName;
     private final Period frequency;
+
 
     public static IndexType fromSeriesId(String seriesId) {
         for (IndexType type : values()) {
@@ -83,5 +87,10 @@ public enum IndexType {
             }
         }
         throw new IllegalArgumentException("지원하지 않는 지수 ID 입니다: " + seriesId);
+    }
+
+    // 캐싱용 불변 리스트
+    public static List<IndexType> getAllIndexTypes() {
+        return ALL_INDEX_TYPES;
     }
 }

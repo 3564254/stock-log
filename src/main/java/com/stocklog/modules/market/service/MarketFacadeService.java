@@ -1,15 +1,20 @@
 package com.stocklog.modules.market.service;
 
-import com.stocklog.modules.market.analysis.dto.MarketAnalysisResultResponse;
-import com.stocklog.modules.market.analysis.MarketAnalysisService;
+import com.stocklog.modules.market.analysis.dto.MarketRegimeDto;
+import com.stocklog.modules.market.analysis.dto.MarketRegimeResponse;
+import com.stocklog.modules.market.analysis.service.MarketAnalysisService;
+import com.stocklog.modules.market.diagnosis.MarketDiagnosisService;
 import com.stocklog.modules.market.exchange.dto.ExchangeRateInfo;
 import com.stocklog.modules.market.index.dto.IndexDashboardDto;
 import com.stocklog.modules.market.index.dto.IndexDto;
+import com.stocklog.modules.market.news.dto.NewsDto;
 import com.stocklog.modules.market.news.dto.NewsResponse;
 import com.stocklog.modules.stock.stock.dto.StockDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 
 @Service
@@ -36,9 +41,16 @@ public class MarketFacadeService {
     }
 
     // ============== analysis Service ============== //
-    public MarketAnalysisResultResponse getMarketAnalysis(IndexDashboardDto dashboardDto) {
-        return analysisService.calculateMarketDiagnosis(dashboardDto);
+    public MarketRegimeDto getMarketAnalysisDto() {
+        return analysisService.analyzeMarket();
     }
+
+    public MarketRegimeResponse getMarketAnalysisResponse(int n) {
+        List<NewsDto> newsDtoList = newsService.getMarketNewsDESCTopN(n);
+        return analysisService.analyzeMarket(newsDtoList);
+    }
+
+
 
     // ============== News Service ============== //
     public NewsResponse fetchStockNews(StockDto stockDto, Pageable pageable) {
@@ -47,6 +59,10 @@ public class MarketFacadeService {
 
     public NewsResponse fetchMarketNews(Pageable pageable) {
         return newsService.getMarketNews(pageable);
+    }
+
+    public List<NewsDto> fetchNewsDtoList(int n) {
+        return newsService.getMarketNewsDESCTopN(n);
     }
 
 }

@@ -57,7 +57,7 @@ public record IndexDashboardDto(
         // ── 10. 기타 섹터 ──
         IndexDto nasdaqIseCybersecurity,
         IndexDto nasdaqBiotech,
-        IndexDto dowJonesUtility,
+        //IndexDto dowJonesUtility,
         IndexDto nasdaqConsumerStaples,
         IndexDto nasdaqCleanEnergy,
         IndexDto phlxGoldSilver,

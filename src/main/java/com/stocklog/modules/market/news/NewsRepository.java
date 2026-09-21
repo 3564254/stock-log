@@ -1,5 +1,6 @@
 package com.stocklog.modules.market.news;
 
+import com.stocklog.modules.market.diagnosis.MarketDiagnosis;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,5 +19,8 @@ public interface NewsRepository extends JpaRepository<News, Long> {
 
     @Query("SELECT s FROM News s WHERE s.related = :code")
     Page<News> findStockNews(@Param("code") String code, Pageable pageable);
+
+    @Query(value = "SELECT * FROM stock_news ORDER BY date_time DESC LIMIT :limit", nativeQuery = true)
+    List<News> findNewsDESCTopN(@Param("limit") int limit);
 
 }

@@ -123,24 +123,24 @@
 <span class="badge flex-shrink-0"
       style="font-size: 11px; padding: 4px 8px; font-weight: 600; border-radius: 6px;"
       :style="
-        ['DANGER_ZONE', 'WARNING_ZONE', 'COOLDOWN'].includes(item.marketPhase)
+        ['DANGER_ZONE', 'WARNING_ZONE', 'COOLDOWN'].includes(item.stockPhase)
           ? 'background:rgba(240,68,82,0.08); color:var(--toss-red);'
-        : ['SCALE_OUT'].includes(item.marketPhase)
+        : ['SCALE_OUT'].includes(item.stockPhase)
           ? 'background:rgba(5,192,114,0.08); color:var(--toss-green);'
-        : ['ENTRY_READY', 'STRONG_HOLD'].includes(item.marketPhase)
+        : ['ENTRY_READY', 'STRONG_HOLD'].includes(item.stockPhase)
           ? 'background:rgba(49,130,246,0.08); color:var(--toss-blue);'
         : 'background:#f2f4f6; color:#4e5968;'
       "
-      x-text="item.marketPhase === 'DANGER_ZONE' ? '하락 지속' :
-              item.marketPhase === 'RECOVERY_WATCH' ? '반등 관망' :
-              item.marketPhase === 'WATCH' ? '방향 탐색' :
-              item.marketPhase === 'SETUP' ? '진입 대기' :
-              item.marketPhase === 'ENTRY_READY' ? '진입 타이밍' :
-              item.marketPhase === 'STRONG_HOLD' ? '강세 지속' :
-              item.marketPhase === 'WARNING_ZONE' ? '과열 경고' :
-              item.marketPhase === 'SCALE_OUT' ? '분할 익절' :
-              item.marketPhase === 'COOLDOWN' ? '매매 휴식' :
-              item.marketPhase ? item.marketPhase : '분석 대기'">
+      x-text="item.stockPhase === 'DANGER_ZONE' ? '하락 지속' :
+              item.stockPhase === 'RECOVERY_WATCH' ? '반등 관망' :
+              item.stockPhase === 'WATCH' ? '방향 탐색' :
+              item.stockPhase === 'SETUP' ? '진입 대기' :
+              item.stockPhase === 'ENTRY_READY' ? '진입 타이밍' :
+              item.stockPhase === 'STRONG_HOLD' ? '강세 지속' :
+              item.stockPhase === 'WARNING_ZONE' ? '과열 경고' :
+              item.stockPhase === 'SCALE_OUT' ? '분할 익절' :
+              item.stockPhase === 'COOLDOWN' ? '매매 휴식' :
+              item.stockPhase ? item.stockPhase : '분석 대기'">
 </span>
 
                       <span x-show="item.targetPrice" class="fw-bold text-truncate" style="color:#8b95a1; font-size: 12px; white-space: nowrap;"

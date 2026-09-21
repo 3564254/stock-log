@@ -2,10 +2,7 @@ package com.stocklog.modules.stock.analysis.service;
 
 import com.stocklog.modules.stock.analysis.domain.signal.SignalResultBuilder;
 import com.stocklog.modules.stock.analysis.domain.signal.rule.SignalRule;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.MarketContext;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.MarketPhase;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.EntrySignal;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.MiniSignalDto;
+import com.stocklog.modules.stock.analysis.domain.signal.vo.*;
 import com.stocklog.modules.stock.chart.dto.StockChartDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +38,7 @@ public class EntrySignalAnalyzer {
             rule.evaluate(ctx, builder);
         }
 
-        MarketPhase currentPhase = determinePhase(ctx);
+        StockPhase currentPhase = determinePhase(ctx);
         addPhaseSpecificSignals(currentPhase, ctx, builder);
 
         PricingResult pricing = calculateTargets(ctx, currentPhase);
@@ -66,7 +63,7 @@ public class EntrySignalAnalyzer {
                 .build();
     }
 
-    public MarketPhase getPhase(MarketContext context) {
+    public StockPhase getPhase(MarketContext context) {
         return determinePhase(context);
     }
 
@@ -74,7 +71,7 @@ public class EntrySignalAnalyzer {
         MarketContext ctx = MarketContext.getMarketContext(dailyCharts, List.of());
         if (ctx == null) return null;
 
-        MarketPhase currentPhase = determinePhase(ctx);
+        StockPhase currentPhase = determinePhase(ctx);
         PricingResult pricing = calculateTargets(ctx, currentPhase);
         String phaseName = getShortPhaseName(currentPhase);
 
@@ -86,7 +83,7 @@ public class EntrySignalAnalyzer {
         );
     }
 
-    private String getShortPhaseName(MarketPhase phase) {
+    private String getShortPhaseName(StockPhase phase) {
         return switch (phase) {
             case DANGER_ZONE -> "하락 지속";
             case RECOVERY_WATCH -> "반등 초기";
@@ -119,7 +116,7 @@ public class EntrySignalAnalyzer {
         return isUs ? String.format("$%,.2f", val) : String.format("%,.0f원", val);
     }
 
-    public MarketPhase determinePhase(MarketContext ctx) {
+    public StockPhase determinePhase(MarketContext ctx) {
         int lastIdx = ctx.lastIdx();
 
         // ==========================================
@@ -189,25 +186,25 @@ public class EntrySignalAnalyzer {
 
         // 🚨 [0순위] 불트랩 방어 (가짜 돌파 후 윗꼬리 투매)
         if (isBullTrap) {
-            return MarketPhase.WARNING_ZONE;
+            return StockPhase.WARNING_ZONE;
         }
 
         // 🟢 [1순위] 베어트랩 및 투매 절정 (바닥 잡기)
         if (isBearTrap && ctx.rsi() < 40) {
-            return MarketPhase.ENTRY_READY; // 밴드 하단 이탈 후 대량거래 동반 말아올림 (찐바닥)
+            return StockPhase.ENTRY_READY; // 밴드 하단 이탈 후 대량거래 동반 말아올림 (찐바닥)
         }
 
         boolean isPanicSelling = ctx.currentPrice() < ctx.lower() && ctx.rsi() < 30;
         if (isPanicSelling) {
             if (isVolumeClimax && isBullishCandle) {
-                return MarketPhase.RECOVERY_WATCH; // 거래량 터진 양봉 발생 시 V자 반등 대기
+                return StockPhase.RECOVERY_WATCH; // 거래량 터진 양봉 발생 시 V자 반등 대기
             }
-            return MarketPhase.COOLDOWN; // 단순 패닉셀 지속
+            return StockPhase.COOLDOWN; // 단순 패닉셀 지속
         }
 
         // 🚨 [2순위] 치명적 지지선 이탈 (Gap Down)
         if (isGapDown && structuralDowntrend) {
-            return MarketPhase.COOLDOWN;
+            return StockPhase.COOLDOWN;
         }
 
         // 🔥 [3순위] 강력한 저항선 돌파 (POC, VWAP, 전고점)
@@ -217,24 +214,24 @@ public class EntrySignalAnalyzer {
 
         if (isAggressiveBreakout) {
             if (isGapUp || ctx.isStrongTrend()) {
-                return MarketPhase.STRONG_HOLD; // 저항선을 갭으로 넘거나, 이미 초강세장인 경우
+                return StockPhase.STRONG_HOLD; // 저항선을 갭으로 넘거나, 이미 초강세장인 경우
             }
-            return MarketPhase.ENTRY_READY; // 확실한 돌파 타점
+            return StockPhase.ENTRY_READY; // 확실한 돌파 타점
         }
 
         // ⚠️ [4순위] 과열 구간 및 모멘텀 둔화 (Scale Out)
         if (ctx.rsi() >= 70 || ctx.currentPrice() >= ctx.upper()) {
             // 고점이 낮아지거나(LH), MACD가 꺾이거나, 매도 거래량이 터지면 익절 시작
             if (!ctx.macd().isHistogramRising() || ctx.isVolBearish() || ctx.isLH()) {
-                return MarketPhase.SCALE_OUT;
+                return StockPhase.SCALE_OUT;
             }
-            return MarketPhase.WARNING_ZONE; // 아직 꺾이진 않은 과열 상태
+            return StockPhase.WARNING_ZONE; // 아직 꺾이진 않은 과열 상태
         }
 
         // 📉 [5순위] 하락장 속 반등 시그널 판단
         if (structuralDowntrend || shortTermDowntrend) {
             if (isDeadCatBounce) {
-                return MarketPhase.DANGER_ZONE; // 거래량 없는 가짜 반등은 즉시 무시
+                return StockPhase.DANGER_ZONE; // 거래량 없는 가짜 반등은 즉시 무시
             }
 
             int recoverySignals = 0;
@@ -245,45 +242,45 @@ public class EntrySignalAnalyzer {
             if (ctx.isHL()) recoverySignals++; // 저점 상승(Higher Low) 확인
 
             if (recoverySignals >= 3) {
-                return MarketPhase.RECOVERY_WATCH;
+                return StockPhase.RECOVERY_WATCH;
             }
-            return MarketPhase.DANGER_ZONE; // 조건 미달 시 하락장 유지
+            return StockPhase.DANGER_ZONE; // 조건 미달 시 하락장 유지
         }
 
         // 🎯 [6순위] 돌파 전 폭발 임박 (Squeeze) 및 눌림목 (Pullback)
         if (ctx.isSqueeze()) {
-            return MarketPhase.SETUP; // 볼린저 밴드 극단적 수축 -> 위아래 방향성 결정 주시
+            return StockPhase.SETUP; // 볼린저 밴드 극단적 수축 -> 위아래 방향성 결정 주시
         }
 
         boolean reclaimedMa5 = ctx.yesterdayPrice() <= ctx.ma5Yesterday() && ctx.currentPrice() > ctx.ma5();
         boolean isPullbackEntry = isNearMa20 && reclaimedMa5 && ctx.isMa20Rising() && isBullishCandle && ctx.isVolBullish();
 
         if (isPullbackEntry) {
-            return MarketPhase.ENTRY_READY; // 20일선 눌림 후 5일선 회복 (교과서적 눌림목)
+            return StockPhase.ENTRY_READY; // 20일선 눌림 후 5일선 회복 (교과서적 눌림목)
         }
 
         if (ctx.isUptrend() && isNearMa20 && ctx.currentPrice() < ctx.ma5()) {
-            return MarketPhase.SETUP; // 아직 반등 양봉은 안 나왔으나 20일선 근처에서 대기 중
+            return StockPhase.SETUP; // 아직 반등 양봉은 안 나왔으나 20일선 근처에서 대기 중
         }
 
         // 💎 [7순위] 추세 지속 판단
         if (ctx.isMacroUptrend() || ctx.isStrongTrend()) {
             // ADX가 25 이상이며 20일선 위에 있으면 추세 홀딩
             if (ctx.adx() >= 25 && ctx.isMa20Rising() && ctx.currentPrice() > ctx.ma20()) {
-                return MarketPhase.STRONG_HOLD;
+                return StockPhase.STRONG_HOLD;
             }
         }
 
         // 💤 [8순위] 기타 횡보 및 관망
         if (ctx.isSideways() || ctx.isWeakTrend()) {
-            return MarketPhase.WATCH;
+            return StockPhase.WATCH;
         }
 
-        return MarketPhase.WATCH;
+        return StockPhase.WATCH;
     }
 
-    private void addPhaseSpecificSignals(MarketPhase phase, MarketContext ctx, SignalResultBuilder builder) {
-        if (ctx.isUptrend() && phase != MarketPhase.DANGER_ZONE && phase != MarketPhase.WATCH) {
+    private void addPhaseSpecificSignals(StockPhase phase, MarketContext ctx, SignalResultBuilder builder) {
+        if (ctx.isUptrend() && phase != StockPhase.DANGER_ZONE && phase != StockPhase.WATCH) {
             builder.addBuySignal("✅ [추세 확립] 정배열 및 20일선 우상향 기울기 확보");
         }
 
@@ -303,7 +300,7 @@ public class EntrySignalAnalyzer {
         }
     }
 
-    private PricingResult calculateTargets(MarketContext ctx, MarketPhase phase) {
+    private PricingResult calculateTargets(MarketContext ctx, StockPhase phase) {
         double atr = ctx.atr();
         double cur = ctx.currentPrice();
 
@@ -327,7 +324,7 @@ public class EntrySignalAnalyzer {
         double primaryEntry, secondaryEntry, stopLoss, primaryTarget, secondaryTarget, trailingStop;
         double bestSupport = !downSupports.isEmpty() ? downSupports.get(0) : cur - (atr * 0.5);
 
-        if (phase == MarketPhase.STRONG_HOLD) {
+        if (phase == StockPhase.STRONG_HOLD) {
             primaryEntry   = Math.max(bestSupport, cur - (atr * STRONG_HOLD_MAX_ATR));
             secondaryEntry = Math.max(primaryEntry - (atr * 0.8), ctx.ma20());
             stopLoss       = secondaryEntry - (atr * 0.5);
@@ -335,7 +332,7 @@ public class EntrySignalAnalyzer {
             primaryTarget  = !upResistances.isEmpty() ? upResistances.get(0) : cur + (atr * 1.5);
             secondaryTarget = primaryTarget + (atr * 1.0);
 
-        } else if (phase == MarketPhase.ENTRY_READY || phase == MarketPhase.SETUP) {
+        } else if (phase == StockPhase.ENTRY_READY || phase == StockPhase.SETUP) {
             primaryEntry   = Math.max(bestSupport, cur - (atr * ENTRY_SETUP_MAX_ATR));
 
             double nextSupport = downSupports.size() > 1 ? downSupports.get(1) : primaryEntry - (atr * 0.8);
@@ -347,7 +344,7 @@ public class EntrySignalAnalyzer {
             primaryTarget  = !upResistances.isEmpty() ? upResistances.get(0) : cur + (atr * 1.2);
             secondaryTarget = primaryTarget + (atr * 1.0);
 
-        } else if (phase == MarketPhase.WARNING_ZONE || phase == MarketPhase.SCALE_OUT) {
+        } else if (phase == StockPhase.WARNING_ZONE || phase == StockPhase.SCALE_OUT) {
             primaryEntry   = Math.max(Math.min(cur - (atr * 1.0), ctx.ma20()), cur - (atr * WARNING_SCALEOUT_MAX_ATR));
             secondaryEntry = primaryEntry - (atr * 1.0);
             stopLoss       = (ctx.ma50() > 0 ? ctx.ma50() : secondaryEntry) - (atr * 0.5);
@@ -415,7 +412,7 @@ public class EntrySignalAnalyzer {
     // 행동강령 렌더링
     private String generateVerdict(
             MarketContext ctx,
-            MarketPhase phase,
+            StockPhase phase,
             PricingResult pricing
     ) {
         StringBuilder sb = new StringBuilder();
@@ -798,10 +795,10 @@ public class EntrySignalAnalyzer {
             }
         }
 
-        boolean isEntryPhase = (phase == MarketPhase.RECOVERY_WATCH
-                || phase == MarketPhase.SETUP
-                || phase == MarketPhase.ENTRY_READY
-                || phase == MarketPhase.STRONG_HOLD);
+        boolean isEntryPhase = (phase == StockPhase.RECOVERY_WATCH
+                || phase == StockPhase.SETUP
+                || phase == StockPhase.ENTRY_READY
+                || phase == StockPhase.STRONG_HOLD);
         if (isEntryPhase) {
             if (rr > 0 && rr < 0.6) {
                 sb.append("""
@@ -840,7 +837,7 @@ public class EntrySignalAnalyzer {
         """);
     }
 
-    private String getPhaseFactBriefing(MarketPhase phase, MarketContext ctx) {
+    private String getPhaseFactBriefing(StockPhase phase, MarketContext ctx) {
         return switch (phase) {
             case DANGER_ZONE -> {
                 if (ctx.projectedVolume() > ctx.volumeMa5() * 2.0) {

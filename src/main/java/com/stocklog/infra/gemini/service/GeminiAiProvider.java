@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stocklog.infra.gemini.dto.GeminiRequest;
 import com.stocklog.modules.ai.AiProvider;
+import com.stocklog.modules.market.analysis.dto.EngineInput;
+import com.stocklog.modules.market.news.dto.NewsDto;
 import com.stocklog.modules.purchase.portfolio.analysis.dto.PortfolioAnalysisResult;
 import com.stocklog.modules.purchase.portfolio.dto.response.PortfolioAnalysisResponse;
 import com.stocklog.modules.stock.analysis.domain.signal.vo.EntrySignal;
@@ -157,5 +159,69 @@ public class GeminiAiProvider implements AiProvider {
         } catch (Exception e) {
             return "AI 분석 중 오류 발생";
         }
+    }
+    @Override
+    public String getMarketAnalysis(EngineInput input, List<NewsDto> newsList) {
+        // 1. 퀀트 로우 데이터 JSON 변환
+        String rawDataJson = "{}";
+        try {
+            if (input != null) {
+                rawDataJson = new ObjectMapper().writeValueAsString(input);
+            }
+        } catch (Exception e) {
+            rawDataJson = "데이터 직렬화 실패";
+        }
+
+        // 2. 실시간 핵심 뉴스 데이터 추출 (최신 최대 15개 헤드라인 선별)
+        String newsData = "최신 뉴스 데이터 없음";
+        if (newsList != null && !newsList.isEmpty()) {
+            newsData = newsList.stream()
+                    .filter(n -> n.headline() != null && !n.headline().isBlank())
+                    .limit(15)
+                    .map(n -> String.format("- [%s|%s] %s",
+                            n.category() != null ? n.category() : "일반",
+                            n.source() != null ? n.source() : "언론사",
+                            n.headline().trim()))
+                    .collect(Collectors.joining("\n"));
+        }
+
+        String prompt = String.format("""
+        당신은 글로벌 탑티어 헤지펀드의 수석 매크로 전략가야. 12개 퀀트 분석 엔진의 로우 데이터(JSON)와 실시간 뉴스(내러티브)를 융합 분석하여, 시장의 본질을 꿰뚫고 당장 취해야 할 포지셔닝 전략을 날카롭게 제시해.
+
+        [1. 퀀트 로우 데이터 (12개 분석기 세부 수치)]
+        %s
+
+        [2. 실시간 핵심 뉴스 헤드라인 (내러티브 및 촉매 파악용 - 최신 15건)]
+        %s
+
+        [🚨 절대 엄수 지시사항 - 위반 시 해고]
+        1. 퀀트와 뉴스의 결합(Synthesis): "뉴스의 A 이슈 때문에 퀀트 지표 B가 이렇게 움직이고 있다"는 식으로 숫자와 내러티브의 인과관계를 반드시 연결해서 설명할 것
+        2. 수치 인용은 절제해서 사용할 것:
+           - 각 소제목(문단)마다 숫자는 최대 1~2개까지만 인용할 것. 그 이상 쓰지 말 것
+           - 문단 전체(4개 소제목)를 통틀어 인용하는 숫자는 최대 5~6개를 넘기지 말 것
+           - "A가 90.0점, B가 -50.0점, C가 6.39%%로..." 처럼 여러 지표를 나열하는 문장은 절대 쓰지 말 것. 한 문장에는 숫자를 하나만 넣을 것
+           - 숫자를 뒷받침 근거로 쓸 지표를 먼저 하나 고르고, 나머지 관련 지표들은 숫자 없이 "~도 함께 약세를 보이며" 같은 방향성 서술로만 표현할 것
+        3. 단순 뉴스 나열 금지: 개별 기사를 요약하지 말고, 전체 뉴스를 관통하는 핵심 테마를 추출해 분석할 것
+        4. 문체 및 포맷: 
+           - 인사말과 서론 절대 생략
+           - 마크다운 볼드체 기호 사용 절대 금지
+           - 한 문단은 2~3문장을 넘기지 말고, 각 문장은 하나의 주장만 담을 것 (여러 근거를 한 문장에 우겨넣지 말 것)
+           - 모든 문장의 끝은 반드시 간결한 명사형으로 종결 (~함, ~임, ~요망, ~필요, ~관망, ~확대, ~축소 등)
+           - 문장 끝에 온점 등 문장 부호 절대 금지
+
+        아래 4가지 소제목을 사용하여 밀도 있고 예리하게 작성해 (각 2~3문장, 숫자는 문단당 1~2개 이내).
+
+        🌐 매크로 및 시장 국면 진단 (추세, 모멘텀, 매크로 퀀트 데이터를 종합하여 현재 장세의 본질적 상태 진단 — 가장 결정적인 지표 하나를 중심으로)
+        🔥 펀더멘털 및 내러티브 흐름 (주도 섹터 데이터와 핵심 뉴스를 엮어 스마트 머니의 이동 경로와 촉매제 분석)
+        ⚠️ 시스템 리스크 및 꼬리 위험 (시장 확산도, 신용 데이터, 악재성 뉴스를 종합하여 잠재적 하방 압력 진단)
+        🎯 퀀트-뉴스 융합 포지셔닝 전략 (데이터와 내러티브를 종합하여 현재 국면에 맞는 포트폴리오 비중 조절 액션 플랜 제안)
+
+        ※ 마지막 줄에는 반드시 다음 문구를 그대로 출력할 것: ※ 본 분석은 퀀트 데이터 및 언론 보도 기반의 참고용이며, 투자 권유 아님
+        """,
+                rawDataJson,
+                newsData
+        );
+
+        return callGemini(prompt);
     }
 }

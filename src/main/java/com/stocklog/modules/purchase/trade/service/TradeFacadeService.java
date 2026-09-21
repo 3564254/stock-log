@@ -7,7 +7,7 @@ import com.stocklog.modules.purchase.trade.dto.response.*;
 import com.stocklog.modules.purchase.trade.dto.vo.WatchItemDto;
 import com.stocklog.modules.purchase.trade.entity.SortType;
 import com.stocklog.modules.stock.analysis.domain.signal.vo.MarketContext;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.MarketPhase;
+import com.stocklog.modules.stock.analysis.domain.signal.vo.StockPhase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,7 +68,7 @@ public class TradeFacadeService {
     }
 
 
-    public TradingRuleCheckResponse evaluateBuySignal(Long memberId, MarketContext marketContext, MarketPhase phase) {
+    public TradingRuleCheckResponse evaluateBuySignal(Long memberId, MarketContext marketContext, StockPhase phase) {
         return tradingRuleService.evaluateBuySignal(memberId, marketContext, phase);
     }
 
@@ -98,7 +98,7 @@ public class TradeFacadeService {
     }
 
     @Transactional
-    public void updateAnalyzedSignal(Long memberId, String stockCode, MarketPhase phase, double targetPrice) {
+    public void updateAnalyzedSignal(Long memberId, String stockCode, StockPhase phase, double targetPrice) {
         watchlistService.updateAnalyzedSignal(memberId, stockCode, phase, targetPrice);
     }
 

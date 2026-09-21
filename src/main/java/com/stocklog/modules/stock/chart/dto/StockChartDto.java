@@ -1,5 +1,6 @@
 package com.stocklog.modules.stock.chart.dto;
 
+import com.stocklog.modules.common.finance.vo.CandleChartDto;
 import com.stocklog.modules.stock.chart.StockChart;
 import lombok.Builder;
 
@@ -8,18 +9,18 @@ import java.time.LocalDate;
 
 @Builder
 public record StockChartDto(
-        LocalDate time,
+        LocalDate date,
         BigDecimal open,
         BigDecimal close,
         BigDecimal high,
         BigDecimal low,
         BigDecimal volume
-)
+) implements CandleChartDto
 {
 
     public static StockChartDto createFallback() {
         return StockChartDto.builder()
-                .time(null)
+                .date(null)
                 .open(BigDecimal.ZERO)
                 .close(BigDecimal.ZERO)
                 .high(BigDecimal.ZERO)
@@ -30,7 +31,7 @@ public record StockChartDto(
 
     public static StockChartDto from(StockChart chart) {
         return StockChartDto.builder()
-                .time(chart.getTradeDate())
+                .date(chart.getTradeDate())
                 .open(chart.getOpenPrice())
                 .close(chart.getClosePrice())
                 .high(chart.getHighPrice())
@@ -44,6 +45,10 @@ public record StockChartDto(
         return rawDate.substring(0, 4) + "-" +
                 rawDate.substring(4, 6) + "-" +
                 rawDate.substring(6, 8);
+    }
+
+    public double closeDoubleValue() {
+        return close.doubleValue();
     }
 }
 

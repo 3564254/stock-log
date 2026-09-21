@@ -134,7 +134,7 @@ public class StockChartService {
         List<StockChart> newCharts = response.chartDtoList().stream()
                 .map(data -> StockChart.builder()
                         .code(code)
-                        .tradeDate(data.time())
+                        .tradeDate(data.date())
                         .openPrice(data.open())
                         .highPrice(data.high())
                         .lowPrice(data.low())
@@ -149,7 +149,7 @@ public class StockChartService {
         chartRepository.saveAll(newCharts);
 
         return response.chartDtoList().stream()
-                .sorted(Comparator.comparing(StockChartDto::time))
+                .sorted(Comparator.comparing(StockChartDto::date))
                 .toList();
     }
 }

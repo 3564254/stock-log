@@ -788,14 +788,20 @@
 
                     if (dataList && dataList.length > 0) {
                         const formatted = dataList
-                            .filter(d => d.time && d.close)
+                            // 💡 'time' 필드가 없더라도 'date' 필드가 있으면 렌더링되도록 방어 코드 적용
+                            .filter(d => (d.time || d.date) && (d.close !== undefined || d.price !== undefined || d.value !== undefined))
                             .map(d => {
-                                let t = String(d.time);
-                                let chartTime = t.length === 8 ? `${t.substring(0,4)}-${t.substring(4,6)}-${t.substring(6,8)}` : t;
-                                const open = Number(d.open);
-                                const close = Number(d.close);
+                                let rawTime = d.time || d.date;
+                                let t = String(rawTime).split('T')[0];
+                                let chartTime = t.length === 8 && !t.includes('-') ? `${t.substring(0,4)}-${t.substring(4,6)}-${t.substring(6,8)}` : t;
+
+                                const close = Number(d.close !== undefined ? d.close : (d.price !== undefined ? d.price : d.value));
+                                const open = d.open !== undefined ? Number(d.open) : close;
+                                const high = d.high !== undefined ? Number(d.high) : close;
+                                const low = d.low !== undefined ? Number(d.low) : close;
+
                                 return {
-                                    time: chartTime, open: open, high: d.high ? Number(d.high) : close, low: d.low ? Number(d.low) : close, close: close, value: Number(d.volume || 0),
+                                    time: chartTime, open: open, high: high, low: low, close: close, value: Number(d.volume || 0),
                                     color: open > close ? 'rgba(49, 130, 246, 0.2)' : 'rgba(240, 68, 82, 0.2)',
                                     upper: d.bollingerUpper, mid: d.bollingerMid, lower: d.bollingerLower
                                 };

@@ -2,7 +2,7 @@ package com.stocklog.modules.purchase.trade.dto.vo;
 
 
 import com.stocklog.modules.purchase.trade.entity.WatchItem;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.MarketPhase;
+import com.stocklog.modules.stock.analysis.domain.signal.vo.StockPhase;
 import lombok.Builder;
 
 @Builder
@@ -11,7 +11,7 @@ public record WatchItemDto(
         String stockCode,
         String stockName,
         String market,
-        MarketPhase marketPhase,
+        StockPhase stockPhase,
         Double targetPrice
 ) {
     public static WatchItemDto of(WatchItem watchItem) {
@@ -20,7 +20,7 @@ public record WatchItemDto(
                 watchItem.getStock().getCode(),
                 watchItem.getStock().getName(),
                 watchItem.getStock().getMarketType().name(),
-                watchItem.getMarketPhase(),
+                watchItem.getStockPhase(),
                 watchItem.getTargetPrice()
         );
     }

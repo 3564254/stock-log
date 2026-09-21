@@ -1,7 +1,7 @@
 package com.stocklog.modules.stock.analysis.utils;
 
-import com.stocklog.modules.stock.analysis.domain.signal.vo.MacdResult;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.Pivot;
+import com.stocklog.modules.common.finance.vo.MacdResult;
+import com.stocklog.modules.common.finance.vo.Pivot;
 
 import java.time.LocalDate;
 import java.time.LocalTime;

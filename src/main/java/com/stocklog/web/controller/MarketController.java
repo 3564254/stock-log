@@ -1,6 +1,7 @@
 package com.stocklog.web.controller;
 
-import com.stocklog.modules.market.analysis.dto.MarketAnalysisResultResponse;
+import com.stocklog.modules.market.analysis.dto.MarketRegimeDto;
+import com.stocklog.modules.market.analysis.dto.MarketRegimeResponse;
 import com.stocklog.modules.market.index.dto.IndexDashboardDto;
 import com.stocklog.modules.market.news.dto.NewsResponse;
 import com.stocklog.modules.market.service.MarketFacadeService;
@@ -22,6 +23,7 @@ public class MarketController {
 
 
 
+
     @GetMapping("/market")
     public String marketPage(
             @LoginUser MemberResponse loginMember,
@@ -30,13 +32,13 @@ public class MarketController {
     ) {
 
         IndexDashboardDto indexDashboard = marketFacadeService.getMarketDashboard();
-        MarketAnalysisResultResponse marketAnalysisResultResponse = marketFacadeService.getMarketAnalysis(indexDashboard);
+        MarketRegimeResponse marketAnalysisResult = marketFacadeService.getMarketAnalysisResponse(15);
         NewsResponse news = marketFacadeService.fetchMarketNews(pageable);
 
 
         model.addAttribute("loginMember", loginMember);
         model.addAttribute("indexDashboard", indexDashboard);
-        model.addAttribute("marketAnalysis", marketAnalysisResultResponse);
+        model.addAttribute("marketAnalysis", marketAnalysisResult);
         model.addAttribute("news", news);
 
         return "market/market";

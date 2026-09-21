@@ -1,4 +1,4 @@
-package com.stocklog.modules.stock.analysis.domain.signal.vo;
+package com.stocklog.modules.common.finance.vo;
 
 import com.stocklog.modules.stock.domain.type.Period;
 import lombok.Builder;
@@ -44,5 +44,9 @@ public record Pivot(
                 low - 2 * (high - p),     // S3 (저가 - 2 * (고가 - 중심))
                 Period.DAY
         );
+    }
+
+    public static Pivot createFallback(Period period) {
+        return new Pivot(0, 0, 0, 0, 0, 0, 0, period);
     }
 }

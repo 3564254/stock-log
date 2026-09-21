@@ -1,17 +1,16 @@
 package com.stocklog.modules.market.chart;
 
-import com.stocklog.modules.market.index.type.IndexType;
 import lombok.Builder;
 
 import java.util.List;
 
 @Builder
 public record MarketChartResponse(
-        List<MarketChartDto> marketChartDtoList
+        List<MarketChartData> marketChartDataList
 ) {
     public static MarketChartResponse createFallback() {
         return MarketChartResponse.builder()
-                .marketChartDtoList(List.of())
+                .marketChartDataList(List.of())
                 .build();
     }
 }

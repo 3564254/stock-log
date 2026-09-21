@@ -1,9 +1,9 @@
 package com.stocklog.infra.fred.indexdata.api;
 
 import com.stocklog.modules.market.index.dto.IndexDto;
-import com.stocklog.modules.market.index.dto.vo.IndexChartData;
+import com.stocklog.modules.market.index.dto.IndexChartDto;
 import com.stocklog.modules.market.index.provider.IndexChartProvider;
-import com.stocklog.modules.market.index.type.IndexType;
+import com.stocklog.modules.market.domain.type.IndexType;
 import com.stocklog.infra.fred.config.FredProperties;
 import com.stocklog.infra.fred.indexdata.dto.IndexChartOutput1;
 import lombok.extern.slf4j.Slf4j;
@@ -39,11 +39,11 @@ public class FredIndexChartProvider implements IndexChartProvider {
                 return IndexDto.createFallback();
             }
 
-            List<IndexChartData> chartDataList = Arrays.stream(output.getObservations())
+            List<IndexChartDto> chartDataList = Arrays.stream(output.getObservations())
                     .filter(obs -> obs.getValue() != null && !obs.getValue().equals("."))
-                    .map(obs -> IndexChartData.builder()
-                            .date(LocalDate.parse(obs.getDate())) // (주의: 도메인 객체 필드명에 맞게 세팅. date가 아니라 time이면 .time(...) 으로 변경)
-                            .value(new BigDecimal(obs.getValue()))
+                    .map(obs -> IndexChartDto.builder()
+                            .date(LocalDate.parse(obs.getDate())) // (주의: 도메인 객체 필드명에 맞게 세팅. date가 아니라 time이면 .date(...) 으로 변경)
+                            .close(new BigDecimal(obs.getValue()))
                             .build())
                     .collect(Collectors.toList());
 
@@ -60,7 +60,7 @@ public class FredIndexChartProvider implements IndexChartProvider {
 
     private IndexChartOutput1 callApi(IndexType type) {
         LocalDate end = LocalDate.now();
-        LocalDate start = end.minusYears(1);
+        LocalDate start = end.minusYears(3);
 
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder

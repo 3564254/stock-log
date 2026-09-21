@@ -14,7 +14,7 @@ import com.stocklog.modules.purchase.trade.dto.response.TradingRuleCheckResponse
 import com.stocklog.modules.purchase.trade.service.TradeFacadeService;
 import com.stocklog.modules.stock.analysis.StockAnalysisService;
 import com.stocklog.modules.stock.analysis.domain.signal.vo.MarketContext;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.MarketPhase;
+import com.stocklog.modules.stock.analysis.domain.signal.vo.StockPhase;
 import com.stocklog.modules.stock.analysis.domain.signal.vo.MiniSignalDto;
 import com.stocklog.modules.stock.chart.StockChartService;
 import com.stocklog.modules.stock.chart.dto.StockChartDto;
@@ -105,11 +105,11 @@ public class PortfolioApiController {
 
         MarketContext marketContext = MarketContext.getMarketContext(dailyCharts, weeklyCharts);
         MiniSignalDto miniSignal = analysisService.getMiniSignal(dailyCharts);
-        MarketPhase marketPhase = analysisService.getMarketPhase(marketContext);
+        StockPhase stockPhase = analysisService.getMarketPhase(marketContext);
 
         tradeService.updateAnalyzedSignal(loginMember.getId(), stockCode, miniSignal.phase(), miniSignal.primaryEntry());
 
-        return tradeService.evaluateBuySignal(loginMember.getId(), marketContext, marketPhase);
+        return tradeService.evaluateBuySignal(loginMember.getId(), marketContext, stockPhase);
     }
 
     @PostMapping("/verify/sell")

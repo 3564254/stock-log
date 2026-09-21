@@ -1,6 +1,6 @@
 package com.stocklog.modules.stock.analysis.domain.signal.vo;
 
-public enum MarketPhase {
+public enum StockPhase {
     // ── 1. 하락 및 회복 국면 ──
     /** [DANGER] 주가 < 20 < 60 < 120 (역배열). 하락 추세 지속 중 매매 절대 금지 */
     DANGER_ZONE,

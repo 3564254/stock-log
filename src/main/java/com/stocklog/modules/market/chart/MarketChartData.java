@@ -1,31 +1,31 @@
 package com.stocklog.modules.market.chart;
 
-import com.stocklog.modules.market.index.dto.vo.IndexChartData;
+import com.stocklog.modules.market.index.dto.IndexChartDto;
 import com.stocklog.modules.market.index.entity.MarketIndexHistory;
-import com.stocklog.modules.market.index.type.IndexType;
+import com.stocklog.modules.market.domain.type.IndexType;
 import lombok.Builder;
 
 import java.util.List;
 
 @Builder
-public record MarketChartDto(
+public record MarketChartData(
         IndexType indexType,
-        List<IndexChartData> chartDataList
+        List<IndexChartDto> chartDataList
 ) {
-    public static MarketChartDto createFallback() {
-        return MarketChartDto.builder()
+    public static MarketChartData createFallback() {
+        return MarketChartData.builder()
                 .indexType(null)
                 .chartDataList(List.of()).build();
     }
 
-    public static MarketChartDto from(List<MarketIndexHistory> histories) {
+    public static MarketChartData from(List<MarketIndexHistory> histories) {
         if (histories == null) return createFallback();
 
         MarketIndexHistory recentHistory = histories.get(0);
 
-        return MarketChartDto.builder()
+        return MarketChartData.builder()
                 .indexType(IndexType.fromSeriesId(recentHistory.getSymbol()))
-                .chartDataList(histories.stream().map(IndexChartData::from).toList())
+                .chartDataList(histories.stream().map(IndexChartDto::from).toList())
                 .build();
     }
 }
