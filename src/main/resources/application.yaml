@@ -1,22 +1,22 @@
 spring:
   application:
     name: StockLog
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
   datasource:
-    url: jdbc:h2:file:./data/testdb;MODE=MySQL  # 기존: jdbc:h2:mem:testdb;MODE=MySQL
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    # MySQL 접속 URL (데이터베이스명 'stocklog')
+    url: jdbc:mysql://localhost:3306/stocklog?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # MYSQL_USER 환경변수가 없으면 기본값 root 사용
+    username: root
+    password: ${MYSQL_PASSWORD}
   jpa:
     # TODO(JPA): 개발 편의의 ddl-auto:update는 운영 스키마 변경을 안전하게 관리하지 못한다.
     # profile별로 validate를 사용하고 Flyway/Liquibase 같은 migration 도구로 스키마 변경 이력을 관리해 보자.
     show-sql: false
     hibernate:
       ddl-auto: update
-
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
 
     # TODO(JPA): OSIV의 사용 여부를 명시적으로 결정하자. false로 두면 Controller/View에서의 지연 로딩을 막아
     # N+1을 빨리 발견할 수 있지만, 필요한 데이터는 Service 트랜잭션 안에서 DTO로 완성해야 한다.
@@ -31,9 +31,6 @@ spring:
       force: true
       enabled: true
 
-
-
-
 kis:
   app-key: ${KIS_APP_KEY}
   app-secret: ${KIS_APP_SECRET}
@@ -47,8 +44,11 @@ exchange:
 
 gemini:
   api:
-    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent
-    key: {GEMINI_API_KEY}
+    key: ${GEMINI_API_KEY}
+    base-url: https://generativelanguage.googleapis.com/v1beta/models/
+    models:
+      flash: gemini-3-flash-preview:generateContent
+      pro: gemini-3.1-pro-preview:generateContent
 
 finnhub:
   api:

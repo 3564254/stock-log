@@ -74,7 +74,8 @@ public class MarketRegimeEngine {
     }
 
     private static double getWeightedScore(EngineInput input) {
-        double weightedScore =
+
+        double coreScore =
                 (input.trend().score() * 0.15) +
                         (input.momentum().score() * 0.10) +
                         (input.breadth().score() * 0.10) +
@@ -87,8 +88,17 @@ public class MarketRegimeEngine {
                         (input.defensive().score() * 0.025) +
                         (input.crossAsset().score() * 0.025);
 
-        weightedScore += input.divergence().score();
-        return Math.max(-100.0, Math.min(100.0, weightedScore));
+        // Divergence는 시장 방향 자체가 아니라 경고 레이어로 반영
+        double divergenceAdjustment =
+                input.divergence().score() * 0.35;
+
+        double totalScore =
+                coreScore + divergenceAdjustment;
+
+        return Math.max(
+                -100.0,
+                Math.min(100.0, totalScore)
+        );
     }
 
     private String extractMacroRegime(AnalyzerScore macro) {

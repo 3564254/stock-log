@@ -85,9 +85,13 @@
     /* ── 뉴스 그리드 ── */
     .news-row { display: flex; gap: 20px; transition: background 0.15s ease, transform 0.15s ease; cursor: pointer; text-decoration: none; color: inherit; }
     .news-row:hover { background-color: #f9fafb; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-    .news-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
-    .news-title { font-size: 16px; font-weight: 700; color: #191f28; line-height: 1.5; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .news-summary { font-size: 14px; color: #6b7684; font-weight: 500; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 12px; }
+    .news-content { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; }
+    .news-title { font-size: 16px; font-weight: 700; color: #191f28; line-height: 1.5; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: break-word; }
+    .news-summary { font-size: 14px; color: #6b7684; font-weight: 500; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: break-word; margin-bottom: 12px; }
+
+    /* AI 수석 전략가 코멘트: 기본은 3~4줄만, '더보기' 클릭 시 전체 펼침 */
+    .ai-comment-text { max-height: 88px; overflow: hidden; transition: max-height 0.3s ease; mask-image: linear-gradient(to bottom, black 60%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%); }
+    .ai-comment-text.expanded { max-height: 2000px; mask-image: none; -webkit-mask-image: none; }
     .news-meta { font-size: 13px; font-weight: 500; color: #8b95a1; }
     .news-thumbnail { width: 120px; height: 84px; border-radius: 8px; object-fit: cover; flex-shrink: 0; border: 1px solid #f2f4f6; }
 
@@ -261,10 +265,16 @@
                 <i class="bi bi-magic me-2" style="color: #3182f6; font-size: 16px;"></i>
                 <span class="fw-bold text-dark" style="font-size: 15px;">AI 수석 전략가 종합 시황</span>
               </div>
-              <!-- white-space: pre-wrap을 적용하여 AI가 생성한 줄바꿈(\n)을 그대로 화면에 렌더링합니다. -->
-              <div style="font-size: 14.5px; color: #333d4b; line-height: 1.75; white-space: pre-wrap; word-break: keep-all;"
+              <!-- 기본은 3~4줄만 보여주고, '더보기'를 눌러야 전체가 펼쳐짐. white-space: pre-wrap으로 AI가 생성한 줄바꿈(\n)은 그대로 유지. -->
+              <div class="ai-comment-text" :class="{ 'expanded': aiCommentExpanded }"
+                   style="font-size: 14.5px; color: #333d4b; line-height: 1.75; white-space: pre-wrap; word-break: keep-all;"
                    th:text="${marketAnalysis.comment}">
               </div>
+              <button type="button" class="align-self-start mt-2" @click="aiCommentExpanded = !aiCommentExpanded"
+                      style="border: none; background: none; padding: 0; font-size: 13px; font-weight: 700; color: var(--toss-blue, #3182f6);">
+                <span x-text="aiCommentExpanded ? '접기' : '더보기'"></span>
+                <i class="bi" :class="aiCommentExpanded ? 'bi-chevron-up' : 'bi-chevron-down'" style="font-size: 11px; margin-left: 2px;"></i>
+              </button>
             </div>
           </div>
         </div>
@@ -274,7 +284,13 @@
           <div class="col-12">
             <div class="toss-card mb-0">
               <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
-                <h3 class="fw-bold m-0 text-dark" style="font-size: 18px;">주요 자산 흐름 (최근 1년)</h3>
+                <div>
+                  <h3 class="fw-bold m-0 text-dark" style="font-size: 18px;" x-text="getDisplayName(activeTab)">S&P 500</h3>
+                  <div class="d-flex align-items-center gap-2 mt-1">
+                    <span class="fw-bold" style="font-size: 15px; color: #191f28;" x-text="formatValue(activeTab)"></span>
+                    <span class="fw-bold" :class="getChangeColorClass(activeTab)" style="font-size: 13px;" x-text="formatChange(activeTab)"></span>
+                  </div>
+                </div>
                 <div class="tab-nav mb-0">
                   <button class="tab-btn" :class="activeTab === 'SP500' ? 'active' : ''" @click="changeTab('SP500')">S&P 500</button>
                   <button class="tab-btn" :class="activeTab === 'NASDAQ100' ? 'active' : ''" @click="changeTab('NASDAQ100')">나스닥 100</button>
@@ -288,109 +304,34 @@
           </div>
         </div>
 
-        <!-- Bottom Row: 4개의 패널 -->
+        <!-- Bottom Row: 지표 패널 (분석 엔진 카테고리 기준, indicatorPanels 배열로 관리) -->
         <div class="row g-4 mb-4 fu d4">
-
-          <div class="col-xxl-6 col-xl-6 col-12">
-            <div class="toss-card h-100 mb-0 p-4">
-              <h4 class="section-title mb-3"><i class="bi bi-graph-up"></i>증시 & 변동성</h4>
-              <div class="d-flex flex-column">
-                <template x-for="type in ['SP500', 'NASDAQ100', 'DOW_JONES', 'PHLX_SEMI', 'VIX']" :key="type">
-                  <div class="compact-indicator-row">
-                    <div style="flex: 1; min-width: 0; padding-right: 12px;">
-                      <div class="compact-name" x-text="getDisplayName(type)"></div>
-                      <div class="compact-date" x-text="formatDate(type)"></div>
-                    </div>
-                    <div class="d-flex align-items-center gap-3 flex-shrink-0">
-                      <svg class="compact-sparkline" preserveAspectRatio="none" viewBox="0 0 100 40">
-                        <polyline fill="none" stroke-width="2.5" :stroke="getSparklineColorHex(type)" :points="getSparklinePoints(type)"></polyline>
-                      </svg>
-                      <div class="text-end" style="width: 100px;">
-                        <div class="compact-value" x-text="formatValue(type)"></div>
-                        <div class="compact-change" :class="getChangeColorClass(type)" x-text="formatChange(type)"></div>
+          <template x-for="panel in indicatorPanels" :key="panel.title">
+            <div class="col-xxl-6 col-xl-6 col-12">
+              <div class="toss-card h-100 mb-0 p-4">
+                <h4 class="section-title mb-3"><i class="bi" :class="panel.icon"></i><span x-text="panel.title"></span></h4>
+                <div class="d-flex flex-column">
+                  <template x-for="type in panel.types" :key="type">
+                    <div class="compact-indicator-row" style="cursor: pointer;" @click="selectIndicator(type)" title="클릭하면 위 차트에서 크게 볼 수 있어요">
+                      <div style="flex: 1; min-width: 0; padding-right: 12px;">
+                        <div class="compact-name" x-text="getDisplayName(type)"></div>
+                        <div class="compact-date" x-text="formatDate(type)"></div>
+                      </div>
+                      <div class="d-flex align-items-center gap-3 flex-shrink-0">
+                        <svg class="compact-sparkline" preserveAspectRatio="none" viewBox="0 0 100 40">
+                          <polyline fill="none" stroke-width="2.5" :stroke="getSparklineColorHex(type)" :points="getSparklinePoints(type)"></polyline>
+                        </svg>
+                        <div class="text-end" style="width: 100px;">
+                          <div class="compact-value" x-text="formatValue(type)"></div>
+                          <div class="compact-change" :class="getChangeColorClass(type)" x-text="formatChange(type)"></div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </template>
+                  </template>
+                </div>
               </div>
             </div>
-          </div>
-
-          <div class="col-xxl-6 col-xl-6 col-12">
-            <div class="toss-card h-100 mb-0 p-4">
-              <h4 class="section-title mb-3"><i class="bi bi-bank"></i>금리 & 채권</h4>
-              <div class="d-flex flex-column">
-                <template x-for="type in ['FED_FUNDS_RATE', 'US10Y', 'US2Y', 'T10Y2Y', 'DOLLAR_INDEX']" :key="type">
-                  <div class="compact-indicator-row">
-                    <div style="flex: 1; min-width: 0; padding-right: 12px;">
-                      <div class="compact-name" x-text="getDisplayName(type)"></div>
-                      <div class="compact-date" x-text="formatDate(type)"></div>
-                    </div>
-                    <div class="d-flex align-items-center gap-3 flex-shrink-0">
-                      <svg class="compact-sparkline" preserveAspectRatio="none" viewBox="0 0 100 40">
-                        <polyline fill="none" stroke-width="2.5" :stroke="getSparklineColorHex(type)" :points="getSparklinePoints(type)"></polyline>
-                      </svg>
-                      <div class="text-end" style="width: 100px;">
-                        <div class="compact-value" x-text="formatValue(type)"></div>
-                        <div class="compact-change" :class="getChangeColorClass(type)" x-text="formatChange(type)"></div>
-                      </div>
-                    </div>
-                  </div>
-                </template>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-xxl-6 col-xl-6 col-12">
-            <div class="toss-card h-100 mb-0 p-4">
-              <h4 class="section-title mb-3"><i class="bi bi-briefcase"></i>거시 경제 & 물가</h4>
-              <div class="d-flex flex-column">
-                <template x-for="type in ['CPI', 'UNEMPLOYMENT', 'GDP', 'RETAIL_SALES', 'M2']" :key="type">
-                  <div class="compact-indicator-row">
-                    <div style="flex: 1; min-width: 0; padding-right: 12px;">
-                      <div class="compact-name" x-text="getDisplayName(type)"></div>
-                      <div class="compact-date" x-text="formatDate(type)"></div>
-                    </div>
-                    <div class="d-flex align-items-center gap-3 flex-shrink-0">
-                      <svg class="compact-sparkline" preserveAspectRatio="none" viewBox="0 0 100 40">
-                        <polyline fill="none" stroke-width="2.5" :stroke="getSparklineColorHex(type)" :points="getSparklinePoints(type)"></polyline>
-                      </svg>
-                      <div class="text-end" style="width: 100px;">
-                        <div class="compact-value" x-text="formatValue(type)"></div>
-                        <div class="compact-change" :class="getChangeColorClass(type)" x-text="formatChange(type)"></div>
-                      </div>
-                    </div>
-                  </div>
-                </template>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-xxl-6 col-xl-6 col-12">
-            <div class="toss-card h-100 mb-0 p-4">
-              <h4 class="section-title mb-3"><i class="bi bi-shield-exclamation"></i>원자재 & 리스크</h4>
-              <div class="d-flex flex-column">
-                <template x-for="type in ['WTI', 'BITCOIN', 'HIGH_YIELD_SPREAD', 'FINANCIAL_STRESS']" :key="type">
-                  <div class="compact-indicator-row">
-                    <div style="flex: 1; min-width: 0; padding-right: 12px;">
-                      <div class="compact-name" x-text="getDisplayName(type)"></div>
-                      <div class="compact-date" x-text="formatDate(type)"></div>
-                    </div>
-                    <div class="d-flex align-items-center gap-3 flex-shrink-0">
-                      <svg class="compact-sparkline" preserveAspectRatio="none" viewBox="0 0 100 40">
-                        <polyline fill="none" stroke-width="2.5" :stroke="getSparklineColorHex(type)" :points="getSparklinePoints(type)"></polyline>
-                      </svg>
-                      <div class="text-end" style="width: 100px;">
-                        <div class="compact-value" x-text="formatValue(type)"></div>
-                        <div class="compact-change" :class="getChangeColorClass(type)" x-text="formatChange(type)"></div>
-                      </div>
-                    </div>
-                  </div>
-                </template>
-              </div>
-            </div>
-          </div>
-
+          </template>
         </div>
       </div>
 
@@ -447,38 +388,88 @@
     Alpine.data('marketDashboardApp', () => {
       return {
         mainTab: new URLSearchParams(window.location.search).get('mainTab') || 'market',
-        activeTab: 'SP500', chart: null, areaSeries: null, toolTip: null, chartInitialzed: false,
+        activeTab: 'SP500', chart: null, areaSeries: null, toolTip: null, chartInitialzed: false, aiCommentExpanded: false,
 
         // MarketRegimeDto 매핑
-        regimeData: /*[[${marketAnalysis}]]*/ null,
+        regimeData: /*[[${marketAnalysis != null ? marketAnalysis.marketRegimeDto : null}]]*/ null,
 
-        // IndexDashboardDto 매핑
+
         allData: {
+          // 0. 글로벌 환율 / 달러
           USD_JPY: /*[[${indexDashboard != null ? indexDashboard.usdJpy : null}]]*/ null,
           DOLLAR_INDEX: /*[[${indexDashboard != null ? indexDashboard.dollarIndex : null}]]*/ null,
+
+          // 1. 미국 전체 시장 대표 지수
           SP500: /*[[${indexDashboard != null ? indexDashboard.sp500 : null}]]*/ null,
           NASDAQ100: /*[[${indexDashboard != null ? indexDashboard.nasdaq100 : null}]]*/ null,
           DOW_JONES: /*[[${indexDashboard != null ? indexDashboard.dowJones : null}]]*/ null,
-          PHLX_SEMI: /*[[${indexDashboard != null ? indexDashboard.phlxSemi : null}]]*/ null,
 
+          // 2. 시장 변동성 및 신용 리스크
           VIX: /*[[${indexDashboard != null ? indexDashboard.vix : null}]]*/ null,
-          FINANCIAL_STRESS: /*[[${indexDashboard != null ? indexDashboard.financialStressIndex : null}]]*/ null,
           HIGH_YIELD_SPREAD: /*[[${indexDashboard != null ? indexDashboard.highYieldSpread : null}]]*/ null,
+          FINANCIAL_STRESS: /*[[${indexDashboard != null ? indexDashboard.financialStressIndex : null}]]*/ null,
 
+          // 3. 채권 및 금리
           US10Y: /*[[${indexDashboard != null ? indexDashboard.us10y : null}]]*/ null,
           US2Y: /*[[${indexDashboard != null ? indexDashboard.us2y : null}]]*/ null,
           T10Y2Y: /*[[${indexDashboard != null ? indexDashboard.yieldCurve10y2y : null}]]*/ null,
           FED_FUNDS_RATE: /*[[${indexDashboard != null ? indexDashboard.fedFundsRate : null}]]*/ null,
 
+          // 4. 원자재 / 대체자산
           WTI: /*[[${indexDashboard != null ? indexDashboard.wti : null}]]*/ null,
           BITCOIN: /*[[${indexDashboard != null ? indexDashboard.bitcoin : null}]]*/ null,
 
+          // 5. 거시 물가
           CPI: /*[[${indexDashboard != null ? indexDashboard.cpi : null}]]*/ null,
+          CORE_PCE: /*[[${indexDashboard != null ? indexDashboard.corePce : null}]]*/ null,
+
+          // 6. 고용
           UNEMPLOYMENT: /*[[${indexDashboard != null ? indexDashboard.unemploymentRate : null}]]*/ null,
+          NONFARM_PAYROLLS: /*[[${indexDashboard != null ? indexDashboard.nonfarmPayrolls : null}]]*/ null,
+          INITIAL_CLAIMS: /*[[${indexDashboard != null ? indexDashboard.initialClaims : null}]]*/ null,
+
+          // 7. 경기 및 소비
           GDP: /*[[${indexDashboard != null ? indexDashboard.gdp : null}]]*/ null,
+          RETAIL_SALES: /*[[${indexDashboard != null ? indexDashboard.retailSales : null}]]*/ null,
+          CONSUMER_SENTIMENT: /*[[${indexDashboard != null ? indexDashboard.consumerSentiment : null}]]*/ null,
+          CONSUMER_REVOLVING_LOANS: /*[[${indexDashboard != null ? indexDashboard.consumerRevolvingLoans : null}]]*/ null,
+
+          // 8. 유동성
+          FED_TOTAL_ASSETS: /*[[${indexDashboard != null ? indexDashboard.fedTotalAssets : null}]]*/ null,
+          REVERSE_REPO: /*[[${indexDashboard != null ? indexDashboard.reverseRepo : null}]]*/ null,
           M2: /*[[${indexDashboard != null ? indexDashboard.m2 : null}]]*/ null,
-          RETAIL_SALES: /*[[${indexDashboard != null ? indexDashboard.retailSales : null}]]*/ null
+
+          // 9. 반도체 / AI 핵심
+          PHLX_SEMI: /*[[${indexDashboard != null ? indexDashboard.phlxSemi : null}]]*/ null,
+          NASDAQ_AI_BIGDATA: /*[[${indexDashboard != null ? indexDashboard.nasdaqAiBigdata : null}]]*/ null,
+          NASDAQ_CAPEX_ACHIEVERS: /*[[${indexDashboard != null ? indexDashboard.nasdaqCapexAchievers : null}]]*/ null,
+          IND_SEMI: /*[[${indexDashboard != null ? indexDashboard.indSemi : null}]]*/ null,
+
+          // 10. 기타 섹터
+          NASDAQ_ISE_CYBERSECURITY: /*[[${indexDashboard != null ? indexDashboard.nasdaqIseCybersecurity : null}]]*/ null,
+          NASDAQ_BIOTECH: /*[[${indexDashboard != null ? indexDashboard.nasdaqBiotech : null}]]*/ null,
+          NASDAQ_CONSUMER_STAPLES: /*[[${indexDashboard != null ? indexDashboard.nasdaqConsumerStaples : null}]]*/ null,
+          NASDAQ_CLEAN_ENERGY: /*[[${indexDashboard != null ? indexDashboard.nasdaqCleanEnergy : null}]]*/ null,
+          PHLX_GOLD_SILVER: /*[[${indexDashboard != null ? indexDashboard.phlxGoldSilver : null}]]*/ null,
+          SECTOR_DISCRETIONARY_DURABLE: /*[[${indexDashboard != null ? indexDashboard.sectorDiscretionaryDurable : null}]]*/ null,
+          SECTOR_FINANCIALS: /*[[${indexDashboard != null ? indexDashboard.sectorFinancials : null}]]*/ null,
+          SECTOR_REAL_ESTATE: /*[[${indexDashboard != null ? indexDashboard.sectorRealEstate : null}]]*/ null,
+          SECTOR_INDUSTRIALS: /*[[${indexDashboard != null ? indexDashboard.sectorIndustrials : null}]]*/ null,
+          US_INDPRO: /*[[${indexDashboard != null ? indexDashboard.usIndpro : null}]]*/ null
         },
+
+        // 하단 지표 패널 구성 (분석 엔진 카테고리 기준 — 패널 추가/순서 변경은 여기서만)
+        indicatorPanels: [
+          { title: '증시 지수 & 환율', icon: 'bi-graph-up', types: ['SP500', 'NASDAQ100', 'DOW_JONES', 'USD_JPY', 'DOLLAR_INDEX'] },
+          { title: '변동성 · 신용 · 원자재', icon: 'bi-shield-exclamation', types: ['VIX', 'HIGH_YIELD_SPREAD', 'FINANCIAL_STRESS', 'WTI', 'BITCOIN'] },
+          { title: '금리 & 채권', icon: 'bi-bank', types: ['FED_FUNDS_RATE', 'US10Y', 'US2Y', 'T10Y2Y'] },
+          { title: '물가 & 고용', icon: 'bi-people', types: ['CPI', 'CORE_PCE', 'UNEMPLOYMENT', 'NONFARM_PAYROLLS', 'INITIAL_CLAIMS'] },
+          { title: '경기 & 소비', icon: 'bi-cart3', types: ['GDP', 'RETAIL_SALES', 'CONSUMER_SENTIMENT', 'CONSUMER_REVOLVING_LOANS'] },
+          { title: '유동성 (연준)', icon: 'bi-droplet', types: ['FED_TOTAL_ASSETS', 'REVERSE_REPO', 'M2'] },
+          { title: '반도체 & AI', icon: 'bi-cpu', types: ['PHLX_SEMI', 'NASDAQ_AI_BIGDATA', 'NASDAQ_CAPEX_ACHIEVERS', 'IND_SEMI'] },
+          { title: '성장 테마 섹터', icon: 'bi-rocket-takeoff', types: ['NASDAQ_ISE_CYBERSECURITY', 'NASDAQ_BIOTECH', 'NASDAQ_CLEAN_ENERGY', 'PHLX_GOLD_SILVER'] },
+          { title: '전통 섹터 & 실물경기', icon: 'bi-building', types: ['NASDAQ_CONSUMER_STAPLES', 'SECTOR_DISCRETIONARY_DURABLE', 'SECTOR_FINANCIALS', 'SECTOR_REAL_ESTATE', 'SECTOR_INDUSTRIALS', 'US_INDPRO'] }
+        ],
 
         init() {
           this.$nextTick(() => {
@@ -501,65 +492,49 @@
           return '#f04452'; // 붉은색 (상승장/기본)
         },
 
-        // 💡 2. 상태 뱃지 (방향성 & 선호도) 디자인 로직
         getRegimeBgClass() {
           const r = this.regimeData?.regime;
-          if (r === 'BULL') return 'bg-up';
-          if (r === 'BEAR') return 'bg-down';
+          if (r === 'BULL' || r === 'POSITIVE') return 'bg-up';
+          if (r === 'BEAR' || r === 'NEGATIVE') return 'bg-down';
           return 'bg-neutral';
         },
+
         getRegimeTextClass() {
           const r = this.regimeData?.regime;
-          if (r === 'BULL') return 'text-up';
-          if (r === 'BEAR') return 'text-down';
+          if (r === 'BULL' || r === 'POSITIVE') return 'text-up';
+          if (r === 'BEAR' || r === 'NEGATIVE') return 'text-down';
           return 'text-dark';
         },
+
         getRegimeIcon() {
           const r = this.regimeData?.regime;
-          if (r === 'BULL') return 'bi-graph-up-arrow';
-          if (r === 'BEAR') return 'bi-graph-down-arrow';
+          if (r === 'BULL' || r === 'POSITIVE') return 'bi-graph-up-arrow';
+          if (r === 'BEAR' || r === 'NEGATIVE') return 'bi-graph-down-arrow';
           return 'bi-dash-circle';
         },
 
-        getRiskBadgeClass() {
-          const r = this.regimeData?.risk;
-          if (r === 'RISK-ON') return 'bg-green-soft text-green';
-          if (r === 'RISK-OFF') return 'bg-orange-soft text-orange';
-          return 'bg-neutral';
-        },
-        getRiskIcon() {
-          const r = this.regimeData?.risk;
-          if (r === 'RISK-ON') return 'bi-shield-check';
-          if (r === 'RISK-OFF') return 'bi-shield-exclamation';
-          return 'bi-shield';
-        },
-
-        getCompassClass() {
-          if (!this.regimeData) return 'compass-neutral';
-          const regime = this.regimeData.regime;
-          if (regime === 'BULL') return 'compass-bull';
-          if (regime === 'BEAR') return 'compass-bear';
-          return 'compass-neutral';
-        },
-
-        // 💡 중앙 나침반 동적 코멘트
+// 3. 설명 문구 분기 처리 수정
         getCompassDescription() {
-          if (!this.regimeData) return '데이터를 불러오는 중입니다.';
+          if (!this.regimeData) return '데이터를 불러오는 중입니다';
           const r = this.regimeData.regime;
           const risk = this.regimeData.risk;
           const conf = this.regimeData.confidence;
 
           let desc = '';
-          if (r === 'BULL') {
-            desc = risk === 'RISK-ON' ? '상승 추세 속에서 위험 자산 선호 심리가 강해요.' : '상승 추세이지만 투자자들은 다소 신중한 모습이에요.';
-          } else if (r === 'BEAR') {
-            desc = risk === 'RISK-OFF' ? '하락 추세가 이어지며 안전 자산 쏠림이 뚜렷해요.' : '하락 추세 속에서도 일부 위험 자산에 매수세가 있어요.';
+          if (r === 'BULL' || r === 'POSITIVE') {
+            desc = risk === 'RISK-ON'
+                    ? '상승 추세 속에서 위험 자산 선호 심리가 강한 국면'
+                    : '상승 추세이나 투자자들의 경계 심리가 상존하는 상태';
+          } else if (r === 'BEAR' || r === 'NEGATIVE') {
+            desc = risk === 'RISK-OFF'
+                    ? '하락 압력이 지속되며 안전 자산 선호가 뚜렷한 국면'
+                    : '하락세 속에서 일부 반등 매수세가 유입되는 상태';
           } else {
-            desc = '뚜렷한 방향성 없이 시장이 눈치를 보고 있어요.';
+            desc = '뚜렷한 방향성 없이 관망세가 우세한 중립 국면';
           }
 
           if (conf <= 40) {
-            desc += ' 다만, 지표 간 의견이 엇갈려 불확실성이 높습니다.';
+            desc += ' (지표 간 엇갈림으로 신뢰도 낮음)';
           }
           return desc;
         },
@@ -570,8 +545,16 @@
             VIX: 'VIX (공포지수)', FINANCIAL_STRESS: '금융 스트레스', HIGH_YIELD_SPREAD: '하이일드 스프레드',
             US10Y: '미 국채 10년물', US2Y: '미 국채 2년물', T10Y2Y: '장단기 금리차 (10-2)', FED_FUNDS_RATE: '미 기준금리',
             WTI: 'WTI 유가', BITCOIN: '비트코인', USD_JPY: '엔/달러 환율', DOLLAR_INDEX: '달러 인덱스',
-            CPI: '소비자물가 (CPI)', UNEMPLOYMENT: '미국 실업률',
-            GDP: '실질 GDP', M2: 'M2 통화량', RETAIL_SALES: '소매판매'
+            CPI: '소비자물가 (CPI)', CORE_PCE: '근원 PCE', UNEMPLOYMENT: '미국 실업률',
+            NONFARM_PAYROLLS: '비농업 고용자 수', INITIAL_CLAIMS: '신규 실업수당 청구',
+            GDP: '실질 GDP', M2: 'M2 통화량', RETAIL_SALES: '소매판매',
+            CONSUMER_SENTIMENT: '소비자심리지수', CONSUMER_REVOLVING_LOANS: '신용카드 대출잔고',
+            FED_TOTAL_ASSETS: '연준 총자산', REVERSE_REPO: '역레포 잔고',
+            NASDAQ_AI_BIGDATA: '나스닥 AI·빅데이터', NASDAQ_CAPEX_ACHIEVERS: '나스닥 CapEx 우수기업', IND_SEMI: '반도체 생산지수',
+            NASDAQ_ISE_CYBERSECURITY: '사이버 시큐리티', NASDAQ_BIOTECH: '나스닥 바이오테크',
+            NASDAQ_CONSUMER_STAPLES: '필수소비재', NASDAQ_CLEAN_ENERGY: '클린에너지', PHLX_GOLD_SILVER: '금·은 광업지수',
+            SECTOR_DISCRETIONARY_DURABLE: '경기소비재(내구재)', SECTOR_FINANCIALS: '금융 섹터',
+            SECTOR_REAL_ESTATE: '부동산', SECTOR_INDUSTRIALS: '산업재', US_INDPRO: '산업생산지수'
           };
           return names[t] || t;
         },
@@ -634,7 +617,12 @@
           if (v === null) return '-';
 
           const percentTypes = ['US10Y','US2Y','FED_FUNDS_RATE','CPI','UNEMPLOYMENT'];
-          const integerTypes = ['SP500','NASDAQ100','DOW_JONES','PHLX_SEMI','BITCOIN'];
+          const integerTypes = [
+            'SP500','NASDAQ100','DOW_JONES','PHLX_SEMI','BITCOIN',
+            'NASDAQ_AI_BIGDATA','NASDAQ_CAPEX_ACHIEVERS','NASDAQ_ISE_CYBERSECURITY',
+            'NASDAQ_BIOTECH','NASDAQ_CONSUMER_STAPLES','NASDAQ_CLEAN_ENERGY','PHLX_GOLD_SILVER',
+            'FED_TOTAL_ASSETS','NONFARM_PAYROLLS','INITIAL_CLAIMS'
+          ];
 
           if (percentTypes.includes(t)) return v.toFixed(2) + '%';
           if (integerTypes.includes(t)) return Math.round(v).toLocaleString();
@@ -657,7 +645,12 @@
           const absCr = Number.isFinite(cr) ? Math.abs(cr) : null;
 
           const rateTypes = ['US10Y','US2Y','FED_FUNDS_RATE','CPI','UNEMPLOYMENT'];
-          const integerTypes = ['SP500','NASDAQ100','DOW_JONES','PHLX_SEMI','BITCOIN'];
+          const integerTypes = [
+            'SP500','NASDAQ100','DOW_JONES','PHLX_SEMI','BITCOIN',
+            'NASDAQ_AI_BIGDATA','NASDAQ_CAPEX_ACHIEVERS','NASDAQ_ISE_CYBERSECURITY',
+            'NASDAQ_BIOTECH','NASDAQ_CONSUMER_STAPLES','NASDAQ_CLEAN_ENERGY','PHLX_GOLD_SILVER',
+            'FED_TOTAL_ASSETS','NONFARM_PAYROLLS','INITIAL_CLAIMS'
+          ];
 
           let valText;
           if (rateTypes.includes(t)) {
@@ -752,6 +745,22 @@
             if (this.toolTip) this.toolTip.style.display = 'none';
             container.style.opacity = '1';
           }, 200);
+        },
+
+        // 하단 패널의 지표 행을 클릭하면, 이미 있는 상단 큰 차트로 이동해서 해당 지표를 보여줌
+        selectIndicator(type) {
+          this.mainTab = 'market';
+          this.$nextTick(() => {
+            if (!this.chartInitialzed) {
+              this.createChart();
+              this.chartInitialzed = true;
+            }
+            this.activeTab = type;
+            this.updateChartData();
+            if (this.toolTip) this.toolTip.style.display = 'none';
+            const container = document.getElementById('market-chart-container');
+            if (container) container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          });
         },
 
         getSparklineColorHex(t) {

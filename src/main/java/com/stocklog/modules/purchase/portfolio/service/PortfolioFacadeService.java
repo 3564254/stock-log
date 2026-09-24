@@ -24,10 +24,12 @@ public class PortfolioFacadeService {
         return portfolioService.getMyPortfolio(memberId);
     }
 
+    @Transactional
     public void updateHolding(Long memberId, HoldingUpdateRequest request) {
         portfolioService.updateHolding(memberId, request);
     }
 
+    @Transactional
     public void deleteHolding(Long memberId, String stockCode) {
         portfolioService.deleteHolding(memberId, stockCode);
     }

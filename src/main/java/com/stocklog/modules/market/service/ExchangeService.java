@@ -7,6 +7,7 @@ import com.stocklog.modules.market.exchange.repository.ExchangeRateRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -15,6 +16,7 @@ class ExchangeService {
     private final ExchangeRateProvider exchangeRateProvider;
     private final ExchangeRateRepository exchangeRateRepository;
 
+    @Transactional
     ExchangeRateInfo fetchExchangeRate() {
         ExchangeRate exchangeRate = exchangeRateRepository.findMainRate()
                 .orElse(null);

@@ -75,6 +75,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-aop:3.3.0'
 	implementation files('libs/yfinance4j-0.1.7.jar')
 	implementation 'com.rometools:rome:2.1.0'
+	runtimeOnly 'com.mysql:mysql-connector-j' // MySQL 연결용
 }
 
 

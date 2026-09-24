@@ -18,6 +18,7 @@ import java.util.Optional;
 public class MemberService {
     private final MemberRepository memberRepository;
 
+    @Transactional
     public void save(Member member) {
         memberRepository.save(member);
     }

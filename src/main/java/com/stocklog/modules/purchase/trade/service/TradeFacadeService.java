@@ -17,7 +17,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class TradeFacadeService {
 
     private final TradeLogService tradeLogService;
@@ -97,7 +97,6 @@ public class TradeFacadeService {
         watchlistService.deleteWatchlistItem(memberId, stockCode);
     }
 
-    @Transactional
     public void updateAnalyzedSignal(Long memberId, String stockCode, StockPhase phase, double targetPrice) {
         watchlistService.updateAnalyzedSignal(memberId, stockCode, phase, targetPrice);
     }
