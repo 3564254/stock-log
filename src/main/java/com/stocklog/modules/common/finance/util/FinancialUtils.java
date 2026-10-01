@@ -1,4 +1,4 @@
-package com.stocklog.global.util;
+package com.stocklog.modules.common.finance.util;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -8,6 +8,10 @@ import java.math.RoundingMode;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class FinancialUtils {
+
+
+
+
 
     /**
      * 값이 유효한지(null이 아니고 NA가 아닌지) 검사하는 유틸 메서드
@@ -66,4 +70,6 @@ public final class FinancialUtils {
             return BigDecimal.ZERO;
         }
     }
+
+
 }

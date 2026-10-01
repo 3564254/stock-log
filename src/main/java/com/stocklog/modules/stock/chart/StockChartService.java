@@ -3,7 +3,7 @@ package com.stocklog.modules.stock.chart;
 import com.stocklog.modules.stock.chart.dto.ChartRequest;
 import com.stocklog.modules.stock.chart.dto.StockChartDto;
 import com.stocklog.modules.stock.chart.dto.StockChartResponse;
-import com.stocklog.modules.stock.domain.type.Period;
+import com.stocklog.modules.common.type.Period;
 import com.stocklog.modules.stock.stock.StockService;
 import com.stocklog.modules.stock.stock.dto.StockDto;
 import lombok.RequiredArgsConstructor;

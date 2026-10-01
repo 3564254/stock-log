@@ -5,7 +5,7 @@ import com.stocklog.modules.stock.chart.dto.StockChartDto;
 import com.stocklog.modules.stock.chart.dto.StockChartResponse;
 import com.stocklog.modules.stock.chart.StockChartProvider;
 import com.stocklog.modules.stock.domain.type.MarketType;
-import com.stocklog.modules.stock.domain.type.Period;
+import com.stocklog.modules.common.type.Period;
 import com.stocklog.infra.kis.chart.dto.KisOverseasChartOutput1;
 import com.stocklog.infra.kis.chart.dto.KisOverseasChartOutput2;
 import com.stocklog.infra.kis.common.KisResponseV2;

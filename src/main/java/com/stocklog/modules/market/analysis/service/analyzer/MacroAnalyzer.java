@@ -1,6 +1,6 @@
 package com.stocklog.modules.market.analysis.service.analyzer;
 
-import com.stocklog.modules.market.analysis.service.result.AnalyzerScore;
+import com.stocklog.modules.market.analysis.service.result.MarketAnalyzerScore;
 import com.stocklog.modules.market.analysis.service.result.MarketAnalyzer;
 import com.stocklog.modules.market.analysis.service.result.ScoreCategory;
 import com.stocklog.modules.market.chart.MarketChartData;
@@ -24,7 +24,7 @@ public class MacroAnalyzer implements MarketAnalyzer {
     ) {}
 
     @Override
-    public AnalyzerScore analyze(Map<IndexType,MarketChartData> data) {
+    public MarketAnalyzerScore analyze(Map<IndexType,MarketChartData> data) {
         // 1. 물가 (Inflation)
         List<Double> cpiCloses = getDoubles(data, IndexType.US_CPI);
         List<Double> pceCloses = getDoubles(data, IndexType.US_CORE_PCE);
@@ -52,10 +52,10 @@ public class MacroAnalyzer implements MarketAnalyzer {
         // 지표들의 세부 방향을 바탕으로 5단계 국면(Regime) 판별
         String regime = determineMacroRegime(totalScore, inflationScore, employmentScore, economyScore);
 
-        ScoreCategory category = AnalyzerScore.categorize(totalScore);
+        ScoreCategory category = MarketAnalyzerScore.categorize(totalScore);
         MacroDetails details = new MacroDetails(inflationScore, employmentScore, economyScore, regime);
 
-        return new AnalyzerScore("MacroCycle", totalScore, category, details);
+        return new MarketAnalyzerScore("MacroCycle", totalScore, category, details);
     }
 
     /**

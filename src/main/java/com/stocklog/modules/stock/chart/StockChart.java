@@ -1,7 +1,7 @@
 package com.stocklog.modules.stock.chart;
 
 import com.stocklog.modules.stock.chart.id.StockChartId;
-import com.stocklog.modules.stock.domain.type.Period;
+import com.stocklog.modules.common.type.Period;
 import jakarta.persistence.*;
 import lombok.*;
 

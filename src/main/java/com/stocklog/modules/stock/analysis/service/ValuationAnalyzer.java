@@ -3,7 +3,7 @@ package com.stocklog.modules.stock.analysis.service;
 import com.stocklog.modules.stock.analysis.domain.valuation.ValuationBand;
 import com.stocklog.modules.stock.analysis.domain.valuation.ValuationScore;
 import com.stocklog.modules.stock.domain.type.AssetType;
-import com.stocklog.modules.stock.domain.type.Nation;
+import com.stocklog.modules.common.type.Nation;
 import com.stocklog.modules.stock.financial.dto.internal.StockFinancialDto;
 import com.stocklog.modules.stock.info.dto.StockInfoDto;
 import com.stocklog.modules.stock.price.dto.StockPriceDto;

@@ -1,7 +1,7 @@
 package com.stocklog.modules.stock.analysis.domain.signal.vo;
 
-import com.stocklog.modules.common.finance.vo.MacdResult;
-import com.stocklog.modules.common.finance.vo.Pivot;
+import com.stocklog.modules.common.finance.model.MacdResult;
+import com.stocklog.modules.common.finance.model.Pivot;
 import com.stocklog.modules.stock.analysis.utils.IndicatorCalculator;
 import com.stocklog.modules.stock.chart.dto.StockChartDto;
 import lombok.Builder;
@@ -133,8 +133,6 @@ public record MarketContext(
         double projectedVolume = IndicatorCalculator.calculateProjectedVolume(currentVolume,yesterdayVolume, chartDate);
         double volumeMa5 = IndicatorCalculator.sma(volumes, lastIdx - 1, 5);
         double volumeMa20 = IndicatorCalculator.sma(volumes, lastIdx - 1, 20);
-        log.info("curVol:{}, yesVol:{}, yesyesVol:{} // projected:{}", currentVolume, yesterdayVolume, volumes.get(lastIdx - 2), projectedVolume);
-        log.info("volMa5:{}, volMa20:{}", volumeMa5, volumeMa20);
 
         double volumeRatio = volumeMa20 > 0 ? projectedVolume / volumeMa20 : 0;
         boolean isVolumeDryingUp = volumeRatio < 0.7;

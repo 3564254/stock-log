@@ -1,5 +1,6 @@
 package com.stocklog.modules.stock.analysis.service;
 
+import com.stocklog.modules.stock.analysis.domain.signal.vo.StockPhase;
 import com.stocklog.modules.stock.analysis.domain.signal.SignalResultBuilder;
 import com.stocklog.modules.stock.analysis.domain.signal.rule.SignalRule;
 import com.stocklog.modules.stock.analysis.domain.signal.vo.*;

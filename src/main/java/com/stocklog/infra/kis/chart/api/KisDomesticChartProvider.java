@@ -5,7 +5,7 @@ import com.stocklog.modules.stock.chart.dto.StockChartDto;
 import com.stocklog.modules.stock.chart.dto.StockChartResponse;
 import com.stocklog.modules.stock.chart.StockChartProvider;
 import com.stocklog.modules.stock.domain.type.MarketType;
-import com.stocklog.modules.stock.domain.type.Period;
+import com.stocklog.modules.common.type.Period;
 import com.stocklog.infra.kis.chart.dto.KisDomesticChartOutput1;
 import com.stocklog.infra.kis.chart.dto.KisDomesticChartOutput2;
 import com.stocklog.infra.kis.common.KisResponseV2;
@@ -23,7 +23,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.stocklog.global.util.FinancialUtils.safeParse;
+import static com.stocklog.modules.common.finance.util.FinancialUtils.safeParse;
 
 @Component
 @RequiredArgsConstructor

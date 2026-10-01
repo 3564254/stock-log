@@ -53,6 +53,11 @@
     .confidence-gauge { background: rgba(0, 0, 0, 0.05); height: 8px; border-radius: 4px; overflow: hidden; position: relative; cursor: help;}
     .gauge-fill { height: 100%; border-radius: 4px; transition: width 1s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.5s ease; }
 
+    /* 서브 점수 게이지: -100~100 스코어를 0(중앙)에서 좌우로 뻗어나가는 바로 표현 */
+    .score-gauge-track { position: relative; height: 8px; background: #f2f4f6; border-radius: 4px; overflow: hidden; }
+    .score-gauge-track::after { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #d1d6db; }
+    .score-gauge-fill { position: absolute; top: 0; height: 100%; border-radius: 4px; }
+
     /* ── AI 퀀트 진단 뱃지 ── */
     .regime-badge { display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-right: 8px; margin-bottom: 8px; }
     .badge-macro { background: #f3f0ff; color: #7048e8; }
@@ -160,29 +165,96 @@
             <div class="toss-card diagnosis-card h-100 mb-0 d-flex flex-column" :class="getCompassClass()">
               <h3 class="section-title hero-title"><i class="bi bi-cpu"></i>AI 퀀트 진단</h3>
 
-              <!-- th:with를 사용하여 하위 DTO를 'dto' 변수로 짧게 매핑 -->
-              <div th:with="dto=${marketAnalysis.marketRegimeDto}">
+              <!-- th:with를 사용하여 DTO 두 개를 모두 변수로 매핑 -->
+              <div th:with="dto=${marketAnalysis.marketRegimeDto}, diag=${marketAnalysis.diagnosisDto}">
 
-                <!-- 배지 요약 영역 -->
-                <div class="mb-3 border-bottom pb-3" style="border-color: #f2f4f6 !important;">
-          <span class="regime-badge badge-macro" th:if="${dto.macroRegime != null}">
-              경기: <span class="ms-1" th:text="${dto.macroRegime}"></span>
-          </span>
-                  <span class="regime-badge badge-liquidity" th:if="${dto.liquidityRegime != null}">
-              유동성: <span class="ms-1" th:text="${dto.liquidityRegime}"></span>
-          </span>
-                  <span class="regime-badge badge-credit" th:if="${dto.creditRegime != null}">
-              신용: <span class="ms-1" th:text="${dto.creditRegime}"></span>
-          </span>
+                <!-- 1. 국면 배지 및 지속일수 영역 -->
+                <div class="mb-3 border-bottom pb-3 d-flex flex-wrap gap-2" style="border-color: #f2f4f6 !important;">
+                  <span class="regime-badge badge-macro mb-0" th:if="${dto.macroRegime != null}">
+                      경기: <span class="ms-1" th:text="${dto.macroRegime}"></span>
+                  </span>
+                  <span class="regime-badge badge-liquidity mb-0" th:if="${dto.liquidityRegime != null}">
+                      유동성: <span class="ms-1" th:text="${dto.liquidityRegime}"></span>
+                  </span>
+                  <span class="regime-badge badge-credit mb-0" th:if="${dto.creditRegime != null}">
+                      신용: <span class="ms-1" th:text="${dto.creditRegime}"></span>
+                  </span>
+                  <span class="regime-badge mb-0" style="background:#f8fafc; color:#4e5968; border:1px solid #e5e8eb;" th:if="${diag != null}">
+                      <i class="bi bi-calendar-check me-1"></i> 국면 지속: <span class="ms-1" th:text="${diag.regimeStreakDays} + '일째'"></span>
+                  </span>
                 </div>
 
-                <!-- 2D 기반 해석 -->
-                <div class="fw-bold mb-3" style="font-size: 18px; color: var(--text-main); line-height: 1.5; letter-spacing: -0.3px;"
+                <!-- 2. 2D 기반 해석 -->
+                <div class="fw-bold mb-4" style="font-size: 18px; color: var(--text-main); line-height: 1.5; letter-spacing: -0.3px;"
                      th:text="${dto.regimeDescription}">
                 </div>
 
-                <!-- 주도 및 경고 리스트 -->
-                <div class="d-flex flex-column gap-3 mt-2" style="font-size: 14px; font-weight: 500;">
+                <!-- 3. 시장 종합 스코어 및 서브 점수 -->
+                <div class="p-4 mb-4 rounded-4" style="background: #f9fafb; border: 1px solid #f2f4f6;" th:if="${diag != null}">
+
+                  <!-- 종합 스코어 및 모멘텀 (1D/5D) -->
+                  <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom" style="border-color: #e5e8eb !important;">
+                    <span class="fw-bold" style="font-size: 14px; color: var(--text-sub);"><i class="bi bi-bar-chart-fill me-1"></i>시장 종합 컨디션 스코어</span>
+                    <div class="d-flex align-items-center gap-3">
+                      <span class="fw-bold" style="font-size: 22px;"
+                            th:classappend="${diag.compositeScore > 0 ? 'text-up' : (diag.compositeScore < 0 ? 'text-down' : 'text-neutral')}"
+                            th:text="${#numbers.formatDecimal(diag.compositeScore, 1, 1)} + '점'"></span>
+                      <div class="d-flex flex-column text-end" style="font-size: 11px; font-weight: 600;">
+                        <span th:classappend="${diag.scoreChange1D > 0 ? 'text-up' : (diag.scoreChange1D < 0 ? 'text-down' : 'text-neutral')}"
+                              th:text="${diag.scoreChange1D > 0 ? '▲ ' : (diag.scoreChange1D < 0 ? '▼ ' : '')} + ${#numbers.formatDecimal(T(java.lang.Math).abs(diag.scoreChange1D), 1, 1)} + ' (1D)'"></span>
+                        <span th:classappend="${diag.scoreChange5D > 0 ? 'text-up' : (diag.scoreChange5D < 0 ? 'text-down' : 'text-neutral')}" style="margin-top: 2px;"
+                              th:text="${diag.scoreChange5D > 0 ? '▲ ' : (diag.scoreChange5D < 0 ? '▼ ' : '')} + ${#numbers.formatDecimal(T(java.lang.Math).abs(diag.scoreChange5D), 1, 1)} + ' (5D)'"></span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 3대 서브 그룹 점수: -100~100 양방향 스코어라서, 0을 기준으로 좌우로 뻗어나가는 게이지로 표시 (음수를 abs()로만 그리면 양수와 구분이 안 됨) -->
+                  <div class="d-flex flex-column gap-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                      <span style="font-size: 13px; font-weight: 600; color: var(--text-sub); width: 85px;">가격 모멘텀</span>
+                      <div class="score-gauge-track flex-grow-1 mx-3">
+                        <div class="score-gauge-fill"
+                             th:style="${diag.marketPriceScore >= 0 ? ('left: 50%; width: ' + (diag.marketPriceScore / 100 * 50) + '%; background: #3182f6;') : ('left: ' + (50 + diag.marketPriceScore / 100 * 50) + '%; width: ' + (-diag.marketPriceScore / 100 * 50) + '%; background: #3182f6;')}"></div>
+                      </div>
+                      <span style="font-size: 14px; font-weight: 700; width: 36px; text-align: right;"
+                            th:classappend="${diag.marketPriceScore > 0 ? 'text-up' : (diag.marketPriceScore < 0 ? 'text-down' : 'text-neutral')}"
+                            th:text="${#numbers.formatDecimal(diag.marketPriceScore, 1, 0)}"></span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                      <span style="font-size: 13px; font-weight: 600; color: var(--text-sub); width: 85px;">거시 유동성</span>
+                      <div class="score-gauge-track flex-grow-1 mx-3">
+                        <div class="score-gauge-fill"
+                             th:style="${diag.macroLiquidityScore >= 0 ? ('left: 50%; width: ' + (diag.macroLiquidityScore / 100 * 50) + '%; background: #05c072;') : ('left: ' + (50 + diag.macroLiquidityScore / 100 * 50) + '%; width: ' + (-diag.macroLiquidityScore / 100 * 50) + '%; background: #05c072;')}"></div>
+                      </div>
+                      <span style="font-size: 14px; font-weight: 700; width: 36px; text-align: right;"
+                            th:classappend="${diag.macroLiquidityScore > 0 ? 'text-up' : (diag.macroLiquidityScore < 0 ? 'text-down' : 'text-neutral')}"
+                            th:text="${#numbers.formatDecimal(diag.macroLiquidityScore, 1, 0)}"></span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                      <span style="font-size: 13px; font-weight: 600; color: var(--text-sub); width: 85px;">섹터 로테이션</span>
+                      <div class="score-gauge-track flex-grow-1 mx-3">
+                        <div class="score-gauge-fill"
+                             th:style="${diag.sectorScore >= 0 ? ('left: 50%; width: ' + (diag.sectorScore / 100 * 50) + '%; background: #7048e8;') : ('left: ' + (50 + diag.sectorScore / 100 * 50) + '%; width: ' + (-diag.sectorScore / 100 * 50) + '%; background: #7048e8;')}"></div>
+                      </div>
+                      <span style="font-size: 14px; font-weight: 700; width: 36px; text-align: right;"
+                            th:classappend="${diag.sectorScore > 0 ? 'text-up' : (diag.sectorScore < 0 ? 'text-down' : 'text-neutral')}"
+                            th:text="${#numbers.formatDecimal(diag.sectorScore, 1, 0)}"></span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                      <span style="font-size: 13px; font-weight: 600; color: var(--text-sub); width: 85px;">크로스 에셋</span>
+                      <div class="score-gauge-track flex-grow-1 mx-3">
+                        <div class="score-gauge-fill"
+                             th:style="${diag.crossAssetScore >= 0 ? ('left: 50%; width: ' + (diag.crossAssetScore / 100 * 50) + '%; background: #f5a623;') : ('left: ' + (50 + diag.crossAssetScore / 100 * 50) + '%; width: ' + (-diag.crossAssetScore / 100 * 50) + '%; background: #f5a623;')}"></div>
+                      </div>
+                      <span style="font-size: 14px; font-weight: 700; width: 36px; text-align: right;"
+                            th:classappend="${diag.crossAssetScore > 0 ? 'text-up' : (diag.crossAssetScore < 0 ? 'text-down' : 'text-neutral')}"
+                            th:text="${#numbers.formatDecimal(diag.crossAssetScore, 1, 0)}"></span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 4. 주도 및 경고 리스트 -->
+                <div class="d-flex flex-column gap-3 mt-auto" style="font-size: 14px; font-weight: 500;">
                   <div th:if="${!#lists.isEmpty(dto.leadership)}">
                     <span class="fw-bold text-dark me-2">주도 섹터:</span>
                     <span style="color: var(--text-sub);" th:each="item, stat : ${dto.leadership}" th:text="${!stat.last ? item + ', ' : item}"></span>
@@ -212,7 +284,6 @@
                 </div>
 
               </div> <!-- // th:with 블록 종료 -->
-
             </div>
           </div>
 
@@ -258,7 +329,7 @@
         </div>
 
         <!-- AI 수석 전략가 종합 시황 (내러티브 — 별도 행으로 분리해 진단 카드와 높이 균형을 맞춤) -->
-        <div class="row g-4 mb-4 fu d3" th:if="${marketAnalysis != null and marketAnalysis.comment != null}">
+        <div class="row g-4 mb-4 fu d3" th:if="${marketAnalysis != null and marketAnalysis.diagnosisDto != null and marketAnalysis.diagnosisDto.comment != null}">
           <div class="col-12">
             <div class="toss-card mb-0 d-flex flex-column" style="background-color: #f9fafb;">
               <div class="d-flex align-items-center mb-3">
@@ -268,7 +339,7 @@
               <!-- 기본은 3~4줄만 보여주고, '더보기'를 눌러야 전체가 펼쳐짐. white-space: pre-wrap으로 AI가 생성한 줄바꿈(\n)은 그대로 유지. -->
               <div class="ai-comment-text" :class="{ 'expanded': aiCommentExpanded }"
                    style="font-size: 14.5px; color: #333d4b; line-height: 1.75; white-space: pre-wrap; word-break: keep-all;"
-                   th:text="${marketAnalysis.comment}">
+                   th:text="${marketAnalysis.diagnosisDto.comment}">
               </div>
               <button type="button" class="align-self-start mt-2" @click="aiCommentExpanded = !aiCommentExpanded"
                       style="border: none; background: none; padding: 0; font-size: 13px; font-weight: 700; color: var(--toss-blue, #3182f6);">
@@ -393,7 +464,8 @@
         // MarketRegimeDto 매핑
         regimeData: /*[[${marketAnalysis != null ? marketAnalysis.marketRegimeDto : null}]]*/ null,
 
-
+        // IndexDashboardDto 매핑
+        // IndexDashboardDto 매핑 (40개 전 지표)
         allData: {
           // 0. 글로벌 환율 / 달러
           USD_JPY: /*[[${indexDashboard != null ? indexDashboard.usdJpy : null}]]*/ null,
@@ -492,49 +564,65 @@
           return '#f04452'; // 붉은색 (상승장/기본)
         },
 
+        // 💡 2. 상태 뱃지 (방향성 & 선호도) 디자인 로직
         getRegimeBgClass() {
           const r = this.regimeData?.regime;
-          if (r === 'BULL' || r === 'POSITIVE') return 'bg-up';
-          if (r === 'BEAR' || r === 'NEGATIVE') return 'bg-down';
+          if (r === 'BULL') return 'bg-up';
+          if (r === 'BEAR') return 'bg-down';
           return 'bg-neutral';
         },
-
         getRegimeTextClass() {
           const r = this.regimeData?.regime;
-          if (r === 'BULL' || r === 'POSITIVE') return 'text-up';
-          if (r === 'BEAR' || r === 'NEGATIVE') return 'text-down';
+          if (r === 'BULL') return 'text-up';
+          if (r === 'BEAR') return 'text-down';
           return 'text-dark';
         },
-
         getRegimeIcon() {
           const r = this.regimeData?.regime;
-          if (r === 'BULL' || r === 'POSITIVE') return 'bi-graph-up-arrow';
-          if (r === 'BEAR' || r === 'NEGATIVE') return 'bi-graph-down-arrow';
+          if (r === 'BULL') return 'bi-graph-up-arrow';
+          if (r === 'BEAR') return 'bi-graph-down-arrow';
           return 'bi-dash-circle';
         },
 
-// 3. 설명 문구 분기 처리 수정
+        getRiskBadgeClass() {
+          const r = this.regimeData?.risk;
+          if (r === 'RISK-ON') return 'bg-green-soft text-green';
+          if (r === 'RISK-OFF') return 'bg-orange-soft text-orange';
+          return 'bg-neutral';
+        },
+        getRiskIcon() {
+          const r = this.regimeData?.risk;
+          if (r === 'RISK-ON') return 'bi-shield-check';
+          if (r === 'RISK-OFF') return 'bi-shield-exclamation';
+          return 'bi-shield';
+        },
+
+        getCompassClass() {
+          if (!this.regimeData) return 'compass-neutral';
+          const regime = this.regimeData.regime;
+          if (regime === 'BULL') return 'compass-bull';
+          if (regime === 'BEAR') return 'compass-bear';
+          return 'compass-neutral';
+        },
+
+        // 💡 중앙 나침반 동적 코멘트
         getCompassDescription() {
-          if (!this.regimeData) return '데이터를 불러오는 중입니다';
+          if (!this.regimeData) return '데이터를 불러오는 중입니다.';
           const r = this.regimeData.regime;
           const risk = this.regimeData.risk;
           const conf = this.regimeData.confidence;
 
           let desc = '';
-          if (r === 'BULL' || r === 'POSITIVE') {
-            desc = risk === 'RISK-ON'
-                    ? '상승 추세 속에서 위험 자산 선호 심리가 강한 국면'
-                    : '상승 추세이나 투자자들의 경계 심리가 상존하는 상태';
-          } else if (r === 'BEAR' || r === 'NEGATIVE') {
-            desc = risk === 'RISK-OFF'
-                    ? '하락 압력이 지속되며 안전 자산 선호가 뚜렷한 국면'
-                    : '하락세 속에서 일부 반등 매수세가 유입되는 상태';
+          if (r === 'BULL') {
+            desc = risk === 'RISK-ON' ? '상승 추세 속에서 위험 자산 선호 심리가 강해요.' : '상승 추세이지만 투자자들은 다소 신중한 모습이에요.';
+          } else if (r === 'BEAR') {
+            desc = risk === 'RISK-OFF' ? '하락 추세가 이어지며 안전 자산 쏠림이 뚜렷해요.' : '하락 추세 속에서도 일부 위험 자산에 매수세가 있어요.';
           } else {
-            desc = '뚜렷한 방향성 없이 관망세가 우세한 중립 국면';
+            desc = '뚜렷한 방향성 없이 시장이 눈치를 보고 있어요.';
           }
 
           if (conf <= 40) {
-            desc += ' (지표 간 엇갈림으로 신뢰도 낮음)';
+            desc += ' 다만, 지표 간 의견이 엇갈려 불확실성이 높습니다.';
           }
           return desc;
         },

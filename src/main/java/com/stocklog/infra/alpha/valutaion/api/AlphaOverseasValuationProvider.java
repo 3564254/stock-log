@@ -14,7 +14,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-import static com.stocklog.global.util.FinancialUtils.safeParse;
+import static com.stocklog.modules.common.finance.util.FinancialUtils.safeParse;
 
 @Component
 @Slf4j

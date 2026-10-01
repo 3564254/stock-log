@@ -4,7 +4,7 @@ import com.stocklog.modules.market.domain.type.IndexType;
 import com.stocklog.modules.stock.chart.dto.ChartRequest;
 import com.stocklog.modules.stock.application.request.StockRequest;
 import com.stocklog.modules.stock.domain.type.DataType;
-import com.stocklog.modules.stock.domain.type.Period;
+import com.stocklog.modules.common.type.Period;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;

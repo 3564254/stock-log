@@ -2,7 +2,7 @@ package com.stocklog.modules.stock.chart;
 
 import com.stocklog.modules.stock.chart.id.StockChartId;
 import org.springframework.data.jpa.repository.JpaRepository;
-import com.stocklog.modules.stock.domain.type.Period;
+import com.stocklog.modules.common.type.Period;
 
 import java.util.List;
 

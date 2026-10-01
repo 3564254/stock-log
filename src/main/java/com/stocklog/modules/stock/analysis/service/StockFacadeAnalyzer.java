@@ -1,5 +1,11 @@
 package com.stocklog.modules.stock.analysis.service;
 
+import com.stocklog.modules.common.finance.indicator.volatility.PhaseIndicators;
+import com.stocklog.modules.common.finance.indicator.priceaction.TargetIndicators;
+import com.stocklog.modules.common.type.ChartDataType;
+import com.stocklog.modules.common.type.ChartPhase;
+import com.stocklog.modules.common.finance.model.TargetResult;
+import com.stocklog.modules.stock.analysis.domain.signal.vo.StockPhase;
 import com.stocklog.modules.stock.analysis.domain.momentum.MomentumScore;
 import com.stocklog.modules.stock.analysis.domain.signal.vo.*;
 import com.stocklog.modules.stock.analysis.domain.technical.TechnicalScore;
@@ -8,10 +14,7 @@ import com.stocklog.modules.stock.analysis.result.StockAnalysisResult;
 import com.stocklog.modules.stock.chart.dto.StockChartDto;
 import com.stocklog.modules.stock.domain.type.AssetType;
 import com.stocklog.modules.stock.application.response.StockSnapshot;
-import com.stocklog.modules.stock.financial.dto.internal.StockFinancialDto;
 import com.stocklog.modules.stock.info.dto.StockInfoDto;
-import com.stocklog.modules.stock.price.dto.StockPriceDto;
-import com.stocklog.modules.stock.valutation.dto.StockValuationDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,19 +34,9 @@ public class StockFacadeAnalyzer {
     private final ValuationAnalyzer valuationAnalyzer;
     private final EntrySignalAnalyzer entrySignalAnalyzer;
 
-    public MomentumScore momentumAnalyze(List<StockChartDto> dailyCharts, StockPriceDto priceDto) {
-        return momentumAnalyzer.analyze(dailyCharts, priceDto);
-    }
-
-    public TechnicalScore technicalAnalyze(List<StockChartDto> dailyCharts, List<StockChartDto> weeklyCharts) {
-        return technicalAnalyzer.analyze(dailyCharts, weeklyCharts);
-    }
-
-    public ValuationScore valuationAnalyze(StockValuationDto valuation, StockFinancialDto financial, StockInfoDto info, StockPriceDto price) {
-        return valuationAnalyzer.analyze(valuation, financial, info, price);
-    }
 
     public EntrySignal entrySignalAnalyze(List<StockChartDto> dailyCharts, List<StockChartDto> weeklyCharts) {
+
         return entrySignalAnalyzer.analyze(dailyCharts, weeklyCharts);
     }
 
@@ -72,6 +65,16 @@ public class StockFacadeAnalyzer {
         String grade = toGrade(totalScore);
         boolean isEtf = isEtf(snapshot.info());
         List<String> allSignals = getAllSignals(momentumScore, technicalScore, valuationScore);
+
+
+
+
+        // ============= 테스트 ============ //
+        com.stocklog.modules.common.finance.context.MarketContext marketContext = com.stocklog.modules.common.finance.context.MarketContext.ofCandle(snapshot.dailyCharts(), snapshot.weeklyCharts(), ChartDataType.STOCK);
+        ChartPhase chartPhase = PhaseIndicators.determinePhase(marketContext);
+        TargetResult targetResult = TargetIndicators.calculateTargets(marketContext, chartPhase);
+
+        log.info("MarketContext={}, targetResut={}, chartPhase={}", marketContext,targetResult, chartPhase);
 
 
         return StockAnalysisResult.builder()

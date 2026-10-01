@@ -1,6 +1,6 @@
 package com.stocklog.modules.market.analysis.service.analyzer;
 
-import com.stocklog.modules.market.analysis.service.result.AnalyzerScore;
+import com.stocklog.modules.market.analysis.service.result.MarketAnalyzerScore;
 import com.stocklog.modules.market.analysis.service.result.MarketAnalyzer;
 import com.stocklog.modules.market.analysis.service.result.ScoreCategory;
 import com.stocklog.modules.market.chart.MarketChartData;
@@ -31,7 +31,7 @@ public class RiskAnalyzer implements MarketAnalyzer {
     ) {}
 
     @Override
-    public AnalyzerScore analyze(Map<IndexType,MarketChartData> data) {
+    public MarketAnalyzerScore analyze(Map<IndexType,MarketChartData> data) {
         // MarketChartData에서 각 지표별 종가(close) 리스트를 추출한다고 가정 (구현체에 맞게 수정 필요)
         List<Double> vixCloses = getDoubles(data, IndexType.VIX);
         List<Double> hySpreadCloses = getDoubles(data, IndexType.HIGH_YIELD_SPREAD);
@@ -53,7 +53,7 @@ public class RiskAnalyzer implements MarketAnalyzer {
         ScoreCategory category = categorizeRisk(totalScore);
         RiskDetails details = new RiskDetails(vixScore, hySpreadScore, dollarScore, usdJpyScore, bitcoinScore);
 
-        return new AnalyzerScore("RiskAppetite", totalScore, category, details);
+        return new MarketAnalyzerScore("RiskAppetite", totalScore, category, details);
     }
 
     private double analyzeVix(List<Double> closes) {

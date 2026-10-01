@@ -37,8 +37,9 @@ public class StockController {
         if (loginMember == null) return "redirect:/auth/login";
 
         StockSnapshot stockSnapshot = snapshotUseCase.getStockSnapshot(code);
-
         StockAnalysisResult analysisResult =  analysisService.getAnalysisResult(stockSnapshot);
+
+
 
         Map<String, String> signalDescMap = analysisResult.getSignals().stream()
                 .collect(Collectors.toMap(

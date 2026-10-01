@@ -1,6 +1,6 @@
 package com.stocklog.modules.market.analysis.service.analyzer;
 
-import com.stocklog.modules.market.analysis.service.result.AnalyzerScore;
+import com.stocklog.modules.market.analysis.service.result.MarketAnalyzerScore;
 import com.stocklog.modules.market.analysis.service.result.MarketAnalyzer;
 import com.stocklog.modules.market.analysis.service.result.ScoreCategory;
 import com.stocklog.modules.market.chart.MarketChartData;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 
-import static com.stocklog.modules.common.finance.indicator.MathUtils.computeReturn;
+import static com.stocklog.modules.common.finance.indicator.trend.MomentumIndicators.computeReturn;
 import static com.stocklog.modules.market.analysis.service.analyzer.utils.GetDoublesUtils.getDoubles;
 
 @Component
@@ -27,7 +27,7 @@ public class CreditAnalyzer implements MarketAnalyzer {
     ) {}
 
     @Override
-    public AnalyzerScore analyze(Map<IndexType,MarketChartData> data) {
+    public MarketAnalyzerScore analyze(Map<IndexType,MarketChartData> data) {
         // 데이터 추출
         List<Double> hySpreadCloses = getDoubles(data, IndexType.HIGH_YIELD_SPREAD);
         List<Double> finStressCloses = getDoubles(data, IndexType.FINANCIAL_STRESS);
@@ -54,12 +54,12 @@ public class CreditAnalyzer implements MarketAnalyzer {
         // 국면 판별 (HEALTHY, NEUTRAL, STRESS)
         String regime = determineCreditRegime(totalScore, hasDivergence);
 
-        ScoreCategory category = AnalyzerScore.categorize(totalScore);
+        ScoreCategory category = MarketAnalyzerScore.categorize(totalScore);
         CreditDetails details = new CreditDetails(
                 hySpreadScore, financialStressScore, consumerLoansScore, sectorFinancialsScore, hasDivergence, regime
         );
 
-        return new AnalyzerScore("CreditHealth", totalScore, category, details);
+        return new MarketAnalyzerScore("CreditHealth", totalScore, category, details);
     }
 
     // [팩터 1] High Yield Spread (최대 ±35점) - 낮을수록, 축소될수록 긍정적

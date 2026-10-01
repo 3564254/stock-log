@@ -13,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import static com.stocklog.global.util.FinancialUtils.safeParse;
+import static com.stocklog.modules.common.finance.util.FinancialUtils.safeParse;
 
 @Component
 @Slf4j

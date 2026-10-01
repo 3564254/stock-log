@@ -1,5 +1,5 @@
 package com.stocklog.modules.market.domain.type;
-import com.stocklog.modules.stock.domain.type.Period;
+import com.stocklog.modules.common.type.Period;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 

@@ -16,7 +16,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
 
-import static com.stocklog.global.util.FinancialUtils.*;
+import static com.stocklog.modules.common.finance.util.FinancialUtils.*;
 
 @Component
 @Slf4j

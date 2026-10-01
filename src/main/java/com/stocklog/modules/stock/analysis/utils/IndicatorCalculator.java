@@ -1,7 +1,9 @@
 package com.stocklog.modules.stock.analysis.utils;
 
-import com.stocklog.modules.common.finance.vo.MacdResult;
-import com.stocklog.modules.common.finance.vo.Pivot;
+import com.stocklog.modules.common.finance.indicator.priceaction.PivotIndicators;
+import com.stocklog.modules.common.finance.model.MacdResult;
+import com.stocklog.modules.common.finance.model.Pivot;
+import com.stocklog.modules.common.type.Period;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -18,7 +20,8 @@ public final class IndicatorCalculator {
     // ── 1. 지지/저항 지표 (Pivot) ──
 
     public static Pivot calcPivot(double high, double low, double close) {
-        return  Pivot.of(high,low,close);
+        return  PivotIndicators.calcPivotPoints(high, low, close, Period.DAY);
+
     }
 
     // ── 2. 추세 및 모멘텀 지표 ──

@@ -1,5 +1,6 @@
 package com.stocklog.modules.stock.info;
 
+import com.stocklog.modules.common.type.Nation;
 import com.stocklog.modules.stock.domain.type.*;
 import com.stocklog.global.common.BaseTimeEntity;
 import jakarta.persistence.*;

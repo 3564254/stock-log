@@ -1,7 +1,7 @@
 package com.stocklog.modules.market.analysis.service.analyzer;
 
-import com.stocklog.modules.common.finance.vo.MacdResult;
-import com.stocklog.modules.market.analysis.service.result.AnalyzerScore;
+import com.stocklog.modules.common.finance.model.MacdResult;
+import com.stocklog.modules.market.analysis.service.result.MarketAnalyzerScore;
 import com.stocklog.modules.market.analysis.service.result.MarketAnalyzer;
 import com.stocklog.modules.market.analysis.service.result.ScoreCategory;
 import com.stocklog.modules.market.chart.MarketChartData;
@@ -13,10 +13,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.stocklog.modules.common.finance.indicator.MathUtils.computeReturn;
-import static com.stocklog.modules.common.finance.indicator.MathUtils.rateOfChange;
-import static com.stocklog.modules.common.finance.indicator.MomentumIndicators.calcMacd;
-import static com.stocklog.modules.common.finance.indicator.MomentumIndicators.calcRsiWilder;
+import static com.stocklog.modules.common.finance.indicator.trend.MomentumIndicators.*;
 import static com.stocklog.modules.market.analysis.service.analyzer.utils.GetDoublesUtils.getDoubles;
 
 @Component
@@ -38,7 +35,7 @@ public class MarketMomentumAnalyzer implements MarketAnalyzer {
     public record MomentumDetails(Map<IndexType, IndexMomentumDetails> indexDetails) {}
 
     @Override
-    public AnalyzerScore analyze(Map<IndexType, MarketChartData> data) {
+    public MarketAnalyzerScore analyze(Map<IndexType, MarketChartData> data) {
         Map<IndexType, IndexMomentumDetails> detailsMap = new EnumMap<>(IndexType.class);
         double totalScore = 0;
         int validCount = 0;
@@ -62,10 +59,10 @@ public class MarketMomentumAnalyzer implements MarketAnalyzer {
 
         // 3대 지수 점수 평균화 처리
         double finalScore = (validCount > 0) ? (totalScore / validCount) : 0.0;
-        ScoreCategory category = AnalyzerScore.categorize(finalScore);
+        ScoreCategory category = MarketAnalyzerScore.categorize(finalScore);
         MomentumDetails details = new MomentumDetails(detailsMap);
 
-        return new AnalyzerScore("MarketMomentum", finalScore, category, details);
+        return new MarketAnalyzerScore("MarketMomentum", finalScore, category, details);
     }
 
     private double calculateNormalizedScore(Returns returns, Roc roc, Rsi rsi, Macd macd, MomentumAcceleration accel) {

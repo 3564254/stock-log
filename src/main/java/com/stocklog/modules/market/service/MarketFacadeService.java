@@ -2,7 +2,9 @@ package com.stocklog.modules.market.service;
 
 import com.stocklog.modules.market.analysis.dto.MarketRegimeDto;
 import com.stocklog.modules.market.analysis.dto.MarketRegimeResponse;
+import com.stocklog.modules.market.analysis.dto.TotalResult;
 import com.stocklog.modules.market.analysis.service.MarketAnalysisService;
+import com.stocklog.modules.market.diagnosis.MarketDiagnosisDto;
 import com.stocklog.modules.market.diagnosis.MarketDiagnosisService;
 import com.stocklog.modules.market.exchange.dto.ExchangeRateInfo;
 import com.stocklog.modules.market.index.dto.IndexDashboardDto;
@@ -20,10 +22,12 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class MarketFacadeService {
+
     private final ExchangeService exchangeService;
     private final IndexService indexService;
     private final NewsService newsService;
     private final MarketAnalysisService analysisService;
+    private final MarketDiagnosisService diagnosisService;
 
     // ============== Exchange Service ============== //
     public ExchangeRateInfo fetchExchangeRate() {
@@ -46,8 +50,15 @@ public class MarketFacadeService {
     }
 
     public MarketRegimeResponse getMarketAnalysisResponse(int n) {
-        List<NewsDto> newsDtoList = newsService.getMarketNewsDESCTopN(n);
-        return analysisService.analyzeMarket(newsDtoList);
+        TotalResult totalResult = analysisService.getTotalResult();
+        MarketDiagnosisDto marketDiagnosisDto = diagnosisService.getMarketDiagnosisDto(totalResult.engineInput(),
+                totalResult.marketRegimeDto(),
+                newsService.getMarketNewsDESCTopN(n));
+        return MarketRegimeResponse.builder()
+                .marketRegimeDto(totalResult.marketRegimeDto())
+                .diagnosisDto(marketDiagnosisDto)
+                .build();
+
     }
 
 

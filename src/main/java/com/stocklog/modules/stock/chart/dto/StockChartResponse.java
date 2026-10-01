@@ -1,6 +1,6 @@
 package com.stocklog.modules.stock.chart.dto;
 
-import com.stocklog.modules.stock.domain.type.Period;
+import com.stocklog.modules.common.type.Period;
 import lombok.Builder;
 
 import java.util.List;

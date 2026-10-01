@@ -1,6 +1,6 @@
 package com.stocklog.modules.market.analysis.service.analyzer;
 
-import com.stocklog.modules.market.analysis.service.result.AnalyzerScore;
+import com.stocklog.modules.market.analysis.service.result.MarketAnalyzerScore;
 import com.stocklog.modules.market.analysis.service.result.MarketAnalyzer;
 import com.stocklog.modules.market.analysis.service.result.ScoreCategory;
 import com.stocklog.modules.market.chart.MarketChartData;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 
-import static com.stocklog.modules.common.finance.indicator.MathUtils.computeReturn;
+import static com.stocklog.modules.common.finance.indicator.trend.MomentumIndicators.computeReturn;
 import static com.stocklog.modules.market.analysis.service.analyzer.utils.GetDoublesUtils.getDoubles;
 
 @Component
@@ -32,7 +32,7 @@ public class CrossAssetAnalyzer implements MarketAnalyzer {
     ) {}
 
     @Override
-    public AnalyzerScore analyze(Map<IndexType,MarketChartData> data) {
+    public MarketAnalyzerScore analyze(Map<IndexType,MarketChartData> data) {
         // 1. 주요 자산군 데이터 추출 및 수익률 계산 (20일 모멘텀 기준)
         double stocks = getReturn(data, IndexType.SP500);
         double yields = getReturn(data, IndexType.US_TREASURY_10Y);
@@ -50,10 +50,10 @@ public class CrossAssetAnalyzer implements MarketAnalyzer {
 
         // 3. 자산간 다이버전스 및 조합을 고려한 종합 점수 산출 (-100 ~ +100)
         double score = calculateScore(returns);
-        ScoreCategory category = AnalyzerScore.categorize(score);
+        ScoreCategory category = MarketAnalyzerScore.categorize(score);
         CrossAssetDetails details = new CrossAssetDetails(returns, narrative);
 
-        return new AnalyzerScore("CrossAsset", score, category, details);
+        return new MarketAnalyzerScore("CrossAsset", score, category, details);
     }
 
     /**

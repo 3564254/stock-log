@@ -1,6 +1,6 @@
 package com.stocklog.modules.stock.analysis.domain.valuation;
 
-import com.stocklog.modules.stock.domain.type.Nation;
+import com.stocklog.modules.common.type.Nation;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;

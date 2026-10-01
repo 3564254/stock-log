@@ -4,7 +4,7 @@ import com.opencsv.CSVReader; // 단순 split보다 훨씬 안전합니다.
 import com.stocklog.modules.stock.application.response.StockMasterDto;
 import com.stocklog.modules.stock.domain.type.Currency;
 import com.stocklog.modules.stock.domain.type.MarketType;
-import com.stocklog.modules.stock.domain.type.Nation;
+import com.stocklog.modules.common.type.Nation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;

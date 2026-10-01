@@ -1,5 +1,6 @@
 package com.stocklog.modules.stock.info.dto;
 
+import com.stocklog.modules.common.type.Nation;
 import com.stocklog.modules.stock.domain.type.*;
 import com.stocklog.modules.stock.info.StockInfo;
 import com.stocklog.modules.stock.stock.dto.StockDto;

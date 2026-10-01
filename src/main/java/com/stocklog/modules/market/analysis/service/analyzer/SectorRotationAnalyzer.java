@@ -1,6 +1,6 @@
 package com.stocklog.modules.market.analysis.service.analyzer;
 
-import com.stocklog.modules.market.analysis.service.result.AnalyzerScore;
+import com.stocklog.modules.market.analysis.service.result.MarketAnalyzerScore;
 import com.stocklog.modules.market.analysis.service.result.MarketAnalyzer;
 import com.stocklog.modules.market.analysis.service.result.ScoreCategory;
 import com.stocklog.modules.market.chart.MarketChartData;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.stocklog.modules.common.finance.indicator.MathUtils.computeReturn;
+import static com.stocklog.modules.common.finance.indicator.trend.MomentumIndicators.computeReturn;
 import static com.stocklog.modules.market.analysis.service.analyzer.utils.GetDoublesUtils.getDoubles;
 
 @Component
@@ -46,11 +46,11 @@ public class SectorRotationAnalyzer implements MarketAnalyzer {
     ) {}
 
     @Override
-    public AnalyzerScore analyze(Map<IndexType,MarketChartData> data) {
+    public MarketAnalyzerScore analyze(Map<IndexType,MarketChartData> data) {
         // 1. 벤치마크 (S&P 500) 수익률 계산 (20일 기준)
         List<Double> sp500Closes = getDoubles(data, IndexType.SP500);
         if (sp500Closes == null || sp500Closes.size() < 21) {
-            return new AnalyzerScore("SectorRotation", 0, ScoreCategory.NEUTRAL, null);
+            return new MarketAnalyzerScore("SectorRotation", 0, ScoreCategory.NEUTRAL, null);
         }
         double sp500Return = computeReturn(sp500Closes, sp500Closes.size() - 1, 20);
 
@@ -83,11 +83,11 @@ public class SectorRotationAnalyzer implements MarketAnalyzer {
 
         // 4. 섹터 로테이션 전체 점수 산출 (-100 ~ +100)
         double score = calculateRotationScore(sectorStrengths);
-        ScoreCategory category = AnalyzerScore.categorize(score);
+        ScoreCategory category = MarketAnalyzerScore.categorize(score);
 
         RotationDetails details = new RotationDetails(leadership, weakness, sectorStrengths);
 
-        return new AnalyzerScore("SectorRotation", score, category, details);
+        return new MarketAnalyzerScore("SectorRotation", score, category, details);
     }
 
     /**

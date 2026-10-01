@@ -1,12 +1,11 @@
 package com.stocklog.modules.market.index.dto;
 
-import com.stocklog.modules.common.finance.vo.SimpleChartDto;
+import com.stocklog.modules.common.finance.dto.SimpleChartDto;
 import com.stocklog.modules.market.index.entity.MarketIndexHistory;
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 
 @Builder
 public record IndexChartDto(

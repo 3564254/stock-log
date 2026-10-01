@@ -15,7 +15,7 @@ import com.stocklog.modules.stock.info.StockInfoService;
 import com.stocklog.modules.stock.info.dto.StockInfoDto;
 import com.stocklog.modules.stock.price.StockPriceService;
 import com.stocklog.modules.stock.price.dto.StockPriceDto;
-import com.stocklog.modules.stock.domain.type.Period;
+import com.stocklog.modules.common.type.Period;
 import com.stocklog.infra.gemini.service.GeminiAiProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

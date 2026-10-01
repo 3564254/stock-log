@@ -1,6 +1,6 @@
 package com.stocklog.modules.stock.chart.dto;
 
-import com.stocklog.modules.common.finance.vo.CandleChartDto;
+import com.stocklog.modules.common.finance.dto.CandleChartDto;
 import com.stocklog.modules.stock.chart.StockChart;
 import lombok.Builder;
 

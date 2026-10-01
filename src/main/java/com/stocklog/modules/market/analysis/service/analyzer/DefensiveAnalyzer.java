@@ -1,6 +1,6 @@
 package com.stocklog.modules.market.analysis.service.analyzer;
 
-import com.stocklog.modules.market.analysis.service.result.AnalyzerScore;
+import com.stocklog.modules.market.analysis.service.result.MarketAnalyzerScore;
 import com.stocklog.modules.market.analysis.service.result.MarketAnalyzer;
 import com.stocklog.modules.market.analysis.service.result.ScoreCategory;
 import com.stocklog.modules.market.chart.MarketChartData;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 
-import static com.stocklog.modules.common.finance.indicator.MathUtils.computeReturn;
+import static com.stocklog.modules.common.finance.indicator.trend.MomentumIndicators.computeReturn;
 import static com.stocklog.modules.market.analysis.service.analyzer.utils.GetDoublesUtils.getDoubles;
 
 @Component
@@ -28,7 +28,7 @@ public class DefensiveAnalyzer implements MarketAnalyzer {
     ) {}
 
     @Override
-    public AnalyzerScore analyze(Map<IndexType,MarketChartData> data) {
+    public MarketAnalyzerScore analyze(Map<IndexType,MarketChartData> data) {
         // 1. 방어 자산 데이터 추출
         List<Double> staplesCloses = getDoubles(data, IndexType.NASDAQ_CONSUMER_STAPLES);
         //List<Double> utilCloses = getDoubles(data, IndexType.DOW_JONES_UTILITY);
@@ -63,13 +63,13 @@ public class DefensiveAnalyzer implements MarketAnalyzer {
         boolean defensiveDivergence = (isMarketUp && strongDefensiveCount >= 2);
 
         String regime = determineRegime(score, defensiveDivergence);
-        ScoreCategory category = AnalyzerScore.categorize(score);
+        ScoreCategory category = MarketAnalyzerScore.categorize(score);
 
         DefensiveDetails details = new DefensiveDetails(
                 staplesReturn, goldReturn, dollarReturn, growthReturn, defensiveDivergence, regime
         );
 
-        return new AnalyzerScore("DefensiveRotation", score, category, details);
+        return new MarketAnalyzerScore("DefensiveRotation", score, category, details);
     }
 
     private double calculateDefensiveScore(double staples, double gold, double dollar, double growth) {

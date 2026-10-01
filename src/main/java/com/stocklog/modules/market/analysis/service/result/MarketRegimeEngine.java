@@ -21,15 +21,15 @@ public class MarketRegimeEngine {
 
         // 1. 임계값(Threshold)을 적용한 2차원 축 판별
         String axis1Trend = determineAxis(input.trend().score(), "BULL", "BEAR");
-        String axis2Risk = determineAxis(input.risk().score(), "RISK-ON", "RISK-OFF");
+        String axis2Risk = determineAxis(input.risk().score(), "RISK_ON", "RISK_OFF");
 
         // 2. 기본 국면 문구 매핑
         String combinedRegime = axis1Trend + " + " + axis2Risk;
         String regimeDescription = switch (combinedRegime) {
-            case "BULL + RISK-ON" -> "강한 상승장";
-            case "BULL + RISK-OFF" -> "상승 추세지만 위험 증가 (경계)";
-            case "BEAR + RISK-ON" -> "하락장 속 기술적 반등 / 회복 시도";
-            case "BEAR + RISK-OFF" -> "강한 하락장";
+            case "BULL + RISK_ON" -> "강한 상승장";
+            case "BULL + RISK_OFF" -> "상승 추세지만 위험 증가 (경계)";
+            case "BEAR + RISK_ON" -> "하락장 속 기술적 반등 / 회복 시도";
+            case "BEAR + RISK_OFF" -> "강한 하락장";
             default -> "방향성 탐색 구간 (혼조세)";
         };
 
@@ -101,22 +101,22 @@ public class MarketRegimeEngine {
         );
     }
 
-    private String extractMacroRegime(AnalyzerScore macro) {
+    private String extractMacroRegime(MarketAnalyzerScore macro) {
         if (macro != null && macro.rawDetails() instanceof MacroDetails d) return d.macroRegime();
         return "UNKNOWN";
     }
 
-    private String extractLiquidityRegime(AnalyzerScore liquidity) {
+    private String extractLiquidityRegime(MarketAnalyzerScore liquidity) {
         if (liquidity != null && liquidity.rawDetails() instanceof LiquidityDetails d) return d.liquidityRegime();
         return "UNKNOWN";
     }
 
-    private String extractCreditRegime(AnalyzerScore credit) {
+    private String extractCreditRegime(MarketAnalyzerScore credit) {
         if (credit != null && credit.rawDetails() instanceof CreditDetails d) return d.creditRegime();
         return "UNKNOWN";
     }
 
-    private List<String> extractLeadership(AnalyzerScore sector) {
+    private List<String> extractLeadership(MarketAnalyzerScore sector) {
         if (sector != null && sector.rawDetails() instanceof RotationDetails d) return d.leadership();
         return List.of();
     }
@@ -128,7 +128,7 @@ public class MarketRegimeEngine {
         if (input.breadth().score() < -20) warnings.add("Narrow Market (소수 종목 쏠림 심화)");
     }
 
-    private void collectDivergences(AnalyzerScore divergence, List<String> divergences) {
+    private void collectDivergences(MarketAnalyzerScore divergence, List<String> divergences) {
         if (divergence != null && divergence.rawDetails() instanceof DivergenceDetails d) {
             if (d.warnings() != null && !d.warnings().isEmpty()) divergences.addAll(d.warnings());
             else divergences.add("None");

@@ -2,7 +2,7 @@ package com.stocklog.modules.stock.application.response;
 
 import com.stocklog.modules.stock.domain.type.Currency;
 import com.stocklog.modules.stock.domain.type.MarketType;
-import com.stocklog.modules.stock.domain.type.Nation;
+import com.stocklog.modules.common.type.Nation;
 import com.stocklog.modules.stock.stock.Stock;
 import lombok.Builder;
 
