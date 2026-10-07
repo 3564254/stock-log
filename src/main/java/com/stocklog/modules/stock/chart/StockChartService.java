@@ -124,7 +124,7 @@ public class StockChartService {
                 .filter(p -> p.supports(stockDto.market()))
                 .findFirst()
                 .map(p -> {
-                    return p.fetchInfo(request, period);
+                    return p.fetchChart(request, period);
                 })
                 .orElseThrow(() -> {
                     log.error("[Chart] 지원하지 않는 시장입니다: {}", stockDto.market());

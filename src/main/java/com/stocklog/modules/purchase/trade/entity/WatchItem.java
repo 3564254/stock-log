@@ -1,9 +1,9 @@
 package com.stocklog.modules.purchase.trade.entity;
 
+import com.stocklog.modules.common.type.ChartPhase;
 import com.stocklog.modules.member.entity.Member;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.StockPhase;
 import com.stocklog.modules.stock.info.StockInfo;
-import com.stocklog.global.common.BaseTimeEntity;
+import com.stocklog.global.common.base.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -33,22 +33,22 @@ public class WatchItem extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "market_phase")
-    private StockPhase stockPhase;
+    private ChartPhase chartPhase;
 
     // 💡 딱 하나만 남긴 관찰 목표가
     @Column(name = "target_price")
     private Double targetPrice;
 
     @Builder
-    public WatchItem(Member member, StockInfo stock, StockPhase stockPhase) {
+    public WatchItem(Member member, StockInfo stock, ChartPhase chartPhase) {
         this.member = member;
         this.stock = stock;
-        this.stockPhase = stockPhase;
+        this.chartPhase = chartPhase;
     }
 
     // 국면과 목표가를 함께 갱신하는 메서드
-    public void updateAnalyzedSignal(StockPhase stockPhase, Double targetPrice) {
-        this.stockPhase = stockPhase;
+    public void updateAnalyzedSignal(ChartPhase chartPhase, Double targetPrice) {
+        this.chartPhase = chartPhase;
         this.targetPrice = targetPrice;
     }
 

@@ -1,13 +1,13 @@
 package com.stocklog.modules.purchase.trade.service;
 
+import com.stocklog.modules.common.finance.context.MarketContext;
+import com.stocklog.modules.common.type.ChartPhase;
 import com.stocklog.modules.purchase.trade.dto.request.TradingRuleSaveRequest;
 import com.stocklog.modules.purchase.trade.dto.response.TradingRuleCheckResponse;
 import com.stocklog.modules.purchase.trade.dto.response.TradingRuleResponse;
 import com.stocklog.modules.purchase.trade.entity.TradingRule;
 import com.stocklog.modules.purchase.trade.repository.TradingRuleRepository;
 import com.stocklog.modules.purchase.trade.type.IndicatorType;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.MarketContext;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.StockPhase;
 import com.stocklog.global.error.BusinessException;
 import com.stocklog.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -64,7 +64,7 @@ public class TradingRuleService {
     /**
      * 💡 변경: 검증 시 MarketContext 객체를 직접 주입받아 실시간 데이터를 대조합니다.
      */
-    public TradingRuleCheckResponse evaluateBuySignal(Long memberId, MarketContext ctx, StockPhase phase) {
+    public TradingRuleCheckResponse evaluateBuySignal(Long memberId, MarketContext ctx, ChartPhase phase) {
         List<TradingRule> activeRules = tradingRuleRepository.findAllByMemberIdAndIsActiveTrue(memberId);
 
         List<TradingRuleCheckResponse.RuleDetail> details = new ArrayList<>();
@@ -87,12 +87,12 @@ public class TradingRuleService {
         }
 
         String decision = isAllPass ? "PASS" : "FAIL";
-        String verdict = MarketContext.generateEntryVerdict(ctx, phase);
+        String verdict = "아직 기능 구현 중";
 
         return new TradingRuleCheckResponse(decision, details, verdict);
     }
 
-    public TradingRuleCheckResponse evaluateSellSignal(Long memberId, MarketContext ctx, StockPhase phase) {
+    public TradingRuleCheckResponse evaluateSellSignal(Long memberId, MarketContext ctx, ChartPhase phase) {
 
         return null;
     }
@@ -136,12 +136,12 @@ public class TradingRuleService {
      */
     private boolean evaluateBooleanIndicator(IndicatorType type, MarketContext ctx) {
         return switch (type) {
-            case UPTREND -> ctx.isUptrend();             // 정배열 여부
-            case MACRO_UPTREND -> ctx.isMacroUptrend();  // 장기 추세 여부
-            case BOLLINGER_SQUEEZE -> ctx.isSqueeze();   // 볼린저 응축 여부
-            case VOLUME_BULLISH -> ctx.isVolBullish();   // 매수세 폭발 여부
-            case NEW_HIGH_5D -> ctx.isHH();              // 단기 고점 돌파 여부
-            case HIGHER_LOW -> ctx.isHL();               // 저점 방어 여부
+            case UPTREND -> ctx.priceAction().isUptrend();             // 정배열 여부
+            case MACRO_UPTREND -> ctx.priceAction().isMacroUptrend();  // 장기 추세 여부
+            case BOLLINGER_SQUEEZE -> ctx.bollingerBand().isSqueeze();   // 볼린저 응축 여부
+            case VOLUME_BULLISH -> ctx.volume() != null && ctx.volume().isVolBullish();   // 매수세 폭발 여부
+            case NEW_HIGH_5D -> ctx.priceAction().isHH();              // 단기 고점 돌파 여부
+            case HIGHER_LOW -> ctx.priceAction().isHL();               // 저점 방어 여부
             case MACD_GOLDEN_CROSS -> ctx.macd() != null && ctx.macd().isGoldenCross();
             default -> false;
         };
@@ -153,16 +153,16 @@ public class TradingRuleService {
     private double extractNumericIndicator(IndicatorType type, MarketContext ctx) {
         return switch (type) {
             // case STOCK_SCORE -> ctx.
-            case MA5 -> ctx.ma5();
-            case MA20 -> ctx.ma20();
-            case MA50 -> ctx.ma50();
-            case DIST_MA5 -> ctx.distFromMa5();
-            case DIST_MA20 -> ctx.distFromMa20();
-            case RSI -> ctx.rsi();
-            case ADX -> ctx.adx();
-            case ATR -> ctx.atr();
-            case BAND_WIDTH -> ctx.bandWidth();
-            case VOLUME -> ctx.currentVolume();
+            case MA5 -> ctx.movingAverages().ma5();
+            case MA20 -> ctx.movingAverages().ma20();
+            case MA50 -> ctx.movingAverages().ma50();
+            case DIST_MA5 -> ctx.movingAverages().distFromMa5();
+            case DIST_MA20 -> ctx.movingAverages().distFromMa20();
+            case RSI -> (ctx.momentum() != null) ? ctx.momentum().rsi() : 0;
+            case ADX -> (ctx.momentum() != null) ? ctx.momentum().adx() : 0;
+            case ATR -> (ctx.momentum() != null) ? ctx.momentum().atr() : 0;
+            case BAND_WIDTH -> ctx.bollingerBand().bandWidth();
+            case VOLUME -> ctx.volume() != null ? ctx.volume().currentVolume() : 0;
             default -> 0.0; // 잘못된 매핑 방어
         };
     }

@@ -54,10 +54,31 @@ public record MarketContext(
                 .build();
     }
 
-    public static MarketContext ofCandle(
+    public static MarketContext of(
+            List<? extends CandleChartDto> dailyCharts,
+            List<? extends CandleChartDto> weeklyCharts
+    ) {
+        return of(dailyCharts, weeklyCharts, ChartDataType.STOCK);
+    }
+
+
+    public static MarketContext of(
             List<? extends CandleChartDto> dailyCharts,
             List<? extends CandleChartDto> weeklyCharts,
             ChartDataType chartDataType
+    ) {
+        return of(dailyCharts, weeklyCharts, chartDataType, null);
+    }
+
+    /**
+     * @param session 장중 거래량 보정에 쓰는 거래소 세션. null이면 보정 없이 원본 거래량으로 판정한다.
+     *                종목 코드가 있으면 {@code ExchangeSession.fromCode(code)}로 만든다.
+     */
+    public static MarketContext of(
+            List<? extends CandleChartDto> dailyCharts,
+            List<? extends CandleChartDto> weeklyCharts,
+            ChartDataType chartDataType,
+            @Nullable ExchangeSession session
     ) {
         PriceSeries priceSeries = PriceSeries.ofCandle(dailyCharts, weeklyCharts);
         if (priceSeries == null) {
@@ -68,7 +89,7 @@ public record MarketContext(
         MovingAverages movingAverages = TrendIndicators.calcMovingAverages(priceSeries);
         BollingerBand bollingerBand = VolatilityIndicators.calcBollingerBand(priceSeries, movingAverages);
         MomentumMetrics momentumMetrics = MomentumIndicators.calcMomentumMetrics(priceSeries);
-        VolumeAnalysis volumeAnalysis = VolumeIndicators.calcVolumeAnalysis(priceSeries);
+        VolumeAnalysis volumeAnalysis = VolumeIndicators.calcVolumeAnalysis(priceSeries, session);
         PriceAction priceAction = PriceActionIndicators.calcPriceAction(priceSeries, movingAverages, momentumMetrics.adx());
         MacdResult macdResult = MomentumIndicators.calcMacd(priceSeries.closes());
         PivotSet pivotSet = PivotIndicators.calcPivotSet(dailyCharts, weeklyCharts);

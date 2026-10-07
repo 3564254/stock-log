@@ -1,67 +1,85 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<aside th:fragment="sidebarFragment(activeMenu)" class="sidebar-main">
+<aside th:fragment="sidebarFragment(activeMenu)" class="sidebar-main" aria-label="주 메뉴">
     <style>
         .sidebar-main {
-            width: var(--sidebar-width); background: white; height: 100vh; position: fixed;
+            width: var(--sidebar-width, 250px); background: #fff; height: 100vh; position: fixed;
             top: 0; left: 0; border-right: 1px solid #e5e8eb; display: flex;
-            flex-direction: column; z-index: 1000;
+            flex-direction: column; z-index: 1000; overflow-y: auto;
         }
         .sidebar-logo {
             padding: 32px 24px; display: flex; align-items: center;
-            text-decoration: none; color: #191f28; transition: opacity 0.15s ease;
+            text-decoration: none; color: #191f28; transition: opacity .15s ease;
         }
-        .sidebar-logo:hover { opacity: 0.8; }
+        .sidebar-logo:hover { opacity: .8; }
+        .sidebar-logo-mark {
+            width: 32px; height: 32px; margin-right: 10px; border-radius: 50%;
+            background: var(--toss-blue, #3182f6); display: flex; align-items: center; justify-content: center;
+        }
+        .sidebar-logo-text { font-size: 20px; font-weight: 800; letter-spacing: -.5px; color: #191f28; }
+
+        .menu-group-label {
+            margin: 18px 36px 4px; font-size: 12px; font-weight: 700; color: #8b95a1; letter-spacing: 0;
+        }
         .menu-item {
-            display: flex; align-items: center; padding: 14px 20px;
+            display: flex; align-items: center; padding: 13px 20px;
             color: #4e5968 !important; text-decoration: none !important;
-            font-size: 15px; font-weight: 600; border-radius: 12px; margin: 4px 16px;
-            transition: background-color 0.15s ease, color 0.15s ease;
+            font-size: 15px; font-weight: 600; border-radius: 12px; margin: 3px 16px;
+            transition: background-color .15s ease, color .15s ease;
         }
         .menu-item:hover { background-color: #f2f4f6; color: #191f28 !important; }
-
+        .menu-item:focus-visible { outline: 2px solid var(--toss-blue, #3182f6); outline-offset: -2px; }
         .menu-item.active {
-            background-color: #f0f6ff;
-            color: var(--toss-blue, #3182f6) !important;
-            font-weight: 700;
+            background-color: #f0f6ff; color: var(--toss-blue, #3182f6) !important; font-weight: 700;
         }
-
         .menu-item i { font-size: 18px; margin-right: 14px; width: 24px; text-align: center; }
         .nav-text { display: block; }
     </style>
 
-    <a th:href="@{/}" class="sidebar-logo">
-        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background-color: var(--toss-blue, #3182f6); margin-right: 10px;">
-            <i class="bi bi-bar-chart-fill text-white" style="font-size: 14px;"></i>
-        </div>
-        <span class="fw-bold text-dark" style="font-size: 20px; letter-spacing: -0.5px;">StockLog</span>
+    <a th:href="@{/}" class="sidebar-logo" aria-label="StockLog 홈">
+        <span class="sidebar-logo-mark"><i class="bi bi-bar-chart-fill text-white" style="font-size: 14px;"></i></span>
+        <span class="sidebar-logo-text">StockLog</span>
     </a>
 
-    <nav class="flex-grow-1 mt-2">
-        <a th:href="@{/}" class="menu-item" th:classappend="${activeMenu == 'home'} ? 'active' : ''">
+    <nav class="flex-grow-1 mt-1 pb-3">
+        <a th:href="@{/}" class="menu-item"
+           th:classappend="${activeMenu == 'home'} ? 'active' : ''"
+           th:attr="aria-current=${activeMenu == 'home'} ? 'page' : null">
             <i class="bi" th:classappend="${activeMenu == 'home'} ? 'bi-house-door-fill' : 'bi-house-door'"></i>
             <span class="nav-text">홈</span>
         </a>
 
-        <a th:href="@{/market}" class="menu-item" th:classappend="${activeMenu == 'market'} ? 'active' : ''">
-            <i class="bi bi-graph-up"></i>
+        <a th:href="@{/market}" class="menu-item"
+           th:classappend="${activeMenu == 'market'} ? 'active' : ''"
+           th:attr="aria-current=${activeMenu == 'market'} ? 'page' : null">
+            <i class="bi" th:classappend="${activeMenu == 'market'} ? 'bi-graph-up-arrow' : 'bi-graph-up'"></i>
             <span class="nav-text">시장 동향·뉴스</span>
         </a>
 
-        <a th:href="@{/portfolio}" class="menu-item" th:classappend="${activeMenu == 'portfolio'} ? 'active' : ''">
+        <div class="menu-group-label">내 투자</div>
+        <a th:href="@{/portfolio}" class="menu-item"
+           th:classappend="${activeMenu == 'portfolio'} ? 'active' : ''"
+           th:attr="aria-current=${activeMenu == 'portfolio'} ? 'page' : null">
             <i class="bi" th:classappend="${activeMenu == 'portfolio'} ? 'bi-pie-chart-fill' : 'bi-pie-chart'"></i>
             <span class="nav-text">내 자산</span>
         </a>
-        <a th:href="@{/trade}" class="menu-item" th:classappend="${activeMenu == 'tradelog'} ? 'active' : ''">
-            <i class="bi bi-journal-text"></i>
+        <a th:href="@{/trade}" class="menu-item"
+           th:classappend="${activeMenu == 'tradelog'} ? 'active' : ''"
+           th:attr="aria-current=${activeMenu == 'tradelog'} ? 'page' : null">
+            <i class="bi" th:classappend="${activeMenu == 'tradelog'} ? 'bi-journal-text' : 'bi-journal'"></i>
             <span class="nav-text">매매 기록</span>
         </a>
 
-        <a th:href="@{/community}" class="menu-item" th:classappend="${activeMenu == 'community'} ? 'active' : ''">
+        <div class="menu-group-label">소셜</div>
+        <a th:href="@{/community}" class="menu-item"
+           th:classappend="${activeMenu == 'community'} ? 'active' : ''"
+           th:attr="aria-current=${activeMenu == 'community'} ? 'page' : null">
             <i class="bi" th:classappend="${activeMenu == 'community'} ? 'bi-chat-dots-fill' : 'bi-chat-dots'"></i>
             <span class="nav-text">커뮤니티</span>
         </a>
-        <a th:href="@{/friends}" class="menu-item" th:classappend="${activeMenu == 'friends'} ? 'active' : ''">
+        <a th:href="@{/friends}" class="menu-item"
+           th:classappend="${activeMenu == 'friends'} ? 'active' : ''"
+           th:attr="aria-current=${activeMenu == 'friends'} ? 'page' : null">
             <i class="bi" th:classappend="${activeMenu == 'friends'} ? 'bi-people-fill' : 'bi-people'"></i>
             <span class="nav-text">친구</span>
         </a>

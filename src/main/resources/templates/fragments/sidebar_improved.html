@@ -153,7 +153,7 @@
         .sidebar-main::-webkit-scrollbar-thumb:hover { background: #ccc; }
     </style>
 
-    <a th:href="@{/}" class="sidebar-logo">
+    <a th:href="@{/static}" class="sidebar-logo">
         <div class="sidebar-logo-icon">
             <i class="bi bi-bar-chart-fill"></i>
         </div>
@@ -163,7 +163,7 @@
     <nav class="sidebar-nav">
         <div class="sidebar-section-label">메뉴</div>
 
-        <a th:href="@{/}" class="menu-item" th:classappend="${activeMenu == 'home'} ? 'active' : ''">
+        <a th:href="@{/static}" class="menu-item" th:classappend="${activeMenu == 'home'} ? 'active' : ''">
             <i class="bi" th:classappend="${activeMenu == 'home'} ? 'bi-house-door-fill' : 'bi-house-door'"></i>
             <span class="nav-text">홈</span>
         </a>

@@ -1,5 +1,6 @@
 package com.stocklog.infra.fred.indexdata.api;
 
+import com.stocklog.global.annotation.LogChartFetch;
 import com.stocklog.modules.market.index.dto.IndexDto;
 import com.stocklog.modules.market.index.dto.IndexChartDto;
 import com.stocklog.modules.market.index.provider.IndexChartProvider;
@@ -29,6 +30,7 @@ public class FredIndexChartProvider implements IndexChartProvider {
         this.fredProperties = fredProperties;
     }
 
+    @LogChartFetch
     @Override
     public IndexDto fetchIndexResponse(IndexType type) {
         try {

@@ -10,7 +10,9 @@ import com.stocklog.modules.stock.analysis.result.SignalDescription;
 import com.stocklog.modules.stock.application.response.StockSnapshot;
 import com.stocklog.global.annotation.LoginUser;
 import com.stocklog.modules.stock.application.usecase.StockSnapshotUseCase;
+import com.stocklog.modules.stock.analysis.diagnosis.TradingSignalResult;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,10 +20,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/stock")
@@ -38,10 +43,16 @@ public class StockController {
 
         StockSnapshot stockSnapshot = snapshotUseCase.getStockSnapshot(code);
         StockAnalysisResult analysisResult =  analysisService.getAnalysisResult(stockSnapshot);
+        // 타점 엔진 결과는 getAnalysisResult 안에서 이미 계산되어 있으므로 다시 호출하지 않는다
+        TradingSignalResult tradingSignal = analysisResult.getTradingSignalResult();
 
+        // StockAnalysisResult에서 signals 필드가 빠졌으므로 도메인별 신호를 여기서 합친다
+        List<String> allSignals = new ArrayList<>();
+        allSignals.addAll(analysisResult.getValuation().getSignals());
+        allSignals.addAll(analysisResult.getMomentum().getSignals());
+        allSignals.addAll(analysisResult.getTechnical().getSignals());
 
-
-        Map<String, String> signalDescMap = analysisResult.getSignals().stream()
+        Map<String, String> signalDescMap = allSignals.stream()
                 .collect(Collectors.toMap(
                         s -> s,
                         SignalDescription::get,
@@ -74,7 +85,9 @@ public class StockController {
         model.addAttribute("isEtf", analysisResult.isEtf());
         model.addAttribute("loginMember", loginMember);
         model.addAttribute("analysis", analysisResult);
+        model.addAttribute("tradingSignal", tradingSignal);
         model.addAttribute("stockSnapShot", stockSnapshot);
+        model.addAttribute("signals", allSignals);
         model.addAttribute("signalDescMap", signalDescMap);
         model.addAttribute("gradeColor", gradeColor(analysisResult.getGrade()));
         model.addAttribute("insightMessage", insightMessage(analysisResult.getGrade()));

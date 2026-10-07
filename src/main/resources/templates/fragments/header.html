@@ -2,53 +2,79 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <div th:fragment="headerFragment">
     <style>
+        [x-cloak] { display: none !important; }
+
+        .header-wrap { position: relative; }
+
         .header-pill {
-            background: white; border: 1px solid #e5e8eb; padding: 6px 16px 6px 8px; border-radius: 50px;
-            display: flex; align-items: center; gap: 8px; position: relative; cursor: pointer;
-            transition: background-color 0.15s ease;
+            background: #fff; border: 1px solid #e5e8eb; padding: 6px 14px 6px 6px; border-radius: 50px;
+            display: flex; align-items: center; gap: 8px; cursor: pointer;
+            font-family: inherit; transition: background-color .15s ease, border-color .15s ease;
         }
         .header-pill:hover { background-color: #f9fafb; }
+        .header-pill:focus-visible { outline: 2px solid var(--toss-blue, #3182f6); outline-offset: 2px; }
+        .header-pill[aria-expanded="true"] { border-color: #d1d6db; background-color: #f9fafb; }
+
+        .header-avatar {
+            width: 32px; height: 32px; border-radius: 50%; background: #f2f4f6; color: #6b7684;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .header-name {
+            font-size: 14px; font-weight: 700; color: #191f28;
+            max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .header-chevron { font-size: 12px; color: #8b95a1; transition: transform .15s ease; }
+        .header-pill[aria-expanded="true"] .header-chevron { transform: rotate(180deg); }
+
         .profile-dropdown {
-            position: absolute; top: 56px; right: 0; width: 140px; z-index: 1050;
-            background: white; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            position: absolute; top: calc(100% + 8px); right: 0; width: 160px; z-index: 1050;
+            background: #fff; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,.08);
             border: 1px solid #e5e8eb; overflow: hidden; padding: 8px;
         }
         .dropdown-btn {
-            width: 100%; text-align: left; padding: 12px 16px; font-weight: 600;
-            border: none; background: transparent; transition: background-color 0.15s ease;
-            font-size: 14px; border-radius: 8px;
+            display: block; width: 100%; text-align: left; padding: 11px 14px; font-weight: 600;
+            border: none; background: transparent; font-size: 14px; border-radius: 8px;
+            color: #4e5968; text-decoration: none; font-family: inherit; cursor: pointer;
+            transition: background-color .15s ease;
         }
-        .dropdown-btn:hover { background-color: #f2f4f6; }
+        .dropdown-btn:hover, .dropdown-btn:focus-visible { background-color: #f2f4f6; color: #191f28; outline: none; }
         .logout-btn { color: var(--toss-red, #f04452); }
-        .logout-btn:hover { background-color: #fff4f4; }
+        .logout-btn:hover, .logout-btn:focus-visible { background-color: #fff4f4; color: var(--toss-red, #f04452); }
+
+        .login-btn {
+            background: var(--toss-blue, #3182f6); color: #fff; border: 0; border-radius: 8px;
+            padding: 10px 24px; font-size: 14px; font-weight: 700; text-decoration: none;
+            transition: background-color .15s ease;
+        }
+        .login-btn:hover { background: #1b64da; color: #fff; }
+
+        @media (max-width: 768px) {
+            .header-name { max-width: 90px; }
+        }
     </style>
 
     <header class="d-flex justify-content-end align-items-center mb-4 pt-3">
-        <div class="d-flex align-items-center gap-3">
-            <div th:if="${loginMember != null}" class="header-pill" x-data="{ open: false }" @click.away="open = false">
-                <div class="d-flex align-items-center gap-2" @click="open = !open" style="cursor: pointer;">
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background-color: #f2f4f6;">
-                        <i class="bi bi-person-fill text-secondary"></i>
-                    </div>
-                    <span class="fw-bold text-dark" style="font-size: 14px;" th:text="${loginMember.username}">사용자</span>
-                    <i class="bi bi-chevron-down text-secondary ms-1" style="font-size: 12px;"></i>
-                </div>
+        <!-- 로그인 상태 -->
+        <div th:if="${loginMember != null}" class="header-wrap"
+             x-data="{ open: false }" @click.away="open = false" @keydown.escape.window="open = false">
+            <button type="button" class="header-pill" @click="open = !open"
+                    :aria-expanded="open.toString()" aria-haspopup="menu" aria-label="사용자 메뉴">
+                <span class="header-avatar"><i class="bi bi-person-fill"></i></span>
+                <span class="header-name" th:text="${loginMember.username}">사용자</span>
+                <i class="bi bi-chevron-down header-chevron"></i>
+            </button>
 
-                <div x-show="open" x-transition.opacity x-cloak class="profile-dropdown" style="position: absolute; right: 0; margin-top: 8px;">
-                    <a th:href="@{/auth/info}" class="dropdown-btn d-block text-decoration-none" style="color: #4e5968;">
-                        내 정보
-                    </a>
-                    <form th:action="@{/auth/logout}" method="post" class="m-0 mt-1">
-                        <button type="submit" class="dropdown-btn logout-btn">
-                            로그아웃
-                        </button>
-                    </form>
-                </div>
+            <div x-show="open" x-transition.opacity x-cloak class="profile-dropdown" role="menu">
+                <a th:href="@{/auth/info}" class="dropdown-btn" role="menuitem">내 정보</a>
+                <form th:action="@{/auth/logout}" method="post" class="m-0 mt-1">
+                    <button type="submit" class="dropdown-btn logout-btn" role="menuitem">로그아웃</button>
+                </form>
             </div>
+        </div>
 
-            <div th:if="${loginMember == null}">
-                <a th:href="@{/auth/login}" class="btn border-0 fw-bold" style="background: var(--toss-blue, #3182f6); color: white; border-radius: 8px; padding: 10px 24px; font-size: 14px;">로그인</a>
-            </div>
+        <!-- 비로그인 상태 -->
+        <div th:if="${loginMember == null}">
+            <a th:href="@{/auth/login}" class="login-btn">로그인</a>
         </div>
     </header>
 </div>

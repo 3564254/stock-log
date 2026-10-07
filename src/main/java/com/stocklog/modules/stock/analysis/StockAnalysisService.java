@@ -1,19 +1,14 @@
 package com.stocklog.modules.stock.analysis;
 
-
-import com.stocklog.modules.stock.analysis.domain.signal.vo.MarketContext;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.StockPhase;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.MiniSignalDto;
-import com.stocklog.modules.stock.analysis.service.*;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.EntrySignal;
+import com.stocklog.modules.common.finance.context.MarketContext;
+import com.stocklog.modules.common.type.ChartPhase;
+import com.stocklog.modules.stock.analysis.diagnosis.TradingSignalResult;
 import com.stocklog.modules.stock.analysis.result.StockAnalysisResult;
-import com.stocklog.modules.stock.chart.dto.StockChartDto;
+import com.stocklog.modules.stock.analysis.service.StockFacadeAnalyzer;
 import com.stocklog.modules.stock.application.response.StockSnapshot;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -26,20 +21,11 @@ public class StockAnalysisService {
         return facadeAnalyzer.getAnalysisResult(snapshot);
     }
 
-    public MiniSignalDto getMiniSignal(List<StockChartDto> dailyCharts) {
-        return facadeAnalyzer.entryMiniSignalAnalyze(dailyCharts);
+    public TradingSignalResult getTradingSignal(String symbol, MarketContext marketContext) {
+        return facadeAnalyzer.analyzeTradingSignal(symbol, marketContext);
     }
 
-    public EntrySignal entrySignalAnalyze(List<StockChartDto> dailyCharts, List<StockChartDto> weeklyCharts) {
-        return facadeAnalyzer.entrySignalAnalyze(dailyCharts, weeklyCharts);
-    }
-
-    public StockPhase getMarketPhase(MarketContext marketContext) {
+    public ChartPhase getMarketPhase(MarketContext marketContext) {
         return facadeAnalyzer.getMarketPhase(marketContext);
     }
-
-
-
-
-
 }

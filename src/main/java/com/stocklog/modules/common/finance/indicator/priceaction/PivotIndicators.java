@@ -54,4 +54,9 @@ public final class PivotIndicators {
                 .period(period)
                 .build();
     }
+
+    public static Pivot calcPivotPoints(double high, double low, double close) {
+        return  PivotIndicators.calcPivotPoints(high, low, close, Period.DAY);
+
+    }
 }

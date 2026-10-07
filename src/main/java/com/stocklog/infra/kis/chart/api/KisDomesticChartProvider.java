@@ -1,5 +1,6 @@
 package com.stocklog.infra.kis.chart.api;
 
+import com.stocklog.global.annotation.LogChartFetch;
 import com.stocklog.modules.stock.chart.dto.ChartRequest;
 import com.stocklog.modules.stock.chart.dto.StockChartDto;
 import com.stocklog.modules.stock.chart.dto.StockChartResponse;
@@ -35,7 +36,8 @@ public class KisDomesticChartProvider implements StockChartProvider {
     private final KisTokenManager tokenManager;
 
     @Override
-    public StockChartResponse fetchInfo(ChartRequest request, Period period) {
+    @LogChartFetch
+    public StockChartResponse fetchChart(ChartRequest request, Period period) {
         try {
             List<KisDomesticChartOutput2> output = callApi(request, period);
             if (output == null) return StockChartResponse.createFallback();

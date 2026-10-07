@@ -1,13 +1,13 @@
 package com.stocklog.modules.purchase.trade.service;
 
+import com.stocklog.modules.common.finance.context.MarketContext;
+import com.stocklog.modules.common.type.ChartPhase;
 import com.stocklog.modules.purchase.trade.dto.request.TradeLogRequest;
 import com.stocklog.modules.purchase.trade.dto.request.TradeReviewRequest;
 import com.stocklog.modules.purchase.trade.dto.request.TradingRuleSaveRequest;
 import com.stocklog.modules.purchase.trade.dto.response.*;
 import com.stocklog.modules.purchase.trade.dto.vo.WatchItemDto;
 import com.stocklog.modules.purchase.trade.entity.SortType;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.MarketContext;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.StockPhase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,7 +68,7 @@ public class TradeFacadeService {
     }
 
 
-    public TradingRuleCheckResponse evaluateBuySignal(Long memberId, MarketContext marketContext, StockPhase phase) {
+    public TradingRuleCheckResponse evaluateBuySignal(Long memberId, MarketContext marketContext, ChartPhase phase) {
         return tradingRuleService.evaluateBuySignal(memberId, marketContext, phase);
     }
 
@@ -97,7 +97,7 @@ public class TradeFacadeService {
         watchlistService.deleteWatchlistItem(memberId, stockCode);
     }
 
-    public void updateAnalyzedSignal(Long memberId, String stockCode, StockPhase phase, double targetPrice) {
+    public void updateAnalyzedSignal(Long memberId, String stockCode, ChartPhase phase, double targetPrice) {
         watchlistService.updateAnalyzedSignal(memberId, stockCode, phase, targetPrice);
     }
 

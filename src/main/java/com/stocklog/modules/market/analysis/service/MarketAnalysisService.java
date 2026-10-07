@@ -1,22 +1,19 @@
 package com.stocklog.modules.market.analysis.service;
 
 import com.stocklog.modules.market.analysis.dto.MarketRegimeDto;
-import com.stocklog.modules.market.analysis.dto.MarketRegimeResponse;
 import com.stocklog.modules.market.analysis.dto.TotalResult;
 import com.stocklog.modules.market.analysis.service.analyzer.*;
 import com.stocklog.modules.market.analysis.service.result.MarketAnalyzerScore;
 import com.stocklog.modules.market.analysis.dto.EngineInput;
 import com.stocklog.modules.market.analysis.service.result.MarketRegimeEngine;
 import com.stocklog.modules.market.chart.MarketChartData;
-import com.stocklog.modules.market.diagnosis.MarketDiagnosisService;
+import com.stocklog.modules.market.analysis.diagnosis.MarketDiagnosisService;
 import com.stocklog.modules.market.domain.type.IndexType;
 import com.stocklog.modules.market.index.provider.MarketDataProvider;
-import com.stocklog.modules.market.news.dto.NewsDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -64,7 +61,6 @@ public class MarketAnalysisService {
     }
 
     public TotalResult getTotalResult() {
-        log.info("시장 국면 분석 시작 (Market Analysis System)");
         // 1. Data Snapshot 획득 (DB 또는 외부 API 연동하여 필요한 모든 시계열 데이터를 한 번에 적재)
         Map<IndexType, MarketChartData> snapshot = dataProvider.fetchGlobalMarketSnapshot();
 
@@ -96,10 +92,10 @@ public class MarketAnalysisService {
                 ratesScore, liquidityScore, macroScore, creditScore,
                 sectorScore, defensiveScore, crossAssetScore, divergenceScore
         );
-        log.info("Total Score: {}", engineInput);
 
         // 4. 엔진을 통한 최종 Market Regime 도출 및 반환
         MarketRegimeDto finalResult = regimeEngine.evaluate(engineInput);
+        log.info("[MARKET]: {}", finalResult.regimeDescription());
         return new TotalResult(engineInput, finalResult);
     }
 

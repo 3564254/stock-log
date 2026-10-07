@@ -1,7 +1,7 @@
 package com.stocklog.modules.stock.domain.type;
 
 public enum DataType {
-    CHART,INFO,PRICE,FINANCIAL,VALUTATION,AI,UNKNOWN;
+    CHART,INFO,PRICE,FINANCIAL,VALUTATION,AI,NEWS,MARKET,UNKNOWN;
 
     public static String getType(String name) {
         name = name.toLowerCase();
@@ -11,12 +11,16 @@ public enum DataType {
             return "Info";
         } else if (name.contains("price")) {
             return "Price";
-        } else if (name.contains("financial")) {
+        } else if (name.contains("financial") || name.contains("finance")) {
             return "Financial";
         } else if (name.contains("valuation")) {
             return "Valuation";
         } else if (name.contains("ai")) {
             return "Ai";
+        } else if (name.contains("news")) {
+            return "News";
+        } else if (name.contains("market")) {
+            return "Market";
         } else {
             return "Unknown";
         }

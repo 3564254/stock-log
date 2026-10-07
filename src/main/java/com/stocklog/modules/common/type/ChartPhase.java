@@ -38,4 +38,5 @@ public enum ChartPhase {
 
     private final String title;
     private final String description;
+
 }

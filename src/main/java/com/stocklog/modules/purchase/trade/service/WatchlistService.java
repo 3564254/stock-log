@@ -1,11 +1,11 @@
 package com.stocklog.modules.purchase.trade.service;
 
+import com.stocklog.modules.common.type.ChartPhase;
 import com.stocklog.modules.member.application.usecase.GetMemberUseCase;
 import com.stocklog.modules.member.entity.Member;
 import com.stocklog.modules.purchase.trade.dto.vo.WatchItemDto;
 import com.stocklog.modules.purchase.trade.entity.WatchItem;
 import com.stocklog.modules.purchase.trade.repository.WatchItemRepository;
-import com.stocklog.modules.stock.analysis.domain.signal.vo.StockPhase;
 import com.stocklog.modules.stock.application.usecase.GetStockInfoUseCase;
 import com.stocklog.modules.stock.info.StockInfo;
 import com.stocklog.global.error.BusinessException;
@@ -55,7 +55,7 @@ public class WatchlistService { // default 접근 제어자 유지 (Facade에서
     }
 
     @Transactional
-    public void updateAnalyzedSignal(Long memberId, String stockCode, StockPhase phase, Double targetPrice) {
+    public void updateAnalyzedSignal(Long memberId, String stockCode, ChartPhase phase, Double targetPrice) {
         WatchItem watchItem = watchItemRepository.findByMemberIdAndStockCode(memberId, stockCode)
                 .orElseThrow(() -> new BusinessException(ErrorCode.WATCH_ITEM_NOT_FOUND));
 

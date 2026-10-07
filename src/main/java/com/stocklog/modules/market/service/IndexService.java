@@ -111,7 +111,7 @@ public class IndexService {
     // ── 2. 백그라운드 데이터 동기화 스케줄러 (느려도 사용자에게 영향 없음) ──
     // TODO 해결: 외부 API 호출(Thread.sleep 포함)과 DB 저장을 완전히 분리했습니다.
     // 매시간 정각 또는 지정된 시간에 서버가 스스로 API를 호출하여 DB를 최신화합니다.
-    @Scheduled(cron = "0 * * * * *") // 매분 0초마다 실행 (1분 간격)
+    @Scheduled(cron = "0 5 * * * *") // 매분 0초마다 실행 (1분 간격)
     public void syncAllMarketIndices() {
         log.info("[Index Sync] 전체 시장 지수 백그라운드 동기화 시작");
         LocalDate todayInUS = LocalDate.now(ZoneId.of("America/New_York"));

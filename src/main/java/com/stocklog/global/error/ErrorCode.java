@@ -28,8 +28,10 @@ public enum ErrorCode {
     // ── 주식 및 외부 API (Stock) ──
     STOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "S001", "존재하지 않는 종목 코드"),
     INDEX_NOT_FOUND(HttpStatus.NOT_FOUND, "S002", "존재하지 않는 지수 코드"),
-    EXTERNAL_API_TIMEOUT(HttpStatus.SERVICE_UNAVAILABLE, "S003", "외부 증권사 API 응답 지연"),
-    EXTERNAL_API_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "S004", "외부 증권사 API 연동 오류"),
+    MARKET_NOT_FOUND(HttpStatus.NOT_FOUND,"S003","존재하지 않는 시장 코드"),
+    NEWS_NOT_FOUND(HttpStatus.NOT_FOUND,"S004","새로운 뉴스를 찾을 수 없음"),
+    EXTERNAL_API_TIMEOUT(HttpStatus.SERVICE_UNAVAILABLE, "S005", "외부 증권사 API 응답 지연"),
+    EXTERNAL_API_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "S006", "외부 증권사 API 연동 오류"),
 
     // ── 포트폴리오 (Portfolio) ──
     PORTFOLIO_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "포트폴리오 정보를 찾을 수 없음"),

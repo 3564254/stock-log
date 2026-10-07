@@ -2,46 +2,66 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>서버 오류 - StockLog</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
   <style>
     :root { --toss-blue: #3182f6; --toss-red: #f04452; --toss-gray-bg: #f2f4f6; --text-dark: #191f28; --sidebar-width: 250px; }
-    body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; margin: 0; color: var(--text-dark); letter-spacing: -0.015em;}
+    body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; margin: 0; color: var(--text-dark); letter-spacing: -0.015em; }
     .layout-wrapper { display: flex; min-height: 100vh; }
     .main-content {
-        flex-grow: 1; margin-left: var(--sidebar-width);
-        display: flex; align-items: center; justify-content: center; height: 100vh;
+      flex-grow: 1; margin-left: var(--sidebar-width); min-width: 0;
+      display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px;
     }
-    .error-box { text-align: center; max-width: 480px; padding: 40px; }
-    .error-title { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 12px; }
-    .error-desc { font-size: 15px; color: #4e5968; line-height: 1.6; margin-bottom: 40px; }
-    .alert-box { background: rgba(240,68,82,0.05); border: 1px solid rgba(240,68,82,0.15); border-radius: 16px; padding: 16px; margin-bottom: 40px; text-align: left; word-break: keep-all; }
-    /* 모바일 대응 (에러 페이지 공통) */
-        @media (max-width: 768px) {
-            .sidebar-main { display: none !important; }
-            .main-content { margin-left: 0 !important; padding: 20px !important; }
-            .error-box { padding: 20px !important; width: 100%; }
-        }
+    .error-card {
+      background: #fff; border-radius: 24px; padding: 48px 40px; text-align: center;
+      width: 100%; max-width: 480px; box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    }
+    .error-icon {
+      width: 88px; height: 88px; border-radius: 50%; margin: 0 auto 24px;
+      display: flex; align-items: center; justify-content: center;
+      background: #fff0f1; color: var(--toss-red); font-size: 2.5rem;
+    }
+    .error-code { font-size: 13px; font-weight: 800; color: var(--toss-red); letter-spacing: .08em; margin-bottom: 8px; }
+    .error-title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 12px; word-break: keep-all; }
+    .error-desc { font-size: 15px; color: #4e5968; line-height: 1.65; margin-bottom: 24px; word-break: keep-all; }
+    .alert-box {
+      background: rgba(240,68,82,.05); border: 1px solid rgba(240,68,82,.15); border-radius: 16px;
+      padding: 14px 16px; margin-bottom: 24px; text-align: left; word-break: break-word;
+    }
+    .alert-box .alert-label { font-size: 13px; font-weight: 800; color: #d63a48; margin-bottom: 4px; }
+    .alert-box .alert-body { font-size: 13px; color: #4e5968; font-weight: 600; }
+    .btn-main { background: var(--toss-blue); border: none; color: #fff; }
+    .btn-main:hover { background: #1b64da; color: #fff; }
+    .btn-sub { background: #e5e8eb; border: none; color: #4e5968; }
+    .btn-sub:hover { background: #d1d6db; color: #191f28; }
+
+    @media (max-width: 768px) {
+      .sidebar-main { display: none !important; }
+      .main-content { margin-left: 0 !important; padding: 16px !important; }
+      .error-card { padding: 36px 24px; border-radius: 20px; }
+    }
   </style>
 </head>
 <body>
 <div class="layout-wrapper">
   <aside th:replace="~{fragments/sidebar :: sidebarFragment('none')}"></aside>
   <main class="main-content">
-    <div class="error-box">
-      <i class="bi bi-tools text-secondary mb-4 d-block" style="font-size: 4rem;"></i>
+    <div class="error-card" role="alert">
+      <div class="error-icon"><i class="bi bi-tools"></i></div>
+      <div class="error-code">500</div>
       <h1 class="error-title">일시적인 오류가 발생했어요</h1>
-      <p class="error-desc mb-4">서비스 이용에 불편을 드려 죄송합니다.<br>문제를 해결하기 위해 열심히 노력하고 있어요.</p>
+      <p class="error-desc">서비스 이용에 불편을 드려 죄송해요.<br>잠시 후 다시 시도해 주세요. 계속되면 문의해 주세요.</p>
 
       <div th:if="${errorMessage != null}" class="alert-box">
-        <div style="font-size: 13px; font-weight: 800; color: #d63a48; margin-bottom: 4px;"><i class="bi bi-info-circle-fill me-1"></i>오류 상세 정보</div>
-        <div style="font-size: 13px; color: #4e5968; font-weight: 600;" th:text="${errorMessage}"></div>
+        <div class="alert-label"><i class="bi bi-info-circle-fill me-1"></i>오류 상세 정보</div>
+        <div class="alert-body" th:text="${errorMessage}"></div>
       </div>
 
-      <button onclick="location.reload()" class="btn btn-primary w-100 py-3 rounded-4 fw-bold mb-2" style="background: var(--toss-blue); border: none;">다시 시도하기</button>
-      <a th:href="@{/}" class="btn btn-light w-100 py-3 rounded-4 fw-bold" style="color: #4e5968; background: #e5e8eb; border: none;">홈으로 돌아가기</a>
+      <button type="button" onclick="location.reload()" class="btn btn-main w-100 py-3 rounded-4 fw-bold mb-2">다시 시도하기</button>
+      <a th:href="@{/}" class="btn btn-sub w-100 py-3 rounded-4 fw-bold">홈으로 돌아가기</a>
     </div>
   </main>
 </div>

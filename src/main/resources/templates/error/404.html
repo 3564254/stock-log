@@ -2,27 +2,40 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>페이지를 찾을 수 없음 - StockLog</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
     <style>
         :root { --toss-blue: #3182f6; --toss-gray-bg: #f2f4f6; --text-dark: #191f28; --sidebar-width: 250px; }
-        body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; margin: 0; color: var(--text-dark); letter-spacing: -0.015em;}
+        body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; margin: 0; color: var(--text-dark); letter-spacing: -0.015em; }
         .layout-wrapper { display: flex; min-height: 100vh; }
         .main-content {
-            flex-grow: 1; margin-left: var(--sidebar-width);
-            display: flex; align-items: center; justify-content: center; height: 100vh;
+            flex-grow: 1; margin-left: var(--sidebar-width); min-width: 0;
+            display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px;
         }
-        .error-box { text-align: center; max-width: 480px; padding: 40px; }
-        .error-title { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 12px; }
-        .error-desc { font-size: 15px; color: #4e5968; line-height: 1.6; margin-bottom: 40px; }
+        .error-card {
+            background: #fff; border-radius: 24px; padding: 48px 40px; text-align: center;
+            width: 100%; max-width: 480px; box-shadow: 0 2px 12px rgba(0,0,0,.04);
+        }
+        .error-icon {
+            width: 88px; height: 88px; border-radius: 50%; margin: 0 auto 24px;
+            display: flex; align-items: center; justify-content: center;
+            background: #f0f6ff; color: var(--toss-blue); font-size: 2.5rem;
+        }
+        .error-code { font-size: 13px; font-weight: 800; color: var(--toss-blue); letter-spacing: .08em; margin-bottom: 8px; }
+        .error-title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 12px; word-break: keep-all; }
+        .error-desc { font-size: 15px; color: #4e5968; line-height: 1.65; margin-bottom: 32px; word-break: keep-all; }
+        .btn-main { background: var(--toss-blue); border: none; color: #fff; }
+        .btn-main:hover { background: #1b64da; color: #fff; }
+        .btn-sub { background: #e5e8eb; border: none; color: #4e5968; }
+        .btn-sub:hover { background: #d1d6db; color: #191f28; }
 
-        /* 모바일 대응 (에러 페이지 공통) */
         @media (max-width: 768px) {
             .sidebar-main { display: none !important; }
-            .main-content { margin-left: 0 !important; padding: 20px !important; }
-            .error-box { padding: 20px !important; width: 100%; }
+            .main-content { margin-left: 0 !important; padding: 16px !important; }
+            .error-card { padding: 36px 24px; border-radius: 20px; }
         }
     </style>
 </head>
@@ -30,14 +43,23 @@
 <div class="layout-wrapper">
     <aside th:replace="~{fragments/sidebar :: sidebarFragment('none')}"></aside>
     <main class="main-content">
-        <div class="error-box">
-            <i class="bi bi-search text-secondary mb-4 d-block" style="font-size: 4rem; opacity: 0.5;"></i>
+        <div class="error-card">
+            <div class="error-icon"><i class="bi bi-search"></i></div>
+            <div class="error-code">404</div>
             <h1 class="error-title">페이지를 찾을 수 없어요</h1>
-            <p class="error-desc" th:text="${errorMessage != null ? errorMessage : '요청하신 리소스가 삭제되었거나, 주소가 잘못 입력되었습니다.'}"></p>
-            <button onclick="history.back()" class="btn btn-light w-100 py-3 rounded-4 fw-bold mb-2" style="color: #4e5968; background: #e5e8eb; border: none;">이전 페이지로</button>
-            <a th:href="@{/}" class="btn btn-primary w-100 py-3 rounded-4 fw-bold" style="background: var(--toss-blue); border: none;">홈으로 돌아가기</a>
+            <p class="error-desc"
+               th:text="${errorMessage != null ? errorMessage : '요청하신 페이지가 삭제되었거나 주소가 잘못 입력되었어요.'}"></p>
+            <button type="button" id="backBtn" class="btn btn-sub w-100 py-3 rounded-4 fw-bold mb-2">이전 페이지로</button>
+            <a th:href="@{/}" class="btn btn-main w-100 py-3 rounded-4 fw-bold">홈으로 돌아가기</a>
         </div>
     </main>
 </div>
+<script th:inline="javascript">
+    // 직접 URL로 들어와 이전 기록이 없으면 홈으로 보낸다 (history.back()이 아무 일도 안 하는 경우 방지)
+    document.getElementById('backBtn').addEventListener('click', function () {
+        if (history.length > 1 && document.referrer) history.back();
+        else location.href = /*[[@{/static}]]*/ '/static';
+    });
+</script>
 </body>
 </html>

@@ -1,5 +1,7 @@
 package com.stocklog.modules.market.service;
 
+import com.stocklog.global.error.BusinessException;
+import com.stocklog.global.error.ErrorCode;
 import com.stocklog.modules.market.news.News;
 import com.stocklog.modules.market.news.NewsProvider;
 import com.stocklog.modules.market.news.NewsRepository;
@@ -56,10 +58,7 @@ public class NewsService {
                 .filter(p -> p.supports(stockDto.market()))
                 .findFirst()
                 .map(p -> p.fetchStockNews(request))
-                .orElseThrow(() -> {
-                    log.error("[News] 지원하지 않는 시장입니다: {}", stockDto.market());
-                    return new IllegalArgumentException("지원하지 않는 시장입니다.");
-                });
+                .orElseThrow(() -> new BusinessException(ErrorCode.MARKET_NOT_FOUND));
 
         // 2. 새로운 뉴스 DB 저장
         saveNewNews(fetchedNewsList, stockDto.code() + " 종목");
@@ -72,17 +71,13 @@ public class NewsService {
     }
 
 
-    //@Scheduled(cron = "0 0 0 * * *") // 매분 0초마다 실행 (1분 간격)
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 5 * * * *")
     public void fetchMarketNews() {
         // 1. API에서 시장 뉴스 리스트 가져오기
         List<NewsDto> fetchedNewsList = providers.stream()
                 .findFirst()
                 .map(NewsProvider::fetchMarketNews)
-                .orElseThrow(() -> {
-                    log.error("[News] 새로운 시장 뉴스가 없습니다.");
-                    return new IllegalArgumentException("[News] 새로운 시장 뉴스가 없습니다.");
-                });
+                .orElseThrow(() -> new BusinessException(ErrorCode.NEWS_NOT_FOUND));
 
         // 2. 새로운 뉴스 DB 저장
         saveNewNews(fetchedNewsList, "시장");
@@ -110,8 +105,6 @@ public class NewsService {
         if (!newEntitiesToSave.isEmpty()) {
             newsRepository.saveAll(newEntitiesToSave);
             log.info("[News] {}의 새로운 뉴스 {}건 저장 완료", logContext, newEntitiesToSave.size());
-        } else {
-            log.info("[News] {}의 새로운 뉴스가 없습니다 (모두 이미 저장됨)", logContext);
         }
     }
 

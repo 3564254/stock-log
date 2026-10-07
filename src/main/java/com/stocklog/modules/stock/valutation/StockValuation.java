@@ -1,7 +1,7 @@
 package com.stocklog.modules.stock.valutation;
 
 import com.stocklog.modules.stock.domain.model.StockDateId;
-import com.stocklog.global.common.BaseTimeEntity;
+import com.stocklog.global.common.base.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 

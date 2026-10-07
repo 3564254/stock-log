@@ -20,8 +20,6 @@ public final class TargetIndicators {
     private static final double ENTRY_SETUP_MAX_ATR = 2.0;
     private static final double MIN_RISK_REWARD = 1.2;
     private static final double HIGH_VOLATILITY_PCT = 7.0;
-
-    /** ATR/표준편차가 전부 없을 때 사용하는 최후 fallback (현재가 대비 비율). */
     private static final double FALLBACK_ATR_RATIO = 0.02;
 
     public static TargetResult calculateTargets(MarketContext ctx, ChartPhase phase) {

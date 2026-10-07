@@ -1,6 +1,6 @@
 package com.stocklog.modules.market.analysis.dto;
 
-import com.stocklog.modules.market.diagnosis.MarketDiagnosisDto;
+import com.stocklog.modules.market.analysis.diagnosis.MarketDiagnosisDto;
 import lombok.Builder;
 
 @Builder

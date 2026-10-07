@@ -16,6 +16,7 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
+        format_sql: true # SQL 정렬(가독성 향상)
         dialect: org.hibernate.dialect.MySQLDialect
 
     # TODO(JPA): OSIV의 사용 여부를 명시적으로 결정하자. false로 두면 Controller/View에서의 지연 로딩을 막아
@@ -71,3 +72,9 @@ server:
   servlet:
     session:
       tracking-modes: cookie
+
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: true
+      multiline: true # 쿼리를 줄바꿈하여 예쁘게 출력

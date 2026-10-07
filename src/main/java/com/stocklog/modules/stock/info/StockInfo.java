@@ -2,7 +2,7 @@ package com.stocklog.modules.stock.info;
 
 import com.stocklog.modules.common.type.Nation;
 import com.stocklog.modules.stock.domain.type.*;
-import com.stocklog.global.common.BaseTimeEntity;
+import com.stocklog.global.common.base.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

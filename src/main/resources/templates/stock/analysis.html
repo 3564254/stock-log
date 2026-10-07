@@ -146,6 +146,11 @@
         .bg-up { background: rgba(240,68,82,0.08); color: #d63a48; }
         .bg-down { background: rgba(49,130,246,0.08); color: #1e6fd9; }
         .bg-neutral { background: #f2f4f6; color: #6b7684; }
+        .bg-warn { background: rgba(255,159,64,0.12); color: #c2660a; }
+        .zone-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 14px 18px; border-radius: 14px; margin-bottom: 16px; background: #f9fafb; border: 1px solid #e5e8eb; }
+        .zone-strip .zs-label { font-size: 12px; font-weight: 600; color: #8b95a1; margin-bottom: 2px; }
+        .zone-strip .zs-value { font-size: 16px; font-weight: 800; color: #191f28; }
+        .zone-strip .zs-sep { width: 1px; align-self: stretch; background: #e5e8eb; }
 
         /* 타이밍/상태 배지 공통 */
         .timing-badge { font-size: 12px; padding: 6px 12px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; margin-bottom: 6px; white-space: normal; word-break: keep-all; line-height: 1.4; }
@@ -267,7 +272,7 @@
                             <h3 class="card-header-title">분석 요약</h3>
                             <div th:if="${isEtf}" class="mb-4">
                                 <div class="text-secondary fw-bold mb-3" style="font-size:13px;">가격 추세 시그널</div>
-                                <th:block th:each="s, stat : ${analysis.signals}">
+                                <th:block th:each="s, stat : ${signals}">
                                     <div th:if="${stat.index < 3}" class="d-flex align-items-center gap-2 mb-2">
                                         <i class="bi bi-bar-chart-fill" style="color:#3182f6; font-size:15px;"></i><span class="fw-bold" style="font-size:14px; color:var(--text-dark);" th:text="${s}"></span>
                                     </div>
@@ -275,7 +280,7 @@
                             </div>
                             <div th:if="${!isEtf}" class="mb-4">
                                 <div class="text-secondary fw-bold mb-3" style="font-size:13px;">주요 시그널</div>
-                                <th:block th:each="s, stat : ${analysis.signals}">
+                                <th:block th:each="s, stat : ${signals}">
                                     <div th:if="${stat.index < 3 and !#strings.startsWith(s,'[경고]') and !#strings.startsWith(s,'[주의]') and !#strings.startsWith(s,'⚠️')}"
                                          class="d-flex align-items-center gap-2 mb-2">
                                         <i class="bi bi-check-circle-fill" style="color:#05c072; font-size:15px;"></i><span class="fw-bold" style="font-size:14px; color:var(--text-dark);" th:text="${s}"></span>
@@ -316,32 +321,91 @@
                     <div id="tv-chart-container" style="width: 100%; height: 100%;"></div>
                 </div>
 
-                <div th:if="${analysis.entrySignal != null && analysis.entrySignal.verdict != null}" class="mb-4">
-                    <div class="p-4 rounded-3" style="background: #f9fafb; border: 1px solid #e5e8eb;">
-                        <div th:utext="${analysis.entrySignal.verdict}"></div>
+                <div th:if="${tradingSignal != null && tradingSignal.narrative != null}" class="mb-4">
+                    <div class="p-4 rounded-3" style="background: #f9fafb; border: 1px solid #e5e8eb;"
+                         th:with="n=${tradingSignal.narrative}, toneColor=${n.tone == 'bull' ? 'var(--toss-red)' : (n.tone == 'bear' ? 'var(--toss-blue)' : (n.tone == 'warn' ? 'var(--toss-orange)' : 'var(--text-dark)'))}">
+                        <!-- 엔진 판정(verdict): FALLBACK 등 알 수 없는 값은 아무것도 그리지 않는다 -->
+                        <div th:if="${tradingSignal.verdict != null}" th:switch="${tradingSignal.verdict}" class="mb-2">
+                            <span th:case="'ACTIONABLE'"    class="mc-badge bg-up"><i class="bi bi-check-circle-fill me-1"></i>진입 실행 가능</span>
+                            <span th:case="'WAIT_TRIGGER'"  class="mc-badge bg-blue-soft"><i class="bi bi-hourglass-split me-1"></i>구간 안 · 반등 확인 대기</span>
+                            <span th:case="'WAIT_FOR_ZONE'" class="mc-badge bg-blue-soft"><i class="bi bi-hourglass-split me-1"></i>눌림 구간 대기</span>
+                            <span th:case="'CHASE_RISK'"    class="mc-badge bg-warn"><i class="bi bi-exclamation-triangle-fill me-1"></i>추격 위험</span>
+                            <span th:case="'RR_TOO_LOW'"    class="mc-badge bg-warn"><i class="bi bi-exclamation-triangle-fill me-1"></i>손익비 부족</span>
+                            <span th:case="'NO_SETUP'"      class="mc-badge bg-neutral"><i class="bi bi-dash-circle me-1"></i>진입 계획 없음</span>
+                        </div>
+                        <div style="font-size: 16px; font-weight: 800; color: var(--text-dark); margin-bottom: 8px;" th:text="${n.headline}"></div>
+                        <div style="font-size: 14.5px; line-height: 1.6; color: var(--text-secondary); margin-bottom: 20px;">
+                            <div th:text="${n.summary}"></div>
+                            <div th:each="d : ${n.details}" class="mt-1">
+                                <span th:text="${d.icon}"></span>
+                                <b th:text="${d.label} + ':'"></b>
+                                <span th:text="${d.text}"></span>
+                            </div>
+                        </div>
+                        <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid #edf2f7; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                            <div th:style="'font-size: 15px; font-weight: 800; margin-bottom: 6px; color: ' + ${toneColor}" th:text="${n.actionTitle}"></div>
+                            <div style="font-size: 14px; color: var(--text-secondary); line-height: 1.5;" th:text="${n.actionBody}"></div>
+                        </div>
+                        <div th:if="${tradingSignal.entryPlan != null and tradingSignal.entryPlan.zoneHigh > 0}" class="d-flex flex-wrap gap-2 mt-3">
+                            <span class="mc-badge bg-neutral" th:if="${tradingSignal.entryPlan.type.name() != 'NONE'}" th:text="${tradingSignal.entryPlan.type.title}"></span>
+                            <span class="mc-badge bg-neutral" th:if="${tradingSignal.entryPlan.riskReward > 0 and tradingSignal.entryPlan.type.name() != 'NONE'}" th:text="|손익비 ${#numbers.formatDecimal(tradingSignal.entryPlan.riskReward, 1, 1)}|"></span>
+                            <span class="mc-badge bg-neutral" th:if="${tradingSignal.entryPlan.type.name() != 'NONE'}" th:text="|손절까지 ${#numbers.formatDecimal(tradingSignal.risk.tradeRiskPercent, 1, 1)}%|"></span>
+                            <span class="mc-badge bg-neutral" th:if="${tradingSignal.risk.recommendedWeight > 0}" th:text="|위험 1% 기준 비중 ${#numbers.formatDecimal(tradingSignal.risk.recommendedWeight, 1, 1)}%|"></span>
+                        </div>
                     </div>
                 </div>
 
-                <div th:if="${analysis.entrySignal != null && analysis.entrySignal.primaryEntry != null}" class="row g-4 mb-2">
+                <!-- 현재가 vs 진입 구간: 구간 위 / 안 / 아래를 한눈에 -->
+                <div th:if="${tradingSignal != null and tradingSignal.entryPlan != null and tradingSignal.entryPlan.zoneHigh > 0 and tradingSignal.analysis.marketContext != null}"
+                     th:with="ep=${tradingSignal.entryPlan},
+                              cur=${tradingSignal.analysis.marketContext.currentPrice()},
+                              zHigh=${tradingSignal.entryPlan.zoneHigh},
+                              zLow=${tradingSignal.entryPlan.zoneLow > 0 ? tradingSignal.entryPlan.zoneLow : tradingSignal.entryPlan.zoneHigh},
+                              pos=${tradingSignal.analysis.marketContext.currentPrice() > tradingSignal.entryPlan.zoneHigh ? 'above' : (tradingSignal.analysis.marketContext.currentPrice() < (tradingSignal.entryPlan.zoneLow > 0 ? tradingSignal.entryPlan.zoneLow : tradingSignal.entryPlan.zoneHigh) ? 'below' : 'in')}"
+                     class="zone-strip">
+                    <div>
+                        <div class="zs-label">현재가</div>
+                        <div class="zs-value" th:text="${isKr ? #numbers.formatDecimal(cur, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(cur, 1, 'COMMA', 2, 'POINT')}"></div>
+                    </div>
+                    <div class="zs-sep"></div>
+                    <div>
+                        <div class="zs-label">진입 구간</div>
+                        <div class="zs-value"
+                             th:text="${isKr ? #numbers.formatDecimal(zLow, 1, 'COMMA', 0, 'POINT') + ' ~ ' + #numbers.formatDecimal(zHigh, 1, 'COMMA', 0, 'POINT') + '원'
+                                              : '$' + #numbers.formatDecimal(zLow, 1, 'COMMA', 2, 'POINT') + ' ~ $' + #numbers.formatDecimal(zHigh, 1, 'COMMA', 2, 'POINT')}"></div>
+                    </div>
+                    <div class="zs-sep"></div>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <span th:if="${pos == 'above'}" class="mc-badge bg-blue-soft"
+                              th:text="|구간보다 ${#numbers.formatDecimal((cur - zHigh) / zHigh * 100, 1, 1)}% 위 · 눌림 대기|"></span>
+                        <span th:if="${pos == 'in'}" class="mc-badge bg-up">구간 안</span>
+                        <span th:if="${pos == 'below'}" class="mc-badge bg-warn"
+                              th:text="|구간보다 ${#numbers.formatDecimal((zLow - cur) / zLow * 100, 1, 1)}% 아래 · 지지 이탈 주의|"></span>
+                        <span th:if="${ep.type.name() != 'NONE' and ep.triggerConfirmed}" class="mc-badge bg-up"><i class="bi bi-check2 me-1"></i>반등 확인</span>
+                        <span th:if="${ep.type.name() != 'NONE' and !ep.triggerConfirmed}" class="mc-badge bg-neutral">반등 확인 전</span>
+                    </div>
+                </div>
+
+                <div th:if="${tradingSignal != null}" class="row g-4 mb-2">
                     <div class="col-md-6">
                         <div class="entry-box blue">
                             <div class="entry-box-title" style="color: #1b64da;">
-                                <i class="bi bi-box-arrow-in-down"></i> 분할 매수 (단기 지지선)
+                                <i class="bi bi-box-arrow-in-down"></i> 진입 구간
                             </div>
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="entry-point">
-                                    <div class="entry-point-label">1차 타점</div>
-                                    <div class="entry-point-value" style="color: var(--text-dark);" th:text="${isKr ? #numbers.formatDecimal(analysis.entrySignal.primaryEntry, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(analysis.entrySignal.primaryEntry, 1, 'COMMA', 2, 'POINT')}"></div>
+                                    <div class="entry-point-label">1차 (기준가)</div>
+                                    <div class="entry-point-value" style="color: var(--text-dark);" th:text="${tradingSignal.priceTarget.primaryEntry > 0 ? (isKr ? #numbers.formatDecimal(tradingSignal.priceTarget.primaryEntry, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(tradingSignal.priceTarget.primaryEntry, 1, 'COMMA', 2, 'POINT')) : '-'}"></div>
                                 </div>
                                 <div class="entry-divider"></div>
                                 <div class="entry-point">
-                                    <div class="entry-point-label">2차 타점</div>
-                                    <div class="entry-point-value" style="color: var(--toss-blue);" th:text="${isKr ? #numbers.formatDecimal(analysis.entrySignal.secondaryEntry, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(analysis.entrySignal.secondaryEntry, 1, 'COMMA', 2, 'POINT')}"></div>
+                                    <div class="entry-point-label">2차 (구간 하단)</div>
+                                    <div class="entry-point-value" style="color: var(--toss-blue);" th:text="${tradingSignal.priceTarget.secondaryEntry > 0 ? (isKr ? #numbers.formatDecimal(tradingSignal.priceTarget.secondaryEntry, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(tradingSignal.priceTarget.secondaryEntry, 1, 'COMMA', 2, 'POINT')) : '-'}"></div>
                                 </div>
                                 <div class="entry-divider"></div>
                                 <div class="entry-point">
                                     <div class="entry-point-label">손절가</div>
-                                    <div class="entry-point-value" style="color: var(--text-muted);" th:text="${isKr ? #numbers.formatDecimal(analysis.entrySignal.stopLoss, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(analysis.entrySignal.stopLoss, 1, 'COMMA', 2, 'POINT')}"></div>
+                                    <div class="entry-point-value" style="color: var(--text-muted);" th:text="${tradingSignal.priceTarget.stopLoss > 0 ? (isKr ? #numbers.formatDecimal(tradingSignal.priceTarget.stopLoss, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(tradingSignal.priceTarget.stopLoss, 1, 'COMMA', 2, 'POINT')) : '-'}"></div>
                                 </div>
                             </div>
                         </div>
@@ -353,13 +417,13 @@
                             </div>
                             <div class="d-flex justify-content-center align-items-center h-100">
                                 <div class="entry-point">
-                                    <div class="entry-point-label">1차 (단기 저항)</div>
-                                    <div class="entry-point-value" style="color: var(--text-dark);" th:text="${isKr ? #numbers.formatDecimal(analysis.entrySignal.primaryTarget, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(analysis.entrySignal.primaryTarget, 1, 'COMMA', 2, 'POINT')}"></div>
+                                    <div class="entry-point-label">1차 (가까운 저항 구간)</div>
+                                    <div class="entry-point-value" style="color: var(--text-dark);" th:text="${tradingSignal.priceTarget.primaryTarget > 0 ? (isKr ? #numbers.formatDecimal(tradingSignal.priceTarget.primaryTarget, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(tradingSignal.priceTarget.primaryTarget, 1, 'COMMA', 2, 'POINT')) : '-'}"></div>
                                 </div>
                                 <div class="entry-divider"></div>
                                 <div class="entry-point">
-                                    <div class="entry-point-label">2차 (스윙 랠리)</div>
-                                    <div class="entry-point-value" style="color: var(--toss-red);" th:text="${isKr ? #numbers.formatDecimal(analysis.entrySignal.secondaryTarget, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(analysis.entrySignal.secondaryTarget, 1, 'COMMA', 2, 'POINT')}"></div>
+                                    <div class="entry-point-label">2차 (다음 저항 구간)</div>
+                                    <div class="entry-point-value" style="color: var(--toss-red);" th:text="${tradingSignal.priceTarget.secondaryTarget > 0 ? (isKr ? #numbers.formatDecimal(tradingSignal.priceTarget.secondaryTarget, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(tradingSignal.priceTarget.secondaryTarget, 1, 'COMMA', 2, 'POINT')) : '-'}"></div>
                                 </div>
                             </div>
                         </div>
@@ -367,13 +431,13 @@
                 </div>
             </div>
 
-            <div th:if="${analysis.entrySignal != null && analysis.entrySignal.marketContext != null}" class="toss-card fu d4 mb-4">
+            <div th:if="${tradingSignal != null && tradingSignal.analysis.marketContext != null}" class="toss-card fu d4 mb-4">
                 <div class="d-flex align-items-center justify-content-between mb-4">
                     <h3 class="card-header-title m-0">기술적 지표 및 시장 상황</h3>
                     <div class="text-secondary fw-bold" style="font-size:13px;">Market Context</div>
                 </div>
 
-                <div class="row g-4" th:with="ctx=${analysis.entrySignal.marketContext}">
+                <div class="row g-4" th:with="ctx=${tradingSignal.analysis.marketContext}">
 
                     <div class="col-md-6 d-flex flex-column">
 
@@ -383,13 +447,13 @@
                                 <div class="mc-header-title">추세 및 패턴</div>
                             </div>
                             <div class="d-flex flex-wrap gap-2">
-                                <span th:if="${ctx.isMacroUptrend}" class="mc-badge bg-up">장기 상승장</span>
-                                <span th:if="${!ctx.isMacroUptrend}" class="mc-badge bg-down">장기 하락장</span>
-                                <span th:if="${ctx.isUptrend}" class="mc-badge bg-up">정배열</span>
-                                <span th:if="${ctx.isHH}" class="mc-badge bg-up">고점 갱신</span>
-                                <span th:if="${ctx.isHL}" class="mc-badge bg-up">저점 방어</span>
-                                <span th:if="${ctx.isLL}" class="mc-badge bg-down">저점 이탈</span>
-                                <span th:if="${ctx.isSqueeze}" class="mc-badge bg-neutral">볼린저 응축</span>
+                                <span th:if="${ctx.priceAction.isMacroUptrend}" class="mc-badge bg-up">장기 상승장</span>
+                                <span th:if="${!ctx.priceAction.isMacroUptrend}" class="mc-badge bg-down">장기 하락장</span>
+                                <span th:if="${ctx.priceAction.isUptrend}" class="mc-badge bg-up">정배열</span>
+                                <span th:if="${ctx.priceAction.isHH}" class="mc-badge bg-up">고점 갱신</span>
+                                <span th:if="${ctx.priceAction.isHL}" class="mc-badge bg-up">저점 방어</span>
+                                <span th:if="${ctx.priceAction.isLL}" class="mc-badge bg-down">저점 이탈</span>
+                                <span th:if="${ctx.bollingerBand.isSqueeze}" class="mc-badge bg-neutral">볼린저 응축</span>
                             </div>
                         </div>
 
@@ -401,31 +465,31 @@
                             <div class="mc-row">
                                 <div class="mc-label-wrap">
                                     <div class="mc-label">단기 (MA5)</div>
-                                    <div class="mc-desc" th:text="${isKr ? '기준가: ' + #numbers.formatDecimal(ctx.ma5, 1, 'COMMA', 0, 'POINT') + '원' : '기준가: $' + #numbers.formatDecimal(ctx.ma5, 1, 'COMMA', 2, 'POINT')}"></div>
+                                    <div class="mc-desc" th:text="${isKr ? '기준가: ' + #numbers.formatDecimal(ctx.movingAverages.ma5, 1, 'COMMA', 0, 'POINT') + '원' : '기준가: $' + #numbers.formatDecimal(ctx.movingAverages.ma5, 1, 'COMMA', 2, 'POINT')}"></div>
                                 </div>
                                 <div class="mc-value-wrap">
-                                    <div class="mc-badge" th:classappend="${ctx.isMa5Rising ? 'bg-up' : 'bg-down'}" th:text="${ctx.isMa5Rising ? '상승' : '하락'}"></div>
-                                    <div class="mc-value" th:classappend="${ctx.distFromMa5 > 0 ? 'text-up' : 'text-down'}" th:text="${(ctx.distFromMa5 > 0 ? '+' : '') + #numbers.formatDecimal(ctx.distFromMa5, 1, 2) + '%'}"></div>
+                                    <div class="mc-badge" th:classappend="${ctx.movingAverages.isMa5Rising ? 'bg-up' : 'bg-down'}" th:text="${ctx.movingAverages.isMa5Rising ? '상승' : '하락'}"></div>
+                                    <div class="mc-value" th:classappend="${ctx.movingAverages.distFromMa5 > 0 ? 'text-up' : 'text-down'}" th:text="${(ctx.movingAverages.distFromMa5 > 0 ? '+' : '') + #numbers.formatDecimal(ctx.movingAverages.distFromMa5, 1, 2) + '%'}"></div>
                                 </div>
                             </div>
                             <div class="mc-row">
                                 <div class="mc-label-wrap">
                                     <div class="mc-label">스윙 (MA20)</div>
-                                    <div class="mc-desc" th:text="${isKr ? '기준가: ' + #numbers.formatDecimal(ctx.ma20, 1, 'COMMA', 0, 'POINT') + '원' : '기준가: $' + #numbers.formatDecimal(ctx.ma20, 1, 'COMMA', 2, 'POINT')}"></div>
+                                    <div class="mc-desc" th:text="${isKr ? '기준가: ' + #numbers.formatDecimal(ctx.movingAverages.ma20, 1, 'COMMA', 0, 'POINT') + '원' : '기준가: $' + #numbers.formatDecimal(ctx.movingAverages.ma20, 1, 'COMMA', 2, 'POINT')}"></div>
                                 </div>
                                 <div class="mc-value-wrap">
-                                    <div class="mc-badge" th:classappend="${ctx.isMa20Rising ? 'bg-up' : 'bg-down'}" th:text="${ctx.isMa20Rising ? '상승' : '하락'}"></div>
-                                    <div class="mc-value" th:classappend="${ctx.distFromMa20 > 0 ? 'text-up' : 'text-down'}" th:text="${(ctx.distFromMa20 > 0 ? '+' : '') + #numbers.formatDecimal(ctx.distFromMa20, 1, 2) + '%'}"></div>
+                                    <div class="mc-badge" th:classappend="${ctx.movingAverages.isMa20Rising ? 'bg-up' : 'bg-down'}" th:text="${ctx.movingAverages.isMa20Rising ? '상승' : '하락'}"></div>
+                                    <div class="mc-value" th:classappend="${ctx.movingAverages.distFromMa20 > 0 ? 'text-up' : 'text-down'}" th:text="${(ctx.movingAverages.distFromMa20 > 0 ? '+' : '') + #numbers.formatDecimal(ctx.movingAverages.distFromMa20, 1, 2) + '%'}"></div>
                                 </div>
                             </div>
                             <div class="mc-row">
                                 <div class="mc-label-wrap">
                                     <div class="mc-label">중기 (MA50)</div>
-                                    <div class="mc-desc" th:text="${isKr ? '기준가: ' + #numbers.formatDecimal(ctx.ma50, 1, 'COMMA', 0, 'POINT') + '원' : '기준가: $' + #numbers.formatDecimal(ctx.ma50, 1, 'COMMA', 2, 'POINT')}"></div>
+                                    <div class="mc-desc" th:text="${isKr ? '기준가: ' + #numbers.formatDecimal(ctx.movingAverages.ma50, 1, 'COMMA', 0, 'POINT') + '원' : '기준가: $' + #numbers.formatDecimal(ctx.movingAverages.ma50, 1, 'COMMA', 2, 'POINT')}"></div>
                                 </div>
                                 <div class="mc-value-wrap">
                                     <div class="mc-badge bg-neutral">-</div>
-                                    <div class="mc-value" th:classappend="${ctx.distFromMa50 > 0 ? 'text-up' : 'text-down'}" th:text="${(ctx.distFromMa50 > 0 ? '+' : '') + #numbers.formatDecimal(ctx.distFromMa50, 1, 2) + '%'}"></div>
+                                    <div class="mc-value" th:classappend="${ctx.movingAverages.distFromMa50 > 0 ? 'text-up' : 'text-down'}" th:text="${(ctx.movingAverages.distFromMa50 > 0 ? '+' : '') + #numbers.formatDecimal(ctx.movingAverages.distFromMa50, 1, 2) + '%'}"></div>
                                 </div>
                             </div>
                         </div>
@@ -438,20 +502,21 @@
                             <div class="mc-row">
                                 <div class="mc-label-wrap">
                                     <div class="mc-label">거래량 상태</div>
-                                    <div class="mc-desc" th:text="${ctx.isVolBullish ? '매수세 우위' : (ctx.isVolBearish ? '매도세 우위' : '중립 수준')}"></div>
+                                    <div class="mc-desc" th:text="${!ctx.volume.projectionReliable ? '장 초반이라 거래량 판단을 보류해요' : (ctx.volume.isVolBullish ? '매수세 우위' : (ctx.volume.isVolBearish ? '매도세 우위' : (ctx.volume.isVolumeDryingUp ? '거래가 마르는 중' : '중립 수준')))}"></div>
                                 </div>
                                 <div class="mc-value-wrap">
-                                    <div class="mc-badge" th:classappend="${ctx.isVolBullish ? 'bg-up' : (ctx.isVolBearish ? 'bg-down' : 'bg-neutral')}" th:text="${ctx.isVolBullish ? '증가' : (ctx.isVolBearish ? '감소' : '보통')}"></div>
-                                    <div class="mc-value" th:text="${#numbers.formatDecimal(ctx.currentVolume, 0, 'COMMA', 0, 'POINT')}"></div>
+                                    <div class="mc-badge" th:classappend="${!ctx.volume.projectionReliable ? 'bg-neutral' : (ctx.volume.isVolBullish ? 'bg-up' : (ctx.volume.isVolBearish ? 'bg-down' : 'bg-neutral'))}" th:text="${!ctx.volume.projectionReliable ? '보류' : (ctx.volume.isVolBullish ? '증가' : (ctx.volume.isVolBearish ? '감소' : (ctx.volume.isVolumeDryingUp ? '감소세' : '보통')))}"></div>
+                                    <!-- 20일 평균 대비 배수 (장중이면 예상치). 평균이 없으면 원본 거래량 -->
+                                    <div class="mc-value" th:text="${ctx.volume.volumeMa20 > 0 ? ('20일 평균의 ' + #numbers.formatDecimal(ctx.volume.volumeRatio, 1, 1) + '배' + (ctx.volume.isIntraday ? ' (장중 예상)' : '')) : #numbers.formatDecimal(ctx.volume.currentVolume, 0, 'COMMA', 0, 'POINT')}"></div>
                                 </div>
                             </div>
                             <div class="mc-row">
                                 <div class="mc-label-wrap">
                                     <div class="mc-label">ADX (추세 강도)</div>
-                                    <div class="mc-desc" th:text="${ctx.isStrongTrend ? '강한 추세 진행 중' : (ctx.isWeakTrend ? '비추세/횡보' : '추세 형성 중')}"></div>
+                                    <div class="mc-desc" th:text="${ctx.momentum.isStrongTrend ? '강한 추세 진행 중' : (ctx.momentum.isWeakTrend ? '비추세/횡보' : '추세 형성 중')}"></div>
                                 </div>
                                 <div class="mc-value-wrap">
-                                    <div class="mc-value" th:text="${#numbers.formatDecimal(ctx.adx, 1, 1)}"></div>
+                                    <div class="mc-value" th:text="${#numbers.formatDecimal(ctx.momentum.adx, 1, 1)}"></div>
                                 </div>
                             </div>
                         </div>
@@ -460,7 +525,7 @@
 
                     <div class="col-md-6 d-flex flex-column">
 
-                        <div class="mc-box premium" th:with="vwapDist=${ctx.vwap20 > 0 ? (ctx.currentPrice - ctx.vwap20) / ctx.vwap20 * 100 : 0}, pocDist=${ctx.pocPrice > 0 ? (ctx.currentPrice - ctx.pocPrice) / ctx.pocPrice * 100 : 0}">
+                        <div class="mc-box premium" th:with="vwapDist=${ctx.volume.vwap20 > 0 ? (ctx.currentPrice() - ctx.volume.vwap20) / ctx.volume.vwap20 * 100 : 0}, pocDist=${ctx.volume.pocPrice > 0 ? (ctx.currentPrice() - ctx.volume.pocPrice) / ctx.volume.pocPrice * 100 : 0}">
                             <div class="mc-header">
                                 <div class="mc-header-dot" style="background:#3182f6;"></div>
                                 <div class="mc-header-title">주요 지지/저항선</div>
@@ -469,7 +534,7 @@
                             <div class="mc-row">
                                 <div class="mc-label-wrap">
                                     <div class="mc-label" style="color:#1d4ed8;">세력선 (VWAP)</div>
-                                    <div class="mc-desc" th:text="${isKr ? '20일 가중: ' + #numbers.formatDecimal(ctx.vwap20, 1, 'COMMA', 0, 'POINT') + '원' : '20일 가중: $' + #numbers.formatDecimal(ctx.vwap20, 1, 'COMMA', 2, 'POINT')}"></div>
+                                    <div class="mc-desc" th:text="${isKr ? '20일 가중: ' + #numbers.formatDecimal(ctx.volume.vwap20, 1, 'COMMA', 0, 'POINT') + '원' : '20일 가중: $' + #numbers.formatDecimal(ctx.volume.vwap20, 1, 'COMMA', 2, 'POINT')}"></div>
                                 </div>
                                 <div class="mc-value-wrap">
                                     <div class="mc-badge" th:classappend="${vwapDist > 0 ? 'bg-up' : 'bg-down'}" th:text="${vwapDist > 0 ? '현재가 상회' : '현재가 하회'}"></div>
@@ -480,7 +545,7 @@
                             <div class="mc-row">
                                 <div class="mc-label-wrap">
                                     <div class="mc-label" style="color:#5b21b6;">최대 매물대 (POC)</div>
-                                    <div class="mc-desc" th:text="${isKr ? '3개월 누적: ' + #numbers.formatDecimal(ctx.pocPrice, 1, 'COMMA', 0, 'POINT') + '원' : '3개월 누적: $' + #numbers.formatDecimal(ctx.pocPrice, 1, 'COMMA', 2, 'POINT')}"></div>
+                                    <div class="mc-desc" th:text="${isKr ? '3개월 누적: ' + #numbers.formatDecimal(ctx.volume.pocPrice, 1, 'COMMA', 0, 'POINT') + '원' : '3개월 누적: $' + #numbers.formatDecimal(ctx.volume.pocPrice, 1, 'COMMA', 2, 'POINT')}"></div>
                                 </div>
                                 <div class="mc-value-wrap">
                                     <div class="mc-badge" th:classappend="${pocDist > 0 ? 'bg-up' : 'bg-down'}" th:text="${pocDist > 0 ? '매물대 지지' : '매물대 저항'}"></div>
@@ -495,40 +560,40 @@
                                 <div class="mc-header-title">데일리 피벗 가격대</div>
                             </div>
 
-                            <div th:if="${ctx.dailyPivot != null}">
-                                <div class="mc-row" th:if="${ctx.dailyPivot.r3 != null && !T(java.lang.Double).isNaN(ctx.dailyPivot.r3)}">
+                            <div th:if="${ctx.pivots != null && ctx.pivots.dailyPivot != null}">
+                                <div class="mc-row" th:if="${ctx.pivots.dailyPivot.r3 != null && !T(java.lang.Double).isNaN(ctx.pivots.dailyPivot.r3)}">
                                     <div class="mc-label-wrap"><div class="mc-label">3차 저항선 (R3)</div></div>
-                                    <div class="mc-value mc-pivot-res" th:text="${isKr ? #numbers.formatDecimal(ctx.dailyPivot.r3, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.dailyPivot.r3, 1, 'COMMA', 2, 'POINT')}"></div>
+                                    <div class="mc-value mc-pivot-res" th:text="${isKr ? #numbers.formatDecimal(ctx.pivots.dailyPivot.r3, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.pivots.dailyPivot.r3, 1, 'COMMA', 2, 'POINT')}"></div>
                                 </div>
-                                <div class="mc-row" th:if="${ctx.dailyPivot.r2 != null && !T(java.lang.Double).isNaN(ctx.dailyPivot.r2)}">
+                                <div class="mc-row" th:if="${ctx.pivots.dailyPivot.r2 != null && !T(java.lang.Double).isNaN(ctx.pivots.dailyPivot.r2)}">
                                     <div class="mc-label-wrap"><div class="mc-label">2차 저항선 (R2)</div></div>
-                                    <div class="mc-value mc-pivot-res" th:text="${isKr ? #numbers.formatDecimal(ctx.dailyPivot.r2, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.dailyPivot.r2, 1, 'COMMA', 2, 'POINT')}"></div>
+                                    <div class="mc-value mc-pivot-res" th:text="${isKr ? #numbers.formatDecimal(ctx.pivots.dailyPivot.r2, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.pivots.dailyPivot.r2, 1, 'COMMA', 2, 'POINT')}"></div>
                                 </div>
-                                <div class="mc-row" th:if="${ctx.dailyPivot.r1 != null && !T(java.lang.Double).isNaN(ctx.dailyPivot.r1)}">
+                                <div class="mc-row" th:if="${ctx.pivots.dailyPivot.r1 != null && !T(java.lang.Double).isNaN(ctx.pivots.dailyPivot.r1)}">
                                     <div class="mc-label-wrap"><div class="mc-label">1차 저항선 (R1)</div></div>
-                                    <div class="mc-value mc-pivot-res" th:text="${isKr ? #numbers.formatDecimal(ctx.dailyPivot.r1, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.dailyPivot.r1, 1, 'COMMA', 2, 'POINT')}"></div>
+                                    <div class="mc-value mc-pivot-res" th:text="${isKr ? #numbers.formatDecimal(ctx.pivots.dailyPivot.r1, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.pivots.dailyPivot.r1, 1, 'COMMA', 2, 'POINT')}"></div>
                                 </div>
 
-                                <div class="mc-row" th:if="${ctx.dailyPivot.p != null && !T(java.lang.Double).isNaN(ctx.dailyPivot.p)}">
+                                <div class="mc-row" th:if="${ctx.pivots.dailyPivot.p != null && !T(java.lang.Double).isNaN(ctx.pivots.dailyPivot.p)}">
                                     <div class="mc-label-wrap"><div class="mc-label" style="color:#1d4ed8;">피벗 기준선 (PP)</div><div class="mc-desc">오늘의 중심 가격</div></div>
-                                    <div class="mc-value mc-pivot-pp" th:text="${isKr ? #numbers.formatDecimal(ctx.dailyPivot.p, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.dailyPivot.p, 1, 'COMMA', 2, 'POINT')}"></div>
+                                    <div class="mc-value mc-pivot-pp" th:text="${isKr ? #numbers.formatDecimal(ctx.pivots.dailyPivot.p, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.pivots.dailyPivot.p, 1, 'COMMA', 2, 'POINT')}"></div>
                                 </div>
 
-                                <div class="mc-row" th:if="${ctx.dailyPivot.s1 != null && !T(java.lang.Double).isNaN(ctx.dailyPivot.s1)}">
+                                <div class="mc-row" th:if="${ctx.pivots.dailyPivot.s1 != null && !T(java.lang.Double).isNaN(ctx.pivots.dailyPivot.s1)}">
                                     <div class="mc-label-wrap"><div class="mc-label">1차 지지선 (S1)</div></div>
-                                    <div class="mc-value mc-pivot-sup" th:text="${isKr ? #numbers.formatDecimal(ctx.dailyPivot.s1, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.dailyPivot.s1, 1, 'COMMA', 2, 'POINT')}"></div>
+                                    <div class="mc-value mc-pivot-sup" th:text="${isKr ? #numbers.formatDecimal(ctx.pivots.dailyPivot.s1, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.pivots.dailyPivot.s1, 1, 'COMMA', 2, 'POINT')}"></div>
                                 </div>
-                                <div class="mc-row" th:if="${ctx.dailyPivot.s2 != null && !T(java.lang.Double).isNaN(ctx.dailyPivot.s2)}">
+                                <div class="mc-row" th:if="${ctx.pivots.dailyPivot.s2 != null && !T(java.lang.Double).isNaN(ctx.pivots.dailyPivot.s2)}">
                                     <div class="mc-label-wrap"><div class="mc-label">2차 지지선 (S2)</div></div>
-                                    <div class="mc-value mc-pivot-sup" th:text="${isKr ? #numbers.formatDecimal(ctx.dailyPivot.s2, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.dailyPivot.s2, 1, 'COMMA', 2, 'POINT')}"></div>
+                                    <div class="mc-value mc-pivot-sup" th:text="${isKr ? #numbers.formatDecimal(ctx.pivots.dailyPivot.s2, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.pivots.dailyPivot.s2, 1, 'COMMA', 2, 'POINT')}"></div>
                                 </div>
-                                <div class="mc-row" th:if="${ctx.dailyPivot.s3 != null && !T(java.lang.Double).isNaN(ctx.dailyPivot.s3)}">
+                                <div class="mc-row" th:if="${ctx.pivots.dailyPivot.s3 != null && !T(java.lang.Double).isNaN(ctx.pivots.dailyPivot.s3)}">
                                     <div class="mc-label-wrap"><div class="mc-label">3차 지지선 (S3)</div></div>
-                                    <div class="mc-value mc-pivot-sup" th:text="${isKr ? #numbers.formatDecimal(ctx.dailyPivot.s3, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.dailyPivot.s3, 1, 'COMMA', 2, 'POINT')}"></div>
+                                    <div class="mc-value mc-pivot-sup" th:text="${isKr ? #numbers.formatDecimal(ctx.pivots.dailyPivot.s3, 1, 'COMMA', 0, 'POINT') + '원' : '$' + #numbers.formatDecimal(ctx.pivots.dailyPivot.s3, 1, 'COMMA', 2, 'POINT')}"></div>
                                 </div>
                             </div>
 
-                            <div th:if="${ctx.dailyPivot == null}" class="text-center py-4">
+                            <div th:if="${ctx.pivots == null || ctx.pivots.dailyPivot == null}" class="text-center py-4">
                                 <span class="mc-label text-neutral">피벗 산출 불가</span>
                             </div>
                         </div>
@@ -542,11 +607,12 @@
                                 <div class="mc-header-title">포착된 매매 신호</div>
                             </div>
                             <div class="d-flex flex-wrap gap-2">
-                                <div th:if="${#lists.isEmpty(analysis.entrySignal.buySignals) and #lists.isEmpty(analysis.entrySignal.sellSignals)}" class="mc-label text-neutral">
+                                <div th:if="${#lists.isEmpty(tradingSignal.strength.buySignals) and #lists.isEmpty(tradingSignal.strength.sellSignals) and #lists.isEmpty(tradingSignal.strength.watchSignals)}" class="mc-label text-neutral">
                                     현재 뚜렷하게 포착된 특이 신호 없음
                                 </div>
-                                <span th:each="sig : ${analysis.entrySignal.buySignals}" class="mc-badge bg-up" th:text="${sig}"></span>
-                                <span th:each="sig : ${analysis.entrySignal.sellSignals}" class="mc-badge bg-down" th:text="${sig}"></span>
+                                <span th:each="sig : ${tradingSignal.strength.buySignals}" class="mc-badge bg-up" th:text="${sig}"></span>
+                                <span th:each="sig : ${tradingSignal.strength.sellSignals}" class="mc-badge bg-down" th:text="${sig}"></span>
+                                <span th:each="sig : ${tradingSignal.strength.watchSignals}" class="mc-badge bg-neutral" th:text="${sig}"></span>
                             </div>
                         </div>
                     </div>
@@ -578,7 +644,7 @@
                 <!-- 1. 전체 시그널 탭 -->
                 <div x-show="tab==='all'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
                     <div class="row g-3">
-                        <th:block th:each="signal : ${analysis.signals}">
+                        <th:block th:each="signal : ${signals}">
                             <th:block th:with="isWarn=${#strings.startsWith(signal,'[경고]') or #strings.startsWith(signal,'[주의]') or #strings.startsWith(signal,'⚠️') or #strings.startsWith(signal,'🚨')}">
                                 <div class="col-md-6 col-lg-4">
                                     <div class="signal-card" :class="[[${isWarn}]] ? 'warn' : ''">

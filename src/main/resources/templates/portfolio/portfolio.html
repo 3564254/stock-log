@@ -2,6 +2,7 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>StockLog - 나의 전략 포트폴리오</title>
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -12,72 +13,174 @@
     :root {
       --toss-blue: #3182f6; --toss-red: #f04452; --toss-green: #05c072;
       --toss-warning: #f5a623; --toss-gray-bg: #f2f4f6; --sidebar-width: 250px;
+      --text-strong: #191f28; --text-body: #333d4b; --text-sub: #4e5968; --text-mute: #8b95a1; --text-faint: #b0b8c1;
+      --line: #e5e8eb; --line-soft: #f2f4f6; --surface-soft: #f9fafb;
+      /* 서버 verdict HTML(EntrySignalAnalyzer.generateVerdict)이 참조하는 변수 */
+      --text-dark: #191f28; --text-secondary: #4e5968; --toss-orange: #f5a623;
     }
-    body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: #191f28; }
+    body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: var(--text-strong); }
     [x-cloak] { display: none !important; }
+    .num { font-variant-numeric: tabular-nums; }
 
     .layout-wrapper { display: flex; min-height: 100vh; }
     .main-content { flex-grow: 1; margin-left: var(--sidebar-width); padding: 0 60px 80px 60px; transition: 0.3s; width: calc(100% - var(--sidebar-width)); min-width: 0; }
     .main-content.expanded { margin-left: 80px; width: calc(100% - 80px); }
     .content-container { width: 100%; max-width: 1200px; margin: 0 auto; padding-top: 32px; }
 
-    .toss-card { background: white; border-radius: 16px; padding: 28px; box-shadow: none; margin-bottom: 24px; border: 1px solid #e5e8eb; }
-    .toss-banner { background: #f9fafb; border-radius: 16px; padding: 20px 24px; margin-bottom: 24px; border: 1px solid #e5e8eb; }
+    /* ---------- 카드 / 공통 ---------- */
+    .toss-card { background: white; border-radius: 16px; padding: 28px; margin-bottom: 0; border: 1px solid var(--line); }
+    .card-title { font-size: 18px; font-weight: 700; color: var(--text-strong); margin: 0; }
+    .card-sub { color: var(--text-mute); font-size: 13px; font-weight: 500; margin-top: 4px; }
+    .btn-toss { background: var(--toss-blue); color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: 13px; padding: 8px 14px; white-space: nowrap; transition: .15s; }
+    .btn-toss:hover { background: #1b64da; color: #fff; }
+    .btn-toss:disabled { background: #c9dcfb; color: #fff; }
+    .btn-ghost { background: var(--line-soft); color: var(--text-sub); border: none; border-radius: 8px; font-weight: 700; font-size: 13px; padding: 8px 14px; white-space: nowrap; transition: .15s; }
+    .btn-ghost:hover { background: var(--line); }
+    .btn-soft-blue { background: rgba(49,130,246,0.08); color: var(--toss-blue); border: none; border-radius: 999px; font-weight: 700; font-size: 12px; padding: 6px 12px; white-space: nowrap; }
+    .btn-soft-blue:hover { background: rgba(49,130,246,0.15); }
+    .btn-soft-red { background: rgba(240,68,82,0.08); color: var(--toss-red); border: none; border-radius: 999px; font-weight: 700; font-size: 12px; padding: 6px 12px; white-space: nowrap; }
+    .btn-soft-red:hover { background: rgba(240,68,82,0.15); }
+    .btn-icon-delete { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; color: var(--text-faint); transition: 0.15s; cursor: pointer; background: transparent; border: none; flex-shrink: 0; }
+    .btn-icon-delete:hover { color: var(--toss-red); background: rgba(240,68,82,0.08); }
+    .btn-icon-edit { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; color: var(--text-faint); transition: 0.15s; cursor: pointer; background: transparent; border: none; flex-shrink: 0; }
+    .btn-icon-edit:hover { color: var(--toss-blue); background: rgba(49,130,246,0.08); }
 
-    .toss-input { width: 100%; border: 1px solid #e5e8eb; background: #f9fafb; border-radius: 12px; padding: 14px 16px; outline: none; margin-bottom: 14px; font-size: 15px; font-weight: 500; font-family: 'Pretendard', sans-serif; transition: 0.15s; }
-    .toss-input:focus { border-color: var(--toss-blue); background: white; }
+    /* ---------- 상단 요약 ---------- */
+    .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .summary-tile { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; min-width: 0; }
+    .summary-label { font-size: 13px; color: var(--text-mute); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .summary-value { font-size: 22px; font-weight: 800; margin-top: 6px; color: var(--text-strong); }
+    .summary-foot { font-size: 12px; color: var(--text-mute); font-weight: 500; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .winbar { display: flex; height: 6px; border-radius: 6px; overflow: hidden; background: var(--line-soft); margin-top: 10px; }
+    .winbar > div { height: 100%; }
 
-    select.toss-input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%238b95a1' class='bi bi-chevron-down' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 16px 12px; padding-right: 2.5rem; }
-
-    .modal-backdrop-custom { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-    .modal-sheet { background: white; width: 100%; max-width: 520px; border-radius: 16px; padding: 24px; max-height: 90vh; overflow-y: auto; animation: fadeIn 0.2s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-    @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-
-    .watch-item { display: flex; align-items: center; padding: 16px 20px; background: #ffffff; border: 1px solid #f2f4f6; border-radius: 12px; margin-bottom: 12px; gap: 14px; transition: 0.15s; }
-    .watch-item:hover { border-color: #e5e8eb; background: #f9fafb; }
-
-    .rule-item { display: flex; align-items: flex-start; justify-content: space-between; padding: 16px; border-bottom: 1px solid #f2f4f6; }
-    .rule-item:last-child { border-bottom: none; }
-    .toss-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-    .toss-switch input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; cursor: pointer; inset: 0; background-color: #e4e8ec; transition: .2s; border-radius: 24px; }
-    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .2s; border-radius: 50%; }
-    input:checked + .slider { background-color: var(--toss-blue); }
-    input:checked + .slider:before { transform: translateX(20px); }
-
-    .stock-row { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid #f2f4f6; gap: 14px; }
-    .stock-row:last-child { border-bottom: none; }
-    .stock-icon  { width: 40px; height: 40px; border-radius: 10px; background: #f2f4f6; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #4e5968; flex-shrink: 0; }
-    .stock-name  { font-size: 15px; font-weight: 700; color: #191f28; }
-    .stock-meta  { font-size: 13px; font-weight: 500; color: #8b95a1; margin-top: 2px; }
-
+    /* ---------- 톤(배지) ---------- */
+    .tone { font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
+    .tone-blue   { background: rgba(49,130,246,0.08); color: var(--toss-blue); }
+    .tone-red    { background: rgba(240,68,82,0.08); color: var(--toss-red); }
+    .tone-green  { background: rgba(5,192,114,0.10); color: #03a463; }
+    .tone-orange { background: rgba(245,166,35,0.12); color: #d48806; }
+    .tone-gray   { background: var(--line-soft); color: var(--text-sub); }
     .text-up { color: var(--toss-red) !important; }
     .text-down { color: var(--toss-blue) !important; }
-    .profit-badge { font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 8px; }
-    .badge-profit { background: rgba(240,68,82,0.08); color: var(--toss-red); }
-    .badge-loss   { background: rgba(49,130,246,0.08); color: var(--toss-blue); }
 
-    .empty-state { text-align: center; padding: 48px 0; color: #8b95a1; }
-    .empty-state i { font-size: 2rem; display: block; margin-bottom: 12px; color: #d1d6db; }
+    /* ---------- 필터 칩 / 정렬 ---------- */
+    .chip-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+    .chip { border: 1px solid var(--line); background: #fff; color: var(--text-sub); font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; cursor: pointer; transition: .15s; }
+    .chip .cnt { color: var(--text-mute); margin-left: 4px; font-weight: 600; }
+    .chip.active { background: var(--text-strong); border-color: var(--text-strong); color: #fff; }
+    .chip.active .cnt { color: #c1c7cd; }
+    .sort-select { border: 1px solid var(--line); background: #fff; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--text-sub); padding: 6px 28px 6px 10px; appearance: none; outline: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238b95a1' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 10px center; }
 
-    .btn-icon-delete {
-      width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
-      border-radius: 8px; color: #b0b8c1; transition: 0.15s; cursor: pointer; background: transparent; border: none; flex-shrink: 0;
+    /* ---------- 리스트 행 ---------- */
+    .list-row { display: flex; align-items: center; gap: 14px; padding: 16px 20px; background: #fff; border: 1px solid var(--line-soft); border-radius: 12px; margin-bottom: 10px; transition: .15s; }
+    .list-row:hover { border-color: var(--line); background: var(--surface-soft); }
+    .list-row:last-child { margin-bottom: 0; }
+    .stock-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--line-soft); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: var(--text-sub); flex-shrink: 0; }
+    .row-name { font-size: 15px; font-weight: 700; color: var(--text-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .row-meta { font-size: 12px; font-weight: 500; color: var(--text-mute); }
+    .price-col { text-align: right; min-width: 120px; }
+    .price-main { font-size: 15px; font-weight: 700; }
+    .price-sub { font-size: 12px; color: var(--text-mute); font-weight: 500; margin-top: 2px; }
+    .return-col { text-align: right; min-width: 84px; }
+    .return-val { font-size: 16px; font-weight: 800; }
+    .phase-desc { font-size: 12px; color: var(--text-mute); font-weight: 500; }
+    .verify-stamp { font-size: 11px; font-weight: 600; color: var(--text-mute); }
+
+    .empty-state { text-align: center; padding: 36px 20px; color: var(--text-mute); background: var(--surface-soft); border: 1px dashed var(--line); border-radius: 12px; }
+    .empty-state i { font-size: 1.8rem; display: block; margin-bottom: 10px; color: #d1d6db; }
+    .empty-state .title { font-size: 14px; font-weight: 700; color: var(--text-sub); }
+    .empty-state .desc { font-size: 13px; font-weight: 500; margin-top: 4px; }
+
+    .legend { background: var(--surface-soft); border-radius: 12px; padding: 14px 16px; margin-top: 16px; }
+    .legend-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: 12px; color: var(--text-sub); font-weight: 500; }
+    .legend-row .tone { min-width: 72px; justify-content: center; }
+
+    /* ---------- 규칙 ---------- */
+    .rule-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border: 1px solid var(--line-soft); border-radius: 12px; margin-bottom: 10px; background: #fff; transition: .15s; }
+    .rule-item.inactive { background: var(--surface-soft); }
+    .rule-item.inactive .rule-title, .rule-item.inactive .rule-cond { opacity: .5; }
+    .rule-title { font-size: 15px; font-weight: 700; color: var(--text-strong); }
+    .rule-cond { font-size: 13px; font-weight: 600; color: var(--text-sub); margin-top: 4px; }
+    .rule-cond b { color: var(--toss-blue); }
+    .toss-switch { position: relative; display: inline-block; width: 40px; height: 22px; margin: 0; flex-shrink: 0; }
+    .toss-switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background-color: #e4e8ec; transition: .2s; border-radius: 24px; }
+    .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .2s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--toss-blue); }
+    input:checked + .slider:before { transform: translateX(18px); }
+
+    /* ---------- 입력 ---------- */
+    .toss-input { width: 100%; border: 1px solid var(--line); background: var(--surface-soft); border-radius: 12px; padding: 14px 16px; outline: none; font-size: 15px; font-weight: 500; font-family: 'Pretendard', sans-serif; transition: 0.15s; }
+    .toss-input:focus { border-color: var(--toss-blue); background: white; }
+    select.toss-input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%238b95a1' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 16px 12px; padding-right: 2.5rem; }
+    .field-label { font-size: 14px; font-weight: 700; color: var(--text-sub); margin-bottom: 8px; display: block; }
+    .field-hint { font-size: 12px; color: var(--text-mute); font-weight: 500; margin-top: 8px; }
+    .rule-preview { background: #f0f6ff; border: 1px solid #dbeafe; border-radius: 12px; padding: 14px 16px; font-size: 14px; font-weight: 600; color: var(--text-body); }
+    .rule-preview b { color: var(--toss-blue); }
+
+    /* ---------- 모달 ---------- */
+    .modal-backdrop-custom { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
+    .modal-sheet { background: white; width: 100%; max-width: 520px; border-radius: 16px; padding: 24px; max-height: 90vh; overflow-y: auto; animation: fadeIn 0.2s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    .modal-sheet.flush { padding: 0; display: flex; flex-direction: column; overflow: hidden; }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--line-soft); }
+    .modal-body-scroll { overflow-y: auto; padding: 24px; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+    .search-box { display: flex; align-items: center; background: #fff; padding: 12px 16px; border: 1px solid var(--line); border-radius: 12px; transition: .15s; }
+    .search-box.focus { border-color: var(--toss-blue); }
+    .search-dropdown { position: absolute; left: 0; right: 0; background: #fff; margin-top: 8px; padding: 6px; border: 1px solid var(--line); border-radius: 12px; z-index: 1060; max-height: 280px; overflow-y: auto; box-shadow: 0 6px 20px rgba(0,0,0,0.06); }
+    .search-item { padding: 12px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .search-item:hover { background: var(--surface-soft); }
+    .search-item.disabled { cursor: default; opacity: .55; }
+    .selected-stock { background: #f0f6ff; border: 1px solid #dbeafe; border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+
+    .preset-chip { border: 1px solid var(--line); background: #fff; font-size: 12px; font-weight: 600; color: var(--text-sub); padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+    .preset-chip:hover { border-color: var(--toss-blue); color: var(--toss-blue); }
+
+    .indicator-option { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-radius: 8px; cursor: pointer; }
+    .indicator-option:hover { background: var(--surface-soft); }
+    .indicator-option.selected { background: #f0f6ff; }
+
+    /* ---------- 검증 결과 ---------- */
+    .verdict-hero { border-radius: 14px; padding: 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+    .verdict-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: rgba(255,255,255,.7); flex-shrink: 0; }
+    .verdict-label { font-size: 20px; font-weight: 800; }
+    .verdict-sub { font-size: 13px; font-weight: 600; opacity: .85; margin-top: 2px; }
+    .pass-bar { height: 8px; border-radius: 8px; background: var(--line-soft); overflow: hidden; }
+    .pass-bar > div { height: 100%; background: var(--toss-blue); transition: width .4s; }
+    .detail-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--line-soft); }
+    .detail-row:last-child { border-bottom: none; }
+    .report-box { background: var(--surface-soft); border: 1px solid var(--line); border-radius: 12px; padding: 18px; font-size: 14px; font-weight: 500; line-height: 1.7; color: var(--text-sub); white-space: pre-line; word-break: keep-all; }
+
+    /* ---------- 토스트 ---------- */
+    .toast-stack { position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%); z-index: 20000; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+    .toast-item { background: rgba(25,31,40,.92); color: #fff; font-size: 14px; font-weight: 600; padding: 12px 18px; border-radius: 12px; display: flex; align-items: center; gap: 8px; animation: fadeIn .2s ease; }
+
+    /* ---------- 반응형 ---------- */
+    @media (max-width: 992px) {
+      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
-    .btn-icon-delete:hover { color: var(--toss-red); background: rgba(240,68,82,0.08); }
-
     @media (max-width: 768px) {
       .sidebar-main { display: none !important; }
       .main-content { margin-left: 0 !important; padding: 16px !important; width: 100%; }
       .content-container { padding-top: 16px; }
-      .toss-card, .modal-sheet { padding: 20px !important; }
-      .stock-row { flex-direction: column; align-items: flex-start; gap: 12px; }
-      .stock-row .text-end { text-align: left !important; width: 100%; display: flex; justify-content: space-between; align-items: center; }
+      .toss-card { padding: 20px; }
+      .summary-value { font-size: 19px; }
+      .list-row { flex-wrap: wrap; padding: 14px 16px; }
+      .list-row .row-main { flex: 1 1 calc(100% - 54px); }
+      .list-row .price-col { text-align: left; min-width: 0; flex: 1; }
+      .list-row .row-actions { margin-left: auto; }
+      .modal-backdrop-custom { padding: 12px; }
     }
   </style>
 </head>
 
-<body x-data="portfolioApp">
+<body x-data="portfolioApp"
+      x-effect="document.body.style.overflow = anyModalOpen ? 'hidden' : ''"
+      @keydown.escape.window="closeTopModal()">
 <div class="layout-wrapper">
   <aside th:replace="~{fragments/sidebar :: sidebarFragment('portfolio')}"></aside>
 
@@ -86,667 +189,980 @@
 
     <div class="content-container">
 
-      <div class="toss-banner d-flex align-items-center gap-3 mb-4">
-        <div class="d-inline-flex align-items-center justify-content-center bg-white border" style="width: 40px; height: 40px; border-radius: 10px; border-color: #e5e8eb !important;">
-          <i class="bi bi-shield-check text-dark fs-5"></i>
+      <!-- 페이지 타이틀 -->
+      <div class="mb-3">
+        <h2 class="fw-bold m-0" style="font-size: 22px;">내 투자 전략</h2>
+        <div class="card-sub">보유 종목 상태 → 관심 종목 타이밍 → 매매 규칙 순서로 점검하세요</div>
+      </div>
+
+      <!-- 0. 요약 지표 -->
+      <div class="summary-grid">
+        <div class="summary-tile">
+          <div class="summary-label"><i class="bi bi-graph-up-arrow"></i>평균 수익률</div>
+          <div class="summary-value num" :class="returnClass(avgReturn)" x-text="holdings.length ? formatRate(avgReturn) : '-'"></div>
+          <div class="winbar" x-show="holdings.length">
+            <div :style="`width:${winRatio}%; background: var(--toss-red);`"></div>
+            <div :style="`width:${100 - winRatio}%; background: var(--toss-blue);`"></div>
+          </div>
+          <div class="summary-foot" x-text="holdings.length ? `수익 ${winCount} · 손실 ${lossCount} (종목 단순평균)` : '보유 종목 없음'"></div>
         </div>
-        <div>
-          <div class="fw-bold text-dark" style="font-size: 16px;">내 투자 전략 관리</div>
-          <div style="color: #6b7684; font-size: 13px; font-weight: 500; margin-top: 2px;">설정한 매매 규칙과 종목별 상태를 한눈에 관리하는 공간</div>
+        <div class="summary-tile">
+          <div class="summary-label"><i class="bi bi-wallet2"></i>보유 종목</div>
+          <div class="summary-value num" x-text="holdings.length + '개'"></div>
+          <div class="summary-foot" x-text="bestHolding ? `최고 ${bestHolding.korName} ${formatRate(bestHolding.returnRate)}` : '-'"></div>
+        </div>
+        <div class="summary-tile">
+          <div class="summary-label"><i class="bi bi-crosshair"></i>진입 후보</div>
+          <div class="summary-value num" :class="entryCount > 0 ? 'text-down' : ''" x-text="entryCount + '개'"></div>
+          <div class="summary-foot" x-text="`관심 종목 ${watchList.length}개 중 진입 계획 가능 단계`"></div>
+        </div>
+        <div class="summary-tile">
+          <div class="summary-label"><i class="bi bi-exclamation-triangle"></i>점검 필요</div>
+          <div class="summary-value num" :class="alertCount > 0 ? 'text-up' : ''" x-text="alertCount + '개'"></div>
+          <div class="summary-foot" x-text="`고점 대비 -${DRAWDOWN_ALERT}% 이상 하락 보유 종목`"></div>
         </div>
       </div>
 
       <div class="row g-4">
         <div class="col-lg-7 d-flex flex-column gap-4">
 
-          <!-- 1. 진입 대기 큐 -->
-          <div class="toss-card mb-0">
-            <div class="d-flex justify-content-between align-items-center mb-4">
+          <!-- 1. 보유 종목 -->
+          <section class="toss-card">
+            <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
               <div>
-                <h3 class="fw-bold m-0 text-dark" style="font-size: 18px;">관심 종목 대기열</h3>
-                <div class="mt-1" style="color: #8b95a1; font-size: 13px; font-weight: 500;">매수 타이밍을 기다리는 종목 목록</div>
+                <h3 class="card-title">보유 중인 종목</h3>
+                <div class="card-sub">수익률과 고점 대비 하락폭으로 매도 시점을 점검해요</div>
               </div>
-              <button class="btn btn-sm btn-primary rounded-pill px-3 fw-bold border-0 text-nowrap" style="background:var(--toss-blue); font-size:13px; border-radius: 8px; padding: 8px 14px;" @click="openWatchModal()">
-                <i class="bi bi-plus me-1"></i>종목 추가
-              </button>
+              <button class="btn-toss" @click="openPickModal('holding')"><i class="bi bi-plus me-1"></i>종목 추가</button>
             </div>
 
-            <div class="watch-list">
-              <template x-for="item in watchList" :key="item.stockCode">
-                <div class="watch-item">
-                  <div class="flex-grow-1" style="min-width: 0;">
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                      <span class="fw-bold text-dark text-truncate" style="font-size: 15px; max-width: 70%;" x-text="item.stockName"></span>
-                      <span class="small flex-shrink-0" style="color: #8b95a1; font-weight: 500;" x-text="item.stockCode"></span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2 mt-2">
-<span class="badge flex-shrink-0"
-      style="font-size: 11px; padding: 4px 8px; font-weight: 600; border-radius: 6px;"
-      :style="
-        ['DANGER_ZONE', 'WARNING_ZONE', 'COOLDOWN'].includes(item.stockPhase)
-          ? 'background:rgba(240,68,82,0.08); color:var(--toss-red);'
-        : ['SCALE_OUT'].includes(item.stockPhase)
-          ? 'background:rgba(5,192,114,0.08); color:var(--toss-green);'
-        : ['ENTRY_READY', 'STRONG_HOLD'].includes(item.stockPhase)
-          ? 'background:rgba(49,130,246,0.08); color:var(--toss-blue);'
-        : 'background:#f2f4f6; color:#4e5968;'
-      "
-      x-text="item.stockPhase === 'DANGER_ZONE' ? '하락 지속' :
-              item.stockPhase === 'RECOVERY_WATCH' ? '반등 관망' :
-              item.stockPhase === 'WATCH' ? '방향 탐색' :
-              item.stockPhase === 'SETUP' ? '진입 대기' :
-              item.stockPhase === 'ENTRY_READY' ? '진입 타이밍' :
-              item.stockPhase === 'STRONG_HOLD' ? '강세 지속' :
-              item.stockPhase === 'WARNING_ZONE' ? '과열 경고' :
-              item.stockPhase === 'SCALE_OUT' ? '분할 익절' :
-              item.stockPhase === 'COOLDOWN' ? '매매 휴식' :
-              item.stockPhase ? item.stockPhase : '분석 대기'">
-</span>
-
-                      <span x-show="item.targetPrice" class="fw-bold text-truncate" style="color:#8b95a1; font-size: 12px; white-space: nowrap;"
-                            x-text="'목표가 ' + formatPrice(item.targetPrice, item.stockCode)"></span>
-                    </div>
-                  </div>
-
-                  <div class="d-flex align-items-center gap-1 ms-2 flex-shrink-0">
-                    <button class="btn btn-sm rounded-pill fw-bold text-nowrap flex-shrink-0" style="font-size: 12px; color: var(--toss-blue); background: rgba(49,130,246,0.08); padding: 6px 12px; border: none;" @click="openAiVerifyModal(item)">
-                      AI 검증
-                    </button>
-                    <button class="btn-icon-delete shadow-none flex-shrink-0" @click="deleteWatchItem(item.stockCode, item.stockName)" title="목록에서 삭제">
-                      <i class="bi bi-trash3"></i>
-                    </button>
-                  </div>
-                </div>
-              </template>
-
-              <div class="empty-state" x-show="watchList.length === 0">
-                <div style="font-size: 14px; font-weight: 500;">현재 대기 중인 관심 종목이 없어요</div>
-              </div>
+            <div class="d-flex justify-content-end mb-3" x-show="holdings.length > 1">
+              <select class="sort-select" x-model="holdingSort" aria-label="보유 종목 정렬">
+                <option value="return_desc">수익률 높은 순</option>
+                <option value="return_asc">수익률 낮은 순</option>
+                <option value="drawdown">고점 대비 하락 큰 순</option>
+                <option value="name">이름순</option>
+              </select>
             </div>
-          </div>
 
-          <!-- 2. 가동 중인 전략 (Holdings) -->
-          <div class="toss-card mb-0 flex-grow-1">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <div>
-                <h3 class="fw-bold m-0 text-dark" style="font-size: 18px;">보유 중인 종목</h3>
-                <div class="mt-1" style="color: #8b95a1; font-size: 13px; font-weight: 500;">현재 포트폴리오 수익률 및 매도 관리</div>
-              </div>
+            <template x-for="stock in sortedHoldings" :key="stock.stockCode">
+              <div class="list-row">
+                <div class="stock-icon" x-text="(stock.korName || '?').charAt(0)"></div>
 
-              <div class="d-flex align-items-center gap-3">
-                <div th:if="${portfolio != null and portfolio.averageReturnRate != null}">
-                  <span class="me-2" style="font-size: 13px; color: #6b7684; font-weight: 500;">계좌 평균</span>
-                  <span class="profit-badge"
-                        th:classappend="${portfolio.averageReturnRate >= 0 ? 'badge-profit' : 'badge-loss'}"
-                        th:text="${(portfolio.averageReturnRate >= 0 ? '+' : '') + #numbers.formatDecimal(portfolio.averageReturnRate, 1, 2) + '%'}"></span>
+                <div class="row-main flex-grow-1" style="min-width: 0;">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="row-name" x-text="stock.korName"></span>
+                    <span class="tone tone-red" x-show="isDrawdownAlert(stock)" title="최고가 대비 하락폭이 큽니다">
+                      <i class="bi bi-arrow-down-right"></i><span x-text="'고점 ' + formatRate(drawdown(stock))"></span>
+                    </span>
+                  </div>
+                  <div class="row-meta mt-1">
+                    <span x-text="stock.stockCode"></span><span x-show="stock.sector" x-text="' · ' + stock.sector"></span>
+                  </div>
+                  <template x-if="lastVerify['SELL:' + stock.stockCode]">
+                    <div class="verify-stamp mt-1">
+                      <span x-text="'최근 매도 검증: ' + decisionMeta(lastVerify['SELL:' + stock.stockCode].decision).label + ' · ' + lastVerify['SELL:' + stock.stockCode].at"></span>
+                    </div>
+                  </template>
                 </div>
-                <button class="btn btn-sm btn-primary rounded-pill px-3 fw-bold border-0 text-nowrap" style="background:var(--toss-blue); font-size:13px; border-radius: 8px; padding: 8px 14px;" @click="openHoldingModal()">
-                  <i class="bi bi-plus me-1"></i>종목 추가
+
+                <div class="price-col">
+                  <div class="price-main num" x-text="stock.currentPrice ? formatPrice(stock.currentPrice, stock.stockCode) : '-'"></div>
+                  <div class="price-sub num" x-text="'평단 ' + formatPrice(stock.averagePrice, stock.stockCode)"></div>
+                </div>
+
+                <div class="return-col">
+                  <div class="return-val num" :class="returnClass(stock.returnRate)" x-text="formatRate(stock.returnRate)"></div>
+                  <div class="price-sub num" x-show="drawdown(stock) !== null && !isDrawdownAlert(stock)" x-text="'고점 ' + formatRate(drawdown(stock))"></div>
+                </div>
+
+                <div class="row-actions d-flex align-items-center gap-1 flex-shrink-0">
+                  <button class="btn-soft-red" @click="openVerifyModal('SELL', { stockCode: stock.stockCode, stockName: stock.korName })">매도 검증</button>
+                  <button class="btn-icon-edit" @click="openEditHolding(stock)" title="평단가 수정" aria-label="평단가 수정"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-icon-delete" @click="deleteHolding(stock)" title="보유 종목에서 삭제" aria-label="보유 종목 삭제"><i class="bi bi-trash3"></i></button>
+                </div>
+              </div>
+            </template>
+
+            <div class="empty-state" x-show="holdings.length === 0">
+              <i class="bi bi-wallet2"></i>
+              <div class="title">현재 보유 중인 종목이 없어요</div>
+              <div class="desc">보유 종목을 추가하면 수익률과 매도 검증을 받을 수 있어요</div>
+            </div>
+          </section>
+
+          <!-- 2. 관심 종목 대기열 -->
+          <section class="toss-card">
+            <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+              <div>
+                <h3 class="card-title">관심 종목 대기열</h3>
+                <div class="card-sub">진입에 가까운 단계부터 정렬돼요</div>
+              </div>
+              <button class="btn-toss" @click="openPickModal('watch')"><i class="bi bi-plus me-1"></i>종목 추가</button>
+            </div>
+
+            <div class="chip-row" x-show="watchList.length > 0">
+              <template x-for="f in WATCH_FILTERS" :key="f.key">
+                <button class="chip" :class="watchFilter === f.key ? 'active' : ''" @click="watchFilter = f.key">
+                  <span x-text="f.label"></span><span class="cnt" x-text="watchFilterCount(f.key)"></span>
                 </button>
-              </div>
+              </template>
             </div>
 
-            <div>
-              <th:block th:if="${portfolio != null and !#lists.isEmpty(portfolio.myStocks)}">
-                <th:block th:each="stock : ${portfolio.myStocks}">
-                  <div class="stock-row" style="background: white; border: 1px solid #f2f4f6; border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; transition: 0.15s;">
-                    <div class="stock-icon flex-shrink-0" style="width: 40px; height: 40px; border-radius: 10px;" th:text="${#strings.substring(stock.korName, 0, 1)}"></div>
-                    <div class="flex-grow-1 ms-2" style="min-width: 0;">
-                      <div class="stock-name text-truncate" style="font-size: 15px;" th:text="${stock.korName}"></div>
-                      <div class="stock-meta mt-1 text-truncate">
-                        <th:block th:if="${stock.averagePrice != null}">
-                           <span style="color: #4e5968;">전략 평단가:
-                              <span class="fw-bold text-dark"
-                                    th:data-price="${stock.averagePrice}"
-                                    th:data-code="${stock.stockCode}"
-                                    x-text="formatPrice(Number($el.dataset.price), $el.dataset.code)">
-                              </span>
-                           </span>
-                        </th:block>
-                        <th:block th:unless="${stock.averagePrice != null}">
-                          <span style="color: #8b95a1;">전략 설정 대기</span>
-                        </th:block>
-                      </div>
-                    </div>
-                    <div class="text-end ms-2 me-3 flex-shrink-0" style="min-width:70px;">
-                      <div>
-                        <span class="profit-badge"
-                              th:classappend="${stock.returnRate >= 0 ? 'badge-profit' : 'badge-loss'}"
-                              th:text="${(stock.returnRate >= 0 ? '+' : '') + #numbers.formatDecimal(stock.returnRate, 1, 2) + '%'}"></span>
-                      </div>
-                    </div>
-
-                    <button class="btn btn-sm rounded-pill fw-bold text-nowrap flex-shrink-0"
-                            style="font-size: 13px; padding: 6px 12px; background: rgba(240,68,82,0.08); color: var(--toss-red); border: none;"
-                            th:data-code="${stock.stockCode}"
-                            th:data-name="${stock.korName}"
-                            @click="openSellVerifyModal({ stockCode: $el.dataset.code, stockName: $el.dataset.name })">
-                      매도 검증
-                    </button>
+            <template x-for="item in filteredWatchList" :key="item.stockCode">
+              <div class="list-row">
+                <div class="row-main flex-grow-1" style="min-width: 0;">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="row-name" x-text="item.stockName"></span>
+                    <span class="row-meta flex-shrink-0" x-text="item.stockCode"></span>
+                    <span class="row-meta flex-shrink-0" x-show="item.market" x-text="'· ' + item.market"></span>
                   </div>
-                </th:block>
-              </th:block>
+                  <div class="d-flex align-items-center flex-wrap gap-2 mt-2">
+                    <span class="tone" :class="'tone-' + phaseMeta(item.chartPhase).tone" x-text="phaseMeta(item.chartPhase).label"></span>
+                    <span class="phase-desc" x-text="phaseMeta(item.chartPhase).desc"></span>
+                  </div>
+                  <div class="d-flex align-items-center flex-wrap gap-2 mt-1">
+                    <span class="row-meta num" x-show="item.targetPrice" x-text="'1차 진입가 ' + formatPrice(item.targetPrice, item.stockCode)"></span>
+                    <template x-if="lastVerify['BUY:' + item.stockCode]">
+                      <span class="verify-stamp" x-text="'· 최근 검증 ' + decisionMeta(lastVerify['BUY:' + item.stockCode].decision).label + ' ' + lastVerify['BUY:' + item.stockCode].at"></span>
+                    </template>
+                  </div>
+                </div>
 
-              <div th:if="${portfolio == null or #lists.isEmpty(portfolio.myStocks)}" class="empty-state" style="background: #f9fafb; border-radius: 12px; padding: 40px 20px; border: 1px solid #e5e8eb;">
-                <div class="fw-bold" style="font-size: 14px; color: #8b95a1;">현재 보유 중인 종목이 없어요</div>
+                <div class="row-actions d-flex align-items-center gap-1 flex-shrink-0">
+                  <button class="btn-soft-blue" @click="openVerifyModal('BUY', item)">AI 검증</button>
+                  <button class="btn-icon-delete" @click="deleteWatchItem(item)" title="목록에서 삭제" aria-label="관심 종목 삭제"><i class="bi bi-trash3"></i></button>
+                </div>
+              </div>
+            </template>
+
+            <div class="empty-state" x-show="watchList.length === 0">
+              <i class="bi bi-binoculars"></i>
+              <div class="title">대기 중인 관심 종목이 없어요</div>
+              <div class="desc">종목을 추가하고 AI 검증을 받으면 차트 단계가 표시돼요</div>
+            </div>
+            <div class="empty-state" x-show="watchList.length > 0 && filteredWatchList.length === 0">
+              <div class="title">이 단계에 해당하는 종목이 없어요</div>
+            </div>
+
+            <div x-data="{ open: false }" x-show="watchList.length > 0">
+              <button class="btn btn-link p-0 mt-3 text-decoration-none fw-semibold" style="font-size: 13px; color: var(--text-mute);" @click="open = !open">
+                <i class="bi" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i> 단계 설명 보기
+              </button>
+              <div class="legend" x-show="open" x-transition x-cloak>
+                <template x-for="code in PHASE_ORDER" :key="code">
+                  <div class="legend-row">
+                    <span class="tone" :class="'tone-' + PHASES[code].tone" x-text="PHASES[code].label"></span>
+                    <span x-text="PHASES[code].desc"></span>
+                  </div>
+                </template>
               </div>
             </div>
-          </div>
-
+          </section>
         </div>
 
         <!-- 3. 매매 규칙 -->
         <div class="col-lg-5">
-          <div class="toss-card h-100 mb-0">
-            <div class="d-flex justify-content-between align-items-center mb-3">
+          <section class="toss-card h-100">
+            <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
               <div>
-                <h3 class="fw-bold m-0 text-dark" style="font-size: 18px;">매매 규칙 설정</h3>
-                <div class="mt-1" style="color: #8b95a1; font-size: 13px; font-weight: 500;">매수/매도 검증 시 적용되는 기준</div>
+                <h3 class="card-title">매매 규칙</h3>
+                <div class="card-sub">AI 검증 시 이 기준으로 통과/미달을 판정해요</div>
               </div>
-              <button class="btn btn-sm btn-outline-secondary rounded-pill fw-bold text-nowrap" style="font-size: 13px; border-color: #e5e8eb; color: #4e5968; padding: 6px 12px;" @click="openRuleModal()">
-                규칙 추가
-              </button>
+              <button class="btn-ghost" @click="openRuleModal()"><i class="bi bi-plus me-1"></i>규칙 추가</button>
             </div>
 
-            <div class="rules-container mt-4">
-              <template x-for="rule in tradingRules" :key="rule.id">
-                <div class="rule-item" style="background: white; border: 1px solid #f2f4f6; border-radius: 12px; padding: 16px 20px; margin-bottom: 12px;">
-                  <div style="max-width: 75%;">
-                    <div class="fw-bold text-dark mb-1" style="font-size: 15px;" x-text="rule.title"></div>
-                    <div class="d-flex align-items-center gap-2">
-                      <span class="badge fw-bold" style="background: #f2f4f6; color: #4e5968; font-size: 11px; padding: 4px 8px; border-radius: 4px;" x-text="getIndicatorName(rule.indicatorType)"></span>
-                      <span class="fw-bold" style="color: var(--toss-blue); font-size: 13px;"
-                            x-show="rule.operator && rule.targetValue !== null"
-                            x-text="getOperatorSymbol(rule.operator) + ' ' + rule.targetValue"></span>
-                    </div>
-                  </div>
-                  <div class="d-flex align-items-center gap-3 flex-shrink-0">
-                    <label class="toss-switch mb-0" style="transform: scale(0.85);">
-                      <input type="checkbox" x-model="rule.isActive" @change="toggleRule(rule)">
-                      <span class="slider"></span>
-                    </label>
-                    <button class="btn-icon-delete shadow-none" @click="deleteRule(rule.id, rule.title)" title="규칙 삭제">
-                      <i class="bi bi-trash3" style="font-size: 15px;"></i>
-                    </button>
-                  </div>
+            <div class="d-flex align-items-center gap-2 mb-3" x-show="tradingRules.length > 0">
+              <span class="tone tone-blue" x-text="`활성 ${activeRuleCount}개`"></span>
+              <span class="tone tone-gray" x-show="tradingRules.length - activeRuleCount > 0" x-text="`꺼짐 ${tradingRules.length - activeRuleCount}개`"></span>
+            </div>
+
+            <template x-for="rule in sortedRules" :key="rule.id">
+              <div class="rule-item" :class="rule.isActive ? '' : 'inactive'">
+                <div style="min-width: 0;">
+                  <div class="rule-title text-truncate" x-text="rule.title"></div>
+                  <div class="rule-cond" x-html="ruleSentence(rule)"></div>
                 </div>
-              </template>
+                <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                  <label class="toss-switch" :title="rule.isActive ? '규칙 끄기' : '규칙 켜기'">
+                    <input type="checkbox" x-model="rule.isActive" @change="toggleRule(rule)">
+                    <span class="slider"></span>
+                  </label>
+                  <button class="btn-icon-delete" @click="deleteRule(rule)" title="규칙 삭제" aria-label="규칙 삭제"><i class="bi bi-trash3"></i></button>
+                </div>
+              </div>
+            </template>
 
-              <div class="empty-state" x-show="tradingRules.length === 0" style="background: #f9fafb; border-radius: 12px; padding: 40px 20px; border: 1px solid #e5e8eb;">
-                <div class="fw-bold" style="font-size: 14px; color: #8b95a1;">등록된 매매 규칙이 없어요</div>
+            <div class="empty-state" x-show="tradingRules.length === 0">
+              <i class="bi bi-sliders"></i>
+              <div class="title">등록된 매매 규칙이 없어요</div>
+              <div class="desc mb-3">규칙이 없으면 AI 검증이 차트 분석만으로 판단해요</div>
+              <div class="d-flex flex-wrap justify-content-center gap-2">
+                <template x-for="p in RULE_PRESETS" :key="p.title">
+                  <button class="preset-chip" @click="openRuleModal(p)" x-text="'+ ' + p.title"></button>
+                </template>
               </div>
             </div>
-          </div>
+          </section>
         </div>
-
       </div>
     </div>
   </main>
 </div>
 
-<!-- 타점 예약 모달 -->
-<div x-show="showWatchModal" class="modal-backdrop-custom" x-cloak @click.self="closeWatchModal()">
+<!-- ================= 종목 선택 모달 (관심/보유 공용) ================= -->
+<div x-show="showPickModal" class="modal-backdrop-custom" x-cloak @click.self="closePickModal()">
   <div class="modal-sheet" style="overflow: visible;">
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h3 class="fw-bold m-0 text-dark" style="font-size: 18px;">관심 종목 추가</h3>
-      <button @click="closeWatchModal()" class="btn-close shadow-none"></button>
+      <h3 class="fw-bold m-0" style="font-size: 18px;" x-text="{ watch: '관심 종목 추가', holding: '보유 종목 추가', edit: '평단가 수정' }[pickMode]"></h3>
+      <button @click="closePickModal()" class="btn-close shadow-none" aria-label="닫기"></button>
     </div>
 
-    <div class="position-relative mb-4" @click.outside="isModalSearchOpen = false">
-      <div class="d-flex align-items-center bg-white px-4 py-3 border"
-           style="border-radius: 12px; transition: 0.15s;"
-           :style="isModalSearchOpen ? 'border-color: var(--toss-blue) !important;' : 'border-color: #e5e8eb !important;'">
+    <div class="position-relative mb-3" x-show="!pickForm.code" @click.outside="isSearchOpen = false">
+      <div class="search-box" :class="isSearchOpen ? 'focus' : ''">
         <i class="bi bi-search text-secondary fs-5 me-3"></i>
-        <input type="text" class="border-0 bg-transparent w-100 fs-6 fw-bold text-dark" style="outline: none;"
-               placeholder="종목명이나 코드를 검색해 보세요" x-model="modalSearchQuery"
-               @input.debounce.500ms="modalSearchNew()" @focus="isModalSearchOpen = true">
+        <input type="text" x-ref="pickSearch" class="border-0 bg-transparent w-100 fs-6 fw-bold" style="outline: none;"
+               placeholder="종목명이나 코드를 검색해 보세요" x-model="searchQuery"
+               @input.debounce.400ms="searchNew()" @focus="isSearchOpen = true">
       </div>
 
-      <div x-show="isModalSearchOpen && modalSearchQuery.length > 0"
-           @scroll="if ($el.scrollTop + $el.clientHeight >= $el.scrollHeight - 5) { modalSearchPage++; fetchModalStocks(); }"
-           class="position-absolute w-100 bg-white shadow-sm mt-2 p-2 border"
-           style="z-index: 1060; max-height: 280px; overflow-y: auto; border-color: #e5e8eb !important; border-radius: 12px;"
-           x-cloak>
-        <div x-show="isModalLoading" class="text-center p-4"><div class="spinner-border text-primary" style="width: 1.5rem; height: 1.5rem;"></div></div>
-
-        <template x-for="item in modalSearchResults" :key="item.stock?.code">
-          <div class="search-item p-3 mb-1 d-flex justify-content-between align-items-center"
-               style="cursor: pointer; background: #ffffff; border-radius: 8px;"
-               @click="selectStockForWatch(item.stock)"
-               onmouseover="this.style.backgroundColor='#f9fafb'" onmouseout="this.style.backgroundColor='#ffffff'">
+      <div class="search-dropdown" x-show="isSearchOpen && searchQuery.length > 0" x-cloak @scroll="onSearchScroll($el)">
+        <template x-for="item in searchResults" :key="item.stock?.code">
+          <div class="search-item" :class="isAlreadyAdded(item.stock?.code) ? 'disabled' : ''" @click="selectStock(item.stock)">
             <div>
-              <div class="fw-bold text-dark" style="font-size: 15px;" x-text="item.stock?.name"></div>
-              <div class="small mt-1" style="color: #8b95a1; font-weight: 500;" x-text="item.stock?.code"></div>
+              <div class="fw-bold" style="font-size: 15px;" x-text="item.stock?.name"></div>
+              <div class="row-meta mt-1" x-text="item.stock?.code"></div>
             </div>
-            <div style="font-size: 13px; font-weight: 600; color: #4e5968;">
-              선택 <i class="bi bi-chevron-right"></i>
-            </div>
+            <span x-show="isAlreadyAdded(item.stock?.code)" class="tone tone-gray">등록됨</span>
+            <span x-show="!isAlreadyAdded(item.stock?.code)" style="font-size: 13px; font-weight: 600; color: var(--text-sub);">선택 <i class="bi bi-chevron-right"></i></span>
           </div>
         </template>
-        <div x-show="!isModalLoading && modalSearchResults.length === 0" class="p-4 text-center fw-bold" style="color: #8b95a1;">검색 결과 없음</div>
+        <div x-show="isSearchLoading" class="text-center p-3"><div class="spinner-border text-primary" style="width: 1.3rem; height: 1.3rem;"></div></div>
+        <div x-show="!isSearchLoading && searchResults.length === 0" class="p-4 text-center fw-bold" style="color: var(--text-mute);">검색 결과 없음</div>
       </div>
     </div>
 
-    <div x-show="watchForm.stockCode" class="p-3 rounded-3 mb-4 d-flex justify-content-between align-items-center" style="background: #f0f6ff; border: 1px solid #dbeafe;">
-      <div>
-        <span class="fw-bold text-dark" x-text="watchForm.stockName"></span>
-        <span class="small ms-2" style="color: #8b95a1;" x-text="'(' + watchForm.stockCode + ')'"></span>
-      </div>
-      <button class="btn btn-sm btn-link text-danger fw-bold text-decoration-none" @click="clearSelectedStock()">취소</button>
-    </div>
-
-    <button class="btn border-0 w-100 fw-bold"
-            style="background: var(--toss-blue); color: white; border-radius: 8px; padding: 16px; font-size: 16px;"
-            :disabled="!watchForm.stockCode"
-            @click="submitWatchForm()">
-      관심 종목으로 등록
-    </button>
-  </div>
-</div>
-
-<!-- 전략 가동 모달 -->
-<div x-show="showHoldingModal" class="modal-backdrop-custom" x-cloak @click.self="closeHoldingModal()">
-  <div class="modal-sheet" style="overflow: visible;">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h3 class="fw-bold m-0 text-dark" style="font-size: 18px;">보유 종목 추가</h3>
-      <button @click="closeHoldingModal()" class="btn-close shadow-none"></button>
-    </div>
-
-    <div class="position-relative mb-4" @click.outside="isModalSearchOpen = false">
-      <div class="d-flex align-items-center bg-white px-4 py-3 border"
-           style="border-radius: 12px; transition: 0.15s;"
-           :style="isModalSearchOpen ? 'border-color: var(--toss-blue) !important;' : 'border-color: #e5e8eb !important;'">
-        <i class="bi bi-search text-secondary fs-5 me-3"></i>
-        <input type="text" class="border-0 bg-transparent w-100 fs-6 fw-bold text-dark" style="outline: none;"
-               placeholder="종목명이나 코드를 검색해 보세요" x-model="modalSearchQuery"
-               @input.debounce.500ms="modalSearchNew()" @focus="isModalSearchOpen = true">
-      </div>
-
-      <div x-show="isModalSearchOpen && modalSearchQuery.length > 0"
-           @scroll="if ($el.scrollTop + $el.clientHeight >= $el.scrollHeight - 5) { modalSearchPage++; fetchModalStocks(); }"
-           class="position-absolute w-100 bg-white shadow-sm mt-2 p-2 border"
-           style="z-index: 1060; max-height: 280px; overflow-y: auto; border-color: #e5e8eb !important; border-radius: 12px;"
-           x-cloak>
-        <div x-show="isModalLoading" class="text-center p-4"><div class="spinner-border text-primary" style="width: 1.5rem; height: 1.5rem;"></div></div>
-
-        <template x-for="item in modalSearchResults" :key="item.stock?.code">
-          <div class="search-item p-3 mb-1 d-flex justify-content-between align-items-center"
-               style="cursor: pointer; background: #ffffff; border-radius: 8px;"
-               @click="selectStockForHolding(item.stock)"
-               onmouseover="this.style.backgroundColor='#f9fafb'" onmouseout="this.style.backgroundColor='#ffffff'">
-            <div>
-              <div class="fw-bold text-dark" style="font-size: 15px;" x-text="item.stock?.name"></div>
-              <div class="small mt-1" style="color: #8b95a1; font-weight: 500;" x-text="item.stock?.code"></div>
-            </div>
-            <div style="font-size: 13px; font-weight: 600; color: #4e5968;">
-              선택 <i class="bi bi-chevron-right"></i>
-            </div>
-          </div>
-        </template>
-        <div x-show="!isModalLoading && modalSearchResults.length === 0" class="p-4 text-center fw-bold" style="color: #8b95a1;">검색 결과 없음</div>
-      </div>
-    </div>
-
-    <div x-show="holdingForm.code">
-      <div class="p-3 rounded-3 mb-3 d-flex justify-content-between align-items-center" style="background: #f0f6ff; border: 1px solid #dbeafe;">
+    <div x-show="pickForm.code" class="mb-3">
+      <div class="selected-stock">
         <div>
-          <span class="fw-bold text-dark" x-text="holdingForm.name"></span>
-          <span class="small ms-2" style="color: #8b95a1;" x-text="'(' + holdingForm.code + ')'"></span>
+          <span class="fw-bold" x-text="pickForm.name"></span>
+          <span class="row-meta ms-2" x-text="pickForm.code"></span>
         </div>
-        <button class="btn btn-sm btn-link text-danger fw-bold text-decoration-none" @click="clearSelectedHolding()">변경</button>
+        <button class="btn btn-sm btn-link text-danger fw-bold text-decoration-none p-0" x-show="pickMode !== 'edit'" @click="clearPick()">변경</button>
       </div>
 
-      <div class="mb-4">
-        <label class="form-label fw-bold small text-secondary">평균 매수 단가</label>
-        <input type="number" class="toss-input mb-0" x-model="holdingForm.averagePrice" placeholder="평단가를 입력하세요">
+      <div class="mt-3" x-show="pickMode !== 'watch'">
+        <label class="field-label">평균 매수 단가</label>
+        <input type="number" step="any" min="0" class="toss-input" x-ref="avgInput" x-model="pickForm.averagePrice"
+               :placeholder="isKrCode(pickForm.code) ? '예: 72000 (원)' : '예: 182.50 (달러)'"
+               @keydown.enter="submitPick()">
       </div>
+      <div class="field-hint" x-show="pickMode === 'watch'">등록 후 'AI 검증'을 누르면 차트 단계와 1차 진입가가 계산돼요.</div>
     </div>
 
-    <button class="btn border-0 w-100 fw-bold"
-            style="background: var(--toss-blue); color: white; border-radius: 8px; padding: 16px; font-size: 16px;"
-            :disabled="!holdingForm.code || !holdingForm.averagePrice"
-            @click="submitHoldingForm()">
-      등록하기
+    <button class="btn-toss w-100" style="padding: 16px; font-size: 16px;"
+            :disabled="!canSubmitPick || submitting" @click="submitPick()">
+      <span x-show="!submitting" x-text="{ watch: '관심 종목으로 등록', holding: '보유 종목 등록', edit: '평단가 저장' }[pickMode]"></span>
+      <span x-show="submitting" class="spinner-border spinner-border-sm"></span>
     </button>
   </div>
 </div>
 
-<!-- 매매 규칙 등록 모달 -->
+<!-- ================= 매매 규칙 등록 모달 ================= -->
 <div x-show="showRuleModal" class="modal-backdrop-custom" x-cloak @click.self="showRuleModal = false">
   <div class="modal-sheet">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2">
-      <h3 class="fw-bold m-0 text-dark" style="font-size: 20px;">새로운 매매 규칙 만들기</h3>
-      <button @click="showRuleModal = false" class="btn-close shadow-none"></button>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="fw-bold m-0" style="font-size: 20px;">새로운 매매 규칙</h3>
+      <button @click="showRuleModal = false" class="btn-close shadow-none" aria-label="닫기"></button>
     </div>
 
     <div class="mb-4">
-      <label class="form-label fw-bold mb-2" style="font-size: 14px; color: #4e5968;">규칙 이름</label>
-      <input type="text" class="toss-input" x-model="ruleForm.title" placeholder="예: RSI 30 이하 과매도 진입">
+      <label class="field-label">빠른 선택</label>
+      <div class="d-flex flex-wrap gap-2">
+        <template x-for="p in RULE_PRESETS" :key="p.title">
+          <button class="preset-chip" @click="applyPreset(p)" x-text="p.title"></button>
+        </template>
+      </div>
     </div>
 
-    <div class="mb-4" x-data="{ showIndicatorSheet: false }">
-      <label class="form-label fw-bold mb-2" style="font-size: 14px; color: #4e5968;">검증할 지표</label>
-
+    <div class="mb-4">
+      <label class="field-label">검증할 지표</label>
       <div class="d-flex justify-content-between align-items-center bg-white"
-           style="font-size: 15px; padding: 14px 16px; border-radius: 12px; border: 1px solid #e5e8eb; cursor: pointer;"
+           style="font-size: 15px; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--line); cursor: pointer;"
            @click="showIndicatorSheet = true">
-        <span class="fw-bold" :style="ruleForm.indicatorType ? 'color: #191f28;' : 'color: #8b95a1;'"
-              x-text="ruleForm.indicatorType ? getIndicatorName(ruleForm.indicatorType) : '지표를 선택해 주세요'"></span>
+        <span class="fw-bold" :style="ruleForm.indicatorType ? 'color: var(--text-strong);' : 'color: var(--text-mute);'"
+              x-text="ruleForm.indicatorType ? indicatorMeta(ruleForm.indicatorType).name : '지표를 선택해 주세요'"></span>
         <i class="bi bi-chevron-down text-secondary"></i>
       </div>
-
-      <div x-show="showIndicatorSheet" class="modal-backdrop-custom" x-cloak @click.self="showIndicatorSheet = false" style="z-index: 10005;">
-        <div class="modal-sheet" style="padding: 0; display: flex; flex-direction: column; max-height: 80vh;">
-
-          <div class="d-flex justify-content-between align-items-center p-4 border-bottom sticky-top bg-white" style="border-radius: 16px 16px 0 0;">
-            <h4 class="fw-bold m-0 text-dark" style="font-size: 18px;">지표 선택</h4>
-            <button @click="showIndicatorSheet = false" class="btn-close shadow-none"></button>
-          </div>
-
-          <div style="overflow-y: auto; padding: 20px;">
-            <div class="fw-bold mb-2 ps-2" style="font-size: 13px; color: var(--toss-blue);">수치형 지표</div>
-
-            <template x-for="item in [
-              {value: 'STOCK_SCORE', name: '종목 점수'},
-              {value: 'MA5', name: '5일 이동평균선 (단기)'},
-              {value: 'MA20', name: '20일 이동평균선 (스윙)'},
-              {value: 'MA50', name: '50일 이동평균선 (중기)'},
-              {value: 'DIST_MA5', name: '5일선 이격도 (%)'},
-              {value: 'DIST_MA20', name: '20일선 이격도 (%)'},
-              {value: 'RSI', name: 'RSI (상대강도지수)'},
-              {value: 'ADX', name: 'ADX (추세강도)'},
-              {value: 'ATR', name: 'ATR (변동성)'},
-              {value: 'BAND_WIDTH', name: '볼린저 대역폭 (%)'},
-              {value: 'VOLUME', name: '현재 거래량'}
-            ]">
-              <div class="d-flex justify-content-between align-items-center p-3 mb-1"
-                   style="cursor: pointer; border-radius: 8px;"
-                   :style="ruleForm.indicatorType === item.value ? 'background: #f0f6ff;' : 'background: transparent;'"
-                   @click="ruleForm.indicatorType = item.value; onIndicatorChange(); showIndicatorSheet = false;">
-                <span class="fw-bold" style="font-size: 14px; color: #191f28;" x-text="item.name"></span>
-                <i class="bi bi-check" style="color: var(--toss-blue);" x-show="ruleForm.indicatorType === item.value"></i>
-              </div>
-            </template>
-
-            <div class="fw-bold mt-4 mb-2 ps-2" style="font-size: 13px; color: var(--toss-green);">상태형 지표</div>
-
-            <template x-for="item in [
-              {value: 'UPTREND', name: '정배열 상태'},
-              {value: 'MACRO_UPTREND', name: '장기 상승 추세'},
-              {value: 'BOLLINGER_SQUEEZE', name: '볼린저 밴드 극도 응축'},
-              {value: 'VOLUME_BULLISH', name: '매수 거래량 폭발'},
-              {value: 'NEW_HIGH_5D', name: '단기 고점 갱신'},
-              {value: 'HIGHER_LOW', name: '저점 방어'},
-              {value: 'MACD_GOLDEN_CROSS', name: 'MACD 골든 크로스'}
-            ]">
-              <div class="d-flex justify-content-between align-items-center p-3 mb-1"
-                   style="cursor: pointer; border-radius: 8px;"
-                   :style="ruleForm.indicatorType === item.value ? 'background: #f0f6ff;' : 'background: transparent;'"
-                   @click="ruleForm.indicatorType = item.value; onIndicatorChange(); showIndicatorSheet = false;">
-                <span class="fw-bold" style="font-size: 14px; color: #191f28;" x-text="item.name"></span>
-                <i class="bi bi-check" style="color: var(--toss-blue);" x-show="ruleForm.indicatorType === item.value"></i>
-              </div>
-            </template>
-          </div>
-
-        </div>
-      </div>
+      <div class="field-hint" x-show="ruleForm.indicatorType" x-text="indicatorMeta(ruleForm.indicatorType).hint"></div>
     </div>
 
     <div class="mb-4" x-show="isNumericIndicator(ruleForm.indicatorType)" x-cloak x-transition>
-      <label class="form-label fw-bold mb-2" style="font-size: 14px; color: #4e5968;">상세 조건</label>
+      <label class="field-label">조건</label>
       <div class="d-flex gap-2">
-        <select class="toss-input mb-0" style="width: 140px;" x-model="ruleForm.operator">
-          <option value="LESS_THAN">작을 때 (<)</option>
-          <option value="LESS_THAN_OR_EQUAL_TO">이하 (<=)</option>
-          <option value="GREATER_THAN">클 때 (>)</option>
-          <option value="GREATER_THAN_OR_EQUAL_TO">이상 (>=)</option>
-          <option value="EQUAL_TO">같을 때 (==)</option>
+        <select class="toss-input" style="width: 140px; flex-shrink: 0;" x-model="ruleForm.operator">
+          <template x-for="op in OPERATORS" :key="op.value">
+            <option :value="op.value" x-text="op.label" :selected="ruleForm.operator === op.value"></option>
+          </template>
         </select>
-        <input type="number" step="any" class="toss-input mb-0 flex-grow-1" x-model="ruleForm.targetValue" placeholder="기준 수치 입력">
+        <input type="number" step="any" class="toss-input flex-grow-1" x-model="ruleForm.targetValue" placeholder="기준 수치">
       </div>
     </div>
 
-    <button class="btn border-0 w-100 fw-bold mt-2" style="background: var(--toss-blue); color: white; font-size: 16px; padding: 16px 0; border-radius: 8px;" @click="submitRuleForm">
-      규칙 추가하기
+    <div class="mb-4">
+      <label class="field-label">규칙 이름</label>
+      <input type="text" class="toss-input" x-model="ruleForm.title" :placeholder="suggestedRuleTitle || '예: RSI 30 이하 과매도 진입'">
+      <div class="field-hint" x-show="!ruleForm.title && suggestedRuleTitle">비워두면 '<span x-text="suggestedRuleTitle"></span>'(으)로 저장돼요</div>
+    </div>
+
+    <div class="rule-preview mb-4" x-show="ruleForm.indicatorType" x-html="'검증 시 ' + ruleSentence(ruleForm) + ' 통과로 판정'"></div>
+
+    <button class="btn-toss w-100" style="padding: 16px; font-size: 16px;" :disabled="submitting" @click="submitRuleForm()">
+      <span x-show="!submitting">규칙 추가하기</span>
+      <span x-show="submitting" class="spinner-border spinner-border-sm"></span>
     </button>
   </div>
 </div>
 
-<!-- AI 검증 모달 -->
-<div x-show="showVerifyModal" class="modal-backdrop-custom" x-cloak @click.self="closeAiVerifyModal()">
-  <div class="modal-sheet bg-white" @click.stop style="border-radius: 16px; padding: 0; display: flex; flex-direction: column; max-height: 85vh; width: 100%; max-width: 520px; margin: 0 20px;">
+<!-- 지표 선택 시트 -->
+<div x-show="showIndicatorSheet" class="modal-backdrop-custom" x-cloak @click.self="showIndicatorSheet = false" style="z-index: 10005;">
+  <div class="modal-sheet flush" style="max-height: 80vh;">
+    <div class="modal-head">
+      <h4 class="fw-bold m-0" style="font-size: 18px;">지표 선택</h4>
+      <button @click="showIndicatorSheet = false" class="btn-close shadow-none" aria-label="닫기"></button>
+    </div>
+    <div class="modal-body-scroll" style="padding: 16px 20px;">
+      <template x-for="group in INDICATOR_GROUPS" :key="group.label">
+        <div class="mb-3">
+          <div class="fw-bold mb-2 ps-2" style="font-size: 13px;" :style="`color: ${group.color};`" x-text="group.label"></div>
+          <template x-for="code in group.items" :key="code">
+            <div class="indicator-option" :class="ruleForm.indicatorType === code ? 'selected' : ''" @click="selectIndicator(code)">
+              <div>
+                <div class="fw-bold" style="font-size: 14px;" x-text="INDICATORS[code].name"></div>
+                <div class="row-meta mt-1" x-text="INDICATORS[code].hint"></div>
+              </div>
+              <i class="bi bi-check-lg" style="color: var(--toss-blue);" x-show="ruleForm.indicatorType === code"></i>
+            </div>
+          </template>
+        </div>
+      </template>
+    </div>
+  </div>
+</div>
 
-    <div class="d-flex justify-content-between align-items-center px-4 py-4 border-bottom sticky-top bg-white" style="border-radius: 16px 16px 0 0; border-color: #f2f4f6 !important;">
+<!-- ================= AI 검증 모달 ================= -->
+<div x-show="showVerifyModal" class="modal-backdrop-custom" x-cloak @click.self="closeVerifyModal()">
+  <div class="modal-sheet flush" style="max-height: 88vh;">
+    <div class="modal-head">
       <div>
-        <div style="font-size: 13px; color: #8b95a1; font-weight: 500; margin-bottom: 4px;"
-             x-text="(selectedWatchItem?.stockName || '') + ' 현재 시점 분석'"></div>
-        <h4 class="fw-bold m-0 text-dark" style="font-size: 20px;"
-            x-text="verifyType === 'BUY' ? '진입 타점 검증' : '매도 타점 검증'"></h4>
+        <div class="row-meta mb-1" x-text="(verifyTarget?.stockName || '') + ' · 현재 시점 분석'"></div>
+        <h4 class="fw-bold m-0" style="font-size: 20px;" x-text="verifyType === 'BUY' ? '진입 타점 검증' : '매도 타점 검증'"></h4>
       </div>
-      <button @click="closeAiVerifyModal()" class="btn-close shadow-none"></button>
+      <button @click="closeVerifyModal()" class="btn-close shadow-none" aria-label="닫기"></button>
     </div>
 
-    <div style="overflow-y: auto; padding: 24px;">
+    <div class="modal-body-scroll">
 
-      <div x-show="!aiResult && !aiLoading" class="text-center py-5">
-        <div class="mb-4">
-          <i class="bi bi-cpu text-secondary" style="font-size: 48px; opacity: 0.5;"></i>
-        </div>
-        <p class="mb-4 fw-bold" style="color: #333d4b; font-size: 17px; line-height: 1.5; white-space: pre-line;"
-           x-text="(selectedWatchItem?.stockName || '') + '의\n데이터를 분석할까요?'"></p>
-        <button class="btn border-0 w-100 fw-bold"
-                style="background-color: var(--toss-blue); color: white; border-radius: 8px; padding: 16px; font-size: 16px;"
-                @click="requestAiAnalysis()">
-          분석 시작하기
-        </button>
+      <!-- 시작 전 -->
+      <div x-show="!aiResult && !aiLoading && !aiError" class="text-center py-4">
+        <i class="bi bi-cpu" style="font-size: 44px; color: var(--text-faint);"></i>
+        <p class="mt-3 mb-2 fw-bold" style="color: var(--text-body); font-size: 17px; line-height: 1.5;" x-text="(verifyTarget?.stockName || '') + '을(를) 분석할까요?'"></p>
+        <p class="mb-4 row-meta" x-text="verifyType === 'BUY'
+            ? `활성 규칙 ${activeRuleCount}개와 차트 단계를 함께 확인해요`
+            : '현재 추세와 보유 수익률을 기준으로 매도 여부를 확인해요'"></p>
+        <button class="btn-toss w-100" style="padding: 16px; font-size: 16px;" @click="requestAiAnalysis()">분석 시작하기</button>
       </div>
 
+      <!-- 로딩 -->
       <div x-show="aiLoading" class="text-center py-5">
-        <div class="spinner-border" style="color: #b0b8c1; width: 2.5rem; height: 2.5rem; border-width: 3px;" role="status"></div>
-        <div class="mt-4 fw-bold" style="color: #4e5968; font-size: 16px;">매매 규칙 검증 및 차트 분석 중</div>
-        <div class="mt-2" style="color: #8b95a1; font-size: 14px; font-weight: 500;">잠시만 기다려주세요</div>
+        <div class="spinner-border" style="color: var(--text-faint); width: 2.5rem; height: 2.5rem; border-width: 3px;" role="status"></div>
+        <div class="mt-4 fw-bold" style="color: var(--text-sub); font-size: 16px;" x-text="loadingMessage"></div>
+        <div class="mt-2 row-meta" style="font-size: 14px;">잠시만 기다려주세요</div>
       </div>
 
-      <div x-show="aiResult">
-        <div class="d-flex justify-content-between align-items-center p-3 mb-4" style="background-color: #f9fafb; border-radius: 8px; border: 1px solid #e5e8eb;">
-          <span class="fw-bold" style="font-size: 15px; color: #191f28;">최종 승인 여부</span>
-          <span class="badge fw-bold"
-                style="padding: 8px 12px; font-size: 14px; border-radius: 6px;"
-                :style="aiResult?.decision === 'PASS' ? 'background: rgba(49,130,246,0.08); color: var(--toss-blue);' : 'background: rgba(240,68,82,0.08); color: var(--toss-red);'"
-                x-text="aiResult?.decision === 'PASS' ? '승인 (PASS)' : '반려 (FAIL)'"></span>
+      <!-- 오류 -->
+      <div x-show="aiError && !aiLoading" class="text-center py-4">
+        <i class="bi bi-exclamation-circle" style="font-size: 40px; color: var(--toss-red);"></i>
+        <div class="mt-3 fw-bold" style="font-size: 16px;">분석을 완료하지 못했어요</div>
+        <div class="mt-1 row-meta mb-4" x-text="aiError"></div>
+        <button class="btn-toss w-100" style="padding: 14px;" @click="requestAiAnalysis()">다시 시도</button>
+      </div>
+
+      <!-- 결과 -->
+      <div x-show="aiResult && !aiLoading">
+        <div class="verdict-hero" :class="'tone-' + decisionMeta(aiResult?.decision).tone">
+          <div class="verdict-icon"><i class="bi" :class="decisionMeta(aiResult?.decision).icon"></i></div>
+          <div>
+            <div class="verdict-label" x-text="decisionMeta(aiResult?.decision).label"></div>
+            <div class="verdict-sub" x-text="decisionMeta(aiResult?.decision).sub"></div>
+          </div>
         </div>
 
-        <div class="mb-4">
-          <div class="fw-bold mb-3" style="font-size: 15px; color: #4e5968;">규칙 검증 결과</div>
-          <div style="border: 1px solid #f2f4f6; border-radius: 8px;">
-            <template x-for="(detail, index) in aiResult?.details" :key="detail.ruleId || index">
-              <div class="d-flex justify-content-between align-items-center p-3"
-                   :style="index !== (aiResult?.details?.length - 1) ? 'border-bottom: 1px solid #f2f4f6;' : ''">
-                <div class="d-flex align-items-center gap-3" style="max-width: 75%;">
-                  <span class="badge flex-shrink-0 fw-bold" style="background-color: #f2f4f6; color: #4e5968; font-size: 12px; padding: 4px 8px; border-radius: 4px;"
-                        x-text="getIndicatorName(detail.indicatorType)"></span>
-                  <span class="fw-bold text-truncate" style="font-size: 14px; color: #333d4b;" x-text="detail.ruleTitle"></span>
+        <div class="mb-4" x-show="resultDetails.length > 0">
+          <div class="d-flex justify-content-between align-items-end mb-2">
+            <div class="fw-bold" style="font-size: 15px; color: var(--text-sub);">규칙 검증 결과</div>
+            <div class="fw-bold num" style="font-size: 14px;"><span style="color: var(--toss-blue);" x-text="passedCount"></span><span style="color: var(--text-mute);" x-text="' / ' + resultDetails.length + ' 통과'"></span></div>
+          </div>
+          <div class="pass-bar mb-3"><div :style="`width: ${resultDetails.length ? passedCount / resultDetails.length * 100 : 0}%`"></div></div>
+          <div style="border: 1px solid var(--line-soft); border-radius: 12px;">
+            <template x-for="(detail, index) in sortedDetails" :key="detail.ruleId || index">
+              <div class="detail-row">
+                <div style="min-width: 0;">
+                  <div class="fw-bold text-truncate" style="font-size: 14px; color: var(--text-body);" x-text="detail.ruleTitle"></div>
+                  <div class="row-meta mt-1">
+                    <span x-text="indicatorMeta(detail.indicatorType).short"></span>
+                    <span class="num" x-show="ruleCondition(detail)" x-text="' · 기준 ' + ruleCondition(detail)"></span>
+                    <span class="num" x-show="detail.actualValue != null" x-text="' · 현재 ' + formatNumber(detail.actualValue)"></span>
+                  </div>
                 </div>
-                <div class="flex-shrink-0 fw-bold" style="font-size: 14px;">
-                  <span x-show="detail.passed" style="color: var(--toss-blue);">통과</span>
-                  <span x-show="!detail.passed" style="color: var(--toss-red);">미달</span>
-                </div>
+                <span class="tone flex-shrink-0" :class="detail.passed ? 'tone-blue' : 'tone-red'">
+                  <i class="bi" :class="detail.passed ? 'bi-check-lg' : 'bi-x-lg'"></i><span x-text="detail.passed ? '통과' : '미달'"></span>
+                </span>
               </div>
             </template>
-
-            <div x-show="!aiResult?.details || aiResult?.details.length === 0" class="py-4 text-center" style="color: #8b95a1; font-size: 14px; font-weight: 500;">
-              적용된 매매 규칙이 없어요
-            </div>
           </div>
         </div>
 
-        <div class="mb-5">
-          <div class="fw-bold mb-3" style="font-size: 15px; color: #191f28;">종합 분석 리포트</div>
-          <div class="p-4"
-               style="background-color: #f9fafb; border-radius: 8px; font-size: 14px; font-weight: 500; line-height: 1.6; color: #4e5968; white-space: pre-line; word-break: keep-all; border: 1px solid #e5e8eb;"
-               x-html="formatAiReport(aiResult?.verdictComment || aiResult?.verdict)">
-          </div>
+        <div class="mb-4 p-3 text-center row-meta" style="background: var(--surface-soft); border-radius: 12px;"
+             x-show="resultDetails.length === 0 && verifyType === 'BUY'">
+          적용된 매매 규칙이 없어 차트 분석만으로 판단했어요
         </div>
 
-        <button class="btn border-0 w-100 fw-bold"
-                style="background-color: #f2f4f6; color: #4e5968; border-radius: 8px; padding: 16px; font-size: 15px;"
-                @click="closeAiVerifyModal()">닫기</button>
+        <div class="mb-4" x-show="resultReport">
+          <div class="fw-bold mb-2" style="font-size: 15px;">종합 분석 리포트</div>
+          <div class="report-box" :style="reportIsHtml ? 'white-space: normal;' : ''" x-html="formatAiReport(resultReport)"></div>
+        </div>
+
+        <div class="row-meta mb-3" style="font-size: 12px;">이 결과는 설정한 규칙과 차트 지표에 따른 참고 정보이며, 투자 판단의 책임은 본인에게 있어요.</div>
+
+        <div class="d-flex gap-2">
+          <button class="btn-ghost flex-grow-1" style="padding: 14px; font-size: 15px;" @click="requestAiAnalysis()">다시 분석</button>
+          <button class="btn-toss flex-grow-1" style="padding: 14px; font-size: 15px;" @click="closeVerifyModal()">닫기</button>
+        </div>
       </div>
     </div>
   </div>
+</div>
+
+<!-- 토스트 -->
+<div class="toast-stack">
+  <template x-for="t in toasts" :key="t.id">
+    <div class="toast-item">
+      <i class="bi" :class="t.type === 'error' ? 'bi-exclamation-circle-fill text-danger' : 'bi-check-circle-fill text-success'"></i>
+      <span x-text="t.message"></span>
+    </div>
+  </template>
 </div>
 
 <script th:inline="javascript">
   document.addEventListener('alpine:init', () => {
     const initialWatchList = /*[[${watchList}]]*/ [];
-    const initialRules = /*[[${rulesList}]]*/ [];
+    const initialRules     = /*[[${rulesList}]]*/ [];
+    const initialPortfolio = /*[[${portfolio}]]*/ null;
+
+    /* ---------- 차트 단계 정의: ChartPhase enum(title/description)과 1:1 ----------
+       group 'entry' = TradingSignalAnalyzer.PLANNABLE (신규 진입 계획을 세울 수 있는 단계)
+       rank가 낮을수록 관심 종목 목록 위쪽(진입에 가까움) */
+    const PHASES = {
+      ENTRY_READY:         { label: '진입 대기',      tone: 'blue',   rank: 1,  group: 'entry',   desc: '주요 저항선 돌파 직전 매수세 응축 및 타점 탐색' },
+      RE_ENTRY:            { label: '재진입',         tone: 'blue',   rank: 2,  group: 'entry',   desc: '조정 후 중요 지지선 반등 및 2차 상승 랠리 초입' },
+      COOLDOWN:            { label: '열기 식힘',      tone: 'blue',   rank: 3,  group: 'entry',   desc: '급등 후 이평선 근처에서 과열을 식히는 구간' },
+      RECOVERY_WATCH:      { label: '회복 관찰',      tone: 'blue',   rank: 4,  group: 'entry',   desc: '하락 멈춤 및 초기 다중 바닥 형성 구간' },
+      SETUP:               { label: '셋업 형성',      tone: 'gray',   rank: 5,  group: 'watch',   desc: '변동성 축소(VCP) 등 확률 높은 상승 패턴 구축' },
+      WATCH:               { label: '관심 집중',      tone: 'gray',   rank: 6,  group: 'watch',   desc: '뚜렷한 신호는 없으나 추세가 유지되는 기본 관망 상태' },
+      STRONG_HOLD:         { label: '강력 보유',      tone: 'green',  rank: 7,  group: 'watch',   desc: '저항선 돌파 후 이평선을 타고 우상향하는 주도 추세' },
+      CAPITULATION:        { label: '투매',           tone: 'orange', rank: 8,  group: 'watch',   desc: '공포 매물 출회 및 진바닥 형성 신호' },
+      WARNING_ZONE:        { label: '경고 구간',      tone: 'orange', rank: 9,  group: 'caution', desc: '이격도 과다 및 상승 동력 둔화 조짐 발생' },
+      CLIMAX:              { label: '오버슈팅',       tone: 'orange', rank: 10, group: 'caution', desc: '비이성적 폭등 및 세력 차익 실현 임박 징후' },
+      SCALE_OUT:           { label: '분할 매도',      tone: 'orange', rank: 11, group: 'caution', desc: '지지선 이탈 및 고점 갱신 실패로 인한 비중 축소' },
+      BEAR_RALLY:          { label: '하락장 반등',    tone: 'red',    rank: 12, group: 'caution', desc: '장기 하락 추세 속 단기 반등, 추세 전환 확인 전 추격 주의' },
+      FAKE_OUT:            { label: '속임수 돌파',    tone: 'red',    rank: 13, group: 'caution', desc: '저항선 돌파 후 급락하는 불트랩 발생' },
+      DOWNTREND_CONFIRMED: { label: '하락 추세 확인', tone: 'red',    rank: 14, group: 'caution', desc: '고점·저점이 모두 낮아지고 거래량이 동반된 하락 추세' },
+      DANGER_ZONE:         { label: '위험 구간',      tone: 'red',    rank: 15, group: 'caution', desc: '지속 하락하는 역배열 상태, 신규 매수 금지' },
+      STOP_LOSS:           { label: '손절',           tone: 'red',    rank: 16, group: 'caution', desc: '돌파 실패 및 핵심 지지선 이탈로 인한 위기 탈출' },
+      INSUFFICIENT_DATA:   { label: '정보 부족',      tone: 'gray',   rank: 17, group: 'watch',   desc: '차트 데이터 부족으로 판정 불가' }
+    };
+    const PHASE_ORDER = Object.keys(PHASES).sort((a, b) => PHASES[a].rank - PHASES[b].rank);
+
+    const WATCH_FILTERS = [
+      { key: 'all',     label: '전체' },
+      { key: 'entry',   label: '진입 가능' },
+      { key: 'watch',   label: '관망' },
+      { key: 'caution', label: '주의' }
+    ];
+
+    /* ---------- 지표 정의 (단일 소스) ---------- */
+    const INDICATORS = {
+      STOCK_SCORE:       { name: '종목 점수',                short: '점수',          numeric: true,  hint: '모멘텀+기술+밸류 합산 점수 (S 80↑, A 65↑, B 48↑)' },
+      MA5:               { name: '5일 이동평균선 (단기)',    short: '5일선',         numeric: true,  hint: '가격 단위 값과 비교' },
+      MA20:              { name: '20일 이동평균선 (스윙)',   short: '20일선',        numeric: true,  hint: '가격 단위 값과 비교' },
+      MA50:              { name: '50일 이동평균선 (중기)',   short: '50일선',        numeric: true,  hint: '가격 단위 값과 비교' },
+      DIST_MA5:          { name: '5일선 이격도 (%)',         short: '5일선 이격도',  numeric: true,  hint: '% 단위 · 양수면 5일선 위, 음수면 아래', unit: '%' },
+      DIST_MA20:         { name: '20일선 이격도 (%)',        short: '20일선 이격도', numeric: true,  hint: '% 단위 · 눌림목은 보통 -3~+3% 부근', unit: '%' },
+      RSI:               { name: 'RSI (상대강도지수)',       short: 'RSI',           numeric: true,  hint: '0~100 · 30 이하 과매도, 70 이상 과열' },
+      ADX:               { name: 'ADX (추세강도)',           short: 'ADX',           numeric: true,  hint: '25 이상이면 추세가 있다고 봐요' },
+      ATR:               { name: 'ATR (변동성)',             short: 'ATR',           numeric: true,  hint: '하루 평균 가격 변동폭 (가격 단위)' },
+      BAND_WIDTH:        { name: '볼린저 대역폭 (%)',        short: '볼린저 대역폭', numeric: true,  hint: '% 단위 · 낮을수록 변동성 응축', unit: '%' },
+      VOLUME:            { name: '현재 거래량',              short: '거래량',        numeric: true,  hint: '주 단위 거래량' },
+      UPTREND:           { name: '정배열 상태',              short: '정배열',        numeric: false, hint: '5일선 > 20일선 > 50일선' },
+      MACRO_UPTREND:     { name: '장기 상승 추세',           short: '장기 상승',     numeric: false, hint: '현재가 > 50일선' },
+      BOLLINGER_SQUEEZE: { name: '볼린저 밴드 극도 응축',    short: '볼린저 응축',   numeric: false, hint: '밴드 폭이 극도로 좁아진 폭발 임박 구간' },
+      VOLUME_BULLISH:    { name: '매수 거래량 폭발',         short: '거래량 폭발',   numeric: false, hint: '전일 대비 거래량 급증 + 양봉' },
+      NEW_HIGH_5D:       { name: '단기 고점 갱신',           short: '단기 고점',     numeric: false, hint: '최근 5일 최고가 돌파' },
+      HIGHER_LOW:        { name: '저점 방어',                short: '저점 방어',     numeric: false, hint: '전일 대비 저점 상승' },
+      MACD_GOLDEN_CROSS: { name: 'MACD 골든 크로스',         short: 'MACD 골든',     numeric: false, hint: 'MACD선이 시그널선을 상향 돌파' }
+    };
+    const INDICATOR_GROUPS = [
+      { label: '수치형 지표', color: 'var(--toss-blue)',  items: Object.keys(INDICATORS).filter(k => INDICATORS[k].numeric) },
+      { label: '상태형 지표', color: 'var(--toss-green)', items: Object.keys(INDICATORS).filter(k => !INDICATORS[k].numeric) }
+    ];
+
+    const OPERATORS = [
+      { value: 'LESS_THAN',                label: '미만 (<)',  symbol: '<',  word: '미만' },
+      { value: 'LESS_THAN_OR_EQUAL_TO',    label: '이하 (<=)', symbol: '≤',  word: '이하' },
+      { value: 'GREATER_THAN',             label: '초과 (>)',  symbol: '>',  word: '초과' },
+      { value: 'GREATER_THAN_OR_EQUAL_TO', label: '이상 (>=)', symbol: '≥',  word: '이상' },
+      { value: 'EQUAL_TO',                 label: '같음 (==)', symbol: '=',  word: '일 때' }
+    ];
+
+    const RULE_PRESETS = [
+      { title: 'RSI 30 이하 과매도',  indicatorType: 'RSI',               operator: 'LESS_THAN_OR_EQUAL_TO',    targetValue: 30 },
+      { title: '추세 강도 ADX 25 이상', indicatorType: 'ADX',             operator: 'GREATER_THAN_OR_EQUAL_TO', targetValue: 25 },
+      { title: '정배열 확인',         indicatorType: 'UPTREND',           operator: null, targetValue: null },
+      { title: 'MACD 골든 크로스',    indicatorType: 'MACD_GOLDEN_CROSS', operator: null, targetValue: null }
+    ];
+
+    const DECISIONS = {
+      // TradingRuleCheckResponse.decision (현재)
+      PASS:          { label: '진입 승인',   sub: '설정한 규칙을 모두 충족했어요',            tone: 'blue',   icon: 'bi-check-circle-fill' },
+      FAIL:          { label: '진입 보류',   sub: '아직 조건이 충분히 갖춰지지 않았어요',     tone: 'red',    icon: 'bi-x-circle-fill' },
+      // TradingSignalAnalyzer.Verdict (마이그레이션 후 decision으로 내려오면 그대로 표시)
+      ACTIONABLE:    { label: '진입 실행',   sub: '진입 구간 안 · 반등 확인 · 손익비 통과',   tone: 'blue',   icon: 'bi-check-circle-fill' },
+      WAIT_FOR_ZONE: { label: '눌림 대기',   sub: '현재가가 진입 구간 위, 지정가로 기다리세요', tone: 'orange', icon: 'bi-hourglass-split' },
+      WAIT_TRIGGER:  { label: '확인 대기',   sub: '구간 안이지만 반등(양봉) 확인 전이에요',    tone: 'orange', icon: 'bi-hourglass-split' },
+      CHASE_RISK:    { label: '추격 주의',   sub: '돌파·탈환 구간을 이미 벗어났어요',          tone: 'red',    icon: 'bi-exclamation-triangle-fill' },
+      RR_TOO_LOW:    { label: '손익비 부족', sub: '구조상 기대 수익 대비 손절폭이 커요',       tone: 'red',    icon: 'bi-slash-circle-fill' },
+      NO_SETUP:      { label: '타점 없음',   sub: '지금 단계에서는 진입 계획이 성립하지 않아요', tone: 'gray',   icon: 'bi-dash-circle-fill' },
+      // 매도 검증 (임시 응답)
+      HOLD:          { label: '보유 유지',   sub: '추세가 유지되고 있어요',                   tone: 'blue',   icon: 'bi-pause-circle-fill' },
+      SELL:          { label: '매도 권장',   sub: '매도 조건에 도달했어요',                   tone: 'red',    icon: 'bi-box-arrow-right' }
+    };
+
+    /* 서버가 HTML로 만든 리포트(generateVerdict)는 허용 태그·style만 남기고 정리 */
+    const ALLOWED_TAGS = new Set(['B', 'STRONG', 'EM', 'I', 'BR', 'DIV', 'SPAN', 'P', 'HR', 'UL', 'OL', 'LI']);
+    const sanitizeHtml = (html) => {
+      const doc = new DOMParser().parseFromString(`<div>${html}</div>`, 'text/html');
+      const root = doc.body.firstElementChild;
+      const walk = (node) => {
+        [...node.children].forEach(el => {
+          if (!ALLOWED_TAGS.has(el.tagName)) { el.replaceWith(doc.createTextNode(el.textContent)); return; }
+          [...el.attributes].forEach(a => {
+            if (a.name !== 'style' || /url\s*\(|expression|javascript:/i.test(a.value)) el.removeAttribute(a.name);
+          });
+          walk(el);
+        });
+      };
+      walk(root);
+      return root.innerHTML;
+    };
+    const looksLikeHtml = (s) => /<\/?(div|b|br|strong|span|p)\b/i.test(s || '');
+
+    const escapeHtml = (s) => String(s ?? '')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
     Alpine.data('portfolioApp', () => ({
+      /* 상수 노출 */
+      PHASES, PHASE_ORDER, WATCH_FILTERS, INDICATORS, INDICATOR_GROUPS, OPERATORS, RULE_PRESETS,
+      DRAWDOWN_ALERT: 10, // 고점 대비 이 % 이상 하락하면 경고
+
       sidebarOpen: true,
-      watchList: initialWatchList,
-      tradingRules: initialRules,
 
-      showWatchModal: false, modalSearchQuery: '', modalSearchResults: [], isModalSearchOpen: false, isModalLoading: false, modalSearchPage: 0, watchForm: { stockCode: '', stockName: '' },
+      /* 데이터 */
+      watchList: Array.isArray(initialWatchList) ? initialWatchList : [],
+      tradingRules: (Array.isArray(initialRules) ? initialRules : []).map(r => ({ ...r, isActive: !!(r.isActive ?? r.active) })),
+      portfolio: initialPortfolio || { myStocks: [], averageReturnRate: 0 },
 
-      showRuleModal: false,
-      ruleForm: { title: '', indicatorType: 'RSI', operator: 'LESS_THAN', targetValue: null },
+      /* 보기 상태 */
+      holdingSort: 'return_desc',
+      watchFilter: 'all',
+      lastVerify: {},   // { 'BUY:005930': { decision, at } }
+      toasts: [],
+      submitting: false,
 
-      showVerifyModal: false, verifyType: 'BUY', selectedWatchItem: null, aiLoading: false, aiResult: null,
-      showHoldingModal: false, holdingForm: { code: '', name: '', averagePrice: null },
+      /* 종목 선택 모달 */
+      showPickModal: false, pickMode: 'watch',
+      pickForm: { code: '', name: '', averagePrice: '' },
+      searchQuery: '', searchResults: [], isSearchOpen: false, isSearchLoading: false,
+      searchPage: 0, searchHasMore: true, searchToken: 0,
 
-      isNumericIndicator(type) {
-        if (!type) return false;
-        const numerics = ['STOCK_SCORE', 'MA5', 'MA20', 'MA50', 'DIST_MA5', 'DIST_MA20', 'RSI', 'ADX', 'ATR', 'BAND_WIDTH', 'VOLUME'];
-        return numerics.includes(type);
+      /* 규칙 모달 */
+      showRuleModal: false, showIndicatorSheet: false,
+      ruleForm: { title: '', indicatorType: 'RSI', operator: 'LESS_THAN_OR_EQUAL_TO', targetValue: null },
+
+      /* 검증 모달 */
+      showVerifyModal: false, verifyType: 'BUY', verifyTarget: null,
+      aiLoading: false, aiResult: null, aiError: '', loadingMessage: '',
+
+      /* ======================= 계산 값 ======================= */
+      get anyModalOpen() { return this.showPickModal || this.showRuleModal || this.showIndicatorSheet || this.showVerifyModal; },
+
+      get holdings() { return this.portfolio?.myStocks || []; },
+      get avgReturn() {
+        if (!this.holdings.length) return 0;
+        return this.holdings.reduce((s, h) => s + Number(h.returnRate || 0), 0) / this.holdings.length;
       },
-
-      onIndicatorChange() {
-        if (!this.isNumericIndicator(this.ruleForm.indicatorType)) {
-          this.ruleForm.operator = null;
-          this.ruleForm.targetValue = null;
-        } else if (!this.ruleForm.operator) {
-          this.ruleForm.operator = 'LESS_THAN';
+      get winCount()  { return this.holdings.filter(h => Number(h.returnRate) > 0).length; },
+      get lossCount() { return this.holdings.filter(h => Number(h.returnRate) < 0).length; },
+      get winRatio()  { const n = this.winCount + this.lossCount; return n ? this.winCount / n * 100 : 50; },
+      get bestHolding() {
+        if (!this.holdings.length) return null;
+        return [...this.holdings].sort((a, b) => Number(b.returnRate) - Number(a.returnRate))[0];
+      },
+      get alertCount() { return this.holdings.filter(h => this.isDrawdownAlert(h)).length; },
+      get sortedHoldings() {
+        const list = [...this.holdings];
+        const dd = (h) => this.drawdown(h) ?? 0;
+        switch (this.holdingSort) {
+          case 'return_asc': return list.sort((a, b) => Number(a.returnRate) - Number(b.returnRate));
+          case 'drawdown':   return list.sort((a, b) => dd(a) - dd(b));
+          case 'name':       return list.sort((a, b) => (a.korName || '').localeCompare(b.korName || '', 'ko'));
+          default:           return list.sort((a, b) => Number(b.returnRate) - Number(a.returnRate));
         }
       },
 
-      async deleteWatchItem(stockCode, stockName) {
-        if(!confirm(`'${stockName}' 종목을 관심 종목에서 삭제하시겠습니까?`)) return;
-        try {
-          const response = await fetch(`/api/portfolio/watchList/delete?stockCode=${stockCode}`, { method: 'POST' });
-          if(response.ok) {
-            this.watchList = this.watchList.filter(item => item.stockCode !== stockCode);
-          } else alert('삭제에 실패했습니다.');
-        } catch (e) { alert('서버 통신 오류가 발생했습니다.'); }
+      get entryCount() { return this.watchList.filter(w => this.phaseMeta(w.chartPhase).group === 'entry').length; },
+      get filteredWatchList() {
+        const list = this.watchFilter === 'all'
+                ? [...this.watchList]
+                : this.watchList.filter(w => this.phaseMeta(w.chartPhase).group === this.watchFilter);
+        return list.sort((a, b) => this.phaseMeta(a.chartPhase).rank - this.phaseMeta(b.chartPhase).rank);
+      },
+      watchFilterCount(key) {
+        return key === 'all' ? this.watchList.length : this.watchList.filter(w => this.phaseMeta(w.chartPhase).group === key).length;
       },
 
-      async deleteRule(ruleId, ruleTitle) {
-        if(!confirm(`'${ruleTitle}' 규칙을 삭제하시겠습니까?`)) return;
-        try {
-          const response = await fetch(`/api/portfolio/rules/delete?tradeRuleId=${ruleId}`, { method: 'POST' });
-          if(response.ok) {
-            this.tradingRules = this.tradingRules.filter(r => r.id !== ruleId);
-          } else alert('삭제에 실패했습니다.');
-        } catch (e) { alert('서버 통신 오류가 발생했습니다.'); }
+      get activeRuleCount() { return this.tradingRules.filter(r => r.isActive).length; },
+      get sortedRules() { return [...this.tradingRules].sort((a, b) => Number(b.isActive) - Number(a.isActive)); },
+
+      get resultDetails() { return this.aiResult?.details || []; },
+      get passedCount() { return this.resultDetails.filter(d => d.passed).length; },
+      get sortedDetails() { return [...this.resultDetails].sort((a, b) => Number(a.passed) - Number(b.passed)); }, // 미달 먼저
+      get resultReport() { return this.aiResult?.verdictComment || ''; },
+      get reportIsHtml() { return looksLikeHtml(this.resultReport); },
+
+      get suggestedRuleTitle() {
+        const f = this.ruleForm;
+        if (!f.indicatorType) return '';
+        const m = this.indicatorMeta(f.indicatorType);
+        if (!m.numeric) return m.name;
+        if (f.targetValue === null || f.targetValue === '') return '';
+        const op = OPERATORS.find(o => o.value === f.operator);
+        return `${m.short} ${f.targetValue}${m.unit || ''} ${op ? op.word : ''}`.trim();
       },
 
-      openWatchModal() { this.clearSelectedStock(); this.modalSearchQuery = ''; this.modalSearchResults = []; this.isModalSearchOpen = false; this.showWatchModal = true; },
-      closeWatchModal() { this.showWatchModal = false; },
-      modalSearchNew() { this.modalSearchPage = 0; this.modalSearchResults = []; if (this.modalSearchQuery.length < 1) return; this.fetchModalStocks(); },
-      async fetchModalStocks() { this.isModalLoading = true; this.isModalSearchOpen = true; try { const res = await fetch(`/api/stock/search?name=${encodeURIComponent(this.modalSearchQuery)}&page=${this.modalSearchPage}`); if (res.ok) { const newData = await res.json(); if (this.modalSearchPage === 0) { this.modalSearchResults = newData; } else { this.modalSearchResults.push(...newData); } } } catch (error) { console.error('모달 검색 실패', error); } finally { this.isModalLoading = false; } },
-      openHoldingModal() { this.clearSelectedHolding(); this.modalSearchQuery = ''; this.modalSearchResults = []; this.isModalSearchOpen = false; this.showHoldingModal = true; },
-      closeHoldingModal() { this.showHoldingModal = false; },
-      selectStockForHolding(stock) { this.holdingForm.code = stock.code; this.holdingForm.name = stock.name; this.isModalSearchOpen = false; this.modalSearchQuery = ''; },
-      clearSelectedHolding() { this.holdingForm.code = ''; this.holdingForm.name = ''; this.holdingForm.averagePrice = null; },
-      async submitHoldingForm() { if (!this.holdingForm.code || !this.holdingForm.averagePrice) return alert('종목 선택 및 평단가 입력은 필수입니다.'); try { const response = await fetch('/api/portfolio/holdings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: this.holdingForm.code, name: this.holdingForm.name, averagePrice: parseFloat(this.holdingForm.averagePrice) }) }); if (response.ok) { alert('종목이 등록되었습니다.'); location.reload(); } else { alert('종목 등록 실패'); } } catch (e) { alert('통신 오류 발생'); } },
-      selectStockForWatch(stock) { this.watchForm.stockCode = stock.code; this.watchForm.stockName = stock.name; this.isModalSearchOpen = false; this.modalSearchQuery = ''; },
-      clearSelectedStock() { this.watchForm.stockCode = ''; this.watchForm.stockName = ''; },
-      async submitWatchForm() { if (!this.watchForm.stockCode) return alert('종목을 선택해 주세요'); try { const response = await fetch('/api/portfolio/watchlist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ stockCode: this.watchForm.stockCode }) }); if (response.ok) { alert('관심 종목 등록 완료'); location.reload(); } else { alert('등록 실패'); } } catch (e) { alert('통신 오류 발생'); } },
+      /* ======================= 메타 헬퍼 ======================= */
+      phaseMeta(code) {
+        return PHASES[code] || { label: code || '분석 대기', tone: 'gray', rank: 10, group: 'watch', desc: code ? '' : 'AI 검증을 실행하면 단계가 표시돼요' };
+      },
+      indicatorMeta(code) {
+        return INDICATORS[code] || { name: code || '지표', short: code || '지표', numeric: false, hint: '' };
+      },
+      isNumericIndicator(code) { return !!INDICATORS[code]?.numeric; },
+      operatorSymbol(op) { return OPERATORS.find(o => o.value === op)?.symbol || ''; },
+      decisionMeta(d) { return DECISIONS[d] || { label: d || '결과', sub: '', tone: 'gray', icon: 'bi-info-circle-fill' }; },
 
-      openRuleModal() {
-        this.ruleForm = { title: '', indicatorType: 'RSI', operator: 'LESS_THAN', targetValue: null };
-        this.showRuleModal = true;
+      ruleSentence(rule) {
+        const m = this.indicatorMeta(rule.indicatorType);
+        if (!m.numeric) return `<b>${escapeHtml(m.short)}</b> 충족 시`;
+        if (rule.targetValue === null || rule.targetValue === '' || rule.targetValue === undefined) return `<b>${escapeHtml(m.short)}</b>`;
+        const op = OPERATORS.find(o => o.value === rule.operator);
+        return `${escapeHtml(m.short)} <b>${escapeHtml(op?.symbol || '')} ${escapeHtml(this.formatNumber(rule.targetValue))}${escapeHtml(m.unit || '')}</b> 일 때`;
       },
 
-      async submitRuleForm() {
-        if (!this.ruleForm.title) return alert('규칙 이름을 입력해 주세요');
-        if (!this.ruleForm.indicatorType) return alert('검증할 지표를 선택해 주세요');
+      // highestPriceSinceBuy는 스캔 시에만 갱신되므로 현재가가 더 높으면 현재가를 고점으로 본다
+      drawdown(h) {
+        const cur = Number(h.currentPrice), stored = Number(h.highestPriceSinceBuy);
+        if (!cur || !stored || stored <= 0) return null;
+        const high = Math.max(stored, cur);
+        return (cur - high) / high * 100;
+      },
+      isDrawdownAlert(h) { const d = this.drawdown(h); return d !== null && d <= -this.DRAWDOWN_ALERT; },
 
-        let payload = {
-          title: this.ruleForm.title,
-          indicatorType: this.ruleForm.indicatorType,
-          operator: null,
-          targetValue: null
-        };
-
-        if (this.isNumericIndicator(this.ruleForm.indicatorType)) {
-          if (this.ruleForm.targetValue === null || this.ruleForm.targetValue === '') return alert('기준 수치를 입력해 주세요');
-          payload.operator = this.ruleForm.operator;
-          payload.targetValue = parseFloat(this.ruleForm.targetValue);
-        }
-
-        try {
-          const response = await fetch('/api/portfolio/rules', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-          if (response.ok) { alert('규칙 저장 완료'); location.reload(); }
-        } catch (e) { alert('오류 발생'); }
+      // RuleDetail에는 ruleId만 있으므로, 화면에 있는 규칙 목록에서 기준값을 찾아 붙인다
+      ruleCondition(detail) {
+        const rule = this.tradingRules.find(r => r.id === detail.ruleId);
+        if (!rule || !this.isNumericIndicator(rule.indicatorType) || rule.targetValue == null) return '';
+        return `${this.operatorSymbol(rule.operator)} ${this.formatNumber(rule.targetValue)}${this.indicatorMeta(rule.indicatorType).unit || ''}`;
       },
 
-      async toggleRule(rule) { try { const response = await fetch(`/api/portfolio/rules/${rule.id}/toggle`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ isActive: rule.isActive }) }); if (!response.ok) throw new Error('응답 오류'); } catch (error) { alert('상태 변경 실패'); rule.isActive = !rule.isActive; } },
-
-      openAiVerifyModal(item) { this.verifyType = 'BUY'; this.selectedWatchItem = item; this.resetAiModal(); },
-      openSellVerifyModal(stockObj) { this.verifyType = 'SELL'; this.selectedWatchItem = stockObj; this.resetAiModal(); },
-      resetAiModal() { this.aiResult = null; this.showVerifyModal = true; },
-      closeAiVerifyModal() { this.showVerifyModal = false; },
-      async requestAiAnalysis() { this.aiLoading = true; this.aiResult = null; const endpoint = this.verifyType === 'BUY' ? '/api/portfolio/verify/buy' : '/api/portfolio/verify/sell'; try { const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ targetId: this.selectedWatchItem?.stockCode }) }); if (response.ok) { this.aiResult = await response.json(); } else { alert('분석 실패'); } } catch (error) { alert('통신 오류'); } finally { this.aiLoading = false; } },
-
-      getOperatorSymbol(op) {
-        const symbols = {
-          'GREATER_THAN': '>',
-          'GREATER_THAN_OR_EQUAL_TO': '>=',
-          'LESS_THAN': '<',
-          'LESS_THAN_OR_EQUAL_TO': '<=',
-          'EQUAL_TO': '=='
-        };
-        return symbols[op] || '';
+      /* ======================= 포맷 ======================= */
+      isKrCode(code) { return typeof code === 'string' && /^\d+$/.test(code); },
+      formatPrice(val, code) {
+        if (val === null || val === undefined || val === '' || isNaN(Number(val))) return '-';
+        const n = Number(val);
+        if (!this.isKrCode(code)) return '$' + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+        return new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 0 }).format(n) + '원';
       },
-
-      indicatorNames: {
-        'STOCK_SCORE' : "점수",
-        'MA5': '5일선', 'MA20': '20일선', 'MA50': '50일선',
-        'DIST_MA5': '5일선 이격도', 'DIST_MA20': '20일선 이격도', 'RSI': 'RSI',
-        'ADX': 'ADX', 'ATR': 'ATR', 'BAND_WIDTH': '볼린저 대역폭', 'VOLUME': '거래량',
-        'UPTREND': '정배열 상태', 'MACRO_UPTREND': '장기 상승 추세',
-        'BOLLINGER_SQUEEZE': '볼린저 응축', 'VOLUME_BULLISH': '매수 거래량 폭발',
-        'NEW_HIGH_5D': '단기 고점 갱신', 'HIGHER_LOW': '저점 방어', 'MACD_GOLDEN_CROSS': 'MACD 골든크로스'
+      formatRate(val) {
+        if (val === null || val === undefined || isNaN(Number(val))) return '-';
+        const n = Number(val);
+        return (n > 0 ? '+' : '') + n.toFixed(2) + '%';
       },
-
-      getIndicatorName(type) {
-        const names = {
-          'MACD': 'MACD',
-          'RSI': 'RSI',
-          'BOLLINGER': '볼린저밴드',
-          'MA': '이동평균선',
-          'VOLUME': '거래량',
-          'PRICE': '가격/캔들'
-        };
-        return names[type] || type || '지표';
+      formatNumber(val) {
+        const n = Number(val);
+        if (isNaN(n)) return String(val);
+        return new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 2 }).format(n);
       },
+      returnClass(val) { const n = Number(val); return n > 0 ? 'text-up' : n < 0 ? 'text-down' : ''; },
+      nowLabel() { return new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }); },
 
       formatAiReport(text) {
         if (!text) return '';
-        return text
-                .replace(/\[(.*?)\]/g, '<strong style="color: #191f28; font-size: 15px;">[$1]</strong>')
-                .replace(/-{5,}/g, '<hr style="border: none; border-top: 1px solid #e5e8eb; margin: 16px 0;">');
+        if (looksLikeHtml(text)) return sanitizeHtml(text);
+        // 일반 텍스트(AI 응답)는 escape 후 최소한의 서식만 적용 (XSS 방지)
+        return escapeHtml(text)
+                .replace(/\[(.*?)\]/g, '<strong style="color:#191f28; font-size:15px;">[$1]</strong>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#191f28;">$1</strong>')
+                .replace(/-{5,}/g, '<hr style="border:none; border-top:1px solid #e5e8eb; margin:14px 0;">');
       },
 
-      formatPrice(val, code) {
-        if (!val || val === 0) return '0';
-        const isKr = code && typeof code === 'string' ? /^\d+$/.test(code) : false;
+      /* ======================= 공통 ======================= */
+      toast(message, type = 'success') {
+        const id = Date.now() + Math.random();
+        this.toasts.push({ id, message, type });
+        setTimeout(() => { this.toasts = this.toasts.filter(t => t.id !== id); }, 2400);
+      },
+      async api(url, options = {}) {
+        const res = await fetch(url, options);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        return text ? JSON.parse(text) : null;
+      },
+      postJson(url, body) {
+        return this.api(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      },
+      closeTopModal() {
+        if (this.showIndicatorSheet) return this.showIndicatorSheet = false;
+        if (this.showVerifyModal) return this.closeVerifyModal();
+        if (this.showRuleModal) return this.showRuleModal = false;
+        if (this.showPickModal) return this.closePickModal();
+      },
 
-        if (!isKr) {
-          return '$' + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
-        } else {
-          return new Intl.NumberFormat('ko-KR').format(val) + '원';
+      /* ======================= 종목 선택 ======================= */
+      openPickModal(mode) {
+        this.pickMode = mode;
+        this.clearPick();
+        this.showPickModal = true;
+        this.$nextTick(() => this.$refs.pickSearch?.focus());
+      },
+      openEditHolding(stock) {
+        this.pickMode = 'edit';
+        this.searchQuery = ''; this.searchResults = []; this.isSearchOpen = false;
+        this.pickForm = { code: stock.stockCode, name: stock.korName, averagePrice: stock.averagePrice };
+        this.showPickModal = true;
+        this.$nextTick(() => this.$refs.avgInput?.focus());
+      },
+      closePickModal() { this.showPickModal = false; },
+      clearPick() {
+        this.pickForm = { code: '', name: '', averagePrice: '' };
+        this.searchQuery = ''; this.searchResults = []; this.isSearchOpen = false;
+      },
+      isAlreadyAdded(code) {
+        if (!code) return false;
+        return this.pickMode === 'watch'
+                ? this.watchList.some(w => w.stockCode === code)
+                : this.holdings.some(h => h.stockCode === code);
+      },
+      selectStock(stock) {
+        if (!stock || this.isAlreadyAdded(stock.code)) return;
+        this.pickForm.code = stock.code;
+        this.pickForm.name = stock.name;
+        this.isSearchOpen = false;
+      },
+      get canSubmitPick() {
+        if (!this.pickForm.code) return false;
+        if (this.pickMode === 'watch') return true;
+        return Number(this.pickForm.averagePrice) > 0;
+      },
+      searchNew() {
+        this.searchPage = 0; this.searchResults = []; this.searchHasMore = true;
+        if (!this.searchQuery.trim()) return;
+        this.fetchStocks();
+      },
+      onSearchScroll(el) {
+        if (this.isSearchLoading || !this.searchHasMore) return;
+        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 8) { this.searchPage++; this.fetchStocks(); }
+      },
+      async fetchStocks() {
+        const token = ++this.searchToken;
+        this.isSearchLoading = true; this.isSearchOpen = true;
+        try {
+          const data = await this.api(`/api/stock/search?name=${encodeURIComponent(this.searchQuery.trim())}&page=${this.searchPage}`);
+          if (token !== this.searchToken) return; // 오래된 응답 무시
+          const list = Array.isArray(data) ? data : [];
+          if (list.length === 0) this.searchHasMore = false;
+          this.searchResults = this.searchPage === 0 ? list : [...this.searchResults, ...list];
+        } catch (e) {
+          console.error('종목 검색 실패', e);
+          this.searchHasMore = false;
+        } finally {
+          if (token === this.searchToken) this.isSearchLoading = false;
+        }
+      },
+      async submitPick() {
+        if (!this.canSubmitPick || this.submitting) return;
+        this.submitting = true;
+        try {
+          if (this.pickMode === 'watch') {
+            await this.postJson('/api/portfolio/watchlist', { stockCode: this.pickForm.code });
+            this.watchList = [...this.watchList, { stockCode: this.pickForm.code, stockName: this.pickForm.name, chartPhase: null, targetPrice: null }];
+            this.toast(`${this.pickForm.name}을(를) 관심 종목에 추가했어요`);
+            this.closePickModal();
+          } else if (this.pickMode === 'edit') {
+            const code = this.pickForm.code;
+            const avg = parseFloat(this.pickForm.averagePrice);
+            await this.postJson('/api/portfolio/holdings/update', { code, averagePrice: avg });
+            // Holding.calculateReturnRate와 같은 식으로 화면 수익률 즉시 재계산
+            this.portfolio = { ...this.portfolio, myStocks: this.holdings.map(h => h.stockCode !== code ? h : {
+                ...h, averagePrice: avg,
+                returnRate: Number(h.currentPrice) > 0 ? (Number(h.currentPrice) - avg) / avg * 100 : h.returnRate
+              }) };
+            this.toast('평단가를 수정했어요');
+            this.closePickModal();
+          } else {
+            await this.postJson('/api/portfolio/holdings', {
+              code: this.pickForm.code, name: this.pickForm.name, averagePrice: parseFloat(this.pickForm.averagePrice)
+            });
+            this.toast('보유 종목을 등록했어요');
+            setTimeout(() => location.reload(), 500); // 현재가·수익률은 서버 계산이 필요
+          }
+        } catch (e) {
+          this.toast('등록에 실패했어요. 잠시 후 다시 시도해 주세요', 'error');
+        } finally {
+          this.submitting = false;
+        }
+      },
+
+      /* ======================= 삭제 ======================= */
+      async deleteWatchItem(item) {
+        if (!confirm(`'${item.stockName}'을(를) 관심 종목에서 삭제할까요?`)) return;
+        try {
+          await this.api(`/api/portfolio/watchList/delete?stockCode=${encodeURIComponent(item.stockCode)}`, { method: 'POST' });
+          this.watchList = this.watchList.filter(w => w.stockCode !== item.stockCode);
+          this.toast('관심 종목에서 삭제했어요');
+        } catch (e) { this.toast('삭제에 실패했어요', 'error'); }
+      },
+      async deleteHolding(stock) {
+        if (!confirm(`'${stock.korName}'을(를) 보유 종목에서 삭제할까요?`)) return;
+        try {
+          await this.api(`/api/portfolio/holdings/delete?code=${encodeURIComponent(stock.stockCode)}`, { method: 'POST' });
+          this.portfolio = { ...this.portfolio, myStocks: this.holdings.filter(h => h.stockCode !== stock.stockCode) };
+          this.toast('보유 종목에서 삭제했어요');
+        } catch (e) { this.toast('삭제에 실패했어요', 'error'); }
+      },
+      async deleteRule(rule) {
+        if (!confirm(`'${rule.title}' 규칙을 삭제할까요?`)) return;
+        try {
+          await this.api(`/api/portfolio/rules/delete?tradeRuleId=${rule.id}`, { method: 'POST' });
+          this.tradingRules = this.tradingRules.filter(r => r.id !== rule.id);
+          this.toast('규칙을 삭제했어요');
+        } catch (e) { this.toast('삭제에 실패했어요', 'error'); }
+      },
+
+      /* ======================= 규칙 ======================= */
+      openRuleModal(preset) {
+        this.ruleForm = { title: '', indicatorType: 'RSI', operator: 'LESS_THAN_OR_EQUAL_TO', targetValue: null };
+        if (preset) this.applyPreset(preset);
+        this.showRuleModal = true;
+      },
+      applyPreset(p) { this.ruleForm = { title: p.title, indicatorType: p.indicatorType, operator: p.operator, targetValue: p.targetValue }; },
+      selectIndicator(code) {
+        this.ruleForm.indicatorType = code;
+        if (!this.isNumericIndicator(code)) { this.ruleForm.operator = null; this.ruleForm.targetValue = null; }
+        else if (!this.ruleForm.operator) { this.ruleForm.operator = 'LESS_THAN_OR_EQUAL_TO'; }
+        this.showIndicatorSheet = false;
+      },
+      async submitRuleForm() {
+        const f = this.ruleForm;
+        if (!f.indicatorType) return this.toast('검증할 지표를 선택해 주세요', 'error');
+        const numeric = this.isNumericIndicator(f.indicatorType);
+        if (numeric && (f.targetValue === null || f.targetValue === '')) return this.toast('기준 수치를 입력해 주세요', 'error');
+        const title = (f.title || '').trim() || this.suggestedRuleTitle;
+        if (!title) return this.toast('규칙 이름을 입력해 주세요', 'error');
+
+        const payload = {
+          title, indicatorType: f.indicatorType,
+          operator: numeric ? f.operator : null,
+          targetValue: numeric ? parseFloat(f.targetValue) : null
+        };
+        this.submitting = true;
+        try {
+          await this.postJson('/api/portfolio/rules', payload);
+          this.toast('규칙을 저장했어요');
+          setTimeout(() => location.reload(), 500); // 서버에서 발급한 rule id 필요
+        } catch (e) {
+          this.toast('규칙 저장에 실패했어요', 'error');
+        } finally {
+          this.submitting = false;
+        }
+      },
+      async toggleRule(rule) {
+        try {
+          await this.postJson(`/api/portfolio/rules/${rule.id}/toggle`, { isActive: rule.isActive });
+          this.toast(rule.isActive ? '규칙을 켰어요' : '규칙을 껐어요');
+        } catch (e) {
+          rule.isActive = !rule.isActive;
+          this.toast('상태 변경에 실패했어요', 'error');
+        }
+      },
+
+      /* ======================= AI 검증 ======================= */
+      openVerifyModal(type, target) {
+        this.verifyType = type;
+        this.verifyTarget = target;
+        this.aiResult = null; this.aiError = ''; this.aiLoading = false;
+        this.showVerifyModal = true;
+      },
+      closeVerifyModal() { this.showVerifyModal = false; },
+      normalizeResult(raw) {
+        if (!raw) return null;
+        if (raw.decision) return { ...raw, details: raw.details || [] };
+        // 매도 검증 임시 응답 { status, feedback } 수용 (verifySell 구현 후 제거)
+        return { decision: raw.status || 'HOLD', details: [], verdictComment: raw.feedback || '' };
+      },
+      async requestAiAnalysis() {
+        if (this.aiLoading || !this.verifyTarget) return;
+        this.aiLoading = true; this.aiResult = null; this.aiError = '';
+        const steps = this.verifyType === 'BUY'
+                ? ['차트 데이터를 불러오는 중', '매매 규칙 검증 중', '차트 단계 판정 중', '리포트 작성 중']
+                : ['보유 현황 확인 중', '추세 이탈 여부 확인 중', '리포트 작성 중'];
+        let i = 0; this.loadingMessage = steps[0];
+        const timer = setInterval(() => { i = Math.min(i + 1, steps.length - 1); this.loadingMessage = steps[i]; }, 1500);
+
+        const endpoint = this.verifyType === 'BUY' ? '/api/portfolio/verify/buy' : '/api/portfolio/verify/sell';
+        const code = this.verifyTarget.stockCode;
+        try {
+          const raw = await this.postJson(endpoint, { targetId: code });
+          const result = this.normalizeResult(raw);
+          this.aiResult = result;
+          this.lastVerify = { ...this.lastVerify, [`${this.verifyType}:${code}`]: { decision: result.decision, at: this.nowLabel() } };
+
+          // 매수 검증 시 서버가 단계·진입가를 갱신하므로, 응답에 포함되어 있으면 즉시 반영
+          if (this.verifyType === 'BUY') {
+            const phase = raw?.chartPhase || raw?.phase;
+            const target = raw?.targetPrice ?? raw?.primaryEntry;
+            if (phase || target != null) {
+              this.watchList = this.watchList.map(w => w.stockCode !== code ? w : {
+                ...w, chartPhase: phase || w.chartPhase, targetPrice: target ?? w.targetPrice
+              });
+            }
+          }
+        } catch (e) {
+          this.aiError = '서버 응답이 없거나 분석 중 오류가 발생했어요.';
+        } finally {
+          clearInterval(timer);
+          this.aiLoading = false;
         }
       }
     }));

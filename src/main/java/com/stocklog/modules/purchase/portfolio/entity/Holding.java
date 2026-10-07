@@ -2,7 +2,7 @@ package com.stocklog.modules.purchase.portfolio.entity;
 
 import com.stocklog.modules.member.entity.Member;
 import com.stocklog.modules.stock.info.StockInfo;
-import com.stocklog.global.common.BaseTimeEntity;
+import com.stocklog.global.common.base.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

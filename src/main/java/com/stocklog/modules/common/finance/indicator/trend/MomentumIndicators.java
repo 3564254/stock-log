@@ -25,11 +25,20 @@ public final class MomentumIndicators {
 
     public static double calcAtr(List<Double> highs, List<Double> lows, List<Double> closes, int period, int lastIdx) {
         if (lastIdx < period) return 0;
+
+        // 1) 첫 ATR = 처음 period개 TR의 단순평균 (TR은 i=1부터 계산 가능)
         double atr = 0;
-        for (int i = lastIdx - period + 1; i <= lastIdx; i++) {
-            atr += trueRange(highs.get(i), lows.get(i), closes.get(i - 1)); // 내부 trueRange 호출
+        for (int i = 1; i <= period; i++) {
+            atr += trueRange(highs.get(i), lows.get(i), closes.get(i - 1));
         }
-        return atr / period;
+        atr /= period;
+
+        // 2) 이후 Wilder 평활: ATR = (prevATR * (period-1) + TR) / period
+        for (int i = period + 1; i <= lastIdx; i++) {
+            double tr = trueRange(highs.get(i), lows.get(i), closes.get(i - 1));
+            atr = (atr * (period - 1) + tr) / period;
+        }
+        return atr;
     }
 
     public static double calcRsiWilder(List<Double> prices, int period, int lastIdx) {
@@ -109,21 +118,28 @@ public final class MomentumIndicators {
         }
 
         double[] dx = new double[lastIdx + 1];
-        for (int i = period + 1; i <= lastIdx; i++) {
-            smoothTR = smoothTR - (smoothTR / period) + tr[i];
-            smoothPlusDM = smoothPlusDM - (smoothPlusDM / period) + plusDM[i];
-            smoothMinusDM = smoothMinusDM - (smoothMinusDM / period) + minusDM[i];
+        for (int i = period; i <= lastIdx; i++) {
+            if (i > period) {
+                smoothTR      = smoothTR      - (smoothTR / period)      + tr[i];
+                smoothPlusDM  = smoothPlusDM  - (smoothPlusDM / period)  + plusDM[i];
+                smoothMinusDM = smoothMinusDM - (smoothMinusDM / period) + minusDM[i];
+            }
+            if (smoothTR == 0) { dx[i] = 0; continue; }
 
-            double plusDI = 100 * (smoothPlusDM / smoothTR);
-            double minusDI = 100 * (smoothMinusDM / smoothTR);
-            dx[i] = (plusDI + minusDI == 0) ? 0 : 100 * Math.abs(plusDI - minusDI) / (plusDI + minusDI);
+            double plusDI  = 100 * smoothPlusDM / smoothTR;
+            double minusDI = 100 * smoothMinusDM / smoothTR;
+            double sum = plusDI + minusDI;
+            dx[i] = (sum == 0) ? 0 : 100 * Math.abs(plusDI - minusDI) / sum;
         }
 
+// 첫 ADX = 처음 period개 DX의 평균, 이후 Wilder 평활
         double adx = 0;
-        for (int i = lastIdx - period + 1; i <= lastIdx; i++) {
-            adx += dx[i];
+        for (int i = period; i < period * 2; i++) adx += dx[i];
+        adx /= period;
+        for (int i = period * 2; i <= lastIdx; i++) {
+            adx = (adx * (period - 1) + dx[i]) / period;
         }
-        return adx / period;
+        return adx;
     }
 
     /**

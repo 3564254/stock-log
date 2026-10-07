@@ -7,6 +7,6 @@ import com.stocklog.modules.common.type.Period;
 
 
 public interface StockChartProvider {
-    StockChartResponse fetchInfo(ChartRequest request, Period period);
+    StockChartResponse fetchChart(ChartRequest request, Period period);
     boolean supports(MarketType marketType);
 }

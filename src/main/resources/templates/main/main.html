@@ -14,8 +14,11 @@
         :root {
             --toss-blue: #3182f6; --toss-red: #f04452; --toss-green: #05c072;
             --toss-gray-bg: #f2f4f6; --sidebar-width: 250px;
+            --text-dark: #191f28; --text-sub: #4e5968; --text-muted: #8b95a1;
+            --line: #e5e8eb; --line-soft: #f2f4f6; --surface-soft: #f9fafb;
+            --blue-soft: rgba(49,130,246,0.09); --red-soft: rgba(240,68,82,0.09); --green-soft: rgba(5,192,114,0.10);
         }
-        body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: #333d4b; }
+        body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: #333d4b; letter-spacing: -0.01em; }
         [x-cloak] { display: none !important; }
 
         .layout-wrapper { display: flex; min-height: 100vh; }
@@ -23,55 +26,101 @@
         .main-content.expanded { margin-left: 80px; width: calc(100% - 80px); }
         .content-container { width: 100%; max-width: 1200px; margin: 0 auto; padding-top: 24px; }
 
-        .toss-card { background: white; border-radius: 16px; padding: 28px; box-shadow: none; margin-bottom: 24px; border: 1px solid #e5e8eb; }
-        .toss-banner { background: #f9fafb; border-radius: 16px; padding: 20px 24px; margin-bottom: 24px; border: 1px solid #e5e8eb; }
+        /* ── 카드 / 섹션 ── */
+        .toss-card { background: white; border-radius: 20px; padding: 28px; margin-bottom: 24px; border: 1px solid var(--line); }
+        .section-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; gap: 12px; }
+        .section-title { font-size: 18px; font-weight: 800; color: var(--text-dark); margin: 0; display: flex; align-items: center; gap: 8px; }
+        .section-sub { color: var(--text-muted); font-size: 13.5px; font-weight: 500; margin-top: 4px; }
+        .count-pill { font-size: 12px; font-weight: 700; color: var(--toss-blue); background: var(--blue-soft); border-radius: 999px; padding: 2px 9px; }
+        .ghost-btn { background: var(--line-soft); color: var(--text-sub); font-size: 13px; font-weight: 700; border-radius: 8px; padding: 8px 14px; border: none; text-decoration: none; white-space: nowrap; transition: background .15s; }
+        .ghost-btn:hover { background: #e8ebef; color: var(--text-dark); }
 
-        .widget-placeholder { background: #f9fafb; border: 1px solid #e5e8eb; border-radius: 12px; padding: 32px 20px; text-align: center; color: #8b95a1; transition: 0.15s ease; }
-        .widget-placeholder:hover { background: #f2f4f6; border-color: #d1d6db; }
-        .widget-icon { font-size: 1.5rem; margin-bottom: 12px; color: #b0b8c1; }
+        /* ── 상단 요약 ── */
+        .home-hero { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
+        .hero-title { font-size: 24px; font-weight: 800; color: var(--text-dark); letter-spacing: -0.03em; margin: 0; }
+        .hero-sub { color: var(--text-muted); font-size: 14px; font-weight: 500; margin-top: 4px; }
+        .stat-chips { display: flex; gap: 10px; flex-wrap: wrap; }
+        .stat-chip { background: white; border: 1px solid var(--line); border-radius: 14px; padding: 12px 18px; min-width: 112px; }
+        .stat-chip .k { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+        .stat-chip .v { font-size: 20px; font-weight: 800; color: var(--text-dark); margin-top: 2px; line-height: 1.2; }
+        .stat-chip .v small { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-left: 2px; }
+        .stat-chip.hot { border-color: rgba(49,130,246,0.35); background: linear-gradient(180deg, #fff 0%, #f5f9ff 100%); }
+        .stat-chip.hot .v { color: var(--toss-blue); }
 
-        .watch-item {
-            display: flex; align-items: center; padding: 16px 20px;
-            background: #ffffff; border: 1px solid #f2f4f6;
-            border-radius: 12px; margin-bottom: 12px;
-            gap: 16px; transition: 0.15s ease;
-        }
-        .watch-item:hover { border-color: #e5e8eb; background-color: #f9fafb; }
-        .target-price-badge {
-            background: #f2f4f6; color: #4e5968; font-size: 12px;
-            font-weight: 600; padding: 4px 10px; border-radius: 6px; border: none;
-        }
+        /* ── 검색 ── */
+        .search-box { display: flex; align-items: center; background: white; padding: 14px 20px; border: 1px solid var(--line); border-radius: 14px; transition: border-color .15s, box-shadow .15s; }
+        .search-box.focused { border-color: var(--toss-blue); box-shadow: 0 0 0 4px rgba(49,130,246,0.10); }
+        .search-dropdown { z-index: 1050; max-height: 400px; overflow-y: auto; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,0.08); }
+        .search-item { cursor: pointer; border-radius: 10px; padding: 12px 14px; transition: background .12s; }
+        .search-item:hover { background: var(--surface-soft); }
 
-        .stock-row { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid #f2f4f6; gap: 14px; }
-        .stock-row:last-child { border-bottom: none; }
-        .stock-icon  { width: 40px; height: 40px; border-radius: 10px; background: #f2f4f6; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #4e5968; flex-shrink: 0; }
-        .stock-name  { font-size: 15px; font-weight: 700; color: #191f28; }
-        .stock-meta  { font-size: 13px; font-weight: 500; color: #8b95a1; margin-top: 2px; }
+        /* ── 아바타 ── */
+        .stock-icon { width: 44px; height: 44px; border-radius: 14px; background: var(--line-soft); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; color: var(--text-sub); flex-shrink: 0; }
 
-        .profit-badge { font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 8px; }
-        .badge-profit { background: rgba(240,68,82,0.08); color: var(--toss-red); }
-        .badge-loss   { background: rgba(49,130,246,0.08); color: var(--toss-blue); }
+        /* ── 관심 종목 ── */
+        .watch-item { display: flex; align-items: center; padding: 16px 18px; background: #fff; border: 1px solid var(--line-soft); border-radius: 16px; margin-bottom: 10px; gap: 14px; transition: border-color .15s, background .15s, transform .15s; }
+        .watch-item:last-child { margin-bottom: 0; }
+        .watch-item:hover { border-color: var(--line); background: var(--surface-soft); }
+        .watch-item.is-ready { border-color: rgba(49,130,246,0.35); background: linear-gradient(90deg, #f5f9ff 0%, #fff 70%); }
 
+        .phase-badge { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+        .phase-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+        .tone-bad     { background: var(--red-soft);   color: var(--toss-red); }
+        .tone-good    { background: var(--green-soft); color: #03a45e; }
+        .tone-info    { background: var(--blue-soft);  color: var(--toss-blue); }
+        .tone-neutral { background: var(--line-soft);  color: var(--text-sub); }
+
+        .target-price-badge { background: var(--line-soft); color: var(--text-sub); font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; }
+
+        .btn-verify { font-size: 13px; font-weight: 700; color: var(--toss-blue); background: var(--blue-soft); border-radius: 10px; padding: 9px 16px; border: none; white-space: nowrap; transition: background .15s; }
+        .btn-verify:hover { background: rgba(49,130,246,0.16); }
+        .btn-verify.sell { color: var(--toss-red); background: var(--red-soft); }
+        .btn-verify.sell:hover { background: rgba(240,68,82,0.16); }
+
+        /* ── 포트폴리오 ── */
+        .stock-row { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--line-soft); gap: 14px; }
+        .stock-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .stock-row:first-child { padding-top: 0; }
+        .stock-name { font-size: 15px; font-weight: 700; color: var(--text-dark); }
+        .stock-meta { font-size: 13px; font-weight: 500; color: var(--text-muted); margin-top: 2px; }
+        .profit-badge { font-size: 14px; font-weight: 800; padding: 5px 11px; border-radius: 8px; font-variant-numeric: tabular-nums; }
+        .badge-profit { background: var(--red-soft); color: var(--toss-red); }
+        .badge-loss   { background: var(--blue-soft); color: var(--toss-blue); }
         .text-up { color: var(--toss-red) !important; }
         .text-down { color: var(--toss-blue) !important; }
 
-        .modal-backdrop-custom { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
-        .modal-sheet { background: white; width: 100%; max-width: 520px; border-radius: 16px; padding: 0; max-height: 90vh; overflow-y: auto; animation: fadeIn 0.2s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+        /* ── 준비 중 위젯 ── */
+        .widget-placeholder { background: var(--surface-soft); border: 1px dashed #d8dde3; border-radius: 14px; padding: 28px 20px; text-align: center; color: var(--text-muted); transition: .15s ease; }
+        .widget-placeholder:hover { background: var(--line-soft); border-color: #c9cfd6; }
+        .widget-icon { font-size: 1.6rem; margin-bottom: 10px; color: #b0b8c1; display: block; }
+        .soon-pill { display: inline-block; margin-top: 10px; font-size: 11.5px; font-weight: 700; color: var(--text-muted); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; }
 
-        .empty-state { text-align: center; padding: 48px 0; color: #8b95a1; }
-        .empty-state i { font-size: 2rem; display: block; margin-bottom: 12px; color: #d1d6db; }
+        /* ── 모달 ── */
+        .modal-backdrop-custom { position: fixed; inset: 0; background: rgba(25,31,40,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); padding: 16px; }
+        .modal-sheet { background: white; width: 100%; max-width: 520px; border-radius: 20px; padding: 0; max-height: 90vh; overflow-y: auto; animation: fadeIn 0.2s ease; box-shadow: 0 20px 50px rgba(0,0,0,0.15); }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+        .rule-list { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+        .rule-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; gap: 12px; }
+        .rule-row + .rule-row { border-top: 1px solid var(--line-soft); }
+        .rule-state { font-size: 13px; font-weight: 700; padding: 3px 10px; border-radius: 999px; flex-shrink: 0; }
+        .report-box { background: var(--surface-soft); border: 1px solid var(--line); border-radius: 14px; padding: 20px; font-size: 15px; font-weight: 500; line-height: 1.7; color: var(--text-sub); white-space: pre-line; word-break: keep-all; }
+
+        .empty-state { text-align: center; padding: 40px 0; color: var(--text-muted); }
+        .empty-state i { font-size: 2rem; display: block; margin-bottom: 10px; color: #d1d6db; }
 
         .hover-up { transition: background-color 0.15s ease, opacity 0.15s ease; }
-        .hover-up:hover { opacity: 0.85; }
+        .hover-up:hover { opacity: 0.88; }
 
         @media (max-width: 768px) {
             .sidebar-main { display: none !important; }
             .main-content { margin-left: 0 !important; padding: 16px !important; width: 100%; }
             .content-container { padding-top: 16px; }
             .toss-card, .modal-sheet { padding: 20px !important; }
-            .stock-row { flex-direction: column; align-items: flex-start; gap: 12px; }
-            .stock-row .text-end { text-align: left !important; width: 100%; display: flex; justify-content: space-between; align-items: center; }
+            .hero-title { font-size: 21px; }
+            .stat-chips { width: 100%; }
+            .stat-chip { flex: 1; min-width: 0; padding: 10px 14px; }
+            .watch-item { padding: 14px; gap: 10px; }
+            .stock-row { flex-wrap: wrap; }
         }
     </style>
 </head>
@@ -87,43 +136,37 @@
 
             <!-- 비로그인 상태 안내 (Landing) -->
             <div th:if="${loginMember == null}" class="mt-2">
-                <div class="toss-card text-center mb-4" style="min-height: 320px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: none; background: #ffffff;">
-                    <div class="mb-3">
-                        <i class="bi bi-shield-check" style="font-size: 2rem; color: var(--toss-blue);"></i>
+                <div class="toss-card text-center mb-4" style="min-height: 340px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(120% 120% at 50% 0%, #f1f6ff 0%, #ffffff 60%);">
+                    <div class="mb-3 d-inline-flex align-items-center justify-content-center" style="width: 56px; height: 56px; border-radius: 18px; background: var(--blue-soft);">
+                        <i class="bi bi-shield-check" style="font-size: 1.6rem; color: var(--toss-blue);"></i>
                     </div>
-                    <h1 class="fw-bold mb-3 text-dark" style="font-size: 28px; letter-spacing: -0.5px;">AI로 지키는<br>나만의 투자 원칙</h1>
-                    <p class="mb-5" style="color: #4e5968; font-size: 16px; line-height: 1.6;">감정에 휘둘리지 않도록, 내가 설정한 규칙에<br>맞는 타이밍인지 AI가 미리 확인해 드려요</p>
-                    <a th:href="@{/auth/login}" class="btn border-0 hover-up fw-bold" style="background: var(--toss-blue); color: white; border-radius: 10px; padding: 14px 40px; font-size: 16px;">시작하기</a>
+                    <h1 class="fw-bold mb-3 text-dark" style="font-size: 30px; letter-spacing: -0.04em; line-height: 1.35;">AI로 지키는<br>나만의 투자 원칙</h1>
+                    <p class="mb-5" style="color: var(--text-sub); font-size: 16px; line-height: 1.6;">감정에 휘둘리지 않도록, 내가 설정한 규칙에<br>맞는 타이밍인지 AI가 미리 확인해 드려요</p>
+                    <a th:href="@{/auth/login}" class="btn border-0 hover-up fw-bold" style="background: var(--toss-blue); color: white; border-radius: 12px; padding: 14px 44px; font-size: 16px;">시작하기</a>
                 </div>
 
-                <div class="row g-4 mt-2">
+                <div class="row g-4 mt-1">
                     <div class="col-md-4">
-                        <div class="toss-card h-100 text-start">
-                            <div class="mb-3" style="color: #4e5968;">
-                                <i class="bi bi-crosshair fs-4"></i>
-                            </div>
+                        <div class="toss-card h-100 text-start mb-0">
+                            <div class="stock-icon mb-3" style="background: var(--blue-soft); color: var(--toss-blue);"><i class="bi bi-crosshair fs-5"></i></div>
                             <h4 class="fw-bold mb-2 text-dark" style="font-size: 17px;">관심 종목 대기열</h4>
-                            <p class="mb-0" style="color: #6b7684; font-size: 14px; line-height: 1.5; word-break: keep-all;">원하는 타이밍이 올 때까지 종목을 보관하고 흐름을 지켜보는 공간</p>
+                            <p class="mb-0" style="color: #6b7684; font-size: 14px; line-height: 1.6; word-break: keep-all;">원하는 타이밍이 올 때까지 종목을 보관하고 흐름을 지켜보는 공간</p>
                         </div>
                     </div>
 
                     <div class="col-md-4">
-                        <div class="toss-card h-100 text-start">
-                            <div class="mb-3" style="color: #4e5968;">
-                                <i class="bi bi-robot fs-4"></i>
-                            </div>
+                        <div class="toss-card h-100 text-start mb-0">
+                            <div class="stock-icon mb-3" style="background: var(--green-soft); color: #03a45e;"><i class="bi bi-robot fs-5"></i></div>
                             <h4 class="fw-bold mb-2 text-dark" style="font-size: 17px;">AI 매수 타점 검증</h4>
-                            <p class="mb-0" style="color: #6b7684; font-size: 14px; line-height: 1.5; word-break: keep-all;">매수하기 직전, 내 기준에 딱 맞는 자리인지 AI가 한 번 더 객관적으로 분석해요</p>
+                            <p class="mb-0" style="color: #6b7684; font-size: 14px; line-height: 1.6; word-break: keep-all;">매수하기 직전, 내 기준에 딱 맞는 자리인지 AI가 한 번 더 객관적으로 분석해요</p>
                         </div>
                     </div>
 
                     <div class="col-md-4">
-                        <div class="toss-card h-100 text-start">
-                            <div class="mb-3" style="color: #4e5968;">
-                                <i class="bi bi-pie-chart fs-4"></i>
-                            </div>
+                        <div class="toss-card h-100 text-start mb-0">
+                            <div class="stock-icon mb-3" style="background: var(--red-soft); color: var(--toss-red);"><i class="bi bi-pie-chart fs-5"></i></div>
                             <h4 class="fw-bold mb-2 text-dark" style="font-size: 17px;">포트폴리오 분산 점검</h4>
-                            <p class="mb-0" style="color: #6b7684; font-size: 14px; line-height: 1.5; word-break: keep-all;">투자금이 한 곳에 쏠리지 않도록, 종목들이 안전하게 분산되어 있는지 확인해요</p>
+                            <p class="mb-0" style="color: #6b7684; font-size: 14px; line-height: 1.6; word-break: keep-all;">투자금이 한 곳에 쏠리지 않도록, 종목들이 안전하게 분산되어 있는지 확인해요</p>
                         </div>
                     </div>
                 </div>
@@ -132,45 +175,55 @@
             <!-- 로그인 상태 대시보드 -->
             <div th:if="${loginMember != null}">
 
+                <!-- 상단: 타이틀 + 요약 -->
+                <div class="home-hero">
+                    <div>
+                        <h2 class="hero-title">시장 모니터링 홈</h2>
+                        <div class="hero-sub">시장의 흐름과 내 종목 상태를 한눈에 확인하세요</div>
+                    </div>
+                    <div class="stat-chips">
+                        <div class="stat-chip">
+                            <div class="k">관심 종목</div>
+                            <div class="v"><span x-text="watchList.length">0</span><small>개</small></div>
+                        </div>
+                        <div class="stat-chip" :class="readyCount > 0 ? 'hot' : ''">
+                            <div class="k">진입 타이밍</div>
+                            <div class="v"><span x-text="readyCount">0</span><small>개</small></div>
+                        </div>
+                        <div class="stat-chip">
+                            <div class="k">보유 종목</div>
+                            <div class="v"><span th:text="${dashboard.portfolioResponse != null and dashboard.portfolioResponse.myStocks != null ? #lists.size(dashboard.portfolioResponse.myStocks) : 0}">0</span><small>개</small></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 검색 -->
                 <div class="position-relative mb-4" @click.outside="isGlobalSearchOpen = false">
-                    <div class="d-flex align-items-center bg-white px-4 py-3 border"
-                         style="border-radius: 12px; transition: 0.15s;"
-                         :style="isGlobalSearchOpen ? 'border-color: var(--toss-blue) !important;' : 'border-color: #e5e8eb !important;'">
+                    <div class="search-box" :class="isGlobalSearchOpen ? 'focused' : ''">
                         <i class="bi bi-search text-secondary fs-5 me-3"></i>
                         <input type="text" class="border-0 bg-transparent w-100 fs-6 fw-bold text-dark" style="outline: none;"
                                placeholder="종목명이나 코드를 검색해 보세요" x-model="globalSearchQuery"
                                @input.debounce.500ms="globalSearchNew()" @focus="isGlobalSearchOpen = true">
                     </div>
 
-                    <div x-show="isGlobalSearchOpen && globalSearchQuery.length > 0" @scroll="onSearchScroll" class="position-absolute w-100 bg-white shadow-sm mt-2 p-2 border" style="z-index: 1050; max-height: 400px; overflow-y: auto; border-color: #e5e8eb !important; border-radius: 12px;" x-cloak>
+                    <div x-show="isGlobalSearchOpen && globalSearchQuery.length > 0" @scroll="onSearchScroll" class="search-dropdown position-absolute w-100 bg-white mt-2 p-2" x-cloak>
                         <div x-show="isGlobalLoading" class="text-center p-4"><div class="spinner-border text-primary" style="width: 1.5rem; height: 1.5rem;"></div></div>
                         <template x-for="item in globalSearchResults" :key="item.stock?.code">
-                            <div class="search-item p-3 mb-1 d-flex justify-content-between align-items-center"
-                                 style="cursor: pointer; background: #ffffff; border-radius: 8px;"
-                                 @click="window.location.href = '/stock/analysis?code=' + item.stock?.code"
-                                 onmouseover="this.style.backgroundColor='#f9fafb'" onmouseout="this.style.backgroundColor='#ffffff'">
-
-                                <div>
-                                    <div class="fw-bold text-dark" style="font-size: 15px;" x-text="item.stock?.name"></div>
-                                    <div class="small mt-1" style="color: #8b95a1; font-weight: 500;" x-text="item.stock?.code"></div>
+                            <div class="search-item d-flex justify-content-between align-items-center"
+                                 @click="window.location.href = '/stock/analysis?code=' + item.stock?.code">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="stock-icon" style="width: 38px; height: 38px; border-radius: 12px; font-size: 13px;" x-text="(item.stock?.name || '?').charAt(0)"></div>
+                                    <div>
+                                        <div class="fw-bold text-dark" style="font-size: 15px;" x-text="item.stock?.name"></div>
+                                        <div class="small mt-1" style="color: var(--text-muted); font-weight: 500;" x-text="item.stock?.code"></div>
+                                    </div>
                                 </div>
-
-                                <div style="font-size: 13px; font-weight: 600; color: #4e5968;">
+                                <div style="font-size: 13px; font-weight: 700; color: var(--text-sub);">
                                     분석 보기 <i class="bi bi-chevron-right"></i>
                                 </div>
                             </div>
                         </template>
-                        <div x-show="!isGlobalLoading && globalSearchResults.length === 0 && globalSearchQuery.length > 0" class="p-4 text-center fw-bold" style="color: #8b95a1;">검색 결과 없음</div>
-                    </div>
-                </div>
-
-                <div class="toss-banner d-flex align-items-center gap-3 mb-4">
-                    <div class="d-inline-flex align-items-center justify-content-center bg-white border" style="width: 44px; height: 44px; border-radius: 10px; border-color: #e5e8eb !important;">
-                        <i class="bi bi-bar-chart-fill text-dark fs-5"></i>
-                    </div>
-                    <div>
-                        <div class="fw-bold text-dark" style="font-size: 16px;">시장 모니터링 홈</div>
-                        <div style="color: #6b7684; font-size: 14px; font-weight: 500; margin-top: 2px;">시장의 흐름과 내 종목 상태를 한눈에 파악하는 대시보드</div>
+                        <div x-show="!isGlobalLoading && globalSearchResults.length === 0 && globalSearchQuery.length > 0" class="p-4 text-center fw-bold" style="color: var(--text-muted);">검색 결과 없음</div>
                     </div>
                 </div>
 
@@ -178,73 +231,50 @@
 
                     <div class="col-lg-7 d-flex flex-column gap-4">
 
+                        <!-- 관심 종목 -->
                         <div class="toss-card mb-0">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="section-head">
                                 <div>
-                                    <h3 class="fw-bold m-0 text-dark" style="font-size: 18px;">관심 종목</h3>
-                                    <div class="mt-1" style="color: #8b95a1; font-size: 14px; font-weight: 500;">원하는 매수 타이밍을 기다리고 있는 종목</div>
+                                    <h3 class="section-title">관심 종목 <span class="count-pill" x-show="watchList.length > 0" x-text="watchList.length"></span></h3>
+                                    <div class="section-sub">원하는 매수 타이밍을 기다리고 있는 종목</div>
                                 </div>
-                                <a th:href="@{/portfolio}" class="btn btn-sm hover-up fw-bold" style="background:#f2f4f6; color:#4e5968; font-size:13px; border-radius: 6px; padding: 8px 14px;">
-                                    편집
-                                </a>
+                                <a th:href="@{/portfolio}" class="ghost-btn hover-up">편집</a>
                             </div>
 
                             <div class="watch-list">
                                 <template x-for="item in watchList" :key="item.stockCode">
-                                    <div class="watch-item">
+                                    <div class="watch-item" :class="item.chartPhase === 'ENTRY_READY' ? 'is-ready' : ''">
+                                        <div class="stock-icon" x-text="(item.stockName || '?').charAt(0)"></div>
                                         <div class="flex-grow-1" style="min-width: 0;">
-                                            <div class="d-flex align-items-center gap-2 mb-1">
+                                            <div class="d-flex align-items-center gap-2">
                                                 <span class="fw-bold text-dark text-truncate" style="font-size: 16px; max-width: 70%;" x-text="item.stockName"></span>
-                                                <span class="small flex-shrink-0" style="color: #8b95a1; font-weight: 500;" x-text="item.stockCode"></span>
+                                                <span class="small flex-shrink-0" style="color: var(--text-muted); font-weight: 500;" x-text="item.stockCode"></span>
                                             </div>
-                                            <div class="d-flex align-items-center gap-2 mt-2">
-                                                <span class="badge flex-shrink-0"
-                                                      style="font-size:12px; padding: 4px 8px; font-weight: 600; border-radius: 6px;"
-                                                      :style="
-                                                        ['DANGER_ZONE', 'WARNING_ZONE', 'COOLDOWN'].includes(item.stockPhase)
-                                                          ? 'background:rgba(240,68,82,0.08); color:var(--toss-red);'
-                                                        : ['SCALE_OUT'].includes(item.stockPhase)
-                                                          ? 'background:rgba(5,192,114,0.08); color:var(--toss-green);'
-                                                        : ['ENTRY_READY', 'STRONG_HOLD'].includes(item.stockPhase)
-                                                          ? 'background:rgba(49,130,246,0.08); color:var(--toss-blue);'
-                                                        : 'background:#f2f4f6; color:#4e5968;'
-                                                      "
-                                                      x-text="item.stockPhase === 'DANGER_ZONE' ? '하락 지속' :
-                                                              item.stockPhase === 'RECOVERY_WATCH' ? '반등 관망' :
-                                                              item.stockPhase === 'WATCH' ? '방향 탐색' :
-                                                              item.stockPhase === 'SETUP' ? '진입 대기' :
-                                                              item.stockPhase === 'ENTRY_READY' ? '진입 타이밍' :
-                                                              item.stockPhase === 'STRONG_HOLD' ? '강세 지속' :
-                                                              item.stockPhase === 'WARNING_ZONE' ? '과열 경고' :
-                                                              item.stockPhase === 'SCALE_OUT' ? '분할 익절' :
-                                                              item.stockPhase === 'COOLDOWN' ? '매매 휴식' :
-                                                              item.stockPhase ? item.stockPhase : '분석 대기'">
-                                                </span>
-                                                <span x-show="item.targetPrice" class="target-price-badge text-truncate flex-shrink-0" style="white-space: nowrap;"
-                                                      x-text="'목표 ' + formatPrice(item.targetPrice, item.stockCode)"></span>
+                                            <div class="d-flex align-items-center flex-wrap gap-2 mt-2">
+                                                <span class="phase-badge" :class="phaseMeta(item.chartPhase).tone" x-text="phaseMeta(item.chartPhase).label"></span>
+                                                <span x-show="item.targetPrice" class="target-price-badge" x-text="'목표 ' + formatPrice(item.targetPrice, item.stockCode)"></span>
                                             </div>
                                         </div>
-                                        <button class="btn btn-sm hover-up text-nowrap flex-shrink-0"
-                                                style="font-size: 13px; font-weight: 600; color: #4e5968; background: #f2f4f6; border-radius: 6px; padding: 8px 14px; border: none;" @click="openAiVerifyModal(item)">
-                                            AI 검증
-                                        </button>
+                                        <button class="btn-verify hover-up" @click="openAiVerifyModal(item)">AI 검증</button>
                                     </div>
                                 </template>
 
                                 <div class="empty-state" x-show="watchList.length === 0">
+                                    <i class="bi bi-bookmark-plus"></i>
                                     <div style="font-size: 14px; font-weight: 500;">현재 대기 중인 관심 종목이 없어요</div>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- 내 포트폴리오 -->
                         <div class="toss-card mb-0 flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="section-head">
                                 <div>
-                                    <h3 class="fw-bold m-0 text-dark" style="font-size: 18px;">내 포트폴리오</h3>
-                                    <div class="mt-1" style="color: #8b95a1; font-size: 14px; font-weight: 500;">현재 보유 중인 종목의 수익률과 매도 타이밍 관리</div>
+                                    <h3 class="section-title">내 포트폴리오</h3>
+                                    <div class="section-sub">보유 종목의 수익률과 매도 타이밍 관리</div>
                                 </div>
-                                <div th:if="${dashboard.portfolioResponse != null and dashboard.portfolioResponse.averageReturnRate != null}">
-                                    <span class="me-2" style="font-size: 13px; color: #6b7684; font-weight: 500;">계좌 평균</span>
+                                <div class="d-flex align-items-center gap-2 flex-shrink-0" th:if="${dashboard.portfolioResponse != null and dashboard.portfolioResponse.averageReturnRate != null}">
+                                    <span style="font-size: 13px; color: #6b7684; font-weight: 600;">계좌 평균</span>
                                     <span class="profit-badge"
                                           th:classappend="${dashboard.portfolioResponse.averageReturnRate >= 0 ? 'badge-profit' : 'badge-loss'}"
                                           th:text="${(dashboard.portfolioResponse.averageReturnRate >= 0 ? '+' : '') + #numbers.formatDecimal(dashboard.portfolioResponse.averageReturnRate, 1, 2) + '%'}"></span>
@@ -255,12 +285,12 @@
                                 <th:block th:if="${dashboard.portfolioResponse != null and !#lists.isEmpty(dashboard.portfolioResponse.myStocks)}">
                                     <th:block th:each="stock : ${dashboard.portfolioResponse.myStocks}">
                                         <div class="stock-row">
-                                            <div class="stock-icon flex-shrink-0" th:text="${#strings.substring(stock.korName, 0, 1)}"></div>
+                                            <div class="stock-icon" th:text="${#strings.substring(stock.korName, 0, 1)}"></div>
                                             <div class="flex-grow-1" style="min-width: 0;">
                                                 <div class="stock-name text-truncate" th:text="${stock.korName}"></div>
-                                                <div class="stock-meta mt-1 text-truncate">
+                                                <div class="stock-meta text-truncate">
                                                     <th:block th:if="${stock.averagePrice != null}">
-                                                        <span>전략 평단가:
+                                                        <span>전략 평단가
                                                             <span class="fw-bold text-dark"
                                                                   th:text="${stock.stockCode != null and stock.stockCode.matches('^[0-9]+$') ?
                                                                             #numbers.formatDecimal(stock.averagePrice, 1, 'COMMA', 0, 'POINT') + '원' :
@@ -272,13 +302,12 @@
                                                     </th:block>
                                                 </div>
                                             </div>
-                                            <div class="text-end ms-2 flex-shrink-0" style="min-width:70px;">
+                                            <div class="text-end ms-2 flex-shrink-0">
                                                 <span class="profit-badge"
                                                       th:classappend="${stock.returnRate >= 0 ? 'badge-profit' : 'badge-loss'}"
                                                       th:text="${(stock.returnRate >= 0 ? '+' : '') + #numbers.formatDecimal(stock.returnRate, 1, 2) + '%'}"></span>
                                             </div>
-                                            <button class="btn btn-sm hover-up text-nowrap flex-shrink-0"
-                                                    style="font-size: 13px; font-weight: 600; color: var(--toss-red); background: rgba(240,68,82,0.08); border-radius: 6px; padding: 8px 14px; border: none;"
+                                            <button class="btn-verify sell hover-up"
                                                     th:data-code="${stock.stockCode}"
                                                     th:data-name="${stock.korName}"
                                                     @click="openSellVerifyModal({ stockCode: $el.dataset.code, stockName: $el.dataset.name })">
@@ -289,6 +318,7 @@
                                 </th:block>
 
                                 <div th:if="${dashboard.portfolioResponse == null or #lists.isEmpty(dashboard.portfolioResponse.myStocks)}" class="empty-state">
+                                    <i class="bi bi-wallet2"></i>
                                     <div style="font-size: 14px; font-weight: 500;">현재 보유 중인 종목이 없어요</div>
                                 </div>
                             </div>
@@ -299,29 +329,38 @@
                     <div class="col-lg-5 d-flex flex-column gap-4">
 
                         <div class="toss-card mb-0">
-                            <h3 class="fw-bold mb-3 text-dark" style="font-size: 17px;">거시 경제 지표</h3>
+                            <div class="section-head" style="margin-bottom: 14px;">
+                                <h3 class="section-title" style="font-size: 17px;">거시 경제 지표</h3>
+                            </div>
                             <div class="widget-placeholder">
                                 <i class="bi bi-currency-dollar widget-icon"></i>
                                 <div class="fw-bold text-dark" style="font-size: 15px;">환율 및 주요국 증시</div>
-                                <div class="mt-1" style="font-size: 14px; color: #8b95a1; font-weight: 500;">곧 데이터를 준비해 드릴게요</div>
+                                <div class="mt-1" style="font-size: 14px; color: var(--text-muted); font-weight: 500;">곧 데이터를 준비해 드릴게요</div>
+                                <span class="soon-pill">준비 중</span>
                             </div>
                         </div>
 
                         <div class="toss-card mb-0">
-                            <h3 class="fw-bold mb-3 text-dark" style="font-size: 17px;">주도주 및 거래대금</h3>
+                            <div class="section-head" style="margin-bottom: 14px;">
+                                <h3 class="section-title" style="font-size: 17px;">주도주 및 거래대금</h3>
+                            </div>
                             <div class="widget-placeholder">
                                 <i class="bi bi-bar-chart-line widget-icon"></i>
                                 <div class="fw-bold text-dark" style="font-size: 15px;">당일 시장 주도주 순위</div>
-                                <div class="mt-1" style="font-size: 14px; color: #8b95a1; font-weight: 500;">곧 데이터를 준비해 드릴게요</div>
+                                <div class="mt-1" style="font-size: 14px; color: var(--text-muted); font-weight: 500;">곧 데이터를 준비해 드릴게요</div>
+                                <span class="soon-pill">준비 중</span>
                             </div>
                         </div>
 
                         <div class="toss-card mb-0 flex-grow-1 d-flex flex-column">
-                            <h3 class="fw-bold mb-3 text-dark" style="font-size: 17px;">실시간 핵심 뉴스</h3>
+                            <div class="section-head" style="margin-bottom: 14px;">
+                                <h3 class="section-title" style="font-size: 17px;">실시간 핵심 뉴스</h3>
+                            </div>
                             <div class="widget-placeholder flex-grow-1 d-flex flex-column justify-content-center align-items-center" style="min-height: 200px;">
                                 <i class="bi bi-newspaper widget-icon"></i>
                                 <div class="fw-bold text-dark" style="font-size: 15px;">경제 및 특징주 속보</div>
-                                <div class="mt-1" style="font-size: 14px; color: #8b95a1; font-weight: 500;">곧 데이터를 준비해 드릴게요</div>
+                                <div class="mt-1" style="font-size: 14px; color: var(--text-muted); font-weight: 500;">곧 데이터를 준비해 드릴게요</div>
+                                <span class="soon-pill">준비 중</span>
                             </div>
                         </div>
 
@@ -337,11 +376,11 @@
         <div class="modal-sheet" @click.stop style="display: flex; flex-direction: column;">
 
             <!-- 모달 헤더 -->
-            <div class="d-flex justify-content-between align-items-center px-4 py-4 border-bottom sticky-top bg-white" style="border-radius: 16px 16px 0 0; border-color: #f2f4f6 !important;">
+            <div class="d-flex justify-content-between align-items-center px-4 py-4 border-bottom sticky-top bg-white" style="border-radius: 20px 20px 0 0; border-color: var(--line-soft) !important;">
                 <div>
-                    <div style="font-size: 14px; color: #8b95a1; font-weight: 500; margin-bottom: 4px;"
+                    <div style="font-size: 13.5px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px;"
                          x-text="(selectedWatchItem?.stockName || '') + ' 현재 시점 분석'"></div>
-                    <h4 class="fw-bold m-0 text-dark" style="font-size: 20px;"
+                    <h4 class="fw-bold m-0 text-dark" style="font-size: 20px; letter-spacing: -0.03em;"
                         x-text="verifyType === 'BUY' ? '진입 타점 검증' : '매도 타점 검증'"></h4>
                 </div>
                 <button @click="closeAiVerifyModal()" class="btn-close shadow-none"></button>
@@ -352,13 +391,13 @@
 
                 <!-- 1. 로딩 전 대기 상태 -->
                 <div x-show="!aiResult && !aiLoading" class="text-center py-5">
-                    <div class="mb-4">
-                        <i class="bi bi-cpu text-secondary" style="font-size: 48px; opacity: 0.5;"></i>
+                    <div class="mb-4 d-inline-flex align-items-center justify-content-center" style="width: 72px; height: 72px; border-radius: 22px; background: var(--blue-soft);">
+                        <i class="bi bi-cpu" style="font-size: 34px; color: var(--toss-blue);"></i>
                     </div>
                     <p class="mb-4 fw-bold" style="color: #333d4b; font-size: 18px; line-height: 1.5; white-space: pre-line;"
                        x-text="(selectedWatchItem?.stockName || '') + '의\n데이터를 분석할까요?'"></p>
                     <button class="btn border-0 w-100 fw-bold hover-up"
-                            style="background-color: var(--toss-blue); color: white; border-radius: 10px; padding: 16px; font-size: 16px;"
+                            style="background-color: var(--toss-blue); color: white; border-radius: 12px; padding: 16px; font-size: 16px;"
                             @click="requestAiAnalysis()">
                         분석 시작하기
                     </button>
@@ -366,54 +405,49 @@
 
                 <!-- 2. 로딩 상태 -->
                 <div x-show="aiLoading" class="text-center py-5">
-                    <div class="spinner-border" style="color: #b0b8c1; width: 2.5rem; height: 2.5rem; border-width: 3px;" role="status"></div>
-                    <div class="mt-4 fw-bold" style="color: #4e5968; font-size: 16px;">차트와 매매 규칙을 분석하고 있어요</div>
-                    <div class="mt-2" style="color: #8b95a1; font-size: 14px; font-weight: 500;">잠시만 기다려주세요</div>
+                    <div class="spinner-border" style="color: var(--toss-blue); width: 2.5rem; height: 2.5rem; border-width: 3px;" role="status"></div>
+                    <div class="mt-4 fw-bold" style="color: var(--text-sub); font-size: 16px;">차트와 매매 규칙을 분석하고 있어요</div>
+                    <div class="mt-2" style="color: var(--text-muted); font-size: 14px; font-weight: 500;">잠시만 기다려주세요</div>
                 </div>
 
                 <!-- 3. 분석 완료 리포트 -->
                 <div x-show="aiResult">
-                    <div class="d-flex justify-content-between align-items-center p-4 mb-4" style="background-color: #f9fafb; border-radius: 12px; border: 1px solid #e5e8eb;">
-                        <span class="fw-bold" style="font-size: 16px; color: #191f28;">최종 승인 여부</span>
+                    <div class="d-flex justify-content-between align-items-center p-4 mb-4"
+                         style="border-radius: 14px; border: 1px solid;"
+                         :style="aiResult?.decision === 'PASS' ? 'background: #f5f9ff; border-color: rgba(49,130,246,0.3);' : 'background: #fff7f8; border-color: rgba(240,68,82,0.3);'">
+                        <span class="fw-bold" style="font-size: 16px; color: var(--text-dark);">최종 승인 여부</span>
                         <span class="badge fw-bold"
-                              style="padding: 8px 12px; font-size: 14px; border-radius: 8px;"
-                              :style="aiResult?.decision === 'PASS' ? 'background: rgba(49,130,246,0.08); color: var(--toss-blue);' : 'background: rgba(240,68,82,0.08); color: var(--toss-red);'"
+                              style="padding: 8px 14px; font-size: 14px; border-radius: 999px;"
+                              :style="aiResult?.decision === 'PASS' ? 'background: var(--toss-blue); color: #fff;' : 'background: var(--toss-red); color: #fff;'"
                               x-text="aiResult?.decision === 'PASS' ? '승인 (PASS)' : '반려 (FAIL)'"></span>
                     </div>
 
                     <div class="mb-4">
-                        <div class="fw-bold mb-3" style="font-size: 16px; color: #4e5968;">규칙 검증 결과</div>
-                        <div style="border: 1px solid #e5e8eb; border-radius: 12px;">
+                        <div class="fw-bold mb-3" style="font-size: 16px; color: var(--text-sub);">규칙 검증 결과</div>
+                        <div class="rule-list">
                             <template x-for="(detail, index) in aiResult?.details" :key="detail.ruleId || index">
-                                <div class="d-flex justify-content-between align-items-center p-3"
-                                     :style="index !== (aiResult?.details?.length - 1) ? 'border-bottom: 1px solid #f2f4f6;' : ''">
-                                    <div class="d-flex align-items-center gap-3" style="max-width: 75%;">
-                                        <span class="badge flex-shrink-0 fw-bold" style="background-color: #f2f4f6; color: #4e5968; font-size: 13px; padding: 4px 8px; border-radius: 6px;"
+                                <div class="rule-row">
+                                    <div class="d-flex align-items-center gap-3" style="min-width: 0; max-width: 75%;">
+                                        <span class="badge flex-shrink-0 fw-bold" style="background-color: var(--line-soft); color: var(--text-sub); font-size: 12.5px; padding: 5px 9px; border-radius: 6px;"
                                               x-text="getIndicatorName(detail.indicatorType)"></span>
                                         <span class="fw-bold text-truncate" style="font-size: 14px; color: #333d4b;" x-text="detail.ruleTitle"></span>
                                     </div>
-                                    <div class="flex-shrink-0 fw-bold" style="font-size: 14px;">
-                                        <span x-show="detail.passed" style="color: var(--toss-blue);">통과</span>
-                                        <span x-show="!detail.passed" style="color: var(--toss-red);">미달</span>
-                                    </div>
+                                    <span class="rule-state" :class="detail.passed ? 'tone-info' : 'tone-bad'" x-text="detail.passed ? '통과' : '미달'"></span>
                                 </div>
                             </template>
-                            <div x-show="!aiResult?.details || aiResult?.details.length === 0" class="py-4 text-center" style="color: #8b95a1; font-size: 14px; font-weight: 500;">
+                            <div x-show="!aiResult?.details || aiResult?.details.length === 0" class="py-4 text-center" style="color: var(--text-muted); font-size: 14px; font-weight: 500;">
                                 적용된 매매 규칙이 없어요
                             </div>
                         </div>
                     </div>
 
-                    <div class="mb-5">
-                        <div class="fw-bold mb-3" style="font-size: 16px; color: #191f28;">AI 종합 분석 리포트</div>
-                        <div class="p-4"
-                             style="background-color: #f9fafb; border-radius: 12px; font-size: 15px; font-weight: 500; line-height: 1.6; color: #4e5968; white-space: pre-line; word-break: keep-all; border: 1px solid #e5e8eb;"
-                             x-html="formatAiReport(aiResult?.verdictComment || aiResult?.verdict)">
-                        </div>
+                    <div class="mb-4">
+                        <div class="fw-bold mb-3" style="font-size: 16px; color: var(--text-dark);">AI 종합 분석 리포트</div>
+                        <div class="report-box" x-html="formatAiReport(aiResult?.verdictComment || aiResult?.verdict)"></div>
                     </div>
 
                     <button class="btn border-0 w-100 fw-bold hover-up"
-                            style="background-color: #f2f4f6; color: #4e5968; border-radius: 10px; padding: 16px; font-size: 16px;"
+                            style="background-color: var(--line-soft); color: var(--text-sub); border-radius: 12px; padding: 16px; font-size: 16px;"
                             @click="closeAiVerifyModal()">닫기</button>
                 </div>
             </div>
@@ -435,15 +469,42 @@
             globalSearchPage: 0,
             isGlobalLastPage: false,
 
-            watchList: initialWatchList,
+            watchList: initialWatchList || [],
 
             async init() { },
+
+            get readyCount() {
+                return this.watchList.filter(i => i.chartPhase === 'ENTRY_READY').length;
+            },
 
             showVerifyModal: false,
             verifyType: 'BUY',
             selectedWatchItem: null,
             aiLoading: false,
             aiResult: null,
+
+            phaseMeta(phase) {
+                const map = {
+                    DANGER_ZONE:         { label: '하락 지속',   tone: 'tone-bad' },
+                    WARNING_ZONE:        { label: '과열 경고',   tone: 'tone-bad' },
+                    COOLDOWN:            { label: '매매 휴식',   tone: 'tone-bad' },
+                    STOP_LOSS:           { label: '손절 구간',   tone: 'tone-bad' },
+                    DOWNTREND_CONFIRMED: { label: '하락 추세',   tone: 'tone-bad' },
+                    CAPITULATION:        { label: '투매 구간',   tone: 'tone-bad' },
+                    FAKE_OUT:            { label: '가짜 반등',   tone: 'tone-bad' },
+                    CLIMAX:              { label: '과열 정점',   tone: 'tone-bad' },
+                    SCALE_OUT:           { label: '분할 익절',   tone: 'tone-good' },
+                    ENTRY_READY:         { label: '진입 타이밍', tone: 'tone-info' },
+                    STRONG_HOLD:         { label: '강세 지속',   tone: 'tone-info' },
+                    RE_ENTRY:            { label: '재진입 구간', tone: 'tone-info' },
+                    RECOVERY_WATCH:      { label: '반등 관망',   tone: 'tone-neutral' },
+                    BEAR_RALLY:          { label: '기술적 반등', tone: 'tone-neutral' },
+                    WATCH:               { label: '방향 탐색',   tone: 'tone-neutral' },
+                    SETUP:               { label: '진입 대기',   tone: 'tone-neutral' },
+                    INSUFFICIENT_DATA:   { label: '데이터 부족', tone: 'tone-neutral' }
+                };
+                return map[phase] || { label: phase || '분석 대기', tone: 'tone-neutral' };
+            },
 
             openAiVerifyModal(item) {
                 this.verifyType = 'BUY';
@@ -477,7 +538,12 @@
 
             formatAiReport(text) {
                 if (!text) return '';
-                return text
+                // x-html 로 렌더링하므로 먼저 HTML 을 이스케이프한 뒤 강조/구분선만 변환
+                const esc = String(text)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+                return esc
                     .replace(/\[(.*?)\]/g, '<strong style="color: #191f28; font-size: 16px;">[$1]</strong>')
                     .replace(/-{5,}/g, '<hr style="border: none; border-top: 1px solid #e5e8eb; margin: 16px 0;">');
             },

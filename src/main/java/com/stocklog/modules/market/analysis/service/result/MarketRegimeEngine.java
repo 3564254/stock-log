@@ -16,6 +16,8 @@ import java.util.List;
 @Component
 public class MarketRegimeEngine {
 
+    private static final double NEUTRAL_BAND = 10;
+
     public MarketRegimeDto evaluate(EngineInput input) {
         double weightedScore = getWeightedScore(input);
 
@@ -73,32 +75,47 @@ public class MarketRegimeEngine {
         return "NEUTRAL";
     }
 
+    private record Component(double score, double weight) {}
+
+    // 가중치를 한 곳에서만 정의한다 (점수 합산과 신뢰도 계산이 같은 목록을 쓴다)
+    private static List<Component> components(EngineInput in) {
+        return List.of(
+                new Component(in.trend().score(),      0.15),
+                new Component(in.momentum().score(),   0.10),
+                new Component(in.breadth().score(),    0.10),
+                new Component(in.risk().score(),       0.15),
+                new Component(in.rates().score(),      0.10),
+                new Component(in.liquidity().score(),  0.10),
+                new Component(in.macro().score(),      0.10),
+                new Component(in.credit().score(),     0.10),
+                new Component(in.sector().score(),     0.05),
+                new Component(in.defensive().score(),  0.025),
+                new Component(in.crossAsset().score(), 0.025));
+    }
+
     private static double getWeightedScore(EngineInput input) {
+        double core = components(input).stream().mapToDouble(c -> c.score() * c.weight()).sum();
+        double total = core + input.divergence().score() * 0.35;
+        return Math.max(-100.0, Math.min(100.0, total));
+    }
 
-        double coreScore =
-                (input.trend().score() * 0.15) +
-                        (input.momentum().score() * 0.10) +
-                        (input.breadth().score() * 0.10) +
-                        (input.risk().score() * 0.15) +
-                        (input.rates().score() * 0.10) +
-                        (input.liquidity().score() * 0.10) +
-                        (input.macro().score() * 0.10) +
-                        (input.credit().score() * 0.10) +
-                        (input.sector().score() * 0.05) +
-                        (input.defensive().score() * 0.025) +
-                        (input.crossAsset().score() * 0.025);
+    /** 0~100. 지표들이 같은 방향을 가리킬수록, 그리고 그 방향이 뚜렷할수록 높다. */
+    private static int calcConfidence(EngineInput input, double weightedScore) {
+        double dir = Math.signum(weightedScore);
+        if (dir == 0) return 0;
 
-        // Divergence는 시장 방향 자체가 아니라 경고 레이어로 반영
-        double divergenceAdjustment =
-                input.divergence().score() * 0.35;
+        double total = 0, aligned = 0, opposed = 0;
+        for (Component c : components(input)) {
+            total += c.weight();
+            if (Math.abs(c.score()) < NEUTRAL_BAND) continue;      // 중립은 합의도 반대도 아님
+            if (Math.signum(c.score()) == dir) aligned += c.weight(); else opposed += c.weight();
+        }
+        double agreement = Math.max(0, (aligned - opposed) / total);        // 0~1
+        double magnitude = Math.min(1.0, Math.abs(weightedScore) / 40.0);   // 0~1
 
-        double totalScore =
-                coreScore + divergenceAdjustment;
-
-        return Math.max(
-                -100.0,
-                Math.min(100.0, totalScore)
-        );
+        double conf = 100 * (0.6 * agreement + 0.4 * magnitude);
+        if (input.divergence().score() < -20) conf *= 0.85;                 // 괴리 경고가 있으면 감점
+        return (int) Math.round(Math.max(0, Math.min(100, conf)));
     }
 
     private String extractMacroRegime(MarketAnalyzerScore macro) {

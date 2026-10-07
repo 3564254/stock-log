@@ -1,8 +1,7 @@
 package com.stocklog.global.aop;
 
-import com.stocklog.modules.market.domain.type.IndexType;
-import com.stocklog.modules.stock.chart.dto.ChartRequest;
 import com.stocklog.modules.stock.application.request.StockRequest;
+import com.stocklog.modules.stock.chart.dto.ChartRequest;
 import com.stocklog.modules.stock.domain.type.DataType;
 import com.stocklog.modules.common.type.Period;
 import lombok.extern.slf4j.Slf4j;
@@ -11,59 +10,74 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StopWatch;
+
+import java.util.Arrays;
 
 @Aspect
 @Slf4j
 @Component
 public class LoggingAspect {
 
-    @Before("execution(* com.stocklog.modules..*Provider.fetch*(..)) && args(request, period)")
+    private static final long SLOW_THRESHOLD_MS = 1500L; // 1.5초 이상 지연 시 경고
+
+    @Before(value = "execution(* com.stocklog.modules..*Provider.fetch*(..)) && args(request, period,..)", argNames = "joinPoint,request,period")
     public void logBeforeFetchChart(JoinPoint joinPoint, ChartRequest request, Period period) {
+        if (request == null) {
+            log.warn("[Chart] request is null. period={}", period);
+            return;
+        }
         log.info("[Chart] code={}, period={}, date={}", request.code(), period, request.localDate());
     }
 
-    @Before("execution(* com.stocklog.modules.stock..*Provider.fetch*(..)) && args(request,..)")
-    public void logBeforeFetchPrice(JoinPoint joinPoint, StockRequest request) {
-        log.info("[Price][{}]", request.code());
-    }
-
-    @Before("execution(* com.stocklog.modules.ai..*AiProvider.get*(..))")
-    public void logBeforeAiProviderExecution(JoinPoint joinPoint) {
-        String className = joinPoint.getSignature().getDeclaringType().getSimpleName();
-        String methodName = joinPoint.getSignature().getName();
-        log.info("[AI API] 호출 시작: {}.{}()", className, methodName);
-    }
-
-    @Before("execution(* com.stocklog.modules.market..*Provider.fetch*(..)) && args(type,..)")
-    public void logBeforeFetchIndexExecution(JoinPoint joinPoint, IndexType type) {
-        log.info("[Index][{}]: 최신 데이터 호출", type.getSeriesId());
-    }
-
-    @Before("execution(* com.stocklog.modules.market.news..*Provider.fetch*(..)) && args(request,..)")
-    public void logBeforeFetchStockNewsExecution(JoinPoint joinPoint, StockRequest request) {
-        log.info("[News][{}]: 최신 데이터 호출", request.code());
-    }
-
-
-    @Around("(execution(* com.stocklog.modules..*Provider.fetch*(..)) || execution(* com.stocklog.modules..*Provider.get*(..)))")
-    public Object logProviderExecutionTime(ProceedingJoinPoint joinPoint) throws Throwable {
-        long startTime = System.currentTimeMillis();
+    @Around("providerMethods()")
+    public Object logExecutionTime(ProceedingJoinPoint joinPoint) throws Throwable {
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
 
         String className = joinPoint.getSignature().getDeclaringType().getSimpleName();
         String methodName = joinPoint.getSignature().getName();
         String dataName = DataType.getType(className);
+        Object[] args = joinPoint.getArgs();
+        String code = "";
+
+        if (args.length >= 1) {
+            if (args[0] instanceof ChartRequest request) {
+                code = request.code();
+            } else if (args[0] instanceof StockRequest request) {
+                code = request.code();
+            }
+        }
+
 
         try {
-            return joinPoint.proceed();
+            Object result = joinPoint.proceed();
+            stopWatch.stop();
+            long executionTime = stopWatch.getTotalTimeMillis();
+
+            if (executionTime >= SLOW_THRESHOLD_MS) {
+                log.warn("[{}][{}] 지연 경고: {}.{}() - 소요: {}ms", dataName, code, className, methodName, executionTime);
+            } else {
+                log.info("[{}][{}] 성공: {}.{}() - 소요: {}ms", dataName, code, className, methodName, executionTime);
+            }
+            return result;
         } catch (Throwable throwable) {
-            log.error("[{}] 에러 발생: {}.{}() -> 메시지: {}", dataName, className, methodName, throwable.getMessage(), throwable);
+            stopWatch.stop();
+            log.error("[{}][{}] 에러 발생: {}.{}() -> 메시지: {}", dataName, code, className, methodName, throwable.getMessage(), throwable);
             throw throwable;
-        } finally {
-            long totalTime = System.currentTimeMillis() - startTime;
-            log.info("[{}] 정상 종료: {}.{}() - 소요시간: {}ms", dataName, className, methodName, totalTime);
         }
     }
+
+    @Pointcut("execution(* com.stocklog.modules..*Provider.fetch*(..))")
+    private void providerMethods(){}
+
+    @Pointcut("@annotation(com.stocklog.global.annotation.LogChartFetch)")
+    private void logChartFetch(){}
+
+
+
 
 
 
