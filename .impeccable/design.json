@@ -1,0 +1,479 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-08T00:00:00Z",
+  "title": "Design System: StockLog",
+  "extensions": {
+    "colorMeta": {
+      "toss-blue": {
+        "role": "primary",
+        "displayName": "Toss Blue",
+        "tonalRamp": [
+          "#0b2a5c",
+          "#123f88",
+          "#1b64da",
+          "#3182f6",
+          "#64a8ff",
+          "#90c2ff",
+          "#c9e2ff",
+          "#f0f6ff"
+        ]
+      },
+      "toss-blue-deep": {
+        "role": "primary",
+        "displayName": "Toss Blue Deep",
+        "tonalRamp": [
+          "#0b2a5c",
+          "#123f88",
+          "#1b64da",
+          "#3182f6",
+          "#64a8ff",
+          "#90c2ff",
+          "#c9e2ff",
+          "#f0f6ff"
+        ]
+      },
+      "toss-blue-press": {
+        "role": "primary",
+        "displayName": "Toss Blue Press"
+      },
+      "toss-blue-soft": {
+        "role": "primary",
+        "displayName": "Toss Blue Soft",
+        "canonical": "rgba(49,130,246,0.09)"
+      },
+      "toss-blue-tint": {
+        "role": "primary",
+        "displayName": "Toss Blue Tint"
+      },
+      "toss-blue-tint-line": {
+        "role": "primary",
+        "displayName": "Toss Blue Tint Line"
+      },
+      "toss-red": {
+        "role": "secondary",
+        "displayName": "Toss Red",
+        "tonalRamp": [
+          "#5c0f17",
+          "#8c1a26",
+          "#cf2c3b",
+          "#f04452",
+          "#f66570",
+          "#fb8892",
+          "#ffc9ce",
+          "#fff4f4"
+        ]
+      },
+      "toss-red-deep": {
+        "role": "secondary",
+        "displayName": "Toss Red Deep",
+        "tonalRamp": [
+          "#5c0f17",
+          "#8c1a26",
+          "#cf2c3b",
+          "#f04452",
+          "#f66570",
+          "#fb8892",
+          "#ffc9ce",
+          "#fff4f4"
+        ]
+      },
+      "toss-red-soft": {
+        "role": "secondary",
+        "displayName": "Toss Red Soft",
+        "canonical": "rgba(240,68,82,0.09)"
+      },
+      "toss-red-tint": {
+        "role": "secondary",
+        "displayName": "Toss Red Tint"
+      },
+      "toss-red-tint-line": {
+        "role": "secondary",
+        "displayName": "Toss Red Tint Line"
+      },
+      "status-green": {
+        "role": "tertiary",
+        "displayName": "Status Green",
+        "tonalRamp": [
+          "#023d24",
+          "#025c36",
+          "#03a45e",
+          "#05c072",
+          "#3fd696",
+          "#7fe5b9",
+          "#bff2db",
+          "#ecfbf4"
+        ]
+      },
+      "status-green-text": {
+        "role": "tertiary",
+        "displayName": "Status Green Text"
+      },
+      "status-green-soft": {
+        "role": "tertiary",
+        "displayName": "Status Green Soft",
+        "canonical": "rgba(5,192,114,0.10)"
+      },
+      "caution-amber": {
+        "role": "tertiary",
+        "displayName": "Caution Amber",
+        "tonalRamp": [
+          "#5c3a05",
+          "#8a5807",
+          "#c47d0b",
+          "#f5a623",
+          "#f7bb55",
+          "#fad08a",
+          "#fde7c0",
+          "#fef7ea"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "tonalRamp": [
+          "#191f28",
+          "#333d4b",
+          "#4e5968",
+          "#6b7684",
+          "#8b95a1",
+          "#b0b8c1",
+          "#d1d6db",
+          "#f2f4f6"
+        ]
+      },
+      "ink-body": {
+        "role": "neutral",
+        "displayName": "Ink Body"
+      },
+      "slate": {
+        "role": "neutral",
+        "displayName": "Slate"
+      },
+      "slate-mid": {
+        "role": "neutral",
+        "displayName": "Slate Mid"
+      },
+      "mist": {
+        "role": "neutral",
+        "displayName": "Mist"
+      },
+      "label-text": {
+        "role": "neutral",
+        "displayName": "Label Text"
+      },
+      "fog": {
+        "role": "neutral",
+        "displayName": "Fog"
+      },
+      "haze": {
+        "role": "neutral",
+        "displayName": "Haze"
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline"
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Canvas"
+      },
+      "canvas-hover": {
+        "role": "neutral",
+        "displayName": "Canvas Hover"
+      },
+      "surface-soft": {
+        "role": "neutral",
+        "displayName": "Surface Soft"
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper"
+      },
+      "status-green-tint": {
+        "role": "tertiary",
+        "displayName": "Status Green Tint"
+      },
+      "status-green-line": {
+        "role": "tertiary",
+        "displayName": "Status Green Line"
+      },
+      "caution-text": {
+        "role": "tertiary",
+        "displayName": "Caution Text"
+      },
+      "caution-tint": {
+        "role": "tertiary",
+        "displayName": "Caution Tint"
+      },
+      "caution-line": {
+        "role": "tertiary",
+        "displayName": "Caution Line"
+      },
+      "alert-text": {
+        "role": "tertiary",
+        "displayName": "Alert Text"
+      },
+      "alert-tint": {
+        "role": "tertiary",
+        "displayName": "Alert Tint"
+      },
+      "alert-line": {
+        "role": "tertiary",
+        "displayName": "Alert Line"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Composite score inside the score ring only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page greeting / title; 21px on mobile."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card and section titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Stock names (at 700), list rows, report prose."
+      },
+      "body-sm": {
+        "displayName": "Body Small",
+        "purpose": "Secondary copy, dropdown items, insight boxes."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Buttons, meta lines, cell labels."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Chips, badges, stat keys, nav group labels."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Stat and data-cell values, tabular figures."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card-ambient",
+        "value": "0 4px 20px rgba(0,0,0,0.03)",
+        "purpose": "Every top-level card; replaces the border."
+      },
+      {
+        "name": "raised-control",
+        "value": "0 1px 4px rgba(0,0,0,0.05)",
+        "purpose": "Active segment in a segmented control."
+      },
+      {
+        "name": "dropdown",
+        "value": "0 12px 32px rgba(0,0,0,0.08)",
+        "purpose": "Search results, profile menu."
+      },
+      {
+        "name": "modal",
+        "value": "0 20px 50px rgba(0,0,0,0.15)",
+        "purpose": "Modal sheets over a 50% Ink scrim with 4px blur."
+      },
+      {
+        "name": "focus-halo",
+        "value": "0 0 0 4px rgba(49,130,246,0.10)",
+        "purpose": "Focused fields, paired with a Toss Blue border."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state",
+        "value": "0.15s ease",
+        "purpose": "Background, color and border changes on hover/active."
+      },
+      {
+        "name": "layout",
+        "value": "0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Sidebar collapse and content shift."
+      },
+      {
+        "name": "bar-fill",
+        "value": "width 1s ease",
+        "purpose": "Score axis and progress bars filling on load."
+      },
+      {
+        "name": "modal-enter",
+        "value": "0.2s ease; translateY(10px) → 0, opacity 0 → 1",
+        "purpose": "Modal sheet entrance."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "768px",
+        "purpose": "Sidebar → bottom tab bar; 16px page padding; 20px card padding."
+      },
+      {
+        "name": "tablet",
+        "value": "992px",
+        "purpose": "Multi-column grids reflow."
+      },
+      {
+        "name": "desktop",
+        "value": "1100px",
+        "purpose": "Wide grids reflow."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single main action in a view (로그인, 저장).",
+      "html": "<button class=\"ds-btn-primary\">로그인</button>",
+      "css": ".ds-btn-primary { background: #3182f6; color: #fff; border: 0; border-radius: 8px; padding: 10px 24px; font-family: Pretendard, sans-serif; font-size: 14px; font-weight: 700; letter-spacing: -0.01em; cursor: pointer; transition: background-color .15s ease; } .ds-btn-primary:hover { background: #1b64da; } .ds-btn-primary:focus-visible { outline: 2px solid #3182f6; outline-offset: 2px; } .ds-btn-primary:active { background: #1b64da; transform: scale(0.98); }"
+    },
+    {
+      "name": "Tint Buttons (Buy / Sell check)",
+      "kind": "button",
+      "refersTo": "button-tint",
+      "description": "In-row actions; blue for buy-side, red for sell-side.",
+      "html": "<div class=\"ds-tint-row\"><button class=\"ds-btn-tint\">매수 검증</button><button class=\"ds-btn-tint ds-sell\">매도 검증</button></div>",
+      "css": ".ds-tint-row { display: flex; gap: 8px; } .ds-btn-tint { font-family: Pretendard, sans-serif; font-size: 13px; font-weight: 700; color: #1b64da; background: rgba(49,130,246,0.09); border: 0; border-radius: 12px; padding: 9px 16px; cursor: pointer; white-space: nowrap; transition: background .15s; } .ds-btn-tint:hover { background: rgba(49,130,246,0.16); } .ds-btn-tint:focus-visible { outline: 2px solid #3182f6; outline-offset: 2px; } .ds-btn-tint.ds-sell { color: #cf2c3b; background: rgba(240,68,82,0.09); } .ds-btn-tint.ds-sell:hover { background: rgba(240,68,82,0.16); } .ds-btn-tint.ds-sell:focus-visible { outline-color: #f04452; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary navigation action next to section titles (전체보기).",
+      "html": "<button class=\"ds-btn-ghost\">전체보기</button>",
+      "css": ".ds-btn-ghost { font-family: Pretendard, sans-serif; background: #f2f4f6; color: #4e5968; font-size: 13px; font-weight: 700; border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; transition: background .15s, color .15s; } .ds-btn-ghost:hover { background: #e8ebef; color: #191f28; } .ds-btn-ghost:focus-visible { outline: 2px solid #3182f6; outline-offset: 2px; }"
+    },
+    {
+      "name": "Search Field",
+      "kind": "input",
+      "refersTo": "input-search",
+      "description": "Stock search with leading icon; blue border + halo on focus.",
+      "html": "<label class=\"ds-search\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#8b95a1\" stroke-width=\"2.2\" stroke-linecap=\"round\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"M20 20l-3.5-3.5\"/></svg><input placeholder=\"종목명 또는 코드 검색\"></label>",
+      "css": ".ds-search { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #e5e8eb; border-radius: 14px; padding: 14px 20px; transition: border-color .15s, box-shadow .15s; } .ds-search:focus-within { border-color: #3182f6; box-shadow: 0 0 0 4px rgba(49,130,246,0.10); } .ds-search input { border: 0; outline: 0; flex: 1; font-family: Pretendard, sans-serif; font-size: 15px; font-weight: 500; color: #191f28; background: transparent; } .ds-search input::placeholder { color: #626c7a; }"
+    },
+    {
+      "name": "Sidebar Nav",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Sidebar menu items; active = blue tint fill.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item ds-active\" href=\"#\" aria-current=\"page\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M12 3l9 8h-3v9h-5v-6h-2v6H6v-9H3z\"/></svg>홈</a><a class=\"ds-nav-item\" href=\"#\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 17l6-6 4 4 8-8\"/></svg>시장 동향·뉴스</a><div class=\"ds-nav-label\">내 투자</div><a class=\"ds-nav-item\" href=\"#\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 4v8h8\"/></svg>포트폴리오</a></nav>",
+      "css": ".ds-nav { width: 250px; background: #fff; padding: 8px 0; } .ds-nav-item { display: flex; align-items: center; gap: 14px; margin: 3px 16px; padding: 13px 20px; border-radius: 12px; font-family: Pretendard, sans-serif; font-size: 15px; font-weight: 600; color: #4e5968; text-decoration: none; transition: background-color .15s, color .15s; } .ds-nav-item:hover { background: #f2f4f6; color: #191f28; } .ds-nav-item:focus-visible { outline: 2px solid #3182f6; outline-offset: -2px; } .ds-nav-item.ds-active { background: #f0f6ff; color: #1b64da; font-weight: 700; } .ds-nav-label { margin: 18px 36px 4px; font-family: Pretendard, sans-serif; font-size: 12px; font-weight: 700; color: #626c7a; }"
+    },
+    {
+      "name": "Status Chips",
+      "kind": "chip",
+      "refersTo": "chip-status",
+      "description": "Market-phase and rule states; dot + soft tone fill.",
+      "html": "<div class=\"ds-chips\"><span class=\"ds-chip ds-info\">매수 대기</span><span class=\"ds-chip ds-good\">상승 국면</span><span class=\"ds-chip ds-bad\">과열 주의</span><span class=\"ds-chip ds-neutral\">관망</span></div>",
+      "css": ".ds-chips { display: flex; gap: 8px; flex-wrap: wrap; } .ds-chip { display: inline-flex; align-items: center; gap: 6px; font-family: Pretendard, sans-serif; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; } .ds-chip::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; } .ds-info { background: rgba(49,130,246,0.09); color: #1b64da; } .ds-good { background: rgba(5,192,114,0.10); color: #03a45e; } .ds-bad { background: rgba(240,68,82,0.09); color: #cf2c3b; } .ds-neutral { background: #f2f4f6; color: #4e5968; }"
+    },
+    {
+      "name": "Card with Holding Rows",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Top-level card with ambient lift; rows show profit/loss badges (red up, blue down).",
+      "html": "<section class=\"ds-card\"><div class=\"ds-card-head\"><h3>보유 종목</h3><span class=\"ds-count\">2</span></div><div class=\"ds-row\"><div class=\"ds-avatar\">삼</div><div class=\"ds-row-main\"><div class=\"ds-name\">삼성전자</div><div class=\"ds-meta\">12주 · 평균 71,200원</div></div><span class=\"ds-badge ds-up\">+8.42%</span></div><div class=\"ds-row\"><div class=\"ds-avatar\">N</div><div class=\"ds-row-main\"><div class=\"ds-name\">NVIDIA</div><div class=\"ds-meta\">3주 · 평균 $128.40</div></div><span class=\"ds-badge ds-down\">-2.15%</span></div></section>",
+      "css": ".ds-card { background: #fff; border-radius: 20px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); font-family: Pretendard, sans-serif; letter-spacing: -0.01em; max-width: 440px; } .ds-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; } .ds-card-head h3 { margin: 0; font-size: 18px; font-weight: 800; color: #191f28; } .ds-count { font-size: 12px; font-weight: 700; color: #1b64da; background: rgba(49,130,246,0.09); border-radius: 999px; padding: 2px 9px; } .ds-row { display: flex; align-items: center; gap: 14px; padding: 16px 0; border-bottom: 1px solid #f2f4f6; } .ds-row:last-child { border-bottom: 0; padding-bottom: 0; } .ds-avatar { width: 44px; height: 44px; border-radius: 14px; background: #f2f4f6; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; color: #4e5968; flex-shrink: 0; } .ds-row-main { flex: 1; min-width: 0; } .ds-name { font-size: 15px; font-weight: 700; color: #191f28; } .ds-meta { font-size: 13px; font-weight: 500; color: #626c7a; margin-top: 2px; } .ds-badge { font-size: 14px; font-weight: 800; padding: 5px 11px; border-radius: 8px; font-variant-numeric: tabular-nums; } .ds-up { background: rgba(240,68,82,0.09); color: #cf2c3b; } .ds-down { background: rgba(49,130,246,0.09); color: #1b64da; }"
+    },
+    {
+      "name": "Segmented Tabs",
+      "kind": "nav",
+      "refersTo": "segmented-track",
+      "description": "In-card view switcher on analysis pages.",
+      "html": "<div class=\"ds-seg\" role=\"tablist\"><button class=\"ds-seg-tab ds-on\" role=\"tab\" aria-selected=\"true\">종합</button><button class=\"ds-seg-tab\" role=\"tab\">밸류에이션</button><button class=\"ds-seg-tab\" role=\"tab\">모멘텀</button><button class=\"ds-seg-tab\" role=\"tab\">기술적</button></div>",
+      "css": ".ds-seg { display: flex; gap: 6px; background: #f2f4f6; border-radius: 12px; padding: 4px; max-width: 480px; } .ds-seg-tab { flex: 1; border: 0; background: none; font-family: Pretendard, sans-serif; font-size: 14px; font-weight: 600; color: #626c7a; padding: 10px 6px; border-radius: 8px; cursor: pointer; transition: all .15s; } .ds-seg-tab:hover { color: #4e5968; } .ds-seg-tab:focus-visible { outline: 2px solid #3182f6; outline-offset: 1px; } .ds-seg-tab.ds-on { background: #fff; color: #191f28; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }"
+    },
+    {
+      "name": "Score Axis Rows",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Signature: composite score breakdown beside the score ring.",
+      "html": "<div class=\"ds-axes\"><div class=\"ds-axis\"><span class=\"ds-dot\" style=\"background:#3182f6\"></span><div class=\"ds-axis-name\">밸류에이션<div class=\"ds-axis-sub\">PER · PBR</div></div><div class=\"ds-bar\"><div style=\"width:72%;background:#3182f6\"></div></div><div class=\"ds-axis-num\">29<span>/40</span></div></div><div class=\"ds-axis\"><span class=\"ds-dot\" style=\"background:#05c072\"></span><div class=\"ds-axis-name\">모멘텀<div class=\"ds-axis-sub\">수익률 추세</div></div><div class=\"ds-bar\"><div style=\"width:55%;background:#05c072\"></div></div><div class=\"ds-axis-num\">17<span>/30</span></div></div><div class=\"ds-axis\"><span class=\"ds-dot\" style=\"background:#f5a623\"></span><div class=\"ds-axis-name\">기술적<div class=\"ds-axis-sub\">이평 · RSI</div></div><div class=\"ds-bar\"><div style=\"width:40%;background:#f5a623\"></div></div><div class=\"ds-axis-num\">12<span>/30</span></div></div></div>",
+      "css": ".ds-axes { font-family: Pretendard, sans-serif; max-width: 460px; background: #fff; } .ds-axis { display: flex; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 1px solid #f2f4f6; } .ds-axis:last-child { border-bottom: 0; } .ds-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; } .ds-axis-name { min-width: 90px; font-size: 14px; font-weight: 700; color: #191f28; } .ds-axis-sub { font-size: 12px; font-weight: 500; color: #626c7a; margin-top: 2px; } .ds-bar { flex: 1; height: 6px; background: #f2f4f6; border-radius: 99px; overflow: hidden; } .ds-bar > div { height: 100%; border-radius: 99px; transition: width 1s ease; } .ds-axis-num { min-width: 52px; text-align: right; font-size: 15px; font-weight: 700; color: #191f28; font-variant-numeric: tabular-nums; } .ds-axis-num span { font-size: 12px; font-weight: 500; color: #626c7a; }"
+    },
+    {
+      "name": "Stat Chips",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Home summary figures; the hot variant highlights the actionable count.",
+      "html": "<div class=\"ds-stats\"><div class=\"ds-stat\"><div class=\"ds-k\">보유 종목</div><div class=\"ds-v\">8<small>개</small></div></div><div class=\"ds-stat ds-hot\"><div class=\"ds-k\">매수 준비</div><div class=\"ds-v\">2<small>개</small></div></div></div>",
+      "css": ".ds-stats { display: flex; gap: 10px; font-family: Pretendard, sans-serif; } .ds-stat { background: #fff; border: 1px solid #e5e8eb; border-radius: 14px; padding: 12px 18px; min-width: 112px; } .ds-k { font-size: 12px; font-weight: 600; color: #626c7a; } .ds-v { font-size: 20px; font-weight: 800; color: #191f28; margin-top: 2px; line-height: 1.2; font-variant-numeric: tabular-nums; } .ds-v small { font-size: 13px; font-weight: 600; color: #626c7a; margin-left: 2px; } .ds-hot { border-color: rgba(49,130,246,0.35); background: linear-gradient(180deg, #fff 0%, #f5f9ff 100%); } .ds-hot .ds-v { color: #1b64da; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Clear Window",
+    "overview": "StockLog should feel like a clean pane of glass over your money. Nothing is hidden and nothing shouts, so every number can be read at a glance. The system comes from the Toss school of Korean fintech: a cool grey canvas, white surfaces lifted by soft shadows, one confident blue, and the Korean market's red–blue direction colors. It is friendly rather than technical, so a careful retail investor feels calm reading it and never feels pressured to trade.\n\nDensity is moderate. Screens use clear sections with generous internal padding, and figures are big, bold and tabular, with muted labels underneath. Color carries meaning instead of decoration: blue marks action and brand, red marks gain, blue also marks loss, and green or amber appear only as status signals. Everything else is a ladder of cool greys.\n\nThe system rejects three looks: the dense dark trading terminal (HTS or Bloomberg-style grids and neon tickers), crypto hype styling (gradients and glows everywhere, casino energy), and generic Bootstrap with its default components showing through. Bootstrap stays in the stack for grid and utilities only.",
+    "keyCharacteristics": [
+      "Cool grey canvas with white surfaces and soft ambient lift.",
+      "One brand blue, plus red and blue under the Korean up/down convention.",
+      "Pretendard throughout, with tight negative tracking and heavy weights for figures.",
+      "Generous rounding (8–20px), tinted fills instead of outlines, and quick 0.15s state changes.",
+      "Korean-only copy, with `word-break: keep-all` on prose."
+    ],
+    "rules": [
+      {
+        "name": "The Direction Rule",
+        "body": "Red always means up or gain and blue always means down or loss, following the Korean market convention. Never invert them, and never use green for price movement.",
+        "section": "colors"
+      },
+      {
+        "name": "The Calm Signal Rule",
+        "body": "Saturated color appears only where it carries meaning: an action, a price direction or a status. Structure and chrome stay in the grey ladder.",
+        "section": "colors"
+      },
+      {
+        "name": "The Status-Not-Direction Rule",
+        "body": "Status (rule met / not met, phase health, drawdown) uses the scale green → grey → amber → deep amber with dot. Red and blue are never used for status, because in this market they mean price up and down. Counts that summarize status stay in Ink and get a small status dot.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tint-Not-Outline Rule",
+        "body": "Secondary emphasis comes from a soft tinted fill (9–10% alpha of the signal color) with the full-strength color as text, not from colored outlines.",
+        "section": "colors"
+      },
+      {
+        "name": "The Heavy Number Rule",
+        "body": "Figures are the loudest text on any card, at 700–800 weight and Ink (or a direction color) with tabular figures. Their labels sit beside or below them in Mist at 600 weight.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Family Rule",
+        "body": "Pretendard only. `default_layout.html` still loads Noto Sans KR, which is drift and should not spread.",
+        "section": "typography"
+      },
+      {
+        "name": "The Whisper Lift Rule",
+        "body": "Card shadows stay at or below 0.03–0.04 alpha, so a card should look lifted rather than shadowed. Anything heavier is reserved for dropdowns and modals.",
+        "section": "elevation"
+      },
+      {
+        "name": "The No Double Edge Rule",
+        "body": "A top-level card gets an ambient shadow *or* a Hairline border, never both. Several current pages (home, analysis) still use the border-only version, which is legacy to migrate toward the shadow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** use red (`#f04452`) for up, gain and sell, and blue (`#3182f6`) for down and loss, in every number, badge and chart.",
+      "**Do** emphasize with a soft tint fill (9–10% alpha) and full-strength text, as in the profit/loss badges and status chips.",
+      "**Do** set every figure in Pretendard at 700–800 with `tabular-nums`, with its unit in Mist at 13px/600.",
+      "**Do** lift top-level cards with `0 4px 20px rgba(0,0,0,0.03)` on Paper over the Canvas page, at 20px radius.",
+      "**Do** keep state transitions to about 0.15s on background, color and border.",
+      "**Do** apply `word-break: keep-all` to Korean prose and labels.",
+      "**Do** replace the sidebar with the bottom tab bar at ≤768px."
+    ],
+    "donts": [
+      "**Don't** use green or a green/red pair for price movement. Green is only a status tone.",
+      "**Don't** build a dark, dense trading-terminal look, with neon tickers or tightly packed grids.",
+      "**Don't** use crypto or hype styling, such as gradients on surfaces, glows or flashing color. The only allowed wash is the faint `#fff → #f5f9ff` on a highlighted stat chip or the landing hero.",
+      "**Don't** let default Bootstrap buttons, cards, tables or `.btn-primary` blue show through. Bootstrap is only for grid and utilities.",
+      "**Don't** give one card both a shadow and a border, or a card shadow above 0.04 alpha.",
+      "**Don't** introduce a second typeface. Noto Sans KR in `default_layout.html` is drift.",
+      "**Don't** put Toss Blue as an action color right beside a blue loss figure without a label. Pair them with text so brand blue and down blue can't be confused."
+    ]
+  }
+}

@@ -1,6 +1,7 @@
 package com.stocklog.web.controller;
 
 import com.stocklog.application.dashboard.service.MainDashboardService;
+import com.stocklog.modules.market.open.MarketCalendarService;
 import com.stocklog.modules.market.service.ExchangeService;
 import com.stocklog.modules.member.dto.response.MemberResponse;
 import com.stocklog.global.annotation.LoginUser;
@@ -16,6 +17,7 @@ public class MainController {
 
     private final MainDashboardService mainService;
     private final ExchangeService exchangeService;
+    private final MarketCalendarService calendarService;
 
     @GetMapping({"/", "/main"})
     public String mainPage(@LoginUser MemberResponse loginMember, Model model, HttpServletResponse response) {
@@ -26,6 +28,7 @@ public class MainController {
         Long memberId = (loginMember != null) ? loginMember.getId() : null;
         model.addAttribute("dashboard", mainService.getDashboardData(memberId));
         model.addAttribute("exchange", exchangeService.fetchExchangeRate());
+        model.addAttribute("marketCalendar", calendarService.getMarketCalendarResponse());
 
         return "main/main";
     }

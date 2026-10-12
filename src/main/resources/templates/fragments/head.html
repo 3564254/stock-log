@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<!--
+  모든 화면 <head> 공용 자산. <title> 바로 다음, 페이지 <style> 보다 앞에 둔다.
+    <th:block th:replace="~{fragments/head :: assets}"></th:block>
+
+  - 글꼴·Bootstrap·아이콘 → tokens.css(DESIGN.md 값) → base.css(셸·카드·입력창·모달)
+  - ui-a11y.js 는 Alpine 보다 먼저 실행돼야 해서 defer 없이 여기서 불러온다
+  - Alpine, 차트 라이브러리, Bootstrap JS 처럼 일부 화면만 쓰는 스크립트는 각 페이지에 둔다
+-->
+<th:block th:fragment="assets">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <script th:src="@{/js/ui-a11y.js}"></script>
+</th:block>
+</html>

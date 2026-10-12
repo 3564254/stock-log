@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<!--
+  매수·매도 검증 모달 (홈·포트폴리오 공용)
+
+  여는 법:  $dispatch('open-verify', { type: 'BUY' | 'SELL', stockCode, stockName,
+                                        ruleConditions?: { [ruleId]: '≤ 30' },   // 규칙 기준값 표시용
+                                        canCreateRule?: true })                 // 이 페이지에서 규칙 모달을 바로 열 수 있으면
+  결과 알림: window 'verify-done'  { type, stockCode, placeholder, summary, chartPhase, targetPrice, at }
+  규칙 만들기: canCreateRule이면 window 'verify-create-rule', 아니면 /portfolio?add=rule 로 이동
+
+  판정 모델: decision(PASS/FAIL)은 '활성 규칙 전부 통과' 여부라 규칙이 0개면 의미 없이 PASS가 된다.
+  그래서 규칙 충족 개수와 차트 신호(signalVerdict)를 따로 보여 주고, 승인/반려 같은 판정어는 쓰지 않는다.
+-->
+<div th:fragment="verifyModal" class="vm-root" x-data="verifyModal"
+     @open-verify.window="openWith($event.detail)"
+     @keydown.escape.window="open && close()">
+<style>
+    .vm-root {
+        display: contents;
+        --vm-blue: var(--toss-blue); --vm-blue-deep: var(--toss-blue-deep); --vm-blue-soft: var(--toss-blue-soft);
+        --vm-ink: var(--ink); --vm-body: var(--ink-body); --vm-sub: var(--slate);
+        --vm-line: var(--hairline); --vm-line-soft: var(--canvas); --vm-surface: var(--surface-soft);
+        --vm-good-text: var(--status-green-text); --vm-good-tint: var(--status-green-tint); --vm-good-line: var(--status-green-line);
+        --vm-caution-text: var(--caution-text); --vm-caution-tint: var(--caution-tint); --vm-caution-line: var(--caution-line);
+        /* 서버가 만든 리포트 HTML(generateVerdict)이 참조하는 변수 */
+        --text-dark: var(--ink); --text-secondary: var(--slate); --toss-orange: var(--caution-amber);
+    }
+    .vm-backdrop { position: fixed; inset: 0; z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 16px;
+                   background: var(--scrim); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+    .vm-sheet { background: #fff; width: 100%; max-width: 520px; max-height: 90vh; max-height: 90dvh; border-radius: 20px;
+                display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+                font-family: 'Pretendard', sans-serif; letter-spacing: -0.01em; color: var(--vm-ink); outline: none;
+                animation: vmIn .2s cubic-bezier(.2,.8,.2,1); }
+    @keyframes vmIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { .vm-sheet { animation: none; } }
+
+    .vm-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 20px 24px; border-bottom: 1px solid var(--vm-line-soft); }
+    .vm-stock { font-size: 13px; font-weight: 600; color: var(--vm-sub); margin-bottom: 2px; word-break: keep-all; }
+    .vm-title { font-size: 20px; font-weight: 800; letter-spacing: -0.03em; margin: 0; color: var(--vm-ink); }
+    .vm-close { width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 12px; background: transparent; color: var(--vm-sub);
+                display: inline-flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; transition: background-color .15s ease; }
+    .vm-close:hover { background: var(--vm-line-soft); color: var(--vm-ink); }
+    .vm-body { overflow-y: auto; padding: 24px; }
+
+    .vm-center { text-align: center; padding: 28px 0 8px; }
+    .vm-spinner { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--vm-line-soft); border-top-color: var(--vm-blue); margin: 0 auto; animation: vmSpin .8s linear infinite; }
+    @keyframes vmSpin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .vm-spinner { animation-duration: 2.4s; } }
+    .vm-state-title { font-size: 18px; font-weight: 700; color: var(--vm-ink); margin-top: 18px; word-break: keep-all; }
+    .vm-state-desc { font-size: 14px; font-weight: 500; color: var(--vm-sub); margin-top: 6px; line-height: 1.6; word-break: keep-all; }
+
+    .vm-block { margin-bottom: 24px; }
+    .vm-block-title { font-size: 15px; font-weight: 700; color: var(--vm-ink); margin-bottom: 10px; }
+
+    .vm-verdict { display: flex; gap: 14px; align-items: flex-start; padding: 18px 20px; border-radius: 14px; border: 1px solid var(--vm-line); }
+    .vm-verdict > i { font-size: 20px; line-height: 1.2; flex-shrink: 0; }
+    .vm-verdict-title { font-size: 18px; font-weight: 800; color: var(--vm-ink); letter-spacing: -0.02em; word-break: keep-all; }
+    .vm-verdict-sub { font-size: 14px; font-weight: 500; color: var(--vm-sub); margin-top: 4px; line-height: 1.5; word-break: keep-all; }
+    .vm-good    { background: var(--vm-good-tint);    border-color: var(--vm-good-line); }
+    .vm-good > i { color: var(--vm-good-text); }
+    .vm-caution { background: var(--vm-caution-tint); border-color: var(--vm-caution-line); }
+    .vm-caution > i { color: var(--vm-caution-text); }
+    .vm-neutral { background: var(--vm-surface);      border-color: var(--vm-line); }
+    .vm-neutral > i { color: var(--vm-sub); }
+
+    .vm-rules { border: 1px solid var(--vm-line); border-radius: 14px; overflow: hidden; margin-top: 12px; }
+    .vm-rule { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 13px 16px; }
+    .vm-rule + .vm-rule { border-top: 1px solid var(--vm-line-soft); }
+    .vm-rule-title { font-size: 14px; font-weight: 700; color: var(--vm-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .vm-rule-meta { font-size: 13px; font-weight: 500; color: var(--vm-sub); margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .vm-pill { flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+    .vm-pill-good    { background: var(--vm-good-tint);    color: var(--vm-good-text); }
+    .vm-pill-caution { background: var(--vm-caution-tint); color: var(--vm-caution-text); }
+
+    .vm-signal { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--vm-line); border-radius: 14px; }
+    .vm-signal-label { font-size: 15px; font-weight: 700; color: var(--vm-ink); }
+    .vm-signal-desc { font-size: 13px; font-weight: 500; color: var(--vm-sub); margin-top: 2px; word-break: keep-all; }
+    .vm-price { text-align: right; flex-shrink: 0; }
+    .vm-price-k { font-size: 12px; font-weight: 600; color: var(--vm-sub); }
+    .vm-price-v { font-size: 15px; font-weight: 800; color: var(--vm-ink); font-variant-numeric: tabular-nums; }
+
+    .vm-report { background: var(--vm-surface); border: 1px solid var(--vm-line); border-radius: 14px; padding: 18px 20px; font-size: 14px; font-weight: 500;
+                 line-height: 1.7; color: var(--vm-sub); word-break: keep-all; overflow-wrap: break-word; }
+    .vm-report.is-text { white-space: pre-line; }
+    .vm-foot { font-size: 13px; font-weight: 500; color: var(--vm-sub); line-height: 1.6; word-break: keep-all; margin: 0 0 16px; }
+
+    .vm-actions { display: flex; gap: 8px; }
+    .vm-actions > * { flex: 1 1 0; }
+    .vm-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 12px; padding: 15px 16px;
+              font-family: inherit; font-size: 16px; font-weight: 700; text-decoration: none; cursor: pointer; transition: background-color .15s ease; }
+    .vm-btn-solid { background: var(--vm-blue-deep); color: #fff; }
+    .vm-btn-solid:hover { background: var(--toss-blue-press); color: #fff; }
+    .vm-btn-soft { background: var(--vm-line-soft); color: var(--vm-sub); }
+    .vm-btn-soft:hover { background: var(--canvas-hover); color: var(--vm-ink); }
+    .vm-link { background: none; border: 0; padding: 0; font-family: inherit; font-size: 14px; font-weight: 700; color: var(--vm-blue-deep); text-decoration: none; cursor: pointer; }
+    .vm-link:hover { text-decoration: underline; text-underline-offset: 3px; color: var(--vm-blue-deep); }
+    .vm-btn:focus-visible, .vm-close:focus-visible, .vm-link:focus-visible { outline: 2px solid var(--vm-blue); outline-offset: 2px; }
+
+    @media (max-width: 768px) {
+        .vm-backdrop { align-items: flex-end; padding: 0; }
+        .vm-sheet { max-width: none; border-radius: 20px 20px 0 0; max-height: 92vh; max-height: 92dvh; padding-bottom: env(safe-area-inset-bottom); }
+        .vm-head { padding: 18px 20px; }
+        .vm-body { padding: 20px; }
+    }
+</style>
+
+    <div class="vm-backdrop" x-show="open" x-cloak @click.self="close()">
+        <div class="vm-sheet" role="dialog" aria-modal="true" aria-labelledby="vm-title" tabindex="-1"
+             x-ref="sheet" @keydown.tab="trapFocus($event)">
+
+            <div class="vm-head">
+                <div style="min-width: 0;">
+                    <div class="vm-stock" x-text="target?.stockName || ''"></div>
+                    <h2 class="vm-title" id="vm-title" x-text="type === 'BUY' ? '매수 검증' : '매도 검증'"></h2>
+                </div>
+                <button type="button" class="vm-close" @click="close()" aria-label="닫기"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+            </div>
+
+            <div class="vm-body">
+
+                <!-- 진행 중 -->
+                <div x-show="loading" class="vm-center" role="status" aria-live="polite">
+                    <div class="vm-spinner" aria-hidden="true"></div>
+                    <div class="vm-state-title" x-text="type === 'BUY' ? '매매 규칙과 차트 신호를 확인하고 있어요' : '보유 종목 정보를 확인하고 있어요'"></div>
+                    <div class="vm-state-desc">AI 리포트까지 만들어서 조금 걸릴 수 있어요</div>
+                </div>
+
+                <!-- 실패 -->
+                <div x-show="error && !loading" class="vm-center" role="alert">
+                    <i class="bi bi-exclamation-circle" style="font-size: 48px; color: var(--vm-caution-text);" aria-hidden="true"></i>
+                    <div class="vm-state-title">검증을 완료하지 못했어요</div>
+                    <div class="vm-state-desc" x-text="error"></div>
+                    <div class="vm-actions" style="margin-top: 24px;">
+                        <button type="button" class="vm-btn vm-btn-soft" @click="close()">닫기</button>
+                        <button type="button" class="vm-btn vm-btn-solid" @click="run()">다시 시도</button>
+                    </div>
+                </div>
+
+                <!-- 결과 -->
+                <div x-show="result && !loading" aria-live="polite">
+
+                    <!-- 매도 검증: 서버가 아직 고정 문구만 돌려준다 -->
+                    <template x-if="result && result.placeholder">
+                        <div class="vm-block">
+                            <div class="vm-verdict vm-neutral">
+                                <i class="bi bi-tools" aria-hidden="true"></i>
+                                <div>
+                                    <div class="vm-verdict-title">매도 검증은 아직 준비 중이에요</div>
+                                    <div class="vm-verdict-sub">지금은 실제 분석 결과를 제공하지 않아요. 매도 여부는 보유 수익률과 차트를 직접 확인해 판단해 주세요.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="result && !result.placeholder">
+                        <div>
+                            <!-- 내 규칙 -->
+                            <div class="vm-block">
+                                <div class="vm-block-title">내 매매 규칙</div>
+                                <div class="vm-verdict" :class="'vm-' + ruleSummary.tone">
+                                    <i class="bi" :class="ruleSummary.icon" aria-hidden="true"></i>
+                                    <div>
+                                        <div class="vm-verdict-title" x-text="ruleSummary.title"></div>
+                                        <div class="vm-verdict-sub" x-show="ruleSummary.sub" x-text="ruleSummary.sub"></div>
+                                        <button type="button" class="vm-link" style="margin-top: 8px;" x-show="details.length === 0" @click="createRule()">
+                                            규칙 만들기 <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="vm-rules" x-show="details.length > 0">
+                                    <template x-for="(d, i) in sortedDetails" :key="d.ruleId || i">
+                                        <div class="vm-rule">
+                                            <div style="min-width: 0;">
+                                                <div class="vm-rule-title" x-text="d.ruleTitle"></div>
+                                                <div class="vm-rule-meta" x-text="ruleMeta(d)"></div>
+                                            </div>
+                                            <span class="vm-pill" :class="d.passed ? 'vm-pill-good' : 'vm-pill-caution'">
+                                                <i class="bi" :class="d.passed ? 'bi-check-lg' : 'bi-dash-lg'" aria-hidden="true"></i>
+                                                <span x-text="d.passed ? '충족' : '미충족'"></span>
+                                            </span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- 차트 신호 (매수만) -->
+                            <div class="vm-block" x-show="type === 'BUY'">
+                                <div class="vm-block-title">차트 진입 신호</div>
+                                <div class="vm-signal">
+                                    <div style="min-width: 0;">
+                                        <div class="vm-signal-label" x-text="signalMeta.label"></div>
+                                        <div class="vm-signal-desc" x-text="signalMeta.desc"></div>
+                                    </div>
+                                    <div class="vm-price" x-show="Number(result?.targetPrice) > 0">
+                                        <div class="vm-price-k">1차 진입가</div>
+                                        <div class="vm-price-v" x-text="formatPrice(result?.targetPrice)"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- AI 리포트 -->
+                            <div class="vm-block" x-show="result?.verdictComment">
+                                <div class="vm-block-title">AI 분석 리포트</div>
+                                <div class="vm-report" :class="reportIsHtml ? '' : 'is-text'" x-html="reportHtml"></div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <p class="vm-foot">
+                        <span x-text="analyzedAt ? analyzedAt + ' 기준 · ' : ''"></span>내 규칙과 차트 지표로 계산한 참고 정보예요.<br>
+                        투자 판단과 책임은 본인에게 있어요.
+                    </p>
+
+                    <!-- 다음 행동: 규칙이 있고 모두 충족했을 때만 '기록'을 앞세운다 -->
+                    <template x-if="isRecordFirst">
+                        <div class="vm-actions">
+                            <button type="button" class="vm-btn vm-btn-soft" @click="close()">닫기</button>
+                            <a class="vm-btn vm-btn-solid" :href="recordUrl" x-text="type === 'BUY' ? '보유 종목에 추가' : '매도 기록하기'"></a>
+                        </div>
+                    </template>
+                    <template x-if="!isRecordFirst">
+                        <div>
+                            <div class="vm-actions">
+                                <button type="button" class="vm-btn vm-btn-soft" @click="run()">다시 검증</button>
+                                <button type="button" class="vm-btn vm-btn-solid" @click="close()">닫기</button>
+                            </div>
+                            <div style="text-align: center; margin-top: 14px;" x-show="type === 'BUY'">
+                                <a class="vm-link" :href="recordUrl">그래도 매수했다면 보유 종목에 추가해 두세요</a>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script th:inline="none">
+    document.addEventListener('alpine:init', () => {
+        // IndicatorType enum과 같은 키
+        const INDICATOR_SHORT = {
+            STOCK_SCORE: '종목 점수', MA5: '5일선', MA20: '20일선', MA50: '50일선',
+            DIST_MA5: '5일선 이격도', DIST_MA20: '20일선 이격도', RSI: 'RSI', ADX: 'ADX', ATR: 'ATR',
+            BAND_WIDTH: '볼린저 대역폭', VOLUME: '거래량', UPTREND: '정배열', MACRO_UPTREND: '장기 상승',
+            BOLLINGER_SQUEEZE: '볼린저 응축', VOLUME_BULLISH: '거래량 폭발', NEW_HIGH_5D: '단기 고점',
+            HIGHER_LOW: '저점 방어', MACD_GOLDEN_CROSS: 'MACD 골든 크로스'
+        };
+        // signal.trading.Verdict
+        const SIGNALS = {
+            ACTIONABLE:    { label: '진입 조건 성립', desc: '진입 구간 안에서 반등이 확인됐고 손익비도 기준을 넘었어요' },
+            WAIT_FOR_ZONE: { label: '눌림 대기',     desc: '현재가가 진입 구간보다 위에 있어요' },
+            WAIT_TRIGGER:  { label: '반등 확인 전',  desc: '진입 구간 안이지만 반등 캔들이 아직 나오지 않았어요' },
+            CHASE_RISK:    { label: '추격 구간',     desc: '돌파·탈환 구간을 이미 벗어났어요' },
+            RR_TOO_LOW:    { label: '손익비 부족',   desc: '예상 손실에 비해 기대 수익이 작아요' },
+            NO_SETUP:      { label: '진입 계획 없음', desc: '지금 차트로는 진입 계획을 세울 수 없어요' }
+        };
+
+        const escapeHtml = (s) => String(s ?? '')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        const looksLikeHtml = (s) => /<\/?(div|b|br|strong|span|p)\b/i.test(s || '');
+        // 서버가 만든 리포트 HTML은 허용 태그와 안전한 style만 남긴다
+        const ALLOWED_TAGS = new Set(['B', 'STRONG', 'EM', 'I', 'BR', 'DIV', 'SPAN', 'P', 'HR', 'UL', 'OL', 'LI']);
+        const sanitizeHtml = (html) => {
+            const doc = new DOMParser().parseFromString(`<div>${html}</div>`, 'text/html');
+            const root = doc.body.firstElementChild;
+            const walk = (node) => {
+                [...node.children].forEach(el => {
+                    if (!ALLOWED_TAGS.has(el.tagName)) { el.replaceWith(doc.createTextNode(el.textContent)); return; }
+                    [...el.attributes].forEach(a => {
+                        if (a.name !== 'style' || /url\s*\(|expression|javascript:/i.test(a.value)) el.removeAttribute(a.name);
+                    });
+                    walk(el);
+                });
+            };
+            walk(root);
+            return root.innerHTML;
+        };
+
+        Alpine.data('verifyModal', () => ({
+            open: false,
+            type: 'BUY',
+            target: null,
+            ruleConditions: {},
+            canCreateRule: false,
+            loading: false,
+            result: null,
+            error: '',
+            analyzedAt: '',
+            token: 0,
+            returnFocus: null,
+
+            get details() { return Array.isArray(this.result?.details) ? this.result.details : []; },
+            get sortedDetails() { return [...this.details].sort((a, b) => Number(a.passed) - Number(b.passed)); },
+            get passedCount() { return this.details.filter(d => d.passed).length; },
+            get ruleSummary() {
+                const total = this.details.length, passed = this.passedCount;
+                if (total === 0) {
+                    return { tone: 'neutral', icon: 'bi-journal-plus', title: '켜 둔 매매 규칙이 없어요',
+                             sub: '규칙을 만들어 두면 매수 전에 하나씩 대조해 드려요.' };
+                }
+                if (passed === total) {
+                    return { tone: 'good', icon: 'bi-check-circle-fill', title: `내 규칙 ${total}개를 모두 충족했어요`, sub: '' };
+                }
+                return { tone: 'caution', icon: 'bi-exclamation-circle-fill',
+                         title: `내 규칙 ${total}개 중 ${passed}개를 충족했어요`,
+                         sub: `아직 ${total - passed}개 규칙이 기준에 못 미쳐요.` };
+            },
+            get signalMeta() {
+                return SIGNALS[this.result?.signalVerdict]
+                    || { label: '데이터 부족', desc: '차트 데이터가 부족해 진입 신호를 판단하지 못했어요' };
+            },
+            get isRecordFirst() {
+                if (!this.result) return false;
+                if (this.result.placeholder) return true;
+                return this.details.length > 0 && this.passedCount === this.details.length;
+            },
+            get recordUrl() {
+                const code = encodeURIComponent(this.target?.stockCode || '');
+                const name = encodeURIComponent(this.target?.stockName || '');
+                return this.type === 'BUY'
+                    ? `/portfolio?add=holding&code=${code}&name=${name}`
+                    : `/trade?code=${code}&name=${name}`;
+            },
+            get reportIsHtml() { return looksLikeHtml(this.result?.verdictComment); },
+            get reportHtml() {
+                const text = this.result?.verdictComment;
+                if (!text) return '';
+                if (looksLikeHtml(text)) return sanitizeHtml(text);
+                return escapeHtml(text)
+                    .replace(/\[(.*?)\]/g, '<strong style="color:var(--ink);">[$1]</strong>')
+                    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--ink);">$1</strong>')
+                    .replace(/-{5,}/g, '<hr style="border:none; border-top:1px solid var(--hairline); margin:14px 0;">');
+            },
+            // 서버 결과 한 줄 요약 (목록의 '최근 검증' 표시용)
+            get summary() {
+                if (!this.result || this.result.placeholder) return '';
+                const total = this.details.length, passed = this.passedCount;
+                if (total === 0) return '규칙 없음';
+                return passed === total ? `규칙 ${total}개 모두 충족` : `규칙 ${passed}/${total} 충족`;
+            },
+
+            ruleMeta(d) {
+                const name = INDICATOR_SHORT[d.indicatorType] || d.indicatorType || '지표';
+                const cond = this.ruleConditions?.[d.ruleId];
+                return cond ? `${name} · 기준 ${cond}` : name;
+            },
+            formatPrice(val) {
+                const n = Number(val);
+                if (!isFinite(n) || n <= 0) return '-';
+                const code = this.target?.stockCode || '';
+                return /^\d+$/.test(code)
+                    ? new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 0 }).format(n) + '원'
+                    : '$' + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+            },
+
+            openWith(detail) {
+                if (!detail?.stockCode) return;
+                this.type = detail.type === 'SELL' ? 'SELL' : 'BUY';
+                this.target = { stockCode: detail.stockCode, stockName: detail.stockName || detail.stockCode };
+                this.ruleConditions = detail.ruleConditions || {};
+                this.canCreateRule = !!detail.canCreateRule;
+                this.returnFocus = document.activeElement;
+                this.open = true;
+                document.body.style.overflow = 'hidden';
+                this.$nextTick(() => this.$refs.sheet?.focus());
+                this.run();
+            },
+
+            close() {
+                this.token++;                 // 진행 중인 요청의 결과는 버린다
+                this.open = false;
+                this.loading = false;
+                this.result = null;
+                this.error = '';
+                this.analyzedAt = '';
+                document.body.style.overflow = '';
+                const el = this.returnFocus;
+                this.returnFocus = null;
+                if (el && el.isConnected && typeof el.focus === 'function') el.focus();
+            },
+
+            createRule() {
+                if (this.canCreateRule) {
+                    this.close();
+                    window.dispatchEvent(new CustomEvent('verify-create-rule'));
+                } else {
+                    window.location.href = '/portfolio?add=rule';
+                }
+            },
+
+            trapFocus(e) {
+                const nodes = [...this.$refs.sheet.querySelectorAll('button, a[href], [tabindex]:not([tabindex="-1"])')]
+                    .filter(el => !el.disabled && el.offsetParent !== null);
+                if (nodes.length === 0) { e.preventDefault(); return; }
+                const first = nodes[0], last = nodes[nodes.length - 1];
+                if (e.shiftKey && (document.activeElement === first || document.activeElement === this.$refs.sheet)) {
+                    e.preventDefault(); last.focus();
+                } else if (!e.shiftKey && document.activeElement === last) {
+                    e.preventDefault(); first.focus();
+                }
+            },
+
+            async run() {
+                if (this.loading || !this.target?.stockCode) return;
+                const token = ++this.token;
+                const type = this.type, code = this.target.stockCode;
+                this.loading = true;
+                this.result = null;
+                this.error = '';
+
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 60000);   // 차트 분석 + AI 리포트까지 기다린다
+                try {
+                    const res = await fetch(type === 'BUY' ? '/api/portfolio/verify/buy' : '/api/portfolio/verify/sell', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({ targetId: code }),
+                        signal: controller.signal
+                    });
+                    if (token !== this.token) return;
+
+                    const isJson = (res.headers.get('content-type') || '').includes('application/json');
+                    const sentToLogin = res.redirected && res.url.includes('/auth/login');
+                    if (res.status === 401 || res.status === 403 || sentToLogin) {
+                        this.error = '로그인이 만료됐어요. 다시 로그인한 뒤 검증해 주세요.';
+                        return;
+                    }
+                    if (res.status === 429) {
+                        this.error = '검증 요청이 몰려 있어요. 1분쯤 뒤에 다시 시도해 주세요.';
+                        return;
+                    }
+                    if (!res.ok || !isJson) {
+                        this.error = '서버가 검증 결과를 만들지 못했어요. 잠시 후 다시 시도해 주세요.';
+                        return;
+                    }
+
+                    const raw = await res.json();
+                    if (token !== this.token) return;
+                    if (!raw || typeof raw !== 'object') {
+                        this.error = '서버가 검증 결과를 만들지 못했어요. 잠시 후 다시 시도해 주세요.';
+                        return;
+                    }
+                    // decision이 없으면 매도 검증 임시 응답({ status, feedback })이다 — 실제 결과처럼 보여 주지 않는다
+                    this.result = raw.decision ? raw : { placeholder: true, details: [] };
+                    this.analyzedAt = new Intl.DateTimeFormat('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
+
+                    window.dispatchEvent(new CustomEvent('verify-done', { detail: {
+                        type, stockCode: code,
+                        placeholder: !!this.result.placeholder,
+                        summary: this.summary,
+                        chartPhase: raw.chartPhase || null,
+                        targetPrice: raw.targetPrice ?? null,
+                        at: this.analyzedAt
+                    } }));
+                } catch (err) {
+                    if (token !== this.token) return;
+                    console.error('검증 통신 오류:', err);
+                    this.error = err.name === 'AbortError'
+                        ? '검증이 1분 넘게 걸려 중단했어요. 잠시 후 다시 시도해 주세요.'
+                        : '서버에 연결하지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.';
+                } finally {
+                    clearTimeout(timer);
+                    if (token === this.token) this.loading = false;
+                }
+            }
+        }));
+    });
+</script>
+</div>
+</html>

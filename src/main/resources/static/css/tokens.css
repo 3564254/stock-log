@@ -1,0 +1,93 @@
+/*
+  StockLog 디자인 토큰 — DESIGN.md 의 값을 CSS 변수로 옮긴 단일 원본.
+  색을 바꿀 때는 이 파일과 DESIGN.md 를 함께 고친다. 페이지는 hex 대신 이 변수를 쓴다.
+
+  색 규칙 (DESIGN.md · The Mark-and-Text Rule)
+  - 채도 높은 값(toss-blue, toss-red, status-green, caution-amber, mist)은 '표시'용: 글자 없는 채움, 막대, 점, 링, 차트 선, 포커스 테두리
+  - 진한 값(*-deep, *-text, label-text)은 모든 글자·숫자와, 흰 글자를 얹는 채움용
+  - 빨강 = 상승·수익, 파랑 = 하락·손실 (한국 시장 관례). 상태(규칙 충족, 국면)에는 빨강·파랑을 쓰지 않는다
+*/
+:root {
+    /* ── 브랜드 · 방향 ── */
+    --toss-blue: #3182f6;               /* 표시용: 포커스 링, 차트, 점, 아이콘 */
+    --toss-blue-deep: #1b64da;          /* 파란 글자, 흰 글자를 얹는 기본 버튼 채움 (흰색 대비 5.4:1) */
+    --toss-blue-press: #1957c2;         /* 기본 버튼 hover · 눌림 */
+    --toss-blue-soft: rgba(49, 130, 246, 0.09);
+    --toss-blue-tint: #f0f6ff;
+    --toss-blue-tint-line: #dbeafe;
+
+    --toss-red: #f04452;                /* 표시용: 상승 막대·점·차트 */
+    --toss-red-deep: #cf2c3b;           /* 빨간 글자: 수익 숫자, 매도, 오류, 로그아웃 */
+    --toss-red-soft: rgba(240, 68, 82, 0.09);
+    --toss-red-tint: #fff4f4;
+    --toss-red-tint-line: #ffe5e5;
+
+    /* ── 상태 (가격 방향과 무관) : 초록 → 회색 → 주황 → 진한 주황 + 점 ── */
+    --status-green: #05c072;
+    --status-green-text: #04784a;
+    --status-green-soft: rgba(5, 192, 114, 0.10);
+    --status-green-tint: #eefaf4;
+    --status-green-line: #c9eedc;
+    --caution-amber: #f5a623;           /* 점·아이콘 전용 */
+    --caution-text: #9a5800;
+    --caution-tint: #fff8ec;
+    --caution-line: #fbe3b8;
+    --alert-text: #7a4300;
+    --alert-tint: #fdebd3;
+    --alert-line: #f6d2a6;
+
+    /* ── 회색 사다리 ── */
+    --ink: #191f28;                     /* 제목, 숫자, 본문 */
+    --ink-body: #333d4b;
+    --slate: #4e5968;                   /* 보조 글자, 기본 내비 항목 */
+    --slate-mid: #6b7684;               /* 아바타 채움, 3차 아이콘 (글자 X) */
+    --label-text: #626c7a;              /* 라벨·캡션·단위 — 모든 면에서 4.5:1 이상인 가장 옅은 회색 */
+    --mist: #8b95a1;                    /* 아이콘·셰브런·점 전용 (글자 X) */
+    --fog: #b0b8c1;
+    --haze: #d1d6db;
+    --hairline: #e5e8eb;
+    --canvas: #f2f4f6;
+    --canvas-hover: #e8ebef;            /* 고스트 버튼·회색 칸 hover */
+    --surface-soft: #f9fafb;
+    --paper: #ffffff;
+
+    /* ── 모서리 ── */
+    --radius-xs: 4px;
+    --radius-sm: 8px;                   /* 버튼, 손익 배지, 드롭다운 항목 */
+    --radius-md: 12px;                  /* 데이터 칸, 내비 항목, 입력창 */
+    --radius-field: 14px;
+    --radius-lg: 16px;                  /* 카드(현행), 모달 */
+    --radius-xl: 20px;
+    --radius-pill: 999px;
+
+    /* ── 그림자 ── */
+    --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.03);
+    --shadow-raised: 0 1px 4px rgba(0, 0, 0, 0.05);
+    --shadow-dropdown: 0 12px 32px rgba(0, 0, 0, 0.08);
+    --shadow-modal: 0 20px 50px rgba(0, 0, 0, 0.15);
+    --focus-halo: 0 0 0 4px rgba(49, 130, 246, 0.10);
+    --scrim: rgba(25, 31, 40, 0.5);
+
+    /* ── 글꼴 ── */
+    --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+
+    /* ── 레이아웃 (페이지가 자기 :root 에서 덮어쓴다) ── */
+    --sidebar-width: 250px;
+    --content-max: 1200px;              /* 본문 최대 폭 */
+    --content-top: 32px;                /* 헤더 아래 본문 시작 여백 */
+    --content-top-m: 16px;              /* 768px 이하 */
+    --page-top: 0px;
+    --page-gutter: 60px;
+    --page-bottom: 80px;
+    --page-bottom-m: 16px;
+    --card-radius: var(--radius-lg);
+    --card-pad: 28px;
+    --card-pad-m: 20px;
+    --sheet-max: 480px;
+
+    /* ── 예전 페이지 변수 이름 (새 코드에서는 위 이름을 쓴다) ── */
+    --toss-gray-bg: var(--canvas);
+    --toss-green: var(--status-green);
+    --toss-warning: var(--caution-amber);
+    --text-dark: var(--ink);
+}

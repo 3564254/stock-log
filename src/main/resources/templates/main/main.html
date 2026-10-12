@@ -42,6 +42,15 @@
         .stat-chip.hot { border-color: rgba(49,130,246,0.35); background: linear-gradient(180deg, #fff 0%, #f5f9ff 100%); }
         .stat-chip.hot .v { color: var(--toss-blue-deep); }
 
+        /* ── 장 운영 상태 칩 ── */
+        .home-hero > div:first-child { min-width: 0; }
+        .mkt-status { display: flex; gap: 8px; margin-top: 12px; min-height: 30px; flex-wrap: wrap; }
+        .mkt-chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px;
+                    background: #fff; border: 1px solid var(--line); font-size: 13px; font-weight: 600; color: var(--text-sub); white-space: nowrap; }
+        .mkt-chip b { color: var(--text-dark); font-weight: 700; }
+        .mkt-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: #b0b8c1; flex: none; }
+        .mkt-chip.on .dot { background: var(--status-green, #12b886); box-shadow: 0 0 0 3px rgba(18,184,134,0.18); }
+
         /* ── 검색 ── */
         .search-box { display: flex; align-items: center; background: white; padding: 14px 20px; border: 1px solid var(--line); border-radius: 14px; transition: border-color .15s, box-shadow .15s; }
         .search-box.focused { border-color: var(--toss-blue); box-shadow: var(--focus-halo); }
@@ -120,6 +129,10 @@
             .hero-title { font-size: 21px; }
             .stat-chips { width: 100%; }
             .stat-chip { flex: 1; min-width: 0; padding: 10px 14px; }
+            .home-hero > div:first-child { width: 100%; }
+            .mkt-status { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-top: 10px; }
+            .mkt-status::-webkit-scrollbar { display: none; }
+            .mkt-chip { font-size: 12px; height: 28px; padding: 0 10px; }
             .watch-item { padding: 14px; gap: 10px; }
             /* 포트폴리오 행: 한 줄에 [아이콘 | 이름·평단 | 수익률 | 매도 검증] */
             .section-head { flex-wrap: wrap; gap: 6px 12px; margin-bottom: 14px; }
@@ -190,6 +203,19 @@
                     <div>
                         <h2 class="hero-title">시장 모니터링 홈</h2>
                         <div class="hero-sub">시장의 흐름과 내 종목 상태를 한눈에 확인하세요</div>
+                        <!-- 장 운영 상태: 처음은 model 값, 장 상태가 바뀌는 시각에만 /api/marketData/calendar 재조회 -->
+                        <div class="mkt-status" x-data="marketStatus" th:if="${marketCalendar != null}">
+                            <span class="mkt-src" hidden
+                                  th:each="c : ${ {marketCalendar.KrMarketCalendar(), marketCalendar.UsMarketCalendar()} }"
+                                  th:if="${c != null}"
+                                  th:attr="data-nation=${c.nation()}, data-type=${c.marketOpenType()}, data-open=${c.isMarketOpen()},
+                                           data-start=${c.startTime()}, data-end=${c.endTime()}"></span>
+                            <template x-for="m in items" :key="m.nation">
+                                <span class="mkt-chip" :class="m.isMarketOpen ? 'on' : ''">
+                                    <i class="dot" aria-hidden="true"></i><b x-text="nationLabel(m.nation)"></b><span x-text="statusText(m)"></span>
+                                </span>
+                            </template>
+                        </div>
                     </div>
                     <div class="stat-chips">
                         <div class="stat-chip">
@@ -441,6 +467,80 @@
 <script th:inline="javascript">
     document.addEventListener('alpine:init', () => {
         const initialWatchList = /*[[${dashboard?.watchListResponse}]]*/ [];
+
+        // ── 장 운영 상태 칩 ──
+        Alpine.data('marketStatus', () => ({
+            items: [],
+            timer: null,
+            TYPE: { DAY_MARKET: '데이마켓', PRE_MARKET: '프리마켓', REGULAR_MARKET: '정규장', AFTER_MARKET: '애프터마켓' },
+
+            init() {
+                this.items = [...this.$el.querySelectorAll('.mkt-src')].map(el => ({
+                    nation: el.dataset.nation,
+                    marketOpenType: el.dataset.type,
+                    isMarketOpen: el.dataset.open === 'true',
+                    startTime: el.dataset.start || null,
+                    endTime: el.dataset.end || null,
+                }));
+                this.schedule();
+            },
+
+            // 서버 시각은 KST LocalDateTime(오프셋 없음)
+            toDate(s) { return s ? new Date(/[zZ]|[+-]\d\d:\d\d$/.test(s) ? s : s + '+09:00') : null; },
+            kstDay(d) { return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }); },
+            hm(d) { return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' }); },
+            dayPrefix(d) {
+                const now = new Date();
+                if (this.kstDay(d) === this.kstDay(now)) return '';
+                if (this.kstDay(d) === this.kstDay(new Date(now.getTime() + 86400000))) return '내일 ';
+                const p = Object.fromEntries(new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', weekday: 'short' })
+                    .formatToParts(d).map(x => [x.type, x.value]));
+                return `${p.month}/${p.day}(${p.weekday}) `;
+            },
+
+            nationLabel(n) { return n === 'KR' ? '국내' : n === 'US' ? '미국' : n; },
+            statusText(m) {
+                if (m.isMarketOpen) {
+                    const e = this.toDate(m.endTime);
+                    return (this.TYPE[m.marketOpenType] || '장 운영 중') + (e ? ` · ${this.hm(e)} 마감` : '');
+                }
+                const s = this.toDate(m.startTime);
+                return s ? `장 마감 · ${this.dayPrefix(s)}${this.hm(s)} 개장` : '장 정보 없음';
+            },
+
+            // 가장 먼저 상태가 바뀌는 시각(열림→마감 시각, 닫힘→개장 시각)에 한 번만 재조회
+            schedule(fallbackMs = 60 * 60 * 1000) {
+                clearTimeout(this.timer);
+                const now = Date.now();
+                const next = this.items
+                    .map(m => this.toDate(m.isMarketOpen ? m.endTime : m.startTime))
+                    .filter(d => d && d.getTime() > now)
+                    .reduce((a, d) => Math.min(a, d.getTime()), Infinity);
+                const delay = Math.min(next - now + 5000, fallbackMs);   // 5초 여유, 최대 1시간마다 확인(PC 절전 대비)
+                this.timer = setTimeout(() => this.refresh(), delay);
+            },
+
+            async refresh() {
+                try {
+                    const res = await fetch('/api/marketData/calendar', { headers: { 'Accept': 'application/json' } });
+                    if (!res.ok) throw new Error(res.status);
+                    const d = await res.json();
+                    const norm = o => o && ({
+                        nation: o.nation,
+                        marketOpenType: o.marketOpenType,
+                        isMarketOpen: !!(o.isMarketOpen ?? o.marketOpen),
+                        startTime: o.startTime, endTime: o.endTime,
+                    });
+                    const list = [norm(d.krMarketCalendar ?? d.KrMarketCalendar), norm(d.usMarketCalendar ?? d.UsMarketCalendar)].filter(Boolean);
+                    if (list.length) this.items = list;
+                    this.schedule();
+                } catch (e) {
+                    this.schedule(5 * 60 * 1000);   // 실패 시 기존 표시 유지, 5분 뒤 재시도
+                }
+            },
+
+            destroy() { clearTimeout(this.timer); },
+        }));
 
         Alpine.data('unifiedDashboardApp', () => ({
             sidebarOpen: true,

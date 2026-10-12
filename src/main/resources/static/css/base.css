@@ -1,0 +1,120 @@
+/*
+  StockLog 공용 바탕 — 모든 화면이 공유하는 셸과 기본 요소. tokens.css 다음에 불러온다.
+  페이지별 차이는 페이지 :root 의 레이아웃 변수(--content-max, --card-pad …)로 주고,
+  그 밖의 페이지 전용 규칙은 각 페이지 <style> 에 둔다.
+*/
+
+/* ── 문서 ── */
+body {
+    margin: 0;
+    background-color: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+[x-cloak] { display: none !important; }
+::selection { background: var(--toss-blue-tint-line); color: var(--ink); }
+
+/* 키보드 포커스: 모든 조작 요소에 같은 링. 개별 규칙(:focus-visible)이 있으면 그쪽이 이긴다 */
+:where(a, button, input, select, textarea, summary, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
+    outline: 2px solid var(--toss-blue);
+    outline-offset: 2px;
+}
+
+/* ── 셸: 사이드바(fragments/sidebar) 오른쪽 본문 ── */
+.layout-wrapper { display: flex; min-height: 100vh; }
+.main-content {
+    flex-grow: 1;
+    min-width: 0;
+    margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+    padding: var(--page-top) var(--page-gutter) var(--page-bottom);
+    transition: margin-left .3s ease, width .3s ease;
+}
+.main-content.expanded { margin-left: 80px; width: calc(100% - 80px); }
+.content-container {
+    width: 100%;
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding-top: var(--content-top);
+}
+
+/* ── 카드 ── */
+.toss-card {
+    background: var(--paper);
+    border: 1px solid var(--hairline);
+    border-radius: var(--card-radius);
+    padding: var(--card-pad);
+    margin-bottom: 24px;
+}
+
+/* ── 입력창 ── */
+.toss-input {
+    width: 100%;
+    border: 1px solid var(--hairline);
+    background: var(--surface-soft);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    outline: none;
+    transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease;
+}
+.toss-input:focus { border-color: var(--toss-blue); background: var(--paper); box-shadow: var(--focus-halo); }
+.toss-input:focus-visible { outline: none; }
+.toss-input[aria-invalid="true"] { border-color: var(--toss-red-deep); }
+
+/* ── 기본 버튼 (단일 주요 동작: 로그인, 저장) ── */
+.btn-primary-toss {
+    display: block;
+    width: 100%;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--toss-blue-deep);
+    color: #fff;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 16px;
+    transition: background-color .15s ease;
+}
+.btn-primary-toss:hover { background: var(--toss-blue-press); color: #fff; }
+.btn-primary-toss:disabled { opacity: .7; cursor: progress; }
+
+/* ── 모달 (role="dialog" + x-dialog, static/js/ui-a11y.js) ── */
+.modal-backdrop-custom {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--scrim);
+}
+.modal-sheet {
+    width: 100%;
+    max-width: var(--sheet-max);
+    max-height: 90vh;
+    overflow-y: auto;
+    background: var(--paper);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: var(--shadow-modal);
+}
+.modal-sheet:focus { outline: none; }
+.modal-sheet .btn-close:focus-visible { outline: 2px solid var(--toss-blue); outline-offset: 2px; box-shadow: none; }
+
+/* ── 768px 이하: 사이드바 대신 하단 탭바 (fragments/sidebar) ── */
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 16px 16px var(--page-bottom-m);
+    }
+    .content-container { padding-top: var(--content-top-m); }
+    .toss-card { padding: var(--card-pad-m); }
+    .toss-input { font-size: 16px; }   /* iOS 확대 방지 */
+}

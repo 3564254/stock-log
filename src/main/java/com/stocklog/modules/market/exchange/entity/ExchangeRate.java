@@ -12,10 +12,6 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-/**
- * 메인 환율 (단일 행, id = 1).
- * 방향: 1 baseCurrency = rate quoteCurrency  (예: 1 USD = 1,385.20 KRW)
- */
 @Entity
 @Table(name = "exchange_rate")
 @Getter
@@ -48,7 +44,6 @@ public class ExchangeRate extends BaseTimeEntity {
     private LocalDateTime validFrom;
     private LocalDateTime validUntil;
 
-    /** 외부 API에서 받아온 시각 (갱신 판단용) */
     private LocalDateTime fetchedAt;
 
     public static ExchangeRate from(ExchangeRateInfo info, LocalDateTime now) {
@@ -57,7 +52,6 @@ public class ExchangeRate extends BaseTimeEntity {
         return e;
     }
 
-    /** 같은 행을 덮어쓴다 (영속 상태면 더티 체킹으로 UPDATE) */
     public void update(ExchangeRateInfo info, LocalDateTime now) {
         this.baseCurrency = parseOr(info.baseCurrency(), Currency.USD);
         this.quoteCurrency = parseOr(info.quoteCurrency(), Currency.KRW);
@@ -74,7 +68,6 @@ public class ExchangeRate extends BaseTimeEntity {
         return rate != null && rate.signum() > 0;
     }
 
-    /** 유효기간이 있으면 그 기준, 없으면 받아온 지 DEFAULT_TTL 이내인지로 판단 */
     public boolean isFresh(LocalDateTime now) {
         if (!hasValidRate()) return false;
         if (validUntil != null) return now.isBefore(validUntil);

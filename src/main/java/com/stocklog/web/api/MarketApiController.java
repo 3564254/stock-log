@@ -1,14 +1,12 @@
 package com.stocklog.web.api;
 
-import com.stocklog.infra.toss.exchange.TossExchangeRateProvider;
 import com.stocklog.modules.market.exchange.dto.ExchangeRateInfo;
-import com.stocklog.modules.market.exchange.provider.ExchangeRateProvider;
 import com.stocklog.modules.market.index.dto.IndexDto;
+import com.stocklog.modules.market.open.MarketCalendarService;
+import com.stocklog.modules.market.open.MarketCalendarResponse;
 import com.stocklog.modules.market.service.MarketFacadeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class MarketApiController {
 
     private final MarketFacadeService marketFacadeService;
+    private final MarketCalendarService calendarService;
 
     @GetMapping("/exchange")
     public ExchangeRateInfo getExchangeRate() {
@@ -32,5 +31,8 @@ public class MarketApiController {
         return marketFacadeService.getIndexDto(seriesId);
     }
 
-
+    @GetMapping("/calendar")
+    public MarketCalendarResponse getMarketCalendarResponse() {
+        return calendarService.getMarketCalendarResponse();
+    }
 }
