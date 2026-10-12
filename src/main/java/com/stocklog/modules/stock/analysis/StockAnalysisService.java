@@ -2,9 +2,8 @@ package com.stocklog.modules.stock.analysis;
 
 import com.stocklog.modules.common.finance.context.MarketContext;
 import com.stocklog.modules.common.type.ChartPhase;
-import com.stocklog.modules.stock.analysis.diagnosis.TradingSignalResult;
+import com.stocklog.modules.stock.analysis.signal.trading.TradingSignalResult;
 import com.stocklog.modules.stock.analysis.result.StockAnalysisResult;
-import com.stocklog.modules.stock.analysis.service.StockFacadeAnalyzer;
 import com.stocklog.modules.stock.application.response.StockSnapshot;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

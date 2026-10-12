@@ -1,4 +1,4 @@
-package com.stocklog.modules.stock.analysis.domain.valuation;
+package com.stocklog.modules.stock.analysis.score.band;
 
 import com.stocklog.modules.common.type.Nation;
 import org.springframework.stereotype.Component;

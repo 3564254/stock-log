@@ -1,16 +1,16 @@
-package com.stocklog.modules.stock.analysis.diagnosis;
+package com.stocklog.modules.stock.analysis.phase;
 
 import com.stocklog.modules.common.finance.context.MarketContext;
 import com.stocklog.modules.common.finance.indicator.phase.PhaseIndicators;
 import com.stocklog.modules.common.type.ChartPhase;
-import com.stocklog.modules.stock.analysis.diagnosis.legacy.signal.SignalResultBuilder;
+import com.stocklog.modules.stock.analysis.signal.SignalStrengthBuilder;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class SpecificSignalsBuilder {
+public class PhaseSignals {
 
-    public static void addPhaseSpecificSignals(ChartPhase phase, MarketContext ctx, SignalResultBuilder builder) {
+    public static void addPhaseSpecificSignals(ChartPhase phase, MarketContext ctx, SignalStrengthBuilder builder) {
         evaluateUptrendSignal(phase, ctx, builder);
 
         double price = ctx.currentPrice();
@@ -70,13 +70,13 @@ public class SpecificSignalsBuilder {
         }
     }
 
-    private static void evaluateUptrendSignal(ChartPhase phase, MarketContext ctx, SignalResultBuilder builder) {
+    private static void evaluateUptrendSignal(ChartPhase phase, MarketContext ctx, SignalStrengthBuilder builder) {
         if (ctx.priceAction().isUptrend() && phase != ChartPhase.DANGER_ZONE && phase != ChartPhase.WATCH && phase != ChartPhase.DOWNTREND_CONFIRMED) {
             builder.addBuySignal("✅ [추세 확립] 정배열 및 20일선 우상향 기울기 확보");
         }
     }
 
-    private static void classifyEntryType(ChartPhase phase, MarketContext ctx, SignalResultBuilder builder) {
+    private static void classifyEntryType(ChartPhase phase, MarketContext ctx, SignalStrengthBuilder builder) {
         switch (PhaseIndicators.classifyEntryType(ctx, phase)) {
             case BREAKOUT -> builder.addBuySignal("⚔️ [돌파 타점] 의미 있는 저항선을 강한 거래량과 함께 뚫어내는 공격적 진입 포착");
             case PULLBACK -> builder.addBuySignal("🛡️ [눌림목 타점] 상승 추세 속 주요 이평선 지지를 받으며 반등을 준비하는 구간");

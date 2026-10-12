@@ -1,15 +1,18 @@
-package com.stocklog.modules.stock.analysis.service;
+package com.stocklog.modules.stock.analysis;
 
 import com.stocklog.modules.common.finance.context.MarketContext;
 import com.stocklog.modules.common.finance.indicator.phase.PhaseIndicators;
 import com.stocklog.modules.common.finance.model.ExchangeSession;
 import com.stocklog.modules.common.type.ChartDataType;
 import com.stocklog.modules.common.type.ChartPhase;
-import com.stocklog.modules.stock.analysis.diagnosis.TradingSignalAnalyzer;
-import com.stocklog.modules.stock.analysis.diagnosis.TradingSignalResult;
-import com.stocklog.modules.stock.analysis.domain.momentum.MomentumScore;
-import com.stocklog.modules.stock.analysis.domain.technical.TechnicalScore;
-import com.stocklog.modules.stock.analysis.domain.valuation.ValuationScore;
+import com.stocklog.modules.stock.analysis.analyzer.MomentumAnalyzer;
+import com.stocklog.modules.stock.analysis.analyzer.TechnicalAnalyzer;
+import com.stocklog.modules.stock.analysis.analyzer.ValuationAnalyzer;
+import com.stocklog.modules.stock.analysis.signal.trading.TradingSignalAnalyzer;
+import com.stocklog.modules.stock.analysis.signal.trading.TradingSignalResult;
+import com.stocklog.modules.stock.analysis.score.MomentumScore;
+import com.stocklog.modules.stock.analysis.score.TechnicalScore;
+import com.stocklog.modules.stock.analysis.score.ValuationScore;
 import com.stocklog.modules.stock.analysis.result.StockAnalysisResult;
 import com.stocklog.modules.stock.application.response.StockSnapshot;
 import com.stocklog.modules.stock.domain.type.AssetType;

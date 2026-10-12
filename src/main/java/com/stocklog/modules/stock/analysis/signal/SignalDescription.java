@@ -1,4 +1,4 @@
-package com.stocklog.modules.stock.analysis.result;
+package com.stocklog.modules.stock.analysis.signal;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

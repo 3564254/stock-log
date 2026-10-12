@@ -3,7 +3,7 @@ package com.stocklog.modules.common.finance.indicator.phase;
 
 import com.stocklog.modules.common.finance.context.MarketContext;
 import com.stocklog.modules.common.type.ChartPhase;
-import com.stocklog.modules.stock.analysis.diagnosis.EntryType;
+import com.stocklog.modules.stock.analysis.signal.trading.EntryType;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 

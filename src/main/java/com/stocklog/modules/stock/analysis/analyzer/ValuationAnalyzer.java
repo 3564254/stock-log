@@ -1,7 +1,7 @@
-package com.stocklog.modules.stock.analysis.service;
+package com.stocklog.modules.stock.analysis.analyzer;
 
-import com.stocklog.modules.stock.analysis.domain.valuation.ValuationBand;
-import com.stocklog.modules.stock.analysis.domain.valuation.ValuationScore;
+import com.stocklog.modules.stock.analysis.score.band.ValuationBand;
+import com.stocklog.modules.stock.analysis.score.ValuationScore;
 import com.stocklog.modules.stock.domain.type.AssetType;
 import com.stocklog.modules.common.type.Nation;
 import com.stocklog.modules.stock.financial.dto.internal.StockFinancialDto;
@@ -26,7 +26,7 @@ public class ValuationAnalyzer {
     private static final int MAX_TOTAL_SCORE = 40;
 
 
-    ValuationScore analyze(StockValuationDto valuation, StockFinancialDto financial, StockInfoDto info, StockPriceDto price) {
+    public ValuationScore analyze(StockValuationDto valuation, StockFinancialDto financial, StockInfoDto info, StockPriceDto price) {
         List<String> signals = new ArrayList<>();
 
         // 1. 자산 타입 확인 (ETF, ETN 등 펀드형 자산인 경우)

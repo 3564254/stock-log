@@ -129,7 +129,7 @@ public class AuthController {
         try {
             memberService.updatePassword(loginMember.getId(), passwordRequest);
         } catch (BusinessException e) {
-            bindingResult.rejectValue("oldPassword", "invalidPassword", e.getMessage());
+            bindingResult.rejectValue("currentPassword", "invalidPassword", e.getMessage());
             model.addAttribute("member", memberService.getDetailInfo(loginMember.getId()));
             model.addAttribute("openPasswordModal", true);
             model.addAttribute("usernameRequest", new UsernameRequest());

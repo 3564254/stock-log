@@ -28,8 +28,8 @@ public class StockSnapshotService implements StockSnapshotUseCase {
                 .price(priceService.fetchPrice(code))
                 .financial(financialService.fetchFinancial(code))
                 .valuation(valuationService.fetchValuation(code))
-                .dailyCharts(chartService.getDailyChartDtoDesc(code))
-                .weeklyCharts(chartService.getWeeklyChartDtoDesc(code))
+                .dailyCharts(chartService.getDailyChartDtoAsc(code))
+                .weeklyCharts(chartService.getWeeklyChartDtoAsc(code))
                 .build();
     }
 }

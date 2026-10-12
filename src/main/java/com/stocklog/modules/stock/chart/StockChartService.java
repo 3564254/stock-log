@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -59,25 +61,11 @@ public class StockChartService {
 
     // ================ private ================ //
 
+    /** 항상 최신 -> 과거 순. 캐시 히트/미스와 무관하게 순서가 같도록 Asc 결과를 뒤집어 만든다. */
     private List<StockChartDto> fetchChartDesc(String code, Period period) {
-
-        LocalDate now = LocalDate.now();
-        List<StockChart> result = chartRepository.findByCodeAndPeriodOrderByTradeDateDesc(code, period);
-
-        // 1. 시장 구분을 위해 주식 정보 먼저 조회
-        StockDto stockDto = stockService.getStockDto(code);
-        boolean isMarketOpen = isMarketOpen(stockDto.market().toString());
-
-        // 2. 캐시 체크: 장이 마감되었고, DB에 최신(최근 3일 이내) 데이터가 존재하면 캐시 사용
-        if (!isMarketOpen && result.size() >= 30) {
-            LocalDate lastDate = result.get(0).getTradeDate(); // DESC이므로 0번째가 최신
-            if (lastDate.isAfter(now.minusDays(4))) { // 주말 고려 방어 로직
-                log.info("[Chart] 캐시 히트: 장 마감 & 최신 데이터 DB 존재 (건수: {})", result.size());
-                return result.stream().map(StockChartDto::from).toList();
-            }
-        }
-
-        return fetchAndSave(code, period, now, stockDto);
+        List<StockChartDto> desc = new ArrayList<>(fetchChartAsc(code, period));
+        Collections.reverse(desc);
+        return desc;
     }
 
 

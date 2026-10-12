@@ -17,7 +17,8 @@ import com.stocklog.modules.purchase.trade.dto.request.WatchItemRequest;
 import com.stocklog.modules.purchase.trade.dto.response.TradingRuleCheckResponse;
 import com.stocklog.modules.purchase.trade.service.TradeFacadeService;
 import com.stocklog.modules.stock.analysis.StockAnalysisService;
-import com.stocklog.modules.stock.analysis.diagnosis.TradingSignalResult;
+import com.stocklog.modules.stock.analysis.signal.trading.TradingSignalResult;
+import com.stocklog.modules.stock.application.usecase.GetStockSignalUseCase;
 import com.stocklog.modules.stock.chart.StockChartService;
 import com.stocklog.modules.stock.chart.dto.StockChartDto;
 import com.stocklog.global.annotation.LoginUser;
@@ -36,6 +37,8 @@ import java.util.Map;
 public class PortfolioApiController {
 
     private final StockChartService chartService;
+
+    private final GetStockSignalUseCase stockSignalUseCase;
 
     private final StockAnalysisService analysisService;
     private final PortfolioFacadeService portfolioService;
@@ -101,9 +104,8 @@ public class PortfolioApiController {
     public TradingRuleCheckResponse verifyBuy(@LoginUser MemberResponse loginMember, @RequestBody Map<String, String> request) {
         String stockCode = request.get("targetId");
 
-        List<StockChartDto> dailyCharts = chartService.getDailyChartDtoDesc(stockCode);
-        // TODO(버그): 주봉인데 일봉 조회를 호출하고 있음. 주봉 조회 메서드로 교체 필요 (StockChartService 확인)
-        List<StockChartDto> weeklyCharts = chartService.getDailyChartDtoDesc(stockCode);
+        List<StockChartDto> dailyCharts = chartService.getDailyChartDtoAsc(stockCode);
+        List<StockChartDto> weeklyCharts = chartService.getWeeklyChartDtoAsc(stockCode);
 
         MarketContext marketContext = MarketContext.of(dailyCharts, weeklyCharts, ChartDataType.STOCK,
                 ExchangeSession.fromCode(stockCode));
@@ -113,8 +115,7 @@ public class PortfolioApiController {
         ChartPhase chartPhase = signal.analysis().phase();
 
         tradeService.updateAnalyzedSignal(loginMember.getId(), stockCode, chartPhase, signal.priceTarget().primaryEntry());
-
-        return tradeService.evaluateBuySignal(loginMember.getId(), marketContext, chartPhase);
+        return tradeService.evaluateBuySignal(loginMember.getId(), marketContext, signal);
     }
 
     @PostMapping("/verify/sell")

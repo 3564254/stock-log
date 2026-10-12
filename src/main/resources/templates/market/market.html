@@ -5,11 +5,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>시장 동향 대시보드 — StockLog</title>
+  <th:block th:replace="~{fragments/head :: assets}"></th:block>
 
   <!-- 폰트 및 라이브러리 -->
-  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
   <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
@@ -17,67 +15,76 @@
   <style>
     /* ── 디자인 토큰 ── */
     :root {
-      --toss-blue: #3182f6; --toss-blue-light: rgba(49, 130, 246, 0.08);
-      --toss-red: #f04452; --toss-red-light: rgba(240, 68, 82, 0.08);
-      --toss-green: #05c072; --toss-warning: #f5a623;
-      --bg-color: #f2f4f6; --card-bg: #ffffff;
-      --text-main: #191f28; --text-sub: #8b95a1;
-      --border-color: #e5e8eb; --sidebar-width: 250px;
+        --toss-blue-light: rgba(49, 130, 246, 0.08);
+        --toss-red-light: rgba(240, 68, 82, 0.08);
+        --bg-color: var(--canvas);
+        --card-bg: #ffffff;
+        --text-main: var(--ink);
+        --text-sub: var(--label-text);
+        --border-color: var(--hairline);
+        --good: var(--status-green);
+        --good-text: var(--status-green-text);
+        --good-tint: var(--status-green-tint);
+        --caution: var(--caution-amber);
+        --neutral-fill: var(--fog);
+        --text-strong-sub: var(--slate);
+        --page-gutter: 40px;
+        --page-bottom: 100px;
+        --content-max: 1680px;
+        --content-top: 40px;
+        --card-pad: 24px;
     }
 
-    body { background-color: var(--bg-color); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: var(--text-main); -webkit-font-smoothing: antialiased; }
-    [x-cloak] { display: none !important; }
-
-    .layout-wrapper { display: flex; min-height: 100vh; }
-    .main-content { flex-grow: 1; margin-left: var(--sidebar-width); padding: 0 40px 100px; transition: 0.3s; }
-    .content-container { width: 100%; max-width: 1680px; margin: 0 auto; padding-top: 40px; }
-
     /* ── 공통 카드 ── */
-    .toss-card { background: var(--card-bg); border-radius: 16px; padding: 24px; box-shadow: none; border: 1px solid var(--border-color); position: relative; margin-bottom: 24px; }
+    .toss-card { position: relative; }
 
     /* ── 타이틀 위계: 히어로(진단)는 크고 진하게, 하위 패널은 조용하게 ── */
     .section-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: var(--text-sub); letter-spacing: -0.1px; }
     .section-title i { color: var(--text-sub); font-size: 14px; margin-right: 6px; font-weight: 400; }
     .section-title.hero-title { font-size: 19px; color: var(--text-main); letter-spacing: -0.3px; }
-    .section-title.hero-title i { color: var(--toss-blue); font-size: 18px; }
+    .section-title.hero-title i { color: var(--text-strong-sub); font-size: 18px; }
 
     /* ── 투자 나침반 ── */
     .compass-card { padding: 24px; transition: 0.2s; display: flex; flex-direction: column; justify-content: center; }
 
-    /* ── 진단 카드 테두리 하이라이트 ── */
-    .diagnosis-card { border-left-width: 3px; transition: border-color 0.2s; }
-    .diagnosis-card.compass-bull { background: var(--card-bg); border-left-color: var(--toss-red); }
-    .diagnosis-card.compass-bear { background: var(--card-bg); border-left-color: var(--toss-blue); }
-    .diagnosis-card.compass-neutral { background: var(--card-bg); border-left-color: #c7cdd6; }
-
     .confidence-gauge { background: rgba(0, 0, 0, 0.05); height: 8px; border-radius: 4px; overflow: hidden; position: relative; cursor: help;}
-    .gauge-fill { height: 100%; border-radius: 4px; transition: width 1s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.5s ease; }
+    .gauge-fill { height: 100%; border-radius: 4px; background: var(--text-strong-sub); }
 
     /* 서브 점수 게이지: -100~100 스코어를 0(중앙)에서 좌우로 뻗어나가는 바로 표현 */
-    .score-gauge-track { position: relative; height: 8px; background: #f2f4f6; border-radius: 4px; overflow: hidden; }
-    .score-gauge-track::after { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #d1d6db; }
+    .score-gauge-track { position: relative; height: 8px; background: var(--canvas); border-radius: 4px; overflow: hidden; }
+    .score-gauge-track::after { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--haze); }
     .score-gauge-fill { position: absolute; top: 0; height: 100%; border-radius: 4px; }
 
-    /* ── AI 퀀트 진단 뱃지 ── */
-    .regime-badge { display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-right: 8px; margin-bottom: 8px; }
-    .badge-macro { background: #f3f0ff; color: #7048e8; }
-    .badge-liquidity { background: #e2f9ec; color: var(--toss-green); }
-    .badge-credit { background: #fff6e5; color: var(--toss-warning); }
-
-    .bg-up { background: rgba(240,68,82,0.08); color: var(--toss-red); }
-    .bg-down { background: rgba(49,130,246,0.08); color: var(--toss-blue); }
-    .bg-neutral { background: #f2f4f6; color: #6b7684; }
-    .bg-green-soft { background: rgba(5,192,114,0.08); }
-    .text-green { color: var(--toss-green); }
-    .bg-orange-soft { background: rgba(245,166,35,0.08); }
-    .text-orange { color: var(--toss-warning); }
-    .text-up { color: var(--toss-red) !important; }
-    .text-down { color: var(--toss-blue) !important; }
+    /* ── 진단 배지: 상태 톤 (good · neutral · caution · alert) ── */
+    .regime-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+    .regime-badge .k { font-weight: 500; opacity: .85; }
+    .tone-good    { background: var(--good-tint);    color: var(--good-text); }
+    .tone-neutral { background: var(--canvas);             color: var(--text-strong-sub); }
+    .tone-caution { background: var(--caution-tint); color: var(--caution-text); }
+    .tone-alert   { background: var(--alert-tint);   color: var(--alert-text); }
+    .tone-alert::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+    .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--neutral-fill); }
+    .status-dot.good { background: var(--good); }
+    .status-dot.caution { background: var(--caution); }
+    .status-dot.alert { background: var(--alert-text); }
+    .score-delta.up { color: var(--good-text); }
+    .score-delta.down { color: var(--alert-text); }
+    .score-delta { font-size: 12px; font-weight: 600; color: var(--text-strong-sub); font-variant-numeric: tabular-nums; }
+    .callout { border-radius: 12px; padding: 14px 16px; border: 1px solid; }
+    .callout-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+    .callout-body { color: var(--ink-body); line-height: 1.6; word-break: keep-all; }
+    .callout.alert   { background: var(--alert-tint);   border-color: var(--alert-line); }
+    .callout.alert .callout-title { color: var(--alert-text); }
+    .callout.caution { background: var(--caution-tint); border-color: var(--caution-line); }
+    .callout.caution .callout-title { color: var(--caution-text); }
+    .text-up { color: var(--toss-red-deep) !important; }
+    .text-down { color: var(--toss-blue-deep) !important; }
     .text-dark { color: var(--text-main) !important; }
 
     /* ── 컴팩트 인디케이터 리스트 ── */
     .compact-indicator-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-color); text-decoration: none !important; transition: background-color 0.15s; margin: 0 -12px; padding-left: 12px; padding-right: 12px; border-radius: 8px; }
-    .compact-indicator-row:hover { background-color: #f9fafb; }
+    .compact-indicator-row:hover { background-color: var(--surface-soft); }
+    .compact-indicator-row:focus-visible { background-color: var(--surface-soft); outline: 2px solid var(--toss-blue); outline-offset: -2px; }
     .compact-indicator-row:last-child { border-bottom: none; }
 
     .compact-name { font-size: 14px; font-weight: 600; color: var(--text-main); line-height: 1.3; word-break: keep-all; }
@@ -89,16 +96,16 @@
 
     /* ── 뉴스 그리드 ── */
     .news-row { display: flex; gap: 20px; transition: background 0.15s ease, transform 0.15s ease; cursor: pointer; text-decoration: none; color: inherit; }
-    .news-row:hover { background-color: #f9fafb; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+    .news-row:hover { background-color: var(--surface-soft); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
     .news-content { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; }
-    .news-title { font-size: 16px; font-weight: 700; color: #191f28; line-height: 1.5; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: break-word; }
-    .news-summary { font-size: 14px; color: #6b7684; font-weight: 500; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: break-word; margin-bottom: 12px; }
+    .news-title { font-size: 16px; font-weight: 700; color: var(--ink); line-height: 1.5; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: break-word; }
+    .news-summary { font-size: 14px; color: var(--label-text); font-weight: 500; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: break-word; margin-bottom: 12px; }
 
     /* AI 수석 전략가 코멘트: 기본은 3~4줄만, '더보기' 클릭 시 전체 펼침 */
     .ai-comment-text { max-height: 88px; overflow: hidden; transition: max-height 0.3s ease; mask-image: linear-gradient(to bottom, black 60%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%); }
     .ai-comment-text.expanded { max-height: 2000px; mask-image: none; -webkit-mask-image: none; }
-    .news-meta { font-size: 13px; font-weight: 500; color: #8b95a1; }
-    .news-thumbnail { width: 120px; height: 84px; border-radius: 8px; object-fit: cover; flex-shrink: 0; border: 1px solid #f2f4f6; }
+    .news-meta { font-size: 13px; font-weight: 500; color: var(--label-text); }
+    .news-thumbnail { width: 120px; height: 84px; border-radius: 8px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--canvas); }
 
     /* ── 차트 및 탭 ── */
     #market-chart-container { width: 100%; height: 320px; position: relative; border-radius: 12px; background: transparent; }
@@ -110,10 +117,57 @@
     .text-neutral { color: var(--text-sub) !important; }
 
     .news-pagination { display: flex; justify-content: center; align-items: center; gap: 4px; padding: 24px 0 8px; }
-    .page-num-btn, .page-nav-btn { display: flex; align-items: center; justify-content: center; min-width: 32px; height: 32px; border-radius: 8px; font-size: 14px; font-weight: 500; color: #8b95a1; text-decoration: none; transition: background-color 0.15s ease, color 0.15s ease; }
-    .page-num-btn:hover, .page-nav-btn:hover { background-color: #f2f4f6; }
-    .page-num-btn.active { background-color: #3182f6; color: #ffffff; font-weight: 700; }
-    .lw-tooltip { position: absolute; display: none; background: rgba(255, 255, 255, 0.95); padding: 12px 16px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); border: 1px solid #e5e8eb; pointer-events: none; z-index: 10; }
+    .page-num-btn, .page-nav-btn { display: flex; align-items: center; justify-content: center; min-width: 32px; height: 32px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--label-text); text-decoration: none; transition: background-color 0.15s ease, color 0.15s ease; }
+    .page-num-btn:hover, .page-nav-btn:hover { background-color: var(--canvas); }
+    .page-num-btn.active { background-color: var(--toss-blue-deep); color: #ffffff; font-weight: 700; }
+    .lw-tooltip { position: absolute; display: none; background: rgba(255, 255, 255, 0.95); padding: 12px 16px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); border: 1px solid var(--hairline); pointer-events: none; z-index: 10; }
+
+    /* 섹션 단위 실패/빈 상태 */
+    .section-state { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .section-state-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+    .section-state-desc { font-size: 14px; font-weight: 500; color: var(--text-strong-sub); margin-top: 2px; word-break: keep-all; }
+    .retry-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--canvas); color: var(--text-strong-sub); border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+    .retry-btn:hover { background: var(--canvas-hover); color: var(--text-main); }
+    .chart-empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; background: rgba(255,255,255,0.92); z-index: 5; border-radius: 12px; }
+    .compact-missing { font-size: 13px; font-weight: 600; color: var(--text-strong-sub); }
+    .news-empty { min-height: 160px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 4px; }
+    @media (prefers-reduced-motion: reduce) { .fu { animation: none; } .news-row:hover { transform: none; } }
+
+    /* ── 모바일 (768px 이하): 사이드바는 하단 탭바로 대체됨 ── */
+    @media (max-width: 768px) {
+      .main-content { padding-bottom: 24px; overflow-x: hidden; }
+      .content-container { padding-top: 16px; }
+      .toss-card { padding: 18px; margin-bottom: 16px; border-radius: 14px; }
+      .compass-card { padding: 18px; }
+      .section-title.hero-title { font-size: 17px; }
+      .callout, .ai-comment-text, .section-state-desc, .compact-name, .news-summary { word-break: keep-all; overflow-wrap: break-word; }
+
+      /* 상단 국내/해외 토글: 전체 폭 */
+      div[style*="width: 240px"] { width: 100% !important; }
+
+      /* 종합 점수 줄: 좁으면 줄바꿈 */
+      .diagnosis-card .d-flex.justify-content-between.align-items-center.mb-3.pb-3 { flex-wrap: wrap; gap: 8px 12px; }
+
+      /* 탭: 줄이 밀리지 않게 가로 스크롤 */
+      .tab-nav { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+      .tab-nav::-webkit-scrollbar { display: none; }
+      .tab-btn { flex: 0 0 auto; white-space: nowrap; padding: 8px 14px; }
+      #market-chart-container { height: 240px; }
+
+      /* 지표 행 */
+      .compact-indicator-row { gap: 10px; }
+      .compact-name { font-size: 14px; }
+
+      /* 뉴스 */
+      .news-row { gap: 12px; }
+      .news-row.p-4 { padding: 14px !important; }
+      .news-title { font-size: 15px; margin-bottom: 6px; }
+      .news-summary { font-size: 13px; }
+      .news-thumbnail { width: 88px; height: 64px; }
+      .news-pagination { flex-wrap: wrap; padding-top: 16px; }
+      .page-num-btn, .page-nav-btn { min-width: 40px; height: 40px; }
+      .retry-btn { padding: 10px 16px; }
+    }
 
     @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     .fu { animation: fadeUp 0.3s ease both; }
@@ -132,20 +186,20 @@
       <div class="mb-4 fu d1 d-flex justify-content-between align-items-end flex-wrap gap-3">
         <div>
           <h2 class="fw-bold mb-2 text-dark" style="font-size: 24px;">시장 동향</h2>
-          <p class="m-0" style="font-size: 15px; color: #6b7684; font-weight: 500;"
+          <p class="m-0" style="font-size: 15px; color: var(--label-text); font-weight: 500;"
              th:text="${loginMember != null ? loginMember.username + '님, 오늘 시장의 흐름과 주요 뉴스를 모아봤어요' : '오늘 시장의 흐름과 주요 뉴스를 모아봤어요'}"></p>
         </div>
 
-        <div class="d-flex p-1" style="background-color: #f2f4f6; border-radius: 10px; width: 240px;">
+        <div class="d-flex p-1" style="background-color: var(--canvas); border-radius: 10px; width: 240px;">
           <button class="flex-fill border-0 fw-bold d-flex justify-content-center align-items-center gap-1"
                   style="border-radius: 8px; padding: 10px 14px; font-size: 14px; transition: 0.15s;"
-                  :style="mainTab === 'market' ? 'background: white; color: #191f28; box-shadow: 0 1px 4px rgba(0,0,0,0.05);' : 'background: transparent; color: #8b95a1;'"
-                  @click="mainTab = 'market'; $nextTick(() => { if(!chartInitialzed) { createChart(); updateChartData(); chartInitialzed=true; } })">
+                  :style="mainTab === 'market' ? 'background: white; color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,0.05);' : 'background: transparent; color: var(--label-text);'"
+                  @click="mainTab = 'market'; $nextTick(() => { if(!chartInitialized) { createChart(); updateChartData(); chartInitialized=true; } })">
             거시 경제
           </button>
           <button class="flex-fill border-0 fw-bold d-flex justify-content-center align-items-center gap-1"
                   style="border-radius: 8px; padding: 10px 14px; font-size: 14px; transition: 0.15s;"
-                  :style="mainTab === 'news' ? 'background: white; color: #191f28; box-shadow: 0 1px 4px rgba(0,0,0,0.05);' : 'background: transparent; color: #8b95a1;'"
+                  :style="mainTab === 'news' ? 'background: white; color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,0.05);' : 'background: transparent; color: var(--label-text);'"
                   @click="mainTab = 'news'">
             뉴스 속보
           </button>
@@ -157,30 +211,41 @@
       <!-- ========================================== -->
       <div x-show="mainTab === 'market'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
 
+        <!-- 시장 진단을 만들지 못했을 때: 섹션이 조용히 사라지지 않게 알린다 -->
+        <div class="toss-card mb-4 fu d2" th:if="${marketAnalysis == null}" role="alert">
+          <div class="section-state">
+            <div>
+              <div class="section-state-title">시장 진단을 불러오지 못했어요</div>
+              <div class="section-state-desc">아래 지표와 뉴스는 그대로 볼 수 있어요. 잠시 후 다시 시도해 주세요.</div>
+            </div>
+            <a th:href="@{/market}" class="retry-btn"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i>다시 시도</a>
+          </div>
+        </div>
+
         <!-- Top Row: AI 퀀트 진단 & 시장 나침반 -->
         <div class="row g-4 mb-4 fu d2" th:if="${marketAnalysis != null}">
 
           <!-- AI 퀀트 진단 리포트 (좌측 70%) -->
           <div class="col-xl-8 col-lg-12">
-            <div class="toss-card diagnosis-card h-100 mb-0 d-flex flex-column" :class="getCompassClass()">
+            <div class="toss-card diagnosis-card h-100 mb-0 d-flex flex-column">
               <h3 class="section-title hero-title"><i class="bi bi-cpu"></i>AI 퀀트 진단</h3>
 
               <!-- th:with를 사용하여 DTO 두 개를 모두 변수로 매핑 -->
               <div th:with="dto=${marketAnalysis.marketRegimeDto}, diag=${marketAnalysis.diagnosisDto}">
 
                 <!-- 1. 국면 배지 및 지속일수 영역 -->
-                <div class="mb-3 border-bottom pb-3 d-flex flex-wrap gap-2" style="border-color: #f2f4f6 !important;">
-                  <span class="regime-badge badge-macro mb-0" th:if="${dto.macroRegime != null}">
-                      경기: <span class="ms-1" th:text="${dto.macroRegime}"></span>
+                <div class="mb-3 border-bottom pb-3 d-flex flex-wrap gap-2" style="border-color: var(--canvas) !important;">
+                  <span class="regime-badge" :class="'tone-' + statusOf('macro', regimeData?.macroRegime).tone" th:if="${dto.macroRegime != null}">
+                      <span class="k">경기</span><span x-text="statusOf('macro', regimeData?.macroRegime).label" th:text="${dto.macroRegime}"></span>
                   </span>
-                  <span class="regime-badge badge-liquidity mb-0" th:if="${dto.liquidityRegime != null}">
-                      유동성: <span class="ms-1" th:text="${dto.liquidityRegime}"></span>
+                  <span class="regime-badge" :class="'tone-' + statusOf('liquidity', regimeData?.liquidityRegime).tone" th:if="${dto.liquidityRegime != null}">
+                      <span class="k">유동성</span><span x-text="statusOf('liquidity', regimeData?.liquidityRegime).label" th:text="${dto.liquidityRegime}"></span>
                   </span>
-                  <span class="regime-badge badge-credit mb-0" th:if="${dto.creditRegime != null}">
-                      신용: <span class="ms-1" th:text="${dto.creditRegime}"></span>
+                  <span class="regime-badge" :class="'tone-' + statusOf('credit', regimeData?.creditRegime).tone" th:if="${dto.creditRegime != null}">
+                      <span class="k">신용</span><span x-text="statusOf('credit', regimeData?.creditRegime).label" th:text="${dto.creditRegime}"></span>
                   </span>
-                  <span class="regime-badge mb-0" style="background:#f8fafc; color:#4e5968; border:1px solid #e5e8eb;" th:if="${diag != null}">
-                      <i class="bi bi-calendar-check me-1"></i> 국면 지속: <span class="ms-1" th:text="${diag.regimeStreakDays} + '일째'"></span>
+                  <span class="regime-badge tone-neutral" th:if="${diag != null}">
+                      <i class="bi bi-calendar-check" aria-hidden="true"></i><span class="k">국면 지속</span><span th:text="${diag.regimeStreakDays} + '일째'"></span>
                   </span>
                 </div>
 
@@ -190,19 +255,23 @@
                 </div>
 
                 <!-- 3. 시장 종합 스코어 및 서브 점수 -->
-                <div class="p-4 mb-4 rounded-4" style="background: #f9fafb; border: 1px solid #f2f4f6;" th:if="${diag != null}">
+                <div class="p-4 mb-4 rounded-4" style="background: var(--surface-soft); border: 1px solid var(--canvas);" th:if="${diag != null}">
 
                   <!-- 종합 스코어 및 모멘텀 (1D/5D) -->
-                  <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom" style="border-color: #e5e8eb !important;">
+                  <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom" style="border-color: var(--hairline) !important;">
                     <span class="fw-bold" style="font-size: 14px; color: var(--text-sub);"><i class="bi bi-bar-chart-fill me-1"></i>시장 종합 컨디션 스코어</span>
                     <div class="d-flex align-items-center gap-3">
-                      <span class="fw-bold" style="font-size: 22px;"
-                            th:classappend="${diag.compositeScore > 0 ? 'text-up' : (diag.compositeScore < 0 ? 'text-down' : 'text-neutral')}"
-                            th:text="${#numbers.formatDecimal(diag.compositeScore, 1, 1)} + '점'"></span>
-                      <div class="d-flex flex-column text-end" style="font-size: 11px; font-weight: 600;">
-                        <span th:classappend="${diag.scoreChange1D > 0 ? 'text-up' : (diag.scoreChange1D < 0 ? 'text-down' : 'text-neutral')}"
+                      <span class="fw-bold d-inline-flex align-items-center gap-2" style="font-size: 24px; color: var(--text-main); font-variant-numeric: tabular-nums;">
+                        <span class="status-dot" aria-hidden="true"
+                              th:classappend="${diag.compositeScore >= 5 ? 'good' : (diag.compositeScore <= -5 ? 'caution' : '')}"></span>
+                        <span th:text="${#numbers.formatDecimal(diag.compositeScore, 1, 1)} + '점'"></span>
+                      </span>
+                      <div class="d-flex flex-column text-end">
+                        <span class="score-delta"
+                              th:classappend="${diag.scoreChange1D > 0 ? 'up' : (diag.scoreChange1D < 0 ? 'down' : '')}"
                               th:text="${diag.scoreChange1D > 0 ? '▲ ' : (diag.scoreChange1D < 0 ? '▼ ' : '')} + ${#numbers.formatDecimal(T(java.lang.Math).abs(diag.scoreChange1D), 1, 1)} + ' (1D)'"></span>
-                        <span th:classappend="${diag.scoreChange5D > 0 ? 'text-up' : (diag.scoreChange5D < 0 ? 'text-down' : 'text-neutral')}" style="margin-top: 2px;"
+                        <span class="score-delta" style="margin-top: 2px;"
+                              th:classappend="${diag.scoreChange5D > 0 ? 'up' : (diag.scoreChange5D < 0 ? 'down' : '')}"
                               th:text="${diag.scoreChange5D > 0 ? '▲ ' : (diag.scoreChange5D < 0 ? '▼ ' : '')} + ${#numbers.formatDecimal(T(java.lang.Math).abs(diag.scoreChange5D), 1, 1)} + ' (5D)'"></span>
                       </div>
                     </div>
@@ -214,40 +283,36 @@
                       <span style="font-size: 13px; font-weight: 600; color: var(--text-sub); width: 85px;">가격 모멘텀</span>
                       <div class="score-gauge-track flex-grow-1 mx-3">
                         <div class="score-gauge-fill"
-                             th:style="${diag.marketPriceScore >= 0 ? ('left: 50%; width: ' + (diag.marketPriceScore / 100 * 50) + '%; background: #3182f6;') : ('left: ' + (50 + diag.marketPriceScore / 100 * 50) + '%; width: ' + (-diag.marketPriceScore / 100 * 50) + '%; background: #3182f6;')}"></div>
+                             th:style="${diag.marketPriceScore >= 0 ? ('left: 50%; width: ' + (diag.marketPriceScore / 100 * 50) + '%; background: ' + (diag.marketPriceScore >= 5 ? 'var(--status-green)' : (diag.marketPriceScore <= -5 ? 'var(--caution-amber)' : 'var(--fog)')) + ';') : ('left: ' + (50 + diag.marketPriceScore / 100 * 50) + '%; width: ' + (-diag.marketPriceScore / 100 * 50) + '%; background: ' + (diag.marketPriceScore >= 5 ? 'var(--status-green)' : (diag.marketPriceScore <= -5 ? 'var(--caution-amber)' : 'var(--fog)')) + ';')}"></div>
                       </div>
-                      <span style="font-size: 14px; font-weight: 700; width: 36px; text-align: right;"
-                            th:classappend="${diag.marketPriceScore > 0 ? 'text-up' : (diag.marketPriceScore < 0 ? 'text-down' : 'text-neutral')}"
+                      <span style="font-size: 14px; font-weight: 700; width: 36px; text-align: right; color: var(--text-main); font-variant-numeric: tabular-nums;"
                             th:text="${#numbers.formatDecimal(diag.marketPriceScore, 1, 0)}"></span>
                     </div>
                     <div class="d-flex align-items-center justify-content-between">
                       <span style="font-size: 13px; font-weight: 600; color: var(--text-sub); width: 85px;">거시 유동성</span>
                       <div class="score-gauge-track flex-grow-1 mx-3">
                         <div class="score-gauge-fill"
-                             th:style="${diag.macroLiquidityScore >= 0 ? ('left: 50%; width: ' + (diag.macroLiquidityScore / 100 * 50) + '%; background: #05c072;') : ('left: ' + (50 + diag.macroLiquidityScore / 100 * 50) + '%; width: ' + (-diag.macroLiquidityScore / 100 * 50) + '%; background: #05c072;')}"></div>
+                             th:style="${diag.macroLiquidityScore >= 0 ? ('left: 50%; width: ' + (diag.macroLiquidityScore / 100 * 50) + '%; background: ' + (diag.macroLiquidityScore >= 5 ? 'var(--status-green)' : (diag.macroLiquidityScore <= -5 ? 'var(--caution-amber)' : 'var(--fog)')) + ';') : ('left: ' + (50 + diag.macroLiquidityScore / 100 * 50) + '%; width: ' + (-diag.macroLiquidityScore / 100 * 50) + '%; background: ' + (diag.macroLiquidityScore >= 5 ? 'var(--status-green)' : (diag.macroLiquidityScore <= -5 ? 'var(--caution-amber)' : 'var(--fog)')) + ';')}"></div>
                       </div>
-                      <span style="font-size: 14px; font-weight: 700; width: 36px; text-align: right;"
-                            th:classappend="${diag.macroLiquidityScore > 0 ? 'text-up' : (diag.macroLiquidityScore < 0 ? 'text-down' : 'text-neutral')}"
+                      <span style="font-size: 14px; font-weight: 700; width: 36px; text-align: right; color: var(--text-main); font-variant-numeric: tabular-nums;"
                             th:text="${#numbers.formatDecimal(diag.macroLiquidityScore, 1, 0)}"></span>
                     </div>
                     <div class="d-flex align-items-center justify-content-between">
                       <span style="font-size: 13px; font-weight: 600; color: var(--text-sub); width: 85px;">섹터 로테이션</span>
                       <div class="score-gauge-track flex-grow-1 mx-3">
                         <div class="score-gauge-fill"
-                             th:style="${diag.sectorScore >= 0 ? ('left: 50%; width: ' + (diag.sectorScore / 100 * 50) + '%; background: #7048e8;') : ('left: ' + (50 + diag.sectorScore / 100 * 50) + '%; width: ' + (-diag.sectorScore / 100 * 50) + '%; background: #7048e8;')}"></div>
+                             th:style="${diag.sectorScore >= 0 ? ('left: 50%; width: ' + (diag.sectorScore / 100 * 50) + '%; background: ' + (diag.sectorScore >= 5 ? 'var(--status-green)' : (diag.sectorScore <= -5 ? 'var(--caution-amber)' : 'var(--fog)')) + ';') : ('left: ' + (50 + diag.sectorScore / 100 * 50) + '%; width: ' + (-diag.sectorScore / 100 * 50) + '%; background: ' + (diag.sectorScore >= 5 ? 'var(--status-green)' : (diag.sectorScore <= -5 ? 'var(--caution-amber)' : 'var(--fog)')) + ';')}"></div>
                       </div>
-                      <span style="font-size: 14px; font-weight: 700; width: 36px; text-align: right;"
-                            th:classappend="${diag.sectorScore > 0 ? 'text-up' : (diag.sectorScore < 0 ? 'text-down' : 'text-neutral')}"
+                      <span style="font-size: 14px; font-weight: 700; width: 36px; text-align: right; color: var(--text-main); font-variant-numeric: tabular-nums;"
                             th:text="${#numbers.formatDecimal(diag.sectorScore, 1, 0)}"></span>
                     </div>
                     <div class="d-flex align-items-center justify-content-between">
                       <span style="font-size: 13px; font-weight: 600; color: var(--text-sub); width: 85px;">크로스 에셋</span>
                       <div class="score-gauge-track flex-grow-1 mx-3">
                         <div class="score-gauge-fill"
-                             th:style="${diag.crossAssetScore >= 0 ? ('left: 50%; width: ' + (diag.crossAssetScore / 100 * 50) + '%; background: #f5a623;') : ('left: ' + (50 + diag.crossAssetScore / 100 * 50) + '%; width: ' + (-diag.crossAssetScore / 100 * 50) + '%; background: #f5a623;')}"></div>
+                             th:style="${diag.crossAssetScore >= 0 ? ('left: 50%; width: ' + (diag.crossAssetScore / 100 * 50) + '%; background: ' + (diag.crossAssetScore >= 5 ? 'var(--status-green)' : (diag.crossAssetScore <= -5 ? 'var(--caution-amber)' : 'var(--fog)')) + ';') : ('left: ' + (50 + diag.crossAssetScore / 100 * 50) + '%; width: ' + (-diag.crossAssetScore / 100 * 50) + '%; background: ' + (diag.crossAssetScore >= 5 ? 'var(--status-green)' : (diag.crossAssetScore <= -5 ? 'var(--caution-amber)' : 'var(--fog)')) + ';')}"></div>
                       </div>
-                      <span style="font-size: 14px; font-weight: 700; width: 36px; text-align: right;"
-                            th:classappend="${diag.crossAssetScore > 0 ? 'text-up' : (diag.crossAssetScore < 0 ? 'text-down' : 'text-neutral')}"
+                      <span style="font-size: 14px; font-weight: 700; width: 36px; text-align: right; color: var(--text-main); font-variant-numeric: tabular-nums;"
                             th:text="${#numbers.formatDecimal(diag.crossAssetScore, 1, 0)}"></span>
                     </div>
                   </div>
@@ -264,9 +329,9 @@
                     <span class="fw-bold me-2">시장 경고:</span>특이사항 없음
                   </div>
                   <div th:if="${not #lists.isEmpty(dto.warnings) and not (#lists.size(dto.warnings) == 1 and dto.warnings[0] == 'None')}"
-                       class="p-3 rounded-3" style="background: #fff4f4; border: 1px solid #ffe5e5;">
-                    <div class="fw-bold text-danger mb-1" style="font-size: 13px;"><i class="bi bi-exclamation-triangle-fill me-1"></i>시장 경고</div>
-                    <div style="color: #d63a48;">
+                       class="callout alert">
+                    <div class="callout-title"><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>시장 경고</div>
+                    <div class="callout-body">
                       <span th:each="item, stat : ${dto.warnings}" th:text="${!stat.last ? item + ', ' : item}"></span>
                     </div>
                   </div>
@@ -275,9 +340,9 @@
                     <span class="fw-bold me-2">특이 동향:</span>특이사항 없음
                   </div>
                   <div th:if="${not #lists.isEmpty(dto.divergences) and not (#lists.size(dto.divergences) == 1 and dto.divergences[0] == 'None')}"
-                       class="p-3 rounded-3" style="background: #fff8eb; border: 1px solid #ffeed1;">
-                    <div class="fw-bold mb-1" style="font-size: 13px; color: #f5a623;"><i class="bi bi-exclamation-circle-fill me-1"></i>특이 동향</div>
-                    <div style="color: #d97706;">
+                       class="callout caution">
+                    <div class="callout-title"><i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>특이 동향</div>
+                    <div class="callout-body">
                       <span th:each="item, stat : ${dto.divergences}" th:text="${!stat.last ? item + ', ' : item}"></span>
                     </div>
                   </div>
@@ -295,31 +360,31 @@
               <!-- 중앙 엠블럼 및 상태 -->
               <div class="flex-grow-1 d-flex flex-column justify-content-center align-items-center text-center py-4">
                 <div class="rounded-circle d-flex align-items-center justify-content-center mb-3"
-                     :class="getRegimeBgClass()" style="width: 80px; height: 80px;">
-                  <i class="bi" :class="getRegimeIcon() + ' ' + getRegimeTextClass()" style="font-size: 36px;"></i>
+                     :class="'tone-' + regimeStatus.tone" style="width: 80px; height: 80px;">
+                  <i class="bi" :class="getRegimeIcon()" style="font-size: 36px;" aria-hidden="true"></i>
                 </div>
-                <div style="font-size: 13px; color: #8b95a1; font-weight: 600; margin-bottom: 4px;">현재 시장의 방향성</div>
-                <h4 class="fw-bold m-0" :class="getRegimeTextClass()" style="font-size: 24px; letter-spacing: -0.5px;" th:text="${dto.trendLevel != null ? dto.trendLevel : dto.regime}"></h4>
+                <div style="font-size: 13px; color: var(--label-text); font-weight: 600; margin-bottom: 4px;">현재 시장의 방향성</div>
+                <h4 class="fw-bold m-0" style="font-size: 24px; letter-spacing: -0.5px; color: var(--text-main);" x-text="regimeStatus.label" th:text="${dto.regime}"></h4>
                 <p class="mt-3 mb-0 px-2" style="font-size: 14px; color: var(--text-sub); font-weight: 500; line-height: 1.5; word-break: keep-all;" x-text="getCompassDescription()"></p>
               </div>
 
               <!-- 하단 선호도 & 신뢰도 통합 박스 -->
-              <div class="p-3 rounded-4 mt-auto" style="background: #f8fafc; border: 1px solid #f2f4f6;">
-                <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom" style="border-color: #e5e8eb !important;">
+              <div class="p-3 rounded-4 mt-auto" style="background: var(--surface-soft); border: 1px solid var(--canvas);">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom" style="border-color: var(--hairline) !important;">
                   <span style="font-size: 13px; color: var(--text-sub); font-weight: 600;">투자자 선호도 (Risk)</span>
-                  <div class="d-inline-flex align-items-center gap-1 px-2 py-1 rounded-2" :class="getRiskBadgeClass()">
-                    <i class="bi" :class="getRiskIcon()"></i>
-                    <span class="fw-bold" style="font-size: 13px;" th:text="${dto.risk}"></span>
+                  <div class="d-inline-flex align-items-center gap-1 px-2 py-1 rounded-2" :class="'tone-' + statusOf('risk', regimeData?.risk).tone">
+                    <i class="bi" :class="getRiskIcon()" aria-hidden="true"></i>
+                    <span class="fw-bold" style="font-size: 13px;" x-text="statusOf('risk', regimeData?.risk).label" th:text="${dto.risk}"></span>
                   </div>
                 </div>
 
                 <div>
                   <div class="d-flex justify-content-between align-items-end mb-2">
                     <span style="font-size: 13px; color: var(--text-sub); font-weight: 600;">분석 신뢰도</span>
-                    <span class="fw-bold" :style="{ color: getConfidenceColor() }" style="font-size: 15px;" th:text="${dto.confidence} + ' / 100'"></span>
+                    <span class="fw-bold" style="font-size: 15px; color: var(--text-main); font-variant-numeric: tabular-nums;" th:text="${dto.confidence} + ' / 100'"></span>
                   </div>
                   <div class="confidence-gauge mt-0" title="수치가 낮을수록 지표 간 의견이 엇갈림을 의미해요">
-                    <div class="gauge-fill" :style="{ width: (regimeData?.confidence || 0) + '%', backgroundColor: getConfidenceColor() }"></div>
+                    <div class="gauge-fill" :style="{ width: (regimeData?.confidence || 0) + '%' }"></div>
                   </div>
                 </div>
               </div>
@@ -329,24 +394,45 @@
         </div>
 
         <!-- AI 수석 전략가 종합 시황 (내러티브 — 별도 행으로 분리해 진단 카드와 높이 균형을 맞춤) -->
-        <div class="row g-4 mb-4 fu d3" th:if="${marketAnalysis != null and marketAnalysis.diagnosisDto != null and marketAnalysis.diagnosisDto.comment != null}">
+        <div class="row g-4 mb-4 fu d3" th:if="${marketAnalysis != null and marketAnalysis.diagnosisDto != null and not #strings.isEmpty(marketAnalysis.diagnosisDto.comment) and marketAnalysis.diagnosisDto.comment != 'AI 분석 중 오류 발생'}">
           <div class="col-12">
-            <div class="toss-card mb-0 d-flex flex-column" style="background-color: #f9fafb;">
+            <div class="toss-card mb-0 d-flex flex-column" style="background-color: var(--surface-soft);">
               <div class="d-flex align-items-center mb-3">
-                <i class="bi bi-magic me-2" style="color: #3182f6; font-size: 16px;"></i>
+                <i class="bi bi-magic me-2" style="color: var(--text-strong-sub); font-size: 16px;" aria-hidden="true"></i>
                 <span class="fw-bold text-dark" style="font-size: 15px;">AI 수석 전략가 종합 시황</span>
               </div>
               <!-- 기본은 3~4줄만 보여주고, '더보기'를 눌러야 전체가 펼쳐짐. white-space: pre-wrap으로 AI가 생성한 줄바꿈(\n)은 그대로 유지. -->
               <div class="ai-comment-text" :class="{ 'expanded': aiCommentExpanded }"
-                   style="font-size: 14.5px; color: #333d4b; line-height: 1.75; white-space: pre-wrap; word-break: keep-all;"
+                   style="font-size: 14.5px; color: var(--ink-body); line-height: 1.75; white-space: pre-wrap; word-break: keep-all;"
                    th:text="${marketAnalysis.diagnosisDto.comment}">
               </div>
               <button type="button" class="align-self-start mt-2" @click="aiCommentExpanded = !aiCommentExpanded"
-                      style="border: none; background: none; padding: 0; font-size: 13px; font-weight: 700; color: var(--toss-blue, #3182f6);">
+                      style="border: none; background: none; padding: 0; font-size: 13px; font-weight: 700; color: var(--toss-blue-deep);">
                 <span x-text="aiCommentExpanded ? '접기' : '더보기'"></span>
                 <i class="bi" :class="aiCommentExpanded ? 'bi-chevron-up' : 'bi-chevron-down'" style="font-size: 11px; margin-left: 2px;"></i>
               </button>
             </div>
+          </div>
+        </div>
+
+        <div class="toss-card mb-4 fu d3" style="background-color: var(--surface-soft);"
+             th:if="${marketAnalysis != null and marketAnalysis.diagnosisDto != null and (#strings.isEmpty(marketAnalysis.diagnosisDto.comment) or marketAnalysis.diagnosisDto.comment == 'AI 분석 중 오류 발생')}">
+          <div class="section-state">
+            <div>
+              <div class="section-state-title">오늘의 AI 시황 요약을 만들지 못했어요</div>
+              <div class="section-state-desc">위 진단 점수와 아래 지표는 정상이에요. 요약은 다음 진단 때 다시 만들어요.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 지표 대시보드 실패 -->
+        <div class="toss-card mb-4 fu d3" th:if="${indexError}" role="alert">
+          <div class="section-state">
+            <div>
+              <div class="section-state-title">지표 데이터를 불러오지 못했어요</div>
+              <div class="section-state-desc">차트와 지표 목록이 비어 보일 수 있어요. 잠시 후 다시 시도해 주세요.</div>
+            </div>
+            <a th:href="@{/market}" class="retry-btn"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i>다시 시도</a>
           </div>
         </div>
 
@@ -358,7 +444,7 @@
                 <div>
                   <h3 class="fw-bold m-0 text-dark" style="font-size: 18px;" x-text="getDisplayName(activeTab)">S&P 500</h3>
                   <div class="d-flex align-items-center gap-2 mt-1">
-                    <span class="fw-bold" style="font-size: 15px; color: #191f28;" x-text="formatValue(activeTab)"></span>
+                    <span class="fw-bold" style="font-size: 15px; color: var(--ink);" x-text="hasData(activeTab) ? formatValue(activeTab) : '데이터 없음'"></span>
                     <span class="fw-bold" :class="getChangeColorClass(activeTab)" style="font-size: 13px;" x-text="formatChange(activeTab)"></span>
                   </div>
                 </div>
@@ -370,7 +456,13 @@
                   <button class="tab-btn" :class="activeTab === 'WTI' ? 'active' : ''" @click="changeTab('WTI')">WTI 유가</button>
                 </div>
               </div>
-              <div id="market-chart-container"></div>
+              <div class="position-relative">
+                <div id="market-chart-container"></div>
+                <div class="chart-empty" x-show="chartEmpty" x-cloak role="status">
+                  <div class="section-state-title" x-text="chartUnavailable ? '차트를 표시할 수 없어요' : '이 지표는 아직 데이터가 없어요'"></div>
+                  <div class="section-state-desc" x-text="chartUnavailable ? '차트 라이브러리를 불러오지 못했어요. 새로고침해 주세요.' : '데이터가 들어오면 이곳에 그려져요.'"></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -383,18 +475,25 @@
                 <h4 class="section-title mb-3"><i class="bi" :class="panel.icon"></i><span x-text="panel.title"></span></h4>
                 <div class="d-flex flex-column">
                   <template x-for="type in panel.types" :key="type">
-                    <div class="compact-indicator-row" style="cursor: pointer;" @click="selectIndicator(type)" title="클릭하면 위 차트에서 크게 볼 수 있어요">
+                    <div class="compact-indicator-row" style="cursor: pointer;" role="button" tabindex="0"
+                         @click="selectIndicator(type)" @keydown.enter.prevent="selectIndicator(type)" @keydown.space.prevent="selectIndicator(type)"
+                         title="누르면 위 차트에서 크게 볼 수 있어요">
                       <div style="flex: 1; min-width: 0; padding-right: 12px;">
                         <div class="compact-name" x-text="getDisplayName(type)"></div>
                         <div class="compact-date" x-text="formatDate(type)"></div>
                       </div>
                       <div class="d-flex align-items-center gap-3 flex-shrink-0">
-                        <svg class="compact-sparkline" preserveAspectRatio="none" viewBox="0 0 100 40">
+                        <svg class="compact-sparkline" preserveAspectRatio="none" viewBox="0 0 100 40" aria-hidden="true" focusable="false">
                           <polyline fill="none" stroke-width="2.5" :stroke="getSparklineColorHex(type)" :points="getSparklinePoints(type)"></polyline>
                         </svg>
                         <div class="text-end" style="width: 100px;">
-                          <div class="compact-value" x-text="formatValue(type)"></div>
-                          <div class="compact-change" :class="getChangeColorClass(type)" x-text="formatChange(type)"></div>
+                          <template x-if="hasData(type)">
+                            <div>
+                              <div class="compact-value" x-text="formatValue(type)"></div>
+                              <div class="compact-change" :class="getChangeColorClass(type)" x-text="formatChange(type)"></div>
+                            </div>
+                          </template>
+                          <div class="compact-missing" x-show="!hasData(type)">데이터 없음</div>
                         </div>
                       </div>
                     </div>
@@ -413,7 +512,7 @@
         <div class="row g-4">
           <th:block th:if="${news != null and !#lists.isEmpty(news.newsList)}">
             <div class="col-xxl-6 col-12" th:each="item : ${news.newsList}">
-              <a th:href="${item.url}" target="_blank" class="toss-card news-row h-100 mb-0 p-4 d-flex">
+              <a th:href="${item.url}" target="_blank" rel="noopener noreferrer" class="toss-card news-row h-100 mb-0 p-4 d-flex">
                 <div class="news-content pe-3">
                   <div>
                     <h4 class="news-title" th:text="${item.headline}">뉴스 제목</h4>
@@ -424,27 +523,39 @@
                     <span th:text="${#temporals.format(item.dateTime, 'yyyy-MM-dd HH:mm')}">시간</span>
                   </div>
                 </div>
-                <img th:if="${item.image != null and !item.image.isEmpty()}" th:src="${item.image}" class="news-thumbnail" alt="뉴스 썸네일">
-                <img th:unless="${item.image != null and !item.image.isEmpty()}" src="https://placehold.co/120x84/f2f4f6/8b95a1?text=News" class="news-thumbnail" alt="기본 썸네일">
+                <img th:if="${item.image != null and !item.image.isEmpty()}" th:src="${item.image}" class="news-thumbnail" alt="" loading="lazy"
+                     referrerpolicy="no-referrer" onerror="this.remove()">
               </a>
             </div>
           </th:block>
 
-          <th:block th:if="${news == null or #lists.isEmpty(news.newsList)}">
-            <div class="col-xxl-6 col-12">
-              <div class="toss-card news-row h-100 mb-0 p-4 d-flex justify-content-center align-items-center">
-                <span class="fw-bold" style="color: #8b95a1;">최신 뉴스를 불러오지 못했습니다.</span>
+          <th:block th:if="${news == null}">
+            <div class="col-12">
+              <div class="toss-card mb-0 p-4 news-empty" role="alert">
+                <div class="section-state-title">뉴스를 불러오지 못했어요</div>
+                <div class="section-state-desc mb-2">뉴스 제공처 응답이 없어요. 잠시 후 다시 시도해 주세요.</div>
+                <a th:href="@{/market(mainTab='news')}" class="retry-btn"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i>다시 시도</a>
+              </div>
+            </div>
+          </th:block>
+          <th:block th:if="${news != null and #lists.isEmpty(news.newsList)}">
+            <div class="col-12">
+              <div class="toss-card mb-0 p-4 news-empty" role="status">
+                <div class="section-state-title">아직 표시할 뉴스가 없어요</div>
+                <div class="section-state-desc">새 뉴스가 들어오면 여기에 모여요.</div>
               </div>
             </div>
           </th:block>
         </div>
 
         <div class="news-pagination" th:if="${news != null and !#lists.isEmpty(news.newsList) and news.totalPages > 1}">
-          <a th:if="${news.page > 0}" th:href="@{/market(mainTab='news', page=${news.page - 1})}" class="page-nav-btn">
+          <a th:if="${news.page > 0}" th:href="@{/market(mainTab='news', page=${news.page - 1})}" class="page-nav-btn" aria-label="이전 페이지">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </a>
-          <a th:each="i : ${#numbers.sequence(0, news.totalPages - 1)}" th:href="@{/market(mainTab='news', page=${i})}" th:text="${i + 1}" th:classappend="${i == news.page} ? ' active'" class="page-num-btn"></a>
-          <a th:if="${news.hasNext}" th:href="@{/market(mainTab='news', page=${news.page + 1})}" class="page-nav-btn">
+          <a th:each="i : ${#numbers.sequence(T(java.lang.Math).max(0, news.page - 2), T(java.lang.Math).min(news.totalPages - 1, news.page + 2))}"
+             th:href="@{/market(mainTab='news', page=${i})}" th:text="${i + 1}" th:classappend="${i == news.page} ? ' active'"
+             th:attr="aria-current=${i == news.page} ? 'page' : null, aria-label=${(i + 1) + '페이지'}" class="page-num-btn"></a>
+          <a th:if="${news.hasNext}" th:href="@{/market(mainTab='news', page=${news.page + 1})}" class="page-nav-btn" aria-label="다음 페이지">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </a>
         </div>
@@ -458,8 +569,9 @@
   document.addEventListener('alpine:init', () => {
     Alpine.data('marketDashboardApp', () => {
       return {
-        mainTab: new URLSearchParams(window.location.search).get('mainTab') || 'market',
-        activeTab: 'SP500', chart: null, areaSeries: null, toolTip: null, chartInitialzed: false, aiCommentExpanded: false,
+        mainTab: new URLSearchParams(window.location.search).get('mainTab') === 'news' ? 'news' : 'market',
+        chartEmpty: false, chartUnavailable: false,
+        activeTab: 'SP500', chart: null, areaSeries: null, toolTip: null, chartInitialized: false, aiCommentExpanded: false,
 
         // MarketRegimeDto 매핑
         regimeData: /*[[${marketAnalysis != null ? marketAnalysis.marketRegimeDto : null}]]*/ null,
@@ -548,34 +660,44 @@
             if (this.mainTab === 'market') {
               this.createChart();
               this.updateChartData();
-              this.chartInitialzed = true;
+              this.chartInitialized = true;
             }
           });
         },
 
-        // 💡 1. 신뢰도(Confidence) 동적 컬러
-        getConfidenceColor() {
-          const conf = this.regimeData?.confidence || 0;
-          if (conf <= 20) return '#8b95a1'; // 회색 (관망)
-          if (conf <= 60) return '#f5a623'; // 주황색 (주의)
-
-          const r = this.regimeData?.regime;
-          if (r === 'BEAR') return '#3182f6'; // 푸른색 (하락장)
-          return '#f04452'; // 붉은색 (상승장/기본)
+        // 진단 값 → 한국어 라벨 + 상태 톤. 서버 문자열(MacroAnalyzer·LiquidityAnalyzer·CreditAnalyzer·MarketRegimeEngine)과 같은 키
+        STATUS: {
+          macro: {
+            EXPANSION: { label: '확장', tone: 'good' }, RECOVERY: { label: '회복', tone: 'good' },
+            LATE_CYCLE: { label: '확장 후반', tone: 'caution' }, SLOWDOWN: { label: '둔화', tone: 'caution' },
+            CONTRACTION: { label: '수축', tone: 'alert' }
+          },
+          liquidity: {
+            EXPANDING: { label: '확대', tone: 'good' }, NEUTRAL: { label: '보통', tone: 'neutral' },
+            CONTRACTING: { label: '축소', tone: 'caution' }
+          },
+          credit: {
+            HEALTHY: { label: '안정', tone: 'good' }, NEUTRAL: { label: '보통', tone: 'neutral' },
+            WARNING_DIVERGENCE: { label: '괴리 경고', tone: 'caution' }, STRESS: { label: '경색', tone: 'alert' }
+          },
+          risk: {
+            RISK_ON: { label: '위험 자산 선호', tone: 'good' }, NEUTRAL: { label: '중립', tone: 'neutral' },
+            RISK_OFF: { label: '안전 자산 선호', tone: 'caution' }
+          }
+        },
+        statusOf(kind, value) {
+          return this.STATUS[kind]?.[value] || { label: '판단 불가', tone: 'neutral' };
         },
 
-        // 💡 2. 상태 뱃지 (방향성 & 선호도) 디자인 로직
-        getRegimeBgClass() {
+        // 시장 방향(국면)은 가격 등락이 아니라 상태라서 빨강/파랑 대신 상태 톤을 쓴다. 강도는 trendLevel(ScoreCategory)로 보탠다
+        get regimeStatus() {
           const r = this.regimeData?.regime;
-          if (r === 'BULL') return 'bg-up';
-          if (r === 'BEAR') return 'bg-down';
-          return 'bg-neutral';
-        },
-        getRegimeTextClass() {
-          const r = this.regimeData?.regime;
-          if (r === 'BULL') return 'text-up';
-          if (r === 'BEAR') return 'text-down';
-          return 'text-dark';
+          const level = this.regimeData?.trendLevel;
+          if (r === 'BULL') return { label: level === 'STRONG_POSITIVE' ? '강한 상승 추세' : '상승 추세', tone: 'good' };
+          if (r === 'BEAR') return level === 'STRONG_NEGATIVE'
+            ? { label: '강한 하락 추세', tone: 'alert' }
+            : { label: '하락 추세', tone: 'caution' };
+          return { label: '방향 탐색', tone: 'neutral' };
         },
         getRegimeIcon() {
           const r = this.regimeData?.regime;
@@ -583,26 +705,11 @@
           if (r === 'BEAR') return 'bi-graph-down-arrow';
           return 'bi-dash-circle';
         },
-
-        getRiskBadgeClass() {
-          const r = this.regimeData?.risk;
-          if (r === 'RISK-ON') return 'bg-green-soft text-green';
-          if (r === 'RISK-OFF') return 'bg-orange-soft text-orange';
-          return 'bg-neutral';
-        },
         getRiskIcon() {
           const r = this.regimeData?.risk;
-          if (r === 'RISK-ON') return 'bi-shield-check';
-          if (r === 'RISK-OFF') return 'bi-shield-exclamation';
+          if (r === 'RISK_ON') return 'bi-shield-check';
+          if (r === 'RISK_OFF') return 'bi-shield-exclamation';
           return 'bi-shield';
-        },
-
-        getCompassClass() {
-          if (!this.regimeData) return 'compass-neutral';
-          const regime = this.regimeData.regime;
-          if (regime === 'BULL') return 'compass-bull';
-          if (regime === 'BEAR') return 'compass-bear';
-          return 'compass-neutral';
         },
 
         // 💡 중앙 나침반 동적 코멘트
@@ -614,9 +721,9 @@
 
           let desc = '';
           if (r === 'BULL') {
-            desc = risk === 'RISK-ON' ? '상승 추세 속에서 위험 자산 선호 심리가 강해요.' : '상승 추세이지만 투자자들은 다소 신중한 모습이에요.';
+            desc = risk === 'RISK_ON' ? '상승 추세 속에서 위험 자산 선호 심리가 강해요.' : '상승 추세이지만 투자자들은 다소 신중한 모습이에요.';
           } else if (r === 'BEAR') {
-            desc = risk === 'RISK-OFF' ? '하락 추세가 이어지며 안전 자산 쏠림이 뚜렷해요.' : '하락 추세 속에서도 일부 위험 자산에 매수세가 있어요.';
+            desc = risk === 'RISK_OFF' ? '하락 추세가 이어지며 안전 자산 쏠림이 뚜렷해요.' : '하락 추세 속에서도 일부 위험 자산에 매수세가 있어요.';
           } else {
             desc = '뚜렷한 방향성 없이 시장이 눈치를 보고 있어요.';
           }
@@ -676,15 +783,17 @@
 
         formatDate(t) {
           const obj = this.allData[t];
-          if (!obj) return '업데이트 대기';
+          if (!obj) return '수신된 값 없음';
           if (obj.date) return obj.date;
 
           const dataList = obj.data;
-          if (!Array.isArray(dataList) || dataList.length === 0) return '업데이트 대기';
+          if (!Array.isArray(dataList) || dataList.length === 0) return '수신된 값 없음';
 
           const lastItem = dataList[dataList.length - 1];
-          return this._getDate(lastItem) || '업데이트 대기';
+          return this._getDate(lastItem) || '날짜 정보 없음';
         },
+
+        hasData(t) { return this.getLatestValue(t) !== null; },
 
         getLatestValue(t) {
           const obj = this.allData[t];
@@ -718,12 +827,14 @@
         },
 
         getChangeColorClass(t) {
+          if (!this.hasData(t)) return 'text-neutral';
           const cv = this.extractNumber(this.allData[t]?.changeValue);
           if (isNaN(cv) || cv === 0) return 'text-neutral';
           return cv > 0 ? 'text-up' : 'text-down';
         },
 
         formatChange(t) {
+          if (!this.hasData(t)) return '';
           const cv = this.extractNumber(this.allData[t]?.changeValue);
           const cr = this.extractNumber(this.allData[t]?.changeRate);
           if (isNaN(cv)) return '-';
@@ -756,21 +867,15 @@
         createChart() {
           const container = document.getElementById('market-chart-container');
           if (!container) return;
-
-          // 💡 4. 차트 백그라운드 셰이딩 (신뢰도/방향성 연동)
-          let chartBgColor = 'transparent';
-          const conf = this.regimeData?.confidence || 0;
-          const regime = this.regimeData?.regime;
-
-          if (conf <= 20) {
-            chartBgColor = 'rgba(139, 149, 161, 0.03)'; // 신뢰도 낮을 시 회색 셰이딩
-          } else if (conf > 60) {
-            if (regime === 'BULL') chartBgColor = 'rgba(240, 68, 82, 0.02)'; // 상승장 붉은 셰이딩
-            else if (regime === 'BEAR') chartBgColor = 'rgba(49, 130, 246, 0.02)'; // 하락장 푸른 셰이딩
+          if (typeof LightweightCharts === 'undefined') {   // CDN 차단·장애
+            this.chartUnavailable = true;
+            this.chartEmpty = true;
+            return;
           }
 
           this.chart = LightweightCharts.createChart(container, {
-            layout: { background: { type: 'solid', color: chartBgColor }, textColor: '#8b95a1', fontFamily: 'Pretendard' },
+            autoSize: true,   // 창 크기·회전·사이드바 변화에 맞춰 다시 맞춘다
+            layout: { background: { type: 'solid', color: 'transparent' }, textColor: '#6b7684', fontFamily: 'Pretendard' },
             grid: { vertLines: { visible: false }, horzLines: { color: '#f2f4f6' } },
             timeScale: { borderVisible: false, rightOffset: 5 },
             crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
@@ -791,8 +896,8 @@
               const price = data.value !== undefined ? data.value : data.close;
               this.toolTip.style.display = 'block';
               this.toolTip.innerHTML = `
-                <div style="color: #8b95a1; font-size: 13px; font-weight: 500; margin-bottom: 4px;">${param.time}</div>
-                <div style="font-size: 16px; font-weight: 700; color: #191f28;">${price.toLocaleString(undefined, {minimumFractionDigits:2})}</div>`;
+                <div style="color: var(--label-text); font-size: 13px; font-weight: 500; margin-bottom: 4px;">${param.time}</div>
+                <div style="font-size: 16px; font-weight: 700; color: var(--ink);">${price.toLocaleString(undefined, {minimumFractionDigits:2})}</div>`;
               let left = param.point.x + 15, top = param.point.y - 15;
               if (left + 140 > container.clientWidth) left = param.point.x - 140;
               if (top + 80 > container.clientHeight) top = container.clientHeight - 80;
@@ -803,9 +908,9 @@
         },
 
         updateChartData() {
+          if (!this.areaSeries) return;
           const obj = this.allData[this.activeTab];
-          if (!obj) return;
-          const list = obj.data || [];
+          const list = Array.isArray(obj?.data) ? obj.data : [];
 
           const formatted = list.map(d => ({
             time: String(this._getDate(d)),
@@ -813,10 +918,26 @@
           })).filter(d => Number.isFinite(d.value) && d.time !== 'undefined' && d.time !== '')
                   .sort((a,b) => a.time.localeCompare(b.time));
 
-          if (this.areaSeries && formatted.length > 0) {
-            this.areaSeries.setData(formatted);
-            this.chart.timeScale().fitContent();
+          // 같은 날짜가 두 번 오면 차트 라이브러리가 예외를 던지므로 마지막 값만 남긴다
+          for (let i = formatted.length - 1; i > 0; i--) {
+            if (formatted[i].time === formatted[i - 1].time) formatted.splice(i - 1, 1);
           }
+
+          this.chartEmpty = formatted.length === 0;
+          if (formatted.length === 0) {
+            this.areaSeries.setData([]);   // 이전 지표의 선이 새 제목 아래 남지 않게 비운다
+            return;
+          }
+          // 선 색 = 보이는 구간의 처음 대비 끝 (오르면 빨강, 내리면 파랑, 같으면 회색)
+          const diff = formatted[formatted.length - 1].value - formatted[0].value;
+          const [line, top, bottom] = diff > 0
+            ? ['#f04452', 'rgba(240, 68, 82, 0.14)', 'rgba(240, 68, 82, 0.01)']
+            : diff < 0
+              ? ['#3182f6', 'rgba(49, 130, 246, 0.14)', 'rgba(49, 130, 246, 0.01)']
+              : ['#8b95a1', 'rgba(139, 149, 161, 0.12)', 'rgba(139, 149, 161, 0.01)'];
+          this.areaSeries.applyOptions({ lineColor: line, topColor: top, bottomColor: bottom });
+          this.areaSeries.setData(formatted);
+          this.chart.timeScale().fitContent();
         },
 
         // 💡 4. 차트 탭 변경 시 부드러운 애니메이션 효과
@@ -825,6 +946,7 @@
           this.activeTab = t;
 
           const container = document.getElementById('market-chart-container');
+          if (!container) return;
           container.style.transition = 'opacity 0.2s ease-in-out';
           container.style.opacity = '0.3';
 
@@ -839,9 +961,9 @@
         selectIndicator(type) {
           this.mainTab = 'market';
           this.$nextTick(() => {
-            if (!this.chartInitialzed) {
+            if (!this.chartInitialized) {
               this.createChart();
-              this.chartInitialzed = true;
+              this.chartInitialized = true;
             }
             this.activeTab = type;
             this.updateChartData();
@@ -852,9 +974,13 @@
         },
 
         getSparklineColorHex(t) {
-          const cv = this.extractNumber(this.allData[t]?.changeValue);
-          if (isNaN(cv) || cv === 0) return '#8b95a1';
-          return cv > 0 ? '#f04452' : '#3182f6';
+          const list = this.allData[t]?.data;
+          if (!Array.isArray(list) || list.length < 2) return '#b0b8c1';
+          const values = list.slice(-20).map(d => this._getVal(d)).filter(v => Number.isFinite(v));
+          if (values.length < 2) return '#b0b8c1';
+          const diff = values[values.length - 1] - values[0];
+          if (diff === 0) return '#b0b8c1';
+          return diff > 0 ? '#f04452' : '#3182f6';
         },
 
         getSparklinePoints(t) {

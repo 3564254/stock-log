@@ -1,4 +1,4 @@
-package com.stocklog.modules.stock.analysis.domain.technical;
+package com.stocklog.modules.stock.analysis.score;
 
 import lombok.*;
 import java.util.List;

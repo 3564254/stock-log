@@ -2,102 +2,88 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>StockLog - 매매 기록</title>
-  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <th:block th:replace="~{fragments/head :: assets}"></th:block>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
 
   <style>
     :root {
-      --toss-blue: #3182f6; --toss-red: #f04452; --toss-green: #05c072;
-      --toss-warning: #f5a623; --toss-gray-bg: #f2f4f6; --sidebar-width: 250px;
+        --content-top-m: 8px;
+        --page-bottom-m: 24px;
     }
-    body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: #191f28; }
-    [x-cloak] { display: none !important; }
 
-    .layout-wrapper { display: flex; min-height: 100vh; }
-    .main-content {
-      flex-grow: 1; margin-left: var(--sidebar-width); padding: 0 60px 80px 60px;
-      transition: 0.3s; width: calc(100% - var(--sidebar-width)); min-width: 0;
-    }
-    .main-content.expanded { margin-left: 80px; width: calc(100% - 80px); }
-    .content-container { width: 100%; max-width: 1200px; margin: 0 auto; padding-top: 32px; }
-
-    .toss-card { background: white; border-radius: 16px; padding: 28px; box-shadow: none; margin-bottom: 24px; border: 1px solid #e5e8eb; }
-    .toss-banner { background: #f9fafb; border-radius: 16px; padding: 20px 24px; margin-bottom: 24px; border: 1px solid #e5e8eb; }
+    .toss-banner { background: var(--surface-soft); border-radius: 16px; padding: 20px 24px; margin-bottom: 24px; border: 1px solid var(--hairline); }
 
     .month-nav { display: flex; align-items: center; gap: 16px; }
-    .nav-btn { background: #f2f4f6; border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s; color: #4e5968; }
-    .nav-btn:hover { background: #e4e8ec; }
+    .nav-btn { background: var(--canvas); border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s; color: var(--slate); }
+    .nav-btn:hover { background: var(--canvas-hover); }
     .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-    .month-title { font-size: 1.25rem; font-weight: 700; color: #191f28; min-width: 130px; text-align: center; }
+    .month-title { font-size: 1.25rem; font-weight: 700; color: var(--ink); min-width: 130px; text-align: center; }
 
     .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 24px; }
-    .summary-item { background: #f9fafb; border-radius: 12px; padding: 18px 20px; border: 1px solid #e5e8eb; }
-    .summary-label { font-size: 13px; font-weight: 600; color: #8b95a1; margin-bottom: 6px; }
-    .summary-value { font-size: 1.25rem; font-weight: 700; color: #191f28; }
+    .summary-item { background: var(--surface-soft); border-radius: 12px; padding: 18px 20px; border: 1px solid var(--hairline); }
+    .summary-label { font-size: 13px; font-weight: 600; color: var(--label-text); margin-bottom: 6px; }
+    .summary-value { font-size: 1.25rem; font-weight: 700; color: var(--ink); }
 
     .chart-wrap { position: relative; height: 140px; margin-top: 4px; width: 100%; }
 
     .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 16px; }
-    .cal-day-label { text-align: center; font-size: 12px; font-weight: 600; color: #8b95a1; padding: 4px 0 8px; }
-    .cal-day-label.sun { color: var(--toss-red); }
-    .cal-day-label.sat { color: var(--toss-blue); }
+    .cal-day-label { text-align: center; font-size: 12px; font-weight: 600; color: var(--label-text); padding: 4px 0 8px; }
+    .cal-day-label.sun { color: var(--toss-red-deep); }
+    .cal-day-label.sat { color: var(--toss-blue-deep); }
 
-    .cal-cell { border-radius: 10px; min-height: 72px; padding: 8px 10px; background: #f9fafb; border: 1px solid #e5e8eb; cursor: default; transition: background 0.15s; position: relative; display: flex; flex-direction: column; }
+    .cal-cell { border-radius: 10px; min-height: 72px; padding: 8px 10px; background: var(--surface-soft); border: 1px solid var(--hairline); cursor: default; transition: background 0.15s; position: relative; display: flex; flex-direction: column; }
     .cal-cell.empty { background: transparent; border-color: transparent; }
     .cal-cell.today { border-color: var(--toss-blue) !important; }
     .cal-cell.has-log { cursor: pointer; }
-    .cal-cell.has-log:hover { background: #f2f4f6; }
-    .cal-cell.active { background: #f0f6ff; border-color: var(--toss-blue); }
-    .cal-cell.profit { background: rgba(5,192,114,0.04); }
-    .cal-cell.loss   { background: rgba(240,68,82,0.04); }
+    .cal-cell.has-log:hover { background: var(--canvas); }
+    .cal-cell.active { background: var(--toss-blue-tint); border-color: var(--toss-blue); }
+    .cal-cell.profit { background: rgba(240,68,82,0.04); }
+    .cal-cell.loss   { background: rgba(49,130,246,0.04); }
 
-    .cal-num { font-size: 13px; font-weight: 600; color: #4e5968; margin-bottom: 4px; }
-    .cal-num.sun { color: var(--toss-red); }
-    .cal-num.sat { color: var(--toss-blue); }
+    .cal-num { font-size: 13px; font-weight: 600; color: var(--slate); margin-bottom: 4px; }
+    .cal-num.sun { color: var(--toss-red-deep); }
+    .cal-num.sat { color: var(--toss-blue-deep); }
     .cal-dot-wrap { display: flex; flex-wrap: wrap; gap: 3px; margin-top: auto; }
     .cal-dot { width: 6px; height: 6px; border-radius: 50%; }
     .cal-amount { font-size: 11px; font-weight: 600; margin-top: 2px; }
 
-    .log-date-label { font-size: 12px; font-weight: 600; color: #8b95a1; margin-bottom: 10px; margin-top: 4px; }
-    .log-item { display: flex; align-items: center; padding: 14px 0; border-bottom: 1px solid #f2f4f6; gap: 14px; }
+    .log-date-label { font-size: 12px; font-weight: 600; color: var(--label-text); margin-bottom: 10px; margin-top: 4px; }
+    .log-item { display: flex; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--canvas); gap: 14px; }
     .log-item:last-child { border-bottom: none; }
     .log-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; flex-shrink: 0; }
-    .log-icon.profit { background: rgba(5,192,114,0.08); color: var(--toss-green); }
-    .log-icon.loss   { background: rgba(240,68,82,0.08); color: var(--toss-red); }
-    .log-name { font-size: 15px; font-weight: 700; color: #191f28; }
-    .log-code { font-size: 12px; font-weight: 500; color: #8b95a1; margin-top: 2px; }
-    .log-qty  { font-size: 13px; font-weight: 500; color: #8b95a1; margin-left: auto; margin-right: 20px; flex-shrink: 0; }
+    .log-icon.profit { background: var(--toss-red-soft); color: var(--toss-red-deep); }
+    .log-icon.loss   { background: var(--toss-blue-soft); color: var(--toss-blue-deep); }
+    .log-name { font-size: 15px; font-weight: 700; color: var(--ink); }
+    .log-code { font-size: 12px; font-weight: 500; color: var(--label-text); margin-top: 2px; }
+    .log-qty  { font-size: 13px; font-weight: 500; color: var(--label-text); margin-left: auto; margin-right: 20px; flex-shrink: 0; }
     .log-profit { font-size: 15px; font-weight: 700; text-align: right; flex-shrink: 0; min-width: 90px; }
 
-    .review-feed-item { background: #f9fafb; border: 1px solid #e5e8eb; border-radius: 12px; padding: 18px; margin-bottom: 12px; transition: background 0.15s; position: relative; }
-    .review-feed-item:hover { background: #f2f4f6; }
+    .review-feed-item { background: var(--surface-soft); border: 1px solid var(--hairline); border-radius: 12px; padding: 18px; margin-bottom: 12px; transition: background 0.15s; position: relative; }
+    .review-feed-item:hover { background: var(--canvas); }
     .action-btn-hover:hover { background-color: rgba(0,0,0,0.06); }
 
-    .emotion-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px; }
-    .emo-plan { background: rgba(5,192,114,0.08); color: var(--toss-green); }
-    .emo-impulse { background: rgba(240,68,82,0.08); color: var(--toss-red); }
-    .emo-anxiety { background: rgba(245,166,35,0.08); color: var(--toss-warning); }
+    .emotion-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+    .emotion-tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+    .emo-plan { background: var(--status-green-tint); color: var(--status-green-text); }
+    .emo-anxiety { background: var(--caution-tint); color: var(--caution-text); }
+    .emo-impulse { background: var(--alert-tint); color: var(--alert-text); box-shadow: inset 0 0 0 1px var(--alert-line); }
 
-    .text-up { color: var(--toss-red) !important; }
-    .text-down { color: var(--toss-blue) !important; }
-    .text-green { color: var(--toss-green) !important; }
-    .badge-profit { background: rgba(5,192,114,0.08); color: var(--toss-green); font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; }
-    .badge-loss { background: rgba(240,68,82,0.08); color: var(--toss-red); font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; }
+    .text-up { color: var(--toss-red-deep) !important; }
+    .text-down { color: var(--toss-blue-deep) !important; }
+    .text-green { color: var(--status-green-text) !important; }
+    .badge-profit { background: var(--toss-red-soft); color: var(--toss-red-deep); font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; }
+    .badge-loss { background: var(--toss-blue-soft); color: var(--toss-blue-deep); font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; }
 
-    .modal-backdrop-custom { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-    .modal-sheet { background: white; width: 100%; max-width: 480px; border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-    .toss-input { width: 100%; border: 1px solid #e5e8eb; background: #f9fafb; border-radius: 12px; padding: 14px 16px; outline: none; margin-bottom: 14px; font-size: 15px; font-weight: 500; transition: 0.15s; font-family: 'Pretendard', sans-serif; }
-    .toss-input:focus { border-color: var(--toss-blue); background: white; }
+    .toss-input { margin-bottom: 14px; }
     .search-item { transition: background 0.15s; cursor: pointer; border-radius: 8px; padding: 12px 14px; margin-bottom: 4px; }
-    .search-item:hover { background: #f9fafb; }
+    .search-item:hover { background: var(--surface-soft); }
     .spinner-wrap { display: flex; justify-content: center; padding: 20px; }
 
-    .empty-state { text-align: center; padding: 48px 0; color: #8b95a1; }
-    .empty-state i { font-size: 2rem; display: block; margin-bottom: 12px; color: #d1d6db; }
+    .empty-state { text-align: center; padding: 48px 0; color: var(--label-text); }
+    .empty-state i { font-size: 2rem; display: block; margin-bottom: 12px; color: var(--haze); }
 
     @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
     .fu  { animation: fadeUp 0.3s ease both; }
@@ -105,23 +91,91 @@
     .d2  { animation-delay: 0.1s; }
     .d3  { animation-delay: 0.15s; }
 
+    /* 키보드 포커스 · 버튼으로 바꾼 달력 칸/검색 행 */
+    button.cal-cell { font: inherit; color: inherit; text-align: left; width: 100%; }
+    button.cal-cell:disabled { cursor: default; }
+    button.search-item { display: flex; width: 100%; border: 0; background: transparent; font: inherit; color: inherit; text-align: left; }
+    .search-item:focus-visible { background: var(--canvas); outline: 2px solid var(--toss-blue); outline-offset: -2px; }
+    .nav-btn:focus-visible, .cal-cell:focus-visible, .action-btn-hover:focus-visible, .m-tabs button:focus-visible, .m-fab:focus-visible,
+    .modal-sheet .btn:focus-visible, .modal-sheet .btn-close:focus-visible { outline: 2px solid var(--toss-blue); outline-offset: 2px; box-shadow: none; }
+    .field-error { color: var(--toss-red-deep); font-size: 13px; font-weight: 600; margin: -8px 0 14px; }
+    .req { color: var(--toss-red-deep); margin-left: 2px; }
+    .inline-alert { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+                    background: var(--caution-tint); border: 1px solid var(--caution-line); color: var(--caution-text); border-radius: 12px; padding: 12px 16px; font-size: 14px; font-weight: 600; }
+    .inline-alert button { border: 0; background: #fff; color: var(--caution-text); border-radius: 8px; padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 700; }
+    .search-state { text-align: center; padding: 20px 8px; font-size: 14px; font-weight: 600; color: var(--slate); word-break: keep-all; }
+
+    .m-tabs, .m-fab { display: none; }
+
     @media (max-width: 992px) {
       .col-lg-6 { width: 100% !important; }
     }
     @media (max-width: 768px) {
-      .sidebar-main { display: none !important; }
-      .main-content { margin-left: 0 !important; width: 100% !important; padding: 16px !important; }
-      .content-container { padding-top: 16px; }
-      .toss-card, .modal-sheet { padding: 20px !important; }
-      .summary-grid { grid-template-columns: 1fr !important; gap: 8px; }
-      .summary-item { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
-      .summary-label { margin-bottom: 0; }
-      .cal-cell { min-height: 50px; padding: 4px; }
-      .cal-num { font-size: 10px; margin-bottom: 2px; }
-      .cal-amount { font-size: 8px; }
+      .toss-card, .toss-banner { padding: 18px 16px !important; margin-bottom: 16px; }
+      .toss-card .d-flex.justify-content-between.mb-2 { flex-wrap: wrap; gap: 4px 12px; }
+      .toss-card .d-flex.justify-content-between.mb-2 > span:last-child { word-break: keep-all; }
+
+      /* 숨김 규칙은 모바일에서만 적용 (넓은 화면에서는 전부 보인다) */
+      .m-hide { display: none !important; }
+      .desktop-actions { display: none !important; }
+
+      /* 탭 */
+      .m-tabs { display: flex; gap: 4px; background: #eceff3; border-radius: 12px; padding: 4px; margin-bottom: 16px; position: sticky; top: 0; z-index: 20; }
+      .m-tabs button { flex: 1 1 0; border: 0; background: transparent; border-radius: 9px; padding: 11px 0; min-height: 44px; font-size: 15px; font-weight: 600; color: var(--label-text); font-family: inherit; }
+      .m-tabs button.on { background: #fff; color: var(--ink); font-weight: 700; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+
+      /* 하단 고정 버튼 */
+      .m-fab { display: flex; align-items: center; justify-content: center; gap: 6px; position: fixed; left: 16px; right: 16px;
+               bottom: calc(60px + env(safe-area-inset-bottom) + 12px); z-index: 900; min-height: 52px; border: 0; border-radius: 14px;
+               background: var(--toss-blue-deep); color: #fff; font-size: 16px; font-weight: 700; font-family: inherit; box-shadow: 0 6px 18px rgba(27,100,218,0.30); }
+      .m-fab[style*="display: none"] { display: none !important; }
+      .main-content { padding-bottom: 96px !important; }
+
+      /* 월 이동 + 버튼: 월 이동은 가운데, 버튼 두 개는 한 줄에 반반 */
+      .month-nav { width: 100%; justify-content: space-between; gap: 8px; }
+      .toss-card > .d-flex > .d-flex.gap-2 { width: 100%; }
+      .toss-card > .d-flex > .d-flex.gap-2 .btn { flex: 1 1 0; padding-left: 8px !important; padding-right: 8px !important; white-space: nowrap; min-height: 44px; }
+      .nav-btn { width: 44px; height: 44px; }
+
+      /* 요약: 한 줄씩 라벨 - 값 */
+      .summary-grid { grid-template-columns: 1fr 1fr !important; gap: 8px; margin-top: 16px; }
+      .summary-item { padding: 12px 14px; }
+      .summary-item:first-child { grid-column: 1 / -1; padding: 18px 16px; }
+      .summary-item:first-child .summary-value { font-size: 1.75rem; letter-spacing: -0.02em; }
+      .summary-label { margin-bottom: 4px; }
+      .summary-item:not(:first-child) .summary-value { font-size: 1.1rem; }
+      .chart-wrap { height: 120px; }
+
+      /* 달력: 칸이 좁으므로 금액 글자는 숨기고 색 + 점으로 표시 */
+      .cal-grid { gap: 3px; }
+      .cal-cell { min-height: 46px; padding: 4px; border-radius: 8px; align-items: center; }
+      .cal-cell.has-log { min-height: 52px; }
+      .cal-cell.profit { background: rgba(240,68,82,0.10); }
+      .cal-cell.loss   { background: rgba(49,130,246,0.10); }
+      .cal-cell.active { background: #e7f0ff; }
+      .cal-num { font-size: 12px; margin-bottom: 2px; }
+      .cal-amount { display: none; }
       .cal-dot { width: 4px; height: 4px; }
-      .log-item { gap: 10px; }
-      .log-qty { margin-right: 0; }
+      .cal-dot-wrap { justify-content: center; }
+
+      /* 기록 목록: 아이콘 | 이름·수량 | 손익 */
+      .log-item { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; column-gap: 12px; row-gap: 2px; align-items: center; }
+      .log-item .log-icon { grid-row: 1 / span 2; }
+      .log-item > .flex-grow-1 { grid-column: 2; grid-row: 1; min-width: 0; }
+      .log-item > .log-qty { grid-column: 2; grid-row: 2; margin: 0; }
+      .log-item > .text-end { grid-column: 3; grid-row: 1 / span 2; }
+      .log-name { word-break: keep-all; overflow-wrap: anywhere; }
+      .log-profit { min-width: 0; font-size: 14px; }
+
+      /* 목록/복기 영역은 페이지 스크롤에 맡긴다(안쪽 스크롤 중첩 방지) */
+      .toss-card div[style*="max-height: 500px"] { max-height: none !important; overflow: visible !important; padding-right: 0 !important; }
+      .review-feed-item { padding: 16px; }
+      .review-feed-item p { word-break: keep-all; overflow-wrap: break-word; }
+
+      /* 모달: 아래에서 올라오는 시트 + iOS 확대 방지 */
+      .modal-backdrop-custom { align-items: flex-end; }
+      .modal-sheet { max-width: none; border-radius: 20px 20px 0 0; padding: 20px !important; max-height: 92vh; max-height: 92dvh; overflow-y: auto; padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important; }
+      .toss-input { font-size: 16px; }
     }
   </style>
 </head>
@@ -136,50 +190,55 @@
     <div class="content-container">
 
       <div class="toss-banner d-flex align-items-center gap-3 mb-4 fu">
-        <div class="d-inline-flex align-items-center justify-content-center bg-white border" style="width: 40px; height: 40px; border-radius: 10px; border-color: #e5e8eb !important;">
+        <div class="d-inline-flex align-items-center justify-content-center bg-white border" style="width: 40px; height: 40px; border-radius: 10px; border-color: var(--hairline) !important;">
           <i class="bi bi-graph-up-arrow text-dark fs-5"></i>
         </div>
         <div>
           <div class="fw-bold text-dark" style="font-size: 16px;">매매 기록 및 복기 노트</div>
-          <div style="color: #6b7684; font-size: 13px; font-weight: 500; margin-top: 2px;">수익과 손실을 기록하고 매매 당시의 생각을 되짚어보는 공간</div>
+          <div style="color: var(--label-text); font-size: 13px; font-weight: 500; margin-top: 2px;">수익과 손실을 기록하고 매매 당시의 생각을 되짚어보는 공간</div>
         </div>
       </div>
 
-      <h2 class="fw-bold mb-4 fu d1" style="font-size: 20px; color: #191f28;">매매 기록 대시보드</h2>
+      <h2 class="fw-bold mb-4 fu d1" style="font-size: 20px; color: var(--ink);">매매 기록 대시보드</h2>
 
       <div class="toss-card fu d1">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
           <div class="month-nav">
-            <button class="nav-btn" @click="changeDate(-1)"><i class="bi bi-chevron-left"></i></button>
-            <span class="month-title" x-text="displayDate"></span>
-            <button class="nav-btn" @click="changeDate(1)" :disabled="!canGoNext()"><i class="bi bi-chevron-right"></i></button>
+            <button type="button" class="nav-btn" @click="changeDate(-1)" aria-label="이전 달"><i class="bi bi-chevron-left" aria-hidden="true"></i></button>
+            <span class="month-title" x-text="displayDate" aria-live="polite"></span>
+            <button type="button" class="nav-btn" @click="changeDate(1)" :disabled="!canGoNext()" aria-label="다음 달"><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
           </div>
 
-          <div class="d-flex gap-2">
+          <div class="d-flex gap-2 desktop-actions">
             <button class="btn btn-outline-secondary rounded-pill px-3 fw-bold"
-                    style="font-size: 13px; border-color: #e5e8eb; color: #4e5968;"
+                    style="font-size: 13px; border-color: var(--hairline); color: var(--slate);"
                     @click="openReviewModal()">
               <i class="bi bi-journal-text me-1"></i>복기 노트 작성
             </button>
             <button class="btn btn-primary rounded-pill px-4 fw-bold border-0"
-                    style="background: var(--toss-blue); font-size: 13px;"
+                    style="background: var(--toss-blue-deep); font-size: 13px;"
                     @click="openModal()">
               <i class="bi bi-plus me-1"></i>매매 기록 추가
             </button>
           </div>
         </div>
 
+        <div class="inline-alert mt-3" x-show="dataLoadError" x-cloak role="alert">
+          <span x-text="dataLoadError"></span>
+          <button type="button" @click="loadData()">다시 시도</button>
+        </div>
+
         <div class="summary-grid">
           <div class="summary-item">
             <div class="summary-label">월 실현 손익</div>
             <div class="summary-value"
-                 :class="(data?.totalRealizedProfit||0) >= 0 ? 'text-up' : 'text-down'"
+                 :class="(data?.totalRealizedProfit||0) > 0 ? 'text-up' : ((data?.totalRealizedProfit||0) < 0 ? 'text-down' : '')"
                  x-text="formatMoney(data?.totalRealizedProfit||0)"></div>
           </div>
           <div class="summary-item">
             <div class="summary-label">성공률</div>
-            <div class="summary-value text-green"
-                 x-text="(data?.successRate||0).toFixed(1) + '%'"></div>
+            <div class="summary-value" :class="totalTrades() > 0 ? 'text-green' : ''"
+                 x-text="totalTrades() > 0 ? (data?.successRate||0).toFixed(1) + '%' : '-'"></div>
           </div>
           <div class="summary-item">
             <div class="summary-label">매매 건수</div>
@@ -187,15 +246,22 @@
           </div>
         </div>
 
-        <div class="chart-wrap mt-4">
+        <div class="chart-wrap mt-4" :class="mobileTab !== 'cal' ? 'm-hide' : ''">
           <canvas id="dailyChart"></canvas>
         </div>
       </div>
 
-      <div class="toss-card fu d2">
+      <!-- 모바일 전용 탭 -->
+      <div class="m-tabs" role="tablist" aria-label="매매 기록 보기">
+        <button type="button" role="tab" :aria-selected="mobileTab === 'log'" :class="mobileTab === 'log' ? 'on' : ''" @click="mobileTab = 'log'">기록</button>
+        <button type="button" role="tab" :aria-selected="mobileTab === 'cal'" :class="mobileTab === 'cal' ? 'on' : ''" @click="mobileTab = 'cal'">달력</button>
+        <button type="button" role="tab" :aria-selected="mobileTab === 'review'" :class="mobileTab === 'review' ? 'on' : ''" @click="mobileTab = 'review'">복기</button>
+      </div>
+
+      <div class="toss-card fu d2" :class="mobileTab !== 'cal' ? 'm-hide' : ''">
         <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="fw-bold" style="font-size: 15px; color: #191f28;">월별 매매 현황</span>
-          <span style="font-size: 13px; color: #8b95a1; font-weight: 500;">날짜를 누르면 해당 일자의 기록만 모아볼 수 있어요</span>
+          <span class="fw-bold" style="font-size: 15px; color: var(--ink);">월별 매매 현황</span>
+          <span style="font-size: 13px; color: var(--label-text); font-weight: 500;">날짜를 누르면 해당 일자의 기록만 모아볼 수 있어요</span>
         </div>
 
         <div class="cal-grid">
@@ -212,7 +278,10 @@
           </template>
 
           <template x-for="day in daysInMonth()" :key="day">
-            <div class="cal-cell"
+            <button type="button" class="cal-cell"
+                 :disabled="getLogsForDay(day).length === 0"
+                 :aria-pressed="(selectedDay === day).toString()"
+                 :aria-label="formatSelectedDay(day) + (getLogsForDay(day).length > 0 ? ', 매매 ' + getLogsForDay(day).length + '건, ' + formatMoney(getDayProfit(day)) : ', 기록 없음')"
                  :class="{
                                  'has-log':  getLogsForDay(day).length > 0,
                                  'active':   selectedDay === day,
@@ -220,36 +289,36 @@
                                  'profit':   getDayProfit(day) > 0,
                                  'loss':     getDayProfit(day) < 0 && getLogsForDay(day).length > 0
                              }"
-                 @click="getLogsForDay(day).length > 0 && (selectedDay = selectedDay === day ? null : day)">
-              <div class="cal-num"
+                 @click="selectedDay = selectedDay === day ? null : day; selectedDay && (mobileTab = 'log')">
+              <div class="cal-num" aria-hidden="true"
                    :class="{ 'sun': getDayOfWeek(day) === 0, 'sat': getDayOfWeek(day) === 6 }"
                    x-text="day"></div>
               <template x-if="getLogsForDay(day).length > 0">
-                <div>
+                <div aria-hidden="true">
                   <div class="cal-amount"
                        :class="getDayProfit(day) >= 0 ? 'text-up' : 'text-down'"
                        x-text="formatCompact(getDayProfit(day))"></div>
                   <div class="cal-dot-wrap">
                     <template x-for="log in getLogsForDay(day).slice(0,4)" :key="log.id">
-                      <div class="cal-dot" :style="'background:' + (log.isProfit ? '#05c072' : '#f04452')"></div>
+                      <div class="cal-dot" :style="'background:' + (log.isProfit ? 'var(--toss-red)' : 'var(--toss-blue)')"></div>
                     </template>
                   </div>
                 </div>
               </template>
-            </div>
+            </button>
           </template>
         </div>
       </div>
 
       <div class="row g-4 fu d3">
-        <div class="col-lg-6">
+        <div class="col-lg-6" :class="mobileTab !== 'log' ? 'm-hide' : ''">
           <div class="toss-card h-100 mb-0">
             <div class="d-flex align-items-center justify-content-between mb-3">
-                            <span class="fw-bold" style="font-size: 15px; color: #191f28;"
+                            <span class="fw-bold" style="font-size: 15px; color: var(--ink);"
                                   x-text="selectedDay ? formatSelectedDay(selectedDay) + ' 매매 기록' : '이번 달 전체 기록'"></span>
               <button x-show="selectedDay" @click="selectedDay = null"
                       class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold"
-                      style="font-size: 12px; border-color: #e5e8eb; color: #4e5968;">전체 보기</button>
+                      style="font-size: 12px; border-color: var(--hairline); color: var(--slate);">전체 보기</button>
             </div>
 
             <div class="empty-state" x-show="!data?.dailyLogs || Object.keys(data.dailyLogs).length === 0">
@@ -266,7 +335,7 @@
                         <i class="bi" :class="log.isProfit ? 'bi-arrow-up' : 'bi-arrow-down'"></i>
                       </div>
                       <div class="flex-grow-1">
-                        <div class="log-name" x-text="log.korName"></div>
+                        <div class="log-name" x-text="log.korName || log.stockCode || '종목 정보 없음'"></div>
                         <div class="log-code" x-text="log.stockCode"></div>
                       </div>
                       <div class="log-qty" x-text="formatNumber(log.quantity) + '주'"></div>
@@ -284,11 +353,16 @@
           </div>
         </div>
 
-        <div class="col-lg-6">
+        <div class="col-lg-6" :class="mobileTab !== 'review' ? 'm-hide' : ''">
           <div class="toss-card h-100 mb-0">
-            <h3 class="fw-bold mb-3" style="font-size: 15px; color: #191f28;">투자 복기 노트</h3>
+            <h3 class="fw-bold mb-3" style="font-size: 15px; color: var(--ink);">투자 복기 노트</h3>
 
-            <div class="empty-state" x-show="reviewFeeds.length === 0">
+            <div class="inline-alert mb-3" x-show="reviewLoadError" x-cloak role="alert">
+              <span>복기 노트를 불러오지 못했어요</span>
+              <button type="button" @click="loadReviewFeeds()">다시 시도</button>
+            </div>
+
+            <div class="empty-state" x-show="!reviewLoadError && reviewFeeds.length === 0">
               <div style="font-size: 14px; font-weight: 500;">작성된 투자 복기 메모가 없어요</div>
             </div>
 
@@ -298,14 +372,14 @@
                   <div class="d-flex justify-content-between align-items-start mb-2">
                     <div>
                       <span class="emotion-tag" :class="getEmotionClass(review.emotion)" x-text="review.emotionDescription || '일반 메모'"></span>
-                      <span style="font-size: 12px; color: #8b95a1; font-weight: 500; margin-left: 8px;" x-text="formatShortDate(review.createdAt)"></span>
+                      <span style="font-size: 12px; color: var(--label-text); font-weight: 500; margin-left: 8px;" x-text="formatShortDate(review.createdAt)"></span>
                     </div>
                     <div class="d-flex align-items-center gap-1">
-                      <button @click.stop="openEditReviewModal(review)" class="btn btn-sm text-secondary p-1 rounded-2 action-btn-hover" style="border:none;" title="수정">
-                        <i class="bi bi-pencil-square" style="font-size:13px;"></i>
+                      <button type="button" @click.stop="openEditReviewModal(review)" class="btn btn-sm text-secondary p-1 rounded-2 action-btn-hover" style="border:none;" title="수정" aria-label="복기 노트 수정">
+                        <i class="bi bi-pencil-square" style="font-size:13px;" aria-hidden="true"></i>
                       </button>
-                      <button @click.stop="deleteReview(review.id)" class="btn btn-sm text-danger p-1 rounded-2 action-btn-hover" style="border:none;" title="삭제">
-                        <i class="bi bi-trash3" style="font-size:13px;"></i>
+                      <button type="button" @click.stop="deleteReview(review.id)" class="btn btn-sm text-danger p-1 rounded-2 action-btn-hover" style="border:none;" title="삭제" aria-label="복기 노트 삭제" :disabled="deletingReviewId === review.id">
+                        <i class="bi bi-trash3" style="font-size:13px;" aria-hidden="true"></i>
                       </button>
                     </div>
                   </div>
@@ -322,24 +396,31 @@
   </main>
 </div>
 
+<!-- 모바일 하단 고정 버튼 (탭바 바로 위) -->
+<button type="button" class="m-fab" x-show="!showModal && !showReviewModal" x-cloak
+        @click="mobileTab === 'review' ? openReviewModal() : openModal()">
+  <i class="bi bi-plus-lg"></i><span x-text="mobileTab === 'review' ? '복기 노트 작성' : '매매 기록 추가'"></span>
+</button>
+
 <div x-show="showReviewModal" class="modal-backdrop-custom" x-cloak @click.self="closeReviewModal()">
-  <div class="modal-sheet" @click.stop>
+  <div class="modal-sheet" @click.stop role="dialog" aria-modal="true" aria-labelledby="review-modal-title" tabindex="-1"
+       x-dialog="showReviewModal" @keydown.escape.stop="closeReviewModal()">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
-        <h4 class="fw-bold m-0 text-dark" style="font-size: 18px;" x-text="isEditMode ? '복기 메모 수정' : '복기 노트 작성'"></h4>
-        <div class="mt-1" style="font-size: 13px; color: #8b95a1; font-weight: 500;">매매 당시의 생각과 심리 상태를 기록해 보세요</div>
+        <h2 id="review-modal-title" class="fw-bold m-0 text-dark" style="font-size: 18px;" x-text="isEditMode ? '복기 메모 수정' : '복기 노트 작성'"></h2>
+        <div class="mt-1" style="font-size: 13px; color: var(--label-text); font-weight: 500;">매매 당시의 생각과 심리 상태를 기록해 보세요</div>
       </div>
-      <button @click="closeReviewModal()" class="btn-close shadow-none"></button>
+      <button type="button" @click="closeReviewModal()" class="btn-close shadow-none" aria-label="닫기"></button>
     </div>
 
     <div class="text-start mb-3">
-      <label class="fw-bold mb-2 d-block" style="font-size: 13px; color: #4e5968;">제목</label>
-      <input type="text" x-model="reviewForm.title" class="toss-input" placeholder="제목을 입력해 주세요">
+      <label for="review-title" class="fw-bold mb-2 d-block" style="font-size: 13px; color: var(--slate);">제목</label>
+      <input type="text" id="review-title" x-model="reviewForm.title" class="toss-input" placeholder="제목을 입력해 주세요" maxlength="100" data-autofocus>
     </div>
 
     <div class="text-start mb-3">
-      <label class="fw-bold mb-2 d-block" style="font-size: 13px; color: #4e5968;">감정 상태</label>
-      <select x-model="reviewForm.emotion" class="toss-input" style="cursor: pointer;">
+      <label for="review-emotion" class="fw-bold mb-2 d-block" style="font-size: 13px; color: var(--slate);">감정 상태</label>
+      <select id="review-emotion" x-model="reviewForm.emotion" class="toss-input" style="cursor: pointer;">
         <option value="" disabled selected>심리 상태 선택</option>
         <option value="DISCIPLINED">원칙 준수 (계획 매매)</option>
         <option value="PATIENT_WAIT">인내심 매매 (타점 대기)</option>
@@ -354,73 +435,98 @@
     </div>
 
     <div class="text-start mb-4">
-      <label class="fw-bold mb-2 d-block" style="font-size: 13px; color: #4e5968;">상세 내용</label>
-      <textarea x-model="reviewForm.content" class="toss-input" style="height: 120px; resize: none;" placeholder="매매 배경, 배운 점 등을 자유롭게 적어주세요"></textarea>
+      <label for="review-content" class="fw-bold mb-2 d-block" style="font-size: 13px; color: var(--slate);">상세 내용<span class="req" aria-hidden="true">*</span></label>
+      <textarea id="review-content" x-ref="reviewContent" x-model="reviewForm.content" class="toss-input" style="height: 120px; resize: vertical;"
+                placeholder="매매 배경, 배운 점 등을 자유롭게 적어주세요" required maxlength="2000"
+                :aria-invalid="reviewContentError ? 'true' : 'false'" aria-describedby="review-content-error"
+                @input="reviewContentError = ''"></textarea>
+      <div id="review-content-error" class="field-error" x-show="reviewContentError" x-text="reviewContentError"></div>
     </div>
 
-    <button @click="submitReview()" class="btn border-0 w-100 fw-bold" style="background: var(--toss-blue); color: white; font-size: 16px; padding: 16px 0; border-radius: 8px;" :disabled="reviewSubmitting">
+    <div class="inline-alert mb-3" x-show="reviewSubmitError" x-cloak role="alert">
+      <span x-text="reviewSubmitError"></span>
+    </div>
+
+    <button type="button" @click="submitReview()" class="btn border-0 w-100 fw-bold" style="background: var(--toss-blue-deep); color: white; font-size: 16px; padding: 16px 0; border-radius: 8px;" :disabled="reviewSubmitting" :aria-busy="reviewSubmitting.toString()">
       <span x-show="!reviewSubmitting" x-text="isEditMode ? '수정 완료' : '저장하기'"></span>
-      <span x-show="reviewSubmitting" class="spinner-border spinner-border-sm"></span>
+      <span x-show="reviewSubmitting" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+      <span x-show="reviewSubmitting" class="visually-hidden">저장 중</span>
     </button>
   </div>
 </div>
 
 <div x-show="showModal" class="modal-backdrop-custom" x-cloak @click.self="closeModal()">
-  <div class="modal-sheet" @click.stop>
+  <div class="modal-sheet" @click.stop role="dialog" aria-modal="true" aria-labelledby="trade-modal-title" tabindex="-1"
+       x-dialog="showModal" @keydown.escape.stop="closeModal()">
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h4 class="fw-bold m-0 text-dark" style="font-size: 18px;"
-          x-text="step === 1 ? '종목 선택' : '매매 정보 입력'"></h4>
-      <button @click="closeModal()" class="btn-close shadow-none"></button>
+      <h2 id="trade-modal-title" class="fw-bold m-0 text-dark" style="font-size: 18px;"
+          x-text="step === 1 ? '종목 선택' : '매매 정보 입력'"></h2>
+      <button type="button" @click="closeModal()" class="btn-close shadow-none" aria-label="닫기"></button>
     </div>
 
     <div x-show="step === 1">
-      <input type="text" x-model="searchQuery"
+      <label for="trade-search" class="visually-hidden">종목 검색</label>
+      <input type="search" id="trade-search" x-model="searchQuery" autocomplete="off" maxlength="40"
              @input.debounce.400ms="searchNew()"
-             class="toss-input" placeholder="종목명이나 코드를 검색해 보세요" autofocus>
-      <div x-show="isLoading" class="spinner-wrap">
-        <div class="spinner-border text-primary" style="width: 1.4rem; height: 1.4rem;"></div>
+             data-nav-input data-autofocus @keydown.down="focusFirstNavItem($event, $refs.tradeResults)"
+             class="toss-input" placeholder="종목명이나 코드를 검색해 보세요">
+      <div x-show="isLoading" class="spinner-wrap" role="status">
+        <div class="spinner-border text-primary" style="width: 1.4rem; height: 1.4rem;" aria-hidden="true"></div>
+        <span class="visually-hidden">검색 중</span>
       </div>
-      <div style="max-height: 38vh; overflow-y: auto;">
+      <div style="max-height: 38vh; overflow-y: auto;" x-ref="tradeResults" x-arrow-nav>
         <template x-for="item in searchResults" :key="item.info?.code">
-          <div @click="selectStock(item)" class="search-item d-flex justify-content-between align-items-center">
-            <div>
-              <div class="fw-bold text-dark" style="font-size: 15px;" x-text="item.info?.name"></div>
-              <div class="small mt-1" style="color: #8b95a1; font-weight: 500;" x-text="item.info?.code"></div>
+          <button type="button" data-nav-item @click="selectStock(item)" class="search-item d-flex justify-content-between align-items-center">
+            <div style="min-width: 0;">
+              <div class="fw-bold text-dark text-truncate" style="font-size: 15px;" x-text="item.info?.name || item.info?.code"></div>
+              <div class="small mt-1" style="color: var(--label-text); font-weight: 500;" x-text="item.info?.code"></div>
             </div>
-            <div style="font-size: 13px; font-weight: 600; color: #4e5968;">
-              선택 <i class="bi bi-chevron-right"></i>
+            <div class="flex-shrink-0" style="font-size: 13px; font-weight: 600; color: var(--slate);">
+              선택 <i class="bi bi-chevron-right" aria-hidden="true"></i>
             </div>
-          </div>
+          </button>
         </template>
-        <div x-show="hasMore && !isLoading && searchResults.length > 0" class="text-center mt-2">
-          <button @click="fetchStocks(false)" class="btn btn-link text-decoration-none fw-bold text-secondary" style="font-size: 12px;">더 보기</button>
+        <div x-show="!isLoading && searchError" class="search-state" role="alert">
+          <div x-text="searchError"></div>
+          <button type="button" class="btn btn-link text-decoration-none fw-bold mt-1" style="font-size: 13px;" @click="fetchStocks(searchResults.length === 0)">다시 시도</button>
+        </div>
+        <div x-show="!isLoading && !searchError && searchedQuery && searchResults.length === 0" class="search-state" role="status">
+          <span x-text="`'${searchedQuery}'에 맞는 종목이 없어요. 종목명을 짧게 줄이거나 종목 코드로 검색해 보세요`"></span>
+        </div>
+        <div x-show="hasMore && !isLoading && !searchError && searchResults.length > 0" class="text-center mt-2">
+          <button type="button" @click="fetchStocks(false)" class="btn btn-link text-decoration-none fw-bold" style="font-size: 13px; color: var(--slate);">더 보기</button>
         </div>
       </div>
     </div>
 
     <div x-show="step === 2">
-      <form th:action="@{/trade/add}" method="post">
+      <form th:action="@{/trade/add}" method="post" @submit="tradeSubmitting = true">
         <input type="hidden" name="stockCode" :value="selectedStock.code">
-        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 mb-4" style="background: #f0f6ff; border: 1px solid #dbeafe;">
+        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 mb-4" style="background: var(--toss-blue-tint); border: 1px solid var(--toss-blue-tint-line);">
           <div>
             <div class="fw-bold text-dark" style="font-size: 15px;" x-text="selectedStock.name"></div>
-            <div class="small mt-1" style="color: #8b95a1; font-weight: 500;" x-text="selectedStock.code"></div>
+            <div class="small mt-1" style="color: var(--label-text); font-weight: 500;" x-text="selectedStock.code"></div>
           </div>
-          <button type="button" @click="step = 1" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold" style="font-size: 12px; border-color: #e5e8eb; color: #4e5968;">변경</button>
+          <button type="button" @click="step = 1; $nextTick(() => document.getElementById('trade-search')?.focus())" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold" style="font-size: 13px; border-color: var(--hairline); color: var(--slate);" aria-label="다른 종목 선택">변경</button>
         </div>
         <div class="text-start">
-          <label class="fw-bold mb-2 d-block" style="font-size: 13px; color: #4e5968;">수량</label>
-          <input type="number" step="0.0001" name="quantity" class="toss-input" placeholder="수량을 입력해 주세요" required>
+          <label for="trade-quantity" class="fw-bold mb-2 d-block" style="font-size: 13px; color: var(--slate);">수량<span class="req" aria-hidden="true">*</span></label>
+          <input type="number" id="trade-quantity" step="0.0001" min="0.0001" name="quantity" class="toss-input" placeholder="수량을 입력해 주세요" inputmode="decimal" required>
         </div>
         <div class="text-start">
-          <label class="fw-bold mb-2 d-block" style="font-size: 13px; color: #4e5968;">실현 손익 (원)</label>
-          <input type="number" step="0.01" name="profit" class="toss-input" placeholder="수익 또는 손실 금액을 입력해 주세요" required>
+          <label for="trade-profit" class="fw-bold mb-2 d-block" style="font-size: 13px; color: var(--slate);">실현 손익 (원)<span class="req" aria-hidden="true">*</span></label>
+          <input type="number" id="trade-profit" step="0.01" name="profit" class="toss-input" placeholder="손실이면 앞에 -를 붙여 주세요 (예: -15000)" aria-describedby="trade-profit-hint" required>
+          <div id="trade-profit-hint" class="visually-hidden">수익은 양수, 손실은 음수로 입력해요</div>
         </div>
         <div class="text-start">
-          <label class="fw-bold mb-2 d-block" style="font-size: 13px; color: #4e5968;">매매 일자</label>
-          <input type="date" name="tradeDate" class="toss-input" th:value="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" required>
+          <label for="trade-date" class="fw-bold mb-2 d-block" style="font-size: 13px; color: var(--slate);">매매 일자<span class="req" aria-hidden="true">*</span></label>
+          <input type="date" id="trade-date" name="tradeDate" class="toss-input" th:value="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" th:max="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" required>
         </div>
-        <button type="submit" class="btn border-0 w-100 fw-bold mt-2" style="background: var(--toss-blue); color: white; font-size: 16px; padding: 16px 0; border-radius: 8px;">저장하기</button>
+        <button type="submit" class="btn border-0 w-100 fw-bold mt-2" style="background: var(--toss-blue-deep); color: white; font-size: 16px; padding: 16px 0; border-radius: 8px;" :disabled="tradeSubmitting" :aria-busy="tradeSubmitting.toString()">
+          <span x-show="!tradeSubmitting">저장하기</span>
+          <span x-show="tradeSubmitting" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+          <span x-show="tradeSubmitting" class="visually-hidden">저장 중</span>
+        </button>
       </form>
     </div>
   </div>
@@ -442,19 +548,29 @@
         return new Date(parseInt(y), parseInt(m) - 1, 1);
       })(),
       selectedDay: null,
+      mobileTab: 'log',   // 모바일 전용 탭: log | cal | review (넓은 화면에서는 무시)
       showModal: false,
       step: 1,
       searchQuery: '',
       searchResults: [],
       isLoading: false,
       selectedStock: { name: '', code: '' },
+      searchError: '',
+      searchedQuery: '',
+      searchToken: 0,
+      tradeSubmitting: false,
+      dataLoadError: '',
       page: 0,
       hasMore: true,
       chart: null,
 
       reviewFeeds: [],
+      reviewLoadError: false,
       showReviewModal: false,
       reviewSubmitting: false,
+      reviewContentError: '',
+      reviewSubmitError: '',
+      deletingReviewId: null,
       isEditMode: false,
       currentReviewId: null,
       reviewForm: { title: '', content: '', emotion: '' },
@@ -463,6 +579,7 @@
         this.isEditMode = false;
         this.currentReviewId = null;
         this.reviewForm = { title: '', content: '', emotion: '' };
+        this.reviewContentError = ''; this.reviewSubmitError = '';
         this.showReviewModal = true;
       },
       openEditReviewModal(review) {
@@ -473,13 +590,17 @@
           content: review.content || '',
           emotion: review.emotion || ''
         };
+        this.reviewContentError = ''; this.reviewSubmitError = '';
         this.showReviewModal = true;
       },
       closeReviewModal() { this.showReviewModal = false; },
 
       async submitReview() {
-        if (!this.reviewForm.content) {
-          alert('상세 내용을 입력해 주세요.');
+        if (this.reviewSubmitting) return;
+        this.reviewSubmitError = '';
+        if (!this.reviewForm.content.trim()) {
+          this.reviewContentError = '상세 내용을 입력해 주세요';
+          this.$refs.reviewContent?.focus();
           return;
         }
         this.reviewSubmitting = true;
@@ -493,45 +614,53 @@
           });
 
           if (res.ok) {
-            alert(this.isEditMode ? '복기 수정 완료' : '복기 기록 완료');
             this.closeReviewModal();
             await this.loadReviewFeeds();
+          } else if (res.status === 401) {
+            this.reviewSubmitError = '로그인이 만료됐어요. 작성한 내용을 복사해 두고 다시 로그인해 주세요';
           } else {
-            alert('복기 저장 중 오류 발생');
+            this.reviewSubmitError = '복기 노트를 저장하지 못했어요. 작성한 내용은 그대로 있으니 잠시 후 다시 저장해 주세요';
           }
         } catch (e) {
           console.error(e);
+          this.reviewSubmitError = '네트워크 연결을 확인해 주세요. 작성한 내용은 그대로 있어요';
         } finally {
           this.reviewSubmitting = false;
         }
       },
 
       async deleteReview(id) {
-        if (!confirm('복기 노트를 삭제하시겠습니까?')) return;
+        if (this.deletingReviewId !== null) return;
+        if (!confirm('이 복기 노트를 삭제할까요? 삭제하면 되돌릴 수 없어요.')) return;
+        this.deletingReviewId = id;
         try {
           const res = await fetch(`/api/trade-review/${id}/delete`, { method: 'POST' });
           if (res.ok) {
-            alert('복기 삭제 완료');
             await this.loadReviewFeeds();
           } else {
-            alert('삭제 중 오류 발생');
+            alert('복기 노트를 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.');
           }
         } catch (e) {
           console.error(e);
+          alert('네트워크 연결을 확인한 뒤 다시 시도해 주세요.');
+        } finally {
+          this.deletingReviewId = null;
         }
       },
 
       async loadReviewFeeds() {
         const y = this.currDate.getFullYear();
         const m = String(this.currDate.getMonth()+1).padStart(2,'0');
+        // 실패했을 때 예시 데이터를 채우지 않는다: 남의 기록처럼 보이는 가짜 메모는 기록장을 오염시킨다
         try {
           const res = await fetch(`/api/trade-review?date=${y}-${m}-01`);
-          if (res.ok) { this.reviewFeeds = await res.json(); }
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          this.reviewFeeds = await res.json();
+          this.reviewLoadError = false;
         } catch(e) {
-          this.reviewFeeds = [
-            { id: 1, title: '원칙 준수 매매', content: '계획한 지지선 반등을 확인하고 진입해 목표가 익절 달성', emotion: 'DISCIPLINED', emotionDescription: '원칙 준수', createdAt: '2026-06-11T10:00:00' },
-            { id: 2, title: '추격 매수 반성', content: '급등하는 종목에 조급하게 따라 들어갔다가 손실 확대', emotion: 'IMPULSE_BUY', emotionDescription: '뇌동 매매', createdAt: '2026-06-08T15:30:00' }
-          ];
+          console.error(e);
+          this.reviewFeeds = [];
+          this.reviewLoadError = true;
         }
       },
 
@@ -578,8 +707,8 @@
         return allDates.filter(d => d === key);
       },
 
-      formatMoney(val) { return (val >= 0 ? '+' : '') + this.formatNumber(val) + '원'; },
-      formatNumber(val) { return new Intl.NumberFormat('ko-KR').format(Math.floor(val || 0)); },
+      formatMoney(val) { return (val > 0 ? '+' : '') + this.formatNumber(val) + '원'; },
+      formatNumber(val) { return new Intl.NumberFormat('ko-KR').format(Math.trunc(val || 0)); },
       formatCompact(val) {
         const abs = Math.abs(val); const sign = val >= 0 ? '+' : '-';
         if (abs >= 1_000_000) return sign + (abs/1_000_000).toFixed(1) + 'M';
@@ -610,8 +739,8 @@
             responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => (ctx.raw >= 0 ? '+' : '') + this.formatNumber(ctx.raw) + '원' } } },
             scales: {
-              x: { grid: { display: false }, ticks: { font: { size: 10, weight: '600' }, color: '#8b95a1', callback: (_, i) => (i % 5 === 0 ? labels[i] : '') } },
-              y: { grid: { color: '#f2f4f6' }, border: { display: false }, ticks: { font: { size: 10 }, color: '#8b95a1', callback: v => v === 0 ? '0' : (Math.abs(v) >= 10000 ? (v/10000).toFixed(0)+'만' : v) } }
+              x: { grid: { display: false }, ticks: { font: { size: 10, weight: '600' }, color: '#626c7a', callback: (_, i) => (i % 5 === 0 ? labels[i] : '') } },
+              y: { grid: { color: '#f2f4f6' }, border: { display: false }, ticks: { font: { size: 10 }, color: '#626c7a', callback: v => v === 0 ? '0' : (Math.abs(v) >= 10000 ? (v/10000).toFixed(0)+'만' : v) } }
             }
           }
         });
@@ -626,34 +755,67 @@
         const y = this.currDate.getFullYear(); const m = String(this.currDate.getMonth()+1).padStart(2,'0');
         try {
           const res = await fetch(`/trade/api?date=${y}-${m}-01`);
-          if (res.ok) { this.data = await res.json(); }
-        } catch(e) { console.error(e); }
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          this.data = await res.json();
+          this.dataLoadError = '';
+        } catch(e) {
+          console.error(e);
+          // 이전 달 숫자가 새 달 이름 아래 남아 있지 않도록 비운다
+          this.data = null;
+          this.dataLoadError = `${this.getdisplayDate()} 매매 기록을 불러오지 못했어요`;
+        }
         await this.loadReviewFeeds();
         await this.$nextTick();
         this.buildChart();
       },
 
-      searchNew() { this.page = 0; this.hasMore = true; this.searchResults = []; this.fetchStocks(true); },
+      searchNew() {
+        this.page = 0; this.hasMore = true; this.searchResults = []; this.searchError = ''; this.searchedQuery = '';
+        this.fetchStocks(true);
+      },
       async fetchStocks(isNew = false) {
-        if (this.searchQuery.length < 1) return;
+        const query = this.searchQuery.trim();
+        if (query.length < 1) { this.isLoading = false; return; }
+        if (isNew) { this.page = 0; this.hasMore = true; }
+        // 늦게 도착한 이전 검색 응답이 새 결과를 덮어쓰지 않도록 요청마다 번호를 붙인다
+        const token = ++this.searchToken;
         this.isLoading = true;
+        this.searchError = '';
         try {
-          const res = await fetch(`/api/stock/search?name=${encodeURIComponent(this.searchQuery)}&page=${this.page}`);
-          if (res.ok) {
-            const d = await res.json(); this.searchResults = isNew ? d : [...this.searchResults, ...d];
-            if (d.length < 5) this.hasMore = false;
-            this.page++;
-          }
-        } catch(e) { console.error(e); }
-        finally { this.isLoading = false; }
+          const res = await fetch(`/api/stock/search?name=${encodeURIComponent(query)}&page=${this.page}`);
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const d = await res.json();
+          if (token !== this.searchToken) return;
+          this.searchResults = isNew ? d : [...this.searchResults, ...d];
+          this.searchedQuery = query;
+          if (d.length < 5) this.hasMore = false;
+          this.page++;
+        } catch(e) {
+          console.error(e);
+          if (token === this.searchToken) this.searchError = '종목을 검색하지 못했어요';
+        } finally {
+          if (token === this.searchToken) this.isLoading = false;
+        }
       },
 
       selectStock(item) { this.selectedStock = { name: item.info?.name, code: item.info?.code }; this.step = 2; },
-      openModal()  { this.step = 1; this.searchQuery = ''; this.searchResults = []; this.page = 0; this.hasMore = true; this.showModal = true; },
+      openModal()  {
+        this.step = 1; this.searchQuery = ''; this.searchResults = []; this.page = 0; this.hasMore = true;
+        this.searchError = ''; this.searchedQuery = ''; this.tradeSubmitting = false;
+        this.showModal = true;
+      },
       closeModal() { this.showModal = false; },
 
       async init() {
         this.displayDate = this.getdisplayDate();
+        // 홈 화면의 매도 검증에서 넘어온 경우(?code=&name=) 종목이 선택된 기록 창을 바로 연다
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('code')) {
+          this.selectedStock = { code: params.get('code'), name: params.get('name') || params.get('code') };
+          this.step = 2;
+          this.showModal = true;
+          window.history.replaceState(null, '', window.location.pathname);
+        }
         await this.loadReviewFeeds();
         this.$nextTick(() => this.buildChart());
       }

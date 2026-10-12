@@ -2,6 +2,7 @@ package com.stocklog.modules.purchase.trade.service;
 
 import com.stocklog.modules.common.finance.context.MarketContext;
 import com.stocklog.modules.common.type.ChartPhase;
+import com.stocklog.modules.stock.analysis.signal.trading.TradingSignalResult;
 import com.stocklog.modules.purchase.trade.dto.request.TradingRuleSaveRequest;
 import com.stocklog.modules.purchase.trade.dto.response.TradingRuleCheckResponse;
 import com.stocklog.modules.purchase.trade.dto.response.TradingRuleResponse;
@@ -64,7 +65,7 @@ public class TradingRuleService {
     /**
      * 💡 변경: 검증 시 MarketContext 객체를 직접 주입받아 실시간 데이터를 대조합니다.
      */
-    public TradingRuleCheckResponse evaluateBuySignal(Long memberId, MarketContext ctx, ChartPhase phase) {
+    public TradingRuleCheckResponse evaluateBuySignal(Long memberId, MarketContext ctx, TradingSignalResult signal) {
         List<TradingRule> activeRules = tradingRuleRepository.findAllByMemberIdAndIsActiveTrue(memberId);
 
         List<TradingRuleCheckResponse.RuleDetail> details = new ArrayList<>();
@@ -87,9 +88,13 @@ public class TradingRuleService {
         }
 
         String decision = isAllPass ? "PASS" : "FAIL";
-        String verdict = "아직 기능 구현 중";
+        String report = TradeReportFormatter.buyReport(signal);
 
-        return new TradingRuleCheckResponse(decision, details, verdict);
+        return new TradingRuleCheckResponse(
+                decision, details, report,
+                signal.analysis().phase(),
+                signal.priceTarget().primaryEntry(),
+                signal.verdict());
     }
 
     public TradingRuleCheckResponse evaluateSellSignal(Long memberId, MarketContext ctx, ChartPhase phase) {

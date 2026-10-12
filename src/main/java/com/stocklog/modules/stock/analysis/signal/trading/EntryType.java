@@ -1,4 +1,4 @@
-package com.stocklog.modules.stock.analysis.diagnosis;
+package com.stocklog.modules.stock.analysis.signal.trading;
 
 
 

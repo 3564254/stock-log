@@ -1,6 +1,6 @@
-package com.stocklog.modules.stock.analysis.service;
+package com.stocklog.modules.stock.analysis.analyzer;
 
-import com.stocklog.modules.stock.analysis.domain.technical.TechnicalScore;
+import com.stocklog.modules.stock.analysis.score.TechnicalScore;
 import com.stocklog.modules.stock.chart.dto.StockChartDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 public class TechnicalAnalyzer {
 
     // 💡 dailyCharts, weeklyCharts는 과거 -> 최신(Asc) 정렬 상태라고 가정
-    TechnicalScore analyze(List<StockChartDto> dailyCharts, List<StockChartDto> weeklyCharts) {
+    public TechnicalScore analyze(List<StockChartDto> dailyCharts, List<StockChartDto> weeklyCharts) {
         if (dailyCharts == null || dailyCharts.size() < 20) {
             return TechnicalScore.of(0, List.of("일봉 차트 데이터 부족"));
         }

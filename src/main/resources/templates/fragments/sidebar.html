@@ -1,39 +1,60 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<aside th:fragment="sidebarFragment(activeMenu)" class="sidebar-main" aria-label="주 메뉴">
+<div th:fragment="sidebarFragment(activeMenu)" style="display: contents;">
+<aside class="sidebar-main" aria-label="주 메뉴">
     <style>
         .sidebar-main {
             width: var(--sidebar-width, 250px); background: #fff; height: 100vh; position: fixed;
-            top: 0; left: 0; border-right: 1px solid #e5e8eb; display: flex;
+            top: 0; left: 0; border-right: 1px solid var(--hairline); display: flex;
             flex-direction: column; z-index: 1000; overflow-y: auto;
         }
         .sidebar-logo {
             padding: 32px 24px; display: flex; align-items: center;
-            text-decoration: none; color: #191f28; transition: opacity .15s ease;
+            text-decoration: none; color: var(--ink); transition: opacity .15s ease;
         }
         .sidebar-logo:hover { opacity: .8; }
         .sidebar-logo-mark {
             width: 32px; height: 32px; margin-right: 10px; border-radius: 50%;
-            background: var(--toss-blue, #3182f6); display: flex; align-items: center; justify-content: center;
+            background: var(--toss-blue, var(--toss-blue)); display: flex; align-items: center; justify-content: center;
         }
-        .sidebar-logo-text { font-size: 20px; font-weight: 800; letter-spacing: -.5px; color: #191f28; }
+        .sidebar-logo-text { font-size: 20px; font-weight: 800; letter-spacing: -.5px; color: var(--ink); }
 
         .menu-group-label {
-            margin: 18px 36px 4px; font-size: 12px; font-weight: 700; color: #8b95a1; letter-spacing: 0;
+            margin: 18px 36px 4px; font-size: 12px; font-weight: 700; color: var(--label-text); letter-spacing: 0;
         }
         .menu-item {
             display: flex; align-items: center; padding: 13px 20px;
-            color: #4e5968 !important; text-decoration: none !important;
+            color: var(--slate) !important; text-decoration: none !important;
             font-size: 15px; font-weight: 600; border-radius: 12px; margin: 3px 16px;
             transition: background-color .15s ease, color .15s ease;
         }
-        .menu-item:hover { background-color: #f2f4f6; color: #191f28 !important; }
-        .menu-item:focus-visible { outline: 2px solid var(--toss-blue, #3182f6); outline-offset: -2px; }
+        .menu-item:hover { background-color: var(--canvas); color: var(--ink) !important; }
+        .menu-item:focus-visible { outline: 2px solid var(--toss-blue, var(--toss-blue)); outline-offset: -2px; }
         .menu-item.active {
-            background-color: #f0f6ff; color: var(--toss-blue, #3182f6) !important; font-weight: 700;
+            background-color: var(--toss-blue-tint); color: var(--toss-blue-deep) !important; font-weight: 700;
         }
         .menu-item i { font-size: 18px; margin-right: 14px; width: 24px; text-align: center; }
         .nav-text { display: block; }
+
+        /* ---------- 모바일 하단 탭바 (768px 이하에서 사이드바 대체) ---------- */
+        .mobile-tabbar { display: none; }
+        @media (max-width: 768px) {
+            /* 자체 모바일 규칙이 없는 페이지(시장/커뮤니티 등)도 깨지지 않도록 하는 안전망 */
+            .sidebar-main { display: none !important; }
+            .main-content { margin-left: 0 !important; width: 100% !important; min-width: 0; padding-left: 16px !important; padding-right: 16px !important; }
+            .mobile-tabbar {
+                display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000;
+                background: #fff; border-top: 1px solid var(--hairline); padding-bottom: env(safe-area-inset-bottom);
+            }
+            .mobile-tab {
+                flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+                gap: 3px; padding: 9px 2px 8px; color: var(--label-text) !important; text-decoration: none !important;
+                font-size: 11px; font-weight: 600; white-space: nowrap; letter-spacing: -0.02em; -webkit-tap-highlight-color: transparent;
+            }
+            .mobile-tab i { font-size: 20px; line-height: 1; }
+            .mobile-tab.active { color: var(--toss-blue-deep) !important; font-weight: 700; }
+            body { padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
+        }
     </style>
 
     <a th:href="@{/}" class="sidebar-logo" aria-label="StockLog 홈">
@@ -85,4 +106,26 @@
         </a>
     </nav>
 </aside>
+
+<nav class="mobile-tabbar" aria-label="하단 메뉴">
+    <a th:href="@{/}" class="mobile-tab" th:classappend="${activeMenu == 'home'} ? 'active' : ''" th:attr="aria-current=${activeMenu == 'home'} ? 'page' : null">
+        <i class="bi" th:classappend="${activeMenu == 'home'} ? 'bi-house-door-fill' : 'bi-house-door'"></i><span>홈</span>
+    </a>
+    <a th:href="@{/market}" class="mobile-tab" th:classappend="${activeMenu == 'market'} ? 'active' : ''" th:attr="aria-current=${activeMenu == 'market'} ? 'page' : null">
+        <i class="bi" th:classappend="${activeMenu == 'market'} ? 'bi-graph-up-arrow' : 'bi-graph-up'"></i><span>시장</span>
+    </a>
+    <a th:href="@{/portfolio}" class="mobile-tab" th:classappend="${activeMenu == 'portfolio'} ? 'active' : ''" th:attr="aria-current=${activeMenu == 'portfolio'} ? 'page' : null">
+        <i class="bi" th:classappend="${activeMenu == 'portfolio'} ? 'bi-pie-chart-fill' : 'bi-pie-chart'"></i><span>내 자산</span>
+    </a>
+    <a th:href="@{/trade}" class="mobile-tab" th:classappend="${activeMenu == 'tradelog'} ? 'active' : ''" th:attr="aria-current=${activeMenu == 'tradelog'} ? 'page' : null">
+        <i class="bi" th:classappend="${activeMenu == 'tradelog'} ? 'bi-journal-text' : 'bi-journal'"></i><span>매매기록</span>
+    </a>
+    <a th:href="@{/community}" class="mobile-tab" th:classappend="${activeMenu == 'community'} ? 'active' : ''" th:attr="aria-current=${activeMenu == 'community'} ? 'page' : null">
+        <i class="bi" th:classappend="${activeMenu == 'community'} ? 'bi-chat-dots-fill' : 'bi-chat-dots'"></i><span>커뮤니티</span>
+    </a>
+    <a th:href="@{/friends}" class="mobile-tab" th:classappend="${activeMenu == 'friends'} ? 'active' : ''" th:attr="aria-current=${activeMenu == 'friends'} ? 'page' : null">
+        <i class="bi" th:classappend="${activeMenu == 'friends'} ? 'bi-people-fill' : 'bi-people'"></i><span>친구</span>
+    </a>
+</nav>
+</div>
 </html>

@@ -21,6 +21,8 @@ public enum DataType {
             return "News";
         } else if (name.contains("market")) {
             return "Market";
+        } else if (name.contains("exchange")) {
+            return "Exchange";
         } else {
             return "Unknown";
         }

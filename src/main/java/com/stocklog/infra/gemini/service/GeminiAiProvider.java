@@ -10,7 +10,7 @@ import com.stocklog.modules.market.news.dto.NewsDto;
 import com.stocklog.modules.purchase.portfolio.analysis.dto.PortfolioAnalysisResult;
 import com.stocklog.modules.purchase.portfolio.dto.response.PortfolioAnalysisResponse;
 import com.stocklog.modules.common.type.ChartPhase;
-import com.stocklog.modules.stock.analysis.diagnosis.TradingSignalResult;
+import com.stocklog.modules.stock.analysis.signal.trading.TradingSignalResult;
 import com.stocklog.modules.stock.analysis.result.StockAnalysisResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

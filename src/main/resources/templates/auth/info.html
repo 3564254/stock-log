@@ -4,46 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StockLog - 설정</title>
-    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <th:block th:replace="~{fragments/head :: assets}"></th:block>
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
 
     <style>
-        :root {
-            --toss-blue: #3182f6; --toss-gray-bg: #f2f4f6; --toss-gray-dark: #4e5968;
-            --sidebar-width: 250px;
-        }
-        body { background-color: var(--toss-gray-bg); font-family: 'Pretendard', sans-serif; overflow-x: hidden; margin: 0; color: #191f28; }
-        [x-cloak] { display: none !important; }
+    :root {
+        --toss-gray-dark: var(--slate);
+        --page-top: 20px;
+        --page-bottom: 60px;
+        --content-max: 800px;
+        --content-top: 0px;
+        --card-pad: 32px;
+        --card-pad-m: 24px 20px;
+    }
 
-        .layout-wrapper { display: flex; min-height: 100vh; }
-
-        .main-content { flex-grow: 1; margin-left: var(--sidebar-width); padding: 20px 60px 60px 60px; transition: 0.3s; width: calc(100% - var(--sidebar-width)); }
-        .main-content.expanded { margin-left: 80px; width: calc(100% - 80px); }
-        .content-container { width: 100%; max-width: 800px; margin: 0 auto; }
-
-        .toss-card { background: white; border-radius: 16px; padding: 32px; box-shadow: none; border: 1px solid #e5e8eb; margin-bottom: 24px; }
-
-        .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 24px 0; border-bottom: 1px solid #f2f4f6; cursor: pointer; transition: background-color 0.15s ease; border-radius: 12px; margin: 0 -12px; padding-left: 12px; padding-right: 12px; }
-        .setting-item:hover { background-color: #f9fafb; }
+        .setting-item { display: flex; width: calc(100% + 24px); justify-content: space-between; align-items: center; gap: 12px; padding: 24px 12px; border: 0; border-bottom: 1px solid var(--canvas); background: transparent; text-align: left; font: inherit; color: inherit; cursor: pointer; transition: background-color 0.15s ease; border-radius: 12px; margin: 0 -12px; }
+        .setting-item:hover { background-color: var(--surface-soft); }
         .setting-item:last-child { border-bottom: none; }
+        .setting-item:focus-visible, .btn-primary-toss:focus-visible, .withdraw-btn:focus-visible, .modal .btn-close:focus-visible { outline: 2px solid var(--toss-blue); outline-offset: 2px; box-shadow: none; }
 
-        .header-pill { background: white; border: 1px solid #e5e8eb; padding: 6px 16px 6px 8px; border-radius: 50px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: background-color 0.15s; }
-        .header-pill:hover { background-color: #f9fafb; }
-
-        .profile-dropdown { position: absolute; top: 52px; right: 0; width: 140px; z-index: 1050; background: white; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); border: 1px solid #e5e8eb; padding: 8px; }
-
-        .toss-input { width: 100%; border: 1px solid #e5e8eb; background-color: #f9fafb; border-radius: 12px; padding: 16px; outline: none; margin-bottom: 20px; font-size: 15px; font-weight: 500; transition: 0.15s; font-family: 'Pretendard', sans-serif; }
-        .toss-input:focus { border-color: var(--toss-blue); background: white; }
-
-        .btn-primary-toss { background: var(--toss-blue); color: white; border: none; border-radius: 12px; padding: 16px; width: 100%; font-weight: 700; font-size: 16px; transition: 0.15s; }
-        .btn-primary-toss:hover { opacity: 0.9; }
+        .toss-input { margin-bottom: 20px; padding: 16px; }
+        .toss-input[aria-invalid="true"] { border-color: var(--toss-red-deep); background: var(--toss-red-tint); margin-bottom: 8px; }
+        .field-error { color: var(--toss-red-deep); font-size: 13px; font-weight: 600; margin-bottom: 20px; }
 
         @media (max-width: 768px) {
-            .main-content { margin-left: 0 !important; width: 100% !important; padding: 16px !important; }
-            .toss-card { padding: 24px 20px !important; }
             .modal-content { padding: 16px !important; }
         }
     </style>
@@ -55,50 +40,37 @@
 
     <main class="main-content" :class="!sidebarOpen ? 'expanded' : ''">
         <div class="content-container">
-            <header class="d-flex justify-content-end align-items-center mb-5 pt-3">
-                <div class="header-pill" x-data="{ profileOpen: false }" @click.away="profileOpen = false" style="position: relative;">
-                    <div class="d-flex align-items-center gap-2" @click="profileOpen = !profileOpen">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background-color: #f2f4f6;">
-                            <i class="bi bi-person-fill text-secondary"></i>
-                        </div>
-                        <span class="fw-bold text-dark" style="font-size: 14px;" th:text="${member.username}">사용자</span>
-                        <i class="bi bi-chevron-down text-secondary ms-1" style="font-size: 12px;"></i>
-                    </div>
-                    <div x-show="profileOpen" x-cloak class="profile-dropdown">
-                        <form th:action="@{/auth/logout}" method="post" class="m-0">
-                            <button type="submit" class="btn btn-link text-decoration-none fw-bold w-100 text-start" style="color: #f04452; font-size: 14px; padding: 8px 12px; border-radius: 8px; border: none; transition: 0.15s;" onmouseover="this.style.backgroundColor='#fff4f4'" onmouseout="this.style.backgroundColor='transparent'">로그아웃</button>
-                        </form>
-                    </div>
-                </div>
-            </header>
+            <th:block th:with="loginMember=${loginMember ?: member}">
+                <div th:replace="~{fragments/header :: headerFragment}"></div>
+            </th:block>
 
-            <div class="mb-5"><h2 class="fw-bold m-0" style="font-size: 24px; color: #191f28;">내 정보 설정</h2></div>
+            <div class="mb-5"><h1 class="fw-bold m-0" style="font-size: 24px; color: var(--ink);">내 정보 설정</h1></div>
 
-            <section class="toss-card text-center">
-                <div class="mb-4 d-flex align-items-center justify-content-center mx-auto" style="width: 80px; height: 80px; background-color: #f2f4f6; border-radius: 24px;">
-                    <i class="bi bi-person-fill" style="font-size: 3rem; color: #8b95a1;"></i>
+            <section class="toss-card text-center" aria-label="내 계정">
+                <div class="mb-4 d-flex align-items-center justify-content-center mx-auto" style="width: 80px; height: 80px; background-color: var(--canvas); border-radius: 20px;" aria-hidden="true">
+                    <i class="bi bi-person-fill" style="font-size: 3rem; color: var(--label-text);"></i>
                 </div>
-                <h3 class="fw-bold mb-2 text-dark" style="font-size: 20px;" th:text="${member.username}">닉네임</h3>
-                <span class="fw-medium px-3 py-1" style="background: #f9fafb; color: #6b7684; border: 1px solid #e5e8eb; border-radius: 8px; font-size: 13px;" th:text="'아이디: ' + ${member.loginId}">ID</span>
+                <h2 class="fw-bold mb-2 text-dark text-break" style="font-size: 20px;" th:text="${member.username}">닉네임</h2>
+                <span class="fw-medium px-3 py-1 d-inline-block text-break" style="background: var(--surface-soft); color: var(--slate); border: 1px solid var(--hairline); border-radius: 8px; font-size: 13px;" th:text="'아이디: ' + ${member.loginId}">ID</span>
             </section>
 
-            <section class="toss-card">
-                <div class="setting-item" data-bs-toggle="modal" data-bs-target="#usernameModal">
-                    <div>
-                        <div class="fw-bold text-dark" style="font-size: 16px;">이름 변경</div>
-                        <div style="font-size: 13px; color: #8b95a1; font-weight: 500; margin-top: 4px;" th:text="'현재 이름: ' + ${member.username}">현재 이름</div>
-                    </div>
-                    <i class="bi bi-chevron-right text-secondary"></i>
-                </div>
-                <div class="setting-item" data-bs-toggle="modal" data-bs-target="#passwordModal">
-                    <div class="fw-bold text-dark" style="font-size: 16px;">비밀번호 변경</div>
-                    <i class="bi bi-chevron-right text-secondary"></i>
-                </div>
+            <section class="toss-card" aria-label="계정 설정">
+                <button type="button" class="setting-item" data-bs-toggle="modal" data-bs-target="#usernameModal" aria-haspopup="dialog">
+                    <span class="d-block" style="min-width: 0;">
+                        <span class="d-block fw-bold text-dark" style="font-size: 16px;">이름 변경</span>
+                        <span class="d-block text-break" style="font-size: 13px; color: var(--label-text); font-weight: 500; margin-top: 4px;" th:text="'현재 이름: ' + ${member.username}">현재 이름</span>
+                    </span>
+                    <i class="bi bi-chevron-right text-secondary" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="setting-item" data-bs-toggle="modal" data-bs-target="#passwordModal" aria-haspopup="dialog">
+                    <span class="fw-bold text-dark" style="font-size: 16px;">비밀번호 변경</span>
+                    <i class="bi bi-chevron-right text-secondary" aria-hidden="true"></i>
+                </button>
             </section>
 
             <div class="text-center mt-5">
-                <form th:action="@{/auth/info/withdraw}" method="post" onsubmit="return confirm('정말 계정을 삭제하시겠습니까? 기록된 모든 매매 데이터가 영구적으로 삭제됩니다.')">
-                    <button type="submit" class="btn border-0 bg-transparent text-secondary text-decoration-underline fw-medium" style="font-size: 13px;">계정 삭제하기</button>
+                <form th:action="@{/auth/info/withdraw}" method="post" onsubmit="return confirm('정말 계정을 삭제할까요? 기록된 모든 매매 데이터가 영구적으로 삭제되고 되돌릴 수 없어요.')">
+                    <button type="submit" class="btn border-0 bg-transparent text-decoration-underline fw-medium withdraw-btn" style="font-size: 13px; color: var(--slate);">계정 삭제하기</button>
                 </form>
             </div>
         </div>
@@ -106,17 +78,21 @@
 </div>
 
 <!-- 이름 변경 모달 -->
-<div class="modal fade" id="usernameModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="usernameModal" tabindex="-1" aria-labelledby="usernameModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0" style="border-radius: 16px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
             <div class="modal-header border-0 pb-0">
-                <h4 class="fw-bold m-0 text-dark" style="font-size: 18px;">이름 변경</h4>
-                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+                <h2 id="usernameModalTitle" class="fw-bold m-0 text-dark" style="font-size: 18px;">이름 변경</h2>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="닫기"></button>
             </div>
             <div class="modal-body p-4 pt-4">
-                <form th:action="@{/auth/info/update/username}" method="post">
-                    <label class="fw-bold mb-2 d-block" style="font-size: 13px; color: #4e5968;">새로운 이름</label>
-                    <input type="text" name="username" class="toss-input" placeholder="사용할 이름을 입력해 주세요" required>
+                <form th:action="@{/auth/info/update/username}" th:object="${usernameRequest}" method="post">
+                    <label for="username" class="fw-bold mb-2 d-block" style="font-size: 13px; color: var(--slate);">새로운 이름</label>
+                    <input type="text" th:field="*{username}" class="toss-input" placeholder="2~10자로 입력해 주세요"
+                           required minlength="2" maxlength="10" autocomplete="nickname"
+                           th:attr="aria-invalid=${#fields.hasErrors('username')} ? 'true' : 'false',
+                                    aria-describedby=${#fields.hasErrors('username')} ? 'username-error' : null">
+                    <div id="username-error" class="field-error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">이름 오류</div>
                     <button type="submit" class="btn-primary-toss mt-2">변경 완료</button>
                 </form>
             </div>
@@ -125,20 +101,32 @@
 </div>
 
 <!-- 비밀번호 변경 모달 -->
-<div class="modal fade" id="passwordModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0" style="border-radius: 16px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
             <div class="modal-header border-0 pb-0">
-                <h4 class="fw-bold m-0 text-dark" style="font-size: 18px;">비밀번호 변경</h4>
-                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+                <h2 id="passwordModalTitle" class="fw-bold m-0 text-dark" style="font-size: 18px;">비밀번호 변경</h2>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="닫기"></button>
             </div>
             <div class="modal-body p-4 pt-4">
-                <form th:action="@{/auth/info/update/password}" method="post">
-                    <label class="fw-bold mb-2 d-block" style="font-size: 13px; color: #4e5968;">현재 비밀번호</label>
-                    <input type="password" name="oldPassword" class="toss-input" placeholder="현재 비밀번호를 입력해 주세요" required>
+                <form th:action="@{/auth/info/update/password}" th:object="${passwordRequest}" method="post">
+                    <!-- 아이디 칸이 없는 폼에서도 비밀번호 관리자가 계정을 알아보도록 -->
+                    <input type="text" th:value="${member.loginId}" autocomplete="username" hidden aria-hidden="true" tabindex="-1">
 
-                    <label class="fw-bold mb-2 d-block" style="font-size: 13px; color: #4e5968;">새 비밀번호</label>
-                    <input type="password" name="newPassword" class="toss-input" placeholder="새롭게 사용할 비밀번호를 입력해 주세요" required>
+                    <label for="currentPassword" class="fw-bold mb-2 d-block" style="font-size: 13px; color: var(--slate);">현재 비밀번호</label>
+                    <input type="password" th:field="*{currentPassword}" class="toss-input" placeholder="현재 비밀번호를 입력해 주세요"
+                           required autocomplete="current-password"
+                           th:attr="aria-invalid=${#fields.hasErrors('currentPassword')} ? 'true' : 'false',
+                                    aria-describedby=${#fields.hasErrors('currentPassword')} ? 'currentPassword-error' : null">
+                    <div id="currentPassword-error" class="field-error" th:if="${#fields.hasErrors('currentPassword')}" th:errors="*{currentPassword}">현재 비밀번호 오류</div>
+
+                    <label for="newPassword" class="fw-bold mb-2 d-block" style="font-size: 13px; color: var(--slate);">새 비밀번호</label>
+                    <input type="password" th:field="*{newPassword}" class="toss-input" placeholder="영문, 숫자 포함 8자 이상"
+                           required minlength="8" autocomplete="new-password"
+                           th:attr="aria-invalid=${#fields.hasErrors('newPassword')} ? 'true' : 'false',
+                                    aria-describedby=${#fields.hasErrors('newPassword')} ? 'newPassword-error' : 'newPassword-hint'">
+                    <div id="newPassword-hint" class="visually-hidden">영문과 숫자를 포함해 8자 이상</div>
+                    <div id="newPassword-error" class="field-error" th:if="${#fields.hasErrors('newPassword')}" th:errors="*{newPassword}">새 비밀번호 오류</div>
 
                     <button type="submit" class="btn-primary-toss mt-2">비밀번호 변경</button>
                 </form>
@@ -147,6 +135,18 @@
     </div>
 </div>
 
+<!-- 서버 검증에 실패해 다시 그려진 경우, 입력하던 모달을 다시 열고 오류 칸으로 포커스 -->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const _reopenModal = /*[[${openUsernameModal != null ? 'usernameModal' : (openPasswordModal != null ? 'passwordModal' : null)}]]*/ null;
+    /*]]>*/
+    window.addEventListener('DOMContentLoaded', () => {
+        if (!_reopenModal || !window.bootstrap) return;
+        const el = document.getElementById(_reopenModal);
+        el.addEventListener('shown.bs.modal', () => el.querySelector('[aria-invalid="true"]')?.focus(), { once: true });
+        bootstrap.Modal.getOrCreateInstance(el).show();
+    });
+</script>
 <script>
     document.addEventListener('alpine:init', () => {
         Alpine.data('infoApp', () => ({

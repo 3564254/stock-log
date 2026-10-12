@@ -64,9 +64,8 @@ alpha:
     key: {ALPHA_API_KEY}
 
 toss:
-  api:
-    key: {TOSS_API_KEY}
-    secret: {TOSS_SECRET}
+  api-key: ${TOSS_API_KEY}
+  secret-key: ${TOSS_SECRET}
 
 server:
   servlet:

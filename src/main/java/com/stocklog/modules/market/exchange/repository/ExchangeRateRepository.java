@@ -7,6 +7,6 @@ import java.util.Optional;
 
 public interface ExchangeRateRepository extends JpaRepository<ExchangeRate, Long> {
     default Optional<ExchangeRate> findMainRate() {
-        return findById(1L);
+        return findById(ExchangeRate.MAIN_ID);
     }
 }

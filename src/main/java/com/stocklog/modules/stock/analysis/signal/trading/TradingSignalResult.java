@@ -1,4 +1,4 @@
-package com.stocklog.modules.stock.analysis.diagnosis;
+package com.stocklog.modules.stock.analysis.signal.trading;
 
 import com.stocklog.modules.common.finance.context.MarketContext;
 import com.stocklog.modules.common.type.ChartPhase;
@@ -125,4 +125,6 @@ public record TradingSignalResult(
     public static TradingSignalResult createFallback() {
         return createFallback("UNKNOWN", "DATA_UNAVAILABLE");
     }
+
+
 }

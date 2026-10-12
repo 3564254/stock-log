@@ -2,6 +2,7 @@ package com.stocklog.modules.purchase.trade.service;
 
 import com.stocklog.modules.common.finance.context.MarketContext;
 import com.stocklog.modules.common.type.ChartPhase;
+import com.stocklog.modules.stock.analysis.signal.trading.TradingSignalResult;
 import com.stocklog.modules.purchase.trade.dto.request.TradeLogRequest;
 import com.stocklog.modules.purchase.trade.dto.request.TradeReviewRequest;
 import com.stocklog.modules.purchase.trade.dto.request.TradingRuleSaveRequest;
@@ -67,9 +68,8 @@ public class TradeFacadeService {
         tradingRuleService.deleteRule(memberId, tradingRuleId);
     }
 
-
-    public TradingRuleCheckResponse evaluateBuySignal(Long memberId, MarketContext marketContext, ChartPhase phase) {
-        return tradingRuleService.evaluateBuySignal(memberId, marketContext, phase);
+    public TradingRuleCheckResponse evaluateBuySignal(Long memberId, MarketContext marketContext, TradingSignalResult signal) {
+        return tradingRuleService.evaluateBuySignal(memberId, marketContext, signal);
     }
 
     public void saveTradingRule(Long memberId, TradingRuleSaveRequest request) {

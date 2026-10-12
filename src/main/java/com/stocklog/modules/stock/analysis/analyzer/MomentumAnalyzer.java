@@ -1,6 +1,6 @@
-package com.stocklog.modules.stock.analysis.service;
+package com.stocklog.modules.stock.analysis.analyzer;
 
-import com.stocklog.modules.stock.analysis.domain.momentum.MomentumScore;
+import com.stocklog.modules.stock.analysis.score.MomentumScore;
 import com.stocklog.modules.stock.chart.dto.StockChartDto;
 import com.stocklog.modules.stock.price.dto.StockPriceDto;
 import org.springframework.stereotype.Component;
@@ -13,7 +13,7 @@ import java.util.List;
 public class MomentumAnalyzer {
 
     // 💡 dailyCharts는 과거 -> 최신 (Asc) 정렬 상태로 주입
-    MomentumScore analyze(List<StockChartDto> dailyCharts, StockPriceDto priceDto) {
+    public MomentumScore analyze(List<StockChartDto> dailyCharts, StockPriceDto priceDto) {
         List<String> signals = new ArrayList<>();
         int score = 0;
 

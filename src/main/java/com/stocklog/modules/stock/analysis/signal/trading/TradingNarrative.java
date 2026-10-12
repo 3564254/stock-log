@@ -1,10 +1,8 @@
-package com.stocklog.modules.stock.analysis.diagnosis;
+package com.stocklog.modules.stock.analysis.signal.trading;
 
 import com.stocklog.modules.common.finance.context.MarketContext;
 import com.stocklog.modules.common.type.ChartPhase;
-import com.stocklog.modules.stock.analysis.diagnosis.TradingSignalAnalyzer.TradePlan;
-import com.stocklog.modules.stock.analysis.diagnosis.TradingSignalAnalyzer.Verdict;
-import com.stocklog.modules.stock.analysis.diagnosis.TradingSignalResult.Narrative;
+import com.stocklog.modules.stock.analysis.signal.trading.TradingSignalResult.Narrative;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -18,11 +16,11 @@ import java.util.List;
  * - 지시형("절대 금지", "즉시 매도")보다 상태 서술형으로 쓴다.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class PhaseNarrative {
+public final class TradingNarrative {
 
     private record Action(String title, String body, String tone) {}
 
-    public static Narrative build(ChartPhase phase, MarketContext ctx, Verdict verdict, TradePlan plan) {
+    public static Narrative build(ChartPhase phase, MarketContext ctx, Verdict verdict, EntrySetup plan) {
         boolean us = isUsMarket(ctx);
         List<Narrative.Detail> details = new ArrayList<>();
         String summary = summarize(phase, ctx, us, details);
@@ -260,7 +258,7 @@ public final class PhaseNarrative {
     // ------------------------------------------------------------------
     // 3. 대응 안내 (진입 계획이 있으면 계획 기준, 없으면 국면 기준)
     // ------------------------------------------------------------------
-    private static Action action(ChartPhase phase, MarketContext ctx, Verdict verdict, TradePlan plan, boolean us) {
+    private static Action action(ChartPhase phase, MarketContext ctx, Verdict verdict, EntrySetup plan, boolean us) {
         if (plan != null && verdict != null && verdict != Verdict.NO_SETUP) {
             String zone = fmt(plan.entry().low(), us) + " ~ " + fmt(plan.entry().high(), us);
             String stop = fmt(plan.stop(), us);
