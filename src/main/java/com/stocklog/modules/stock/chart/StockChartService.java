@@ -1,9 +1,12 @@
 package com.stocklog.modules.stock.chart;
 
+import com.stocklog.modules.market.application.usecase.IsMarketOpenUseCase;
+import com.stocklog.modules.market.open.MarketOpenType;
 import com.stocklog.modules.stock.chart.dto.ChartRequest;
 import com.stocklog.modules.stock.chart.dto.StockChartDto;
 import com.stocklog.modules.stock.chart.dto.StockChartResponse;
 import com.stocklog.modules.common.type.Period;
+import com.stocklog.modules.stock.domain.type.MarketType;
 import com.stocklog.modules.stock.stock.StockService;
 import com.stocklog.modules.stock.stock.dto.StockDto;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +30,8 @@ public class StockChartService {
     private final StockChartRepository chartRepository;
     private final List<StockChartProvider> providers;
     private final StockService stockService;
+
+    private final IsMarketOpenUseCase marketOpenUseCase;
 
     @Transactional
     public List<StockChartDto> getDailyChartDtoDesc(String code) {
@@ -88,20 +93,12 @@ public class StockChartService {
         return fetchAndSave(code, period, now, stockDto);
     }
 
-    // ── [신규 추가] 국장/미장 시간에 따른 장중 여부 판별 ──
     private boolean isMarketOpen(String market) {
-        LocalTime now = LocalTime.now();
-        String upperMarket = market.toUpperCase();
-
-        if (upperMarket.contains("KOSPI") || upperMarket.contains("KOSDAQ") || upperMarket.contains("KRX")) {
-            // 국장: 09:00 ~ 15:30
-            return !now.isBefore(LocalTime.of(9, 0)) && now.isBefore(LocalTime.of(15, 30));
-        } else {
-            // 미장: 22:30 ~ 06:00 (서머타임/정규장 오차 넉넉히 커버하기 위해 22:00 ~ 06:30으로 잡음)
-            //return !now.isBefore(LocalTime.of(22, 0)) || now.isBefore(LocalTime.of(6, 30));
-            return true;
-        }
+        MarketOpenType marketOpen = marketOpenUseCase.isMarketOpen(MarketType.from(market));
+        return marketOpen.isOpen();
     }
+
+
 
     // 기존 로직에서 stockDto를 파라미터로 받도록 약간 수정 (DB 중복 조회 방지)
     private List<StockChartDto> fetchAndSave(String code, Period period, LocalDate now, StockDto stockDto) {

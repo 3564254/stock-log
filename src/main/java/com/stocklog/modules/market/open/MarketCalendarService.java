@@ -16,6 +16,10 @@ public class MarketCalendarService {
                 .build();
     }
 
+    public MarketCalendarInfo getMarketCalendarDto(Nation nation) {
+        return marketCalendarProvider.fetchMarketOpenInfo(nation);
+    }
+
 
 
 
