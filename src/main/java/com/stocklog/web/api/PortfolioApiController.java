@@ -52,7 +52,7 @@ public class PortfolioApiController {
     }
 
     @PostMapping("/holdings/update")
-    public void updateStock(@LoginUser MemberResponse loginMember, @RequestBody HoldingUpdateRequest request) {
+    public void updateStock(@LoginUser MemberResponse loginMember, @RequestBody @Valid HoldingUpdateRequest request) {
         portfolioService.updateHolding(loginMember.getId(), request);
     }
 

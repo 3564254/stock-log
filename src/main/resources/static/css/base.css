@@ -11,6 +11,7 @@ body {
     color: var(--ink);
     font-family: var(--font-sans);
     overflow-x: hidden;
+    letter-spacing: -0.01em;
     -webkit-font-smoothing: antialiased;
 }
 [x-cloak] { display: none !important; }
@@ -22,8 +23,18 @@ body {
     outline-offset: 2px;
 }
 
-/* ── 셸: 사이드바(fragments/sidebar) 오른쪽 본문 ── */
-.layout-wrapper { display: flex; min-height: 100vh; }
+/* ── 글자 공통 역할 ── */
+.page-title { font-size: var(--fs-page); font-weight: 800; color: var(--text-strong); letter-spacing: -0.03em; line-height: 1.35; margin: 0; }
+.page-sub { font-size: var(--fs-body); font-weight: 500; color: var(--text-muted); margin-top: 4px; }
+.num { font-variant-numeric: tabular-nums; }   /* 금액·수익률: 숫자 폭을 맞춰 열을 반듯하게 */
+
+/* Bootstrap 글자색 유틸리티를 토큰 색으로 맞춘다 (기본 회색이 섞이지 않게) */
+.text-dark { color: var(--text-strong) !important; }
+.text-secondary { color: var(--text-sub) !important; }
+.text-muted { color: var(--text-muted) !important; }
+
+/* ── 셸: 상단 내비게이션(fragments/sidebar) 아래 본문 ── */
+.layout-wrapper { display: flex; flex-direction: column; min-height: 100vh; }
 .main-content {
     flex-grow: 1;
     min-width: 0;
@@ -32,7 +43,7 @@ body {
     padding: var(--page-top) var(--page-gutter) var(--page-bottom);
     transition: margin-left .3s ease, width .3s ease;
 }
-.main-content.expanded { margin-left: 80px; width: calc(100% - 80px); }
+.main-content.expanded { margin-left: 0; width: 100%; }   /* 예전 사이드바 접기 상태: 이제 의미 없음 */
 .content-container {
     width: 100%;
     max-width: var(--content-max);
@@ -40,14 +51,33 @@ body {
     padding-top: var(--content-top);
 }
 
-/* ── 카드 ── */
+/* ── 카드: 회색 바탕 위 흰 면. 테두리 대신 여백과 바탕색 차이로 구분한다 ── */
 .toss-card {
     background: var(--paper);
-    border: 1px solid var(--hairline);
+    border: 0;
     border-radius: var(--card-radius);
     padding: var(--card-pad);
     margin-bottom: 24px;
 }
+
+/* ── 공통 모양 (랜딩과 같은 언어) ──
+   - 버튼은 알약. 주요 동작 하나만 검정(.pill-dark), 나머지는 회색(.pill-soft)
+   - 탭은 회색 칸 위 흰 알약(세그먼트)
+   - 카드 안의 칸은 테두리 없이 옅은 회색 면(.inset) */
+.pill-dark, .pill-soft {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    border: 0; border-radius: var(--radius-pill);
+    font-family: inherit; font-size: 13px; font-weight: 700; line-height: 1;
+    padding: 10px 16px; white-space: nowrap; text-decoration: none; cursor: pointer;
+    transition: background-color .15s ease, transform .15s ease;
+}
+.pill-dark { background: var(--ink); color: #fff; }
+.pill-dark:hover { background: var(--ink-body); color: #fff; }
+.pill-soft { background: var(--canvas); color: var(--ink); }
+.pill-soft:hover { background: var(--canvas-hover); color: var(--ink); }
+.pill-dark:active, .pill-soft:active { transform: scale(.97); }
+.pill-dark:disabled, .pill-soft:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.inset { background: var(--surface-soft); border-radius: var(--radius-md); }
 
 /* ── 입력창 ── */
 .toss-input {
@@ -72,8 +102,8 @@ body {
     display: block;
     width: 100%;
     border: none;
-    border-radius: var(--radius-md);
-    background: var(--toss-blue-deep);
+    border-radius: var(--radius-pill);
+    background: var(--ink);
     color: #fff;
     font-family: inherit;
     font-size: 16px;
@@ -81,7 +111,7 @@ body {
     padding: 16px;
     transition: background-color .15s ease;
 }
-.btn-primary-toss:hover { background: var(--toss-blue-press); color: #fff; }
+.btn-primary-toss:hover { background: var(--ink-body); color: #fff; }
 .btn-primary-toss:disabled { opacity: .7; cursor: progress; }
 
 /* ── 모달 (role="dialog" + x-dialog, static/js/ui-a11y.js) ── */
@@ -115,6 +145,57 @@ body {
         padding: 16px 16px var(--page-bottom-m);
     }
     .content-container { padding-top: var(--content-top-m); }
-    .toss-card { padding: var(--card-pad-m); }
+    .toss-card { padding: var(--card-pad-m); border-radius: var(--card-radius-m); }
     .toss-input { font-size: 16px; }   /* iOS 확대 방지 */
+    .page-title { font-size: var(--fs-summary); }
+}
+
+/* ── 움직임: 짧고 조용하게 (0.12~0.5초, 위치·투명도만) ── */
+
+/* 1) 눌렀을 때 살짝 작아졌다 돌아오기 */
+:where(button, .pill-dark, .pill-soft, .btn-primary-toss, .btn-toss, .btn-ghost, .ghost-btn, .btn-verify,
+       .btn-soft-blue, .btn-soft-red, .btn-add, .req-btn, .retry-btn, .chip, .preset-chip, .tab-btn, .topnav-link, .mobile-tab) {
+    transition: background-color .15s ease, color .15s ease, box-shadow .15s ease, transform .12s ease;
+}
+:where(button, .pill-dark, .pill-soft, .btn-primary-toss, .btn-toss, .btn-ghost, .ghost-btn, .btn-verify,
+       .btn-soft-blue, .btn-soft-red, .btn-add, .req-btn, .retry-btn, .chip, .preset-chip, .tab-btn, .topnav-link, .mobile-tab):active:not(:disabled) {
+    transform: scale(.97);
+}
+
+/* 2) 모달·바텀시트: 배경은 서서히, 창은 아래에서 살짝 */
+.modal-backdrop-custom { animation: mo-fade .2s ease both; }
+.modal-sheet { animation: mo-rise .24s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes mo-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mo-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@media (max-width: 768px) {
+    .modal-sheet { animation-name: mo-sheet; }
+}
+@keyframes mo-sheet { from { opacity: .6; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+
+/* 3) 숫자가 바뀌면 잠깐 은은하게 반짝 (fragments/sidebar 의 스크립트가 .num-flash 를 붙인다) */
+.num-flash { animation: num-flash .9s ease-out; border-radius: 4px; }
+@keyframes num-flash { from { background-color: rgba(49, 130, 246, 0.14); } to { background-color: transparent; } }
+
+/* 4) 로딩 자리 표시(스켈레톤): 빈 칸 대신 회색 줄이 은은하게 반짝 */
+.skeleton {
+    display: block; border-radius: 8px;
+    background: linear-gradient(90deg, var(--canvas) 0%, var(--canvas-hover) 40%, var(--canvas) 80%);
+    background-size: 200% 100%;
+    animation: sk-shimmer 1.3s ease-in-out infinite;
+}
+.sk-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; }
+.sk-lines { flex: 1; display: grid; gap: 8px; min-width: 0; }
+.sk-avatar { width: 40px; height: 40px; border-radius: 12px; flex: none; }
+.sk-line { height: 12px; }
+.sk-w-90 { width: 90%; } .sk-w-75 { width: 75%; } .sk-w-60 { width: 60%; } .sk-w-35 { width: 35%; }
+@keyframes sk-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+
+/* 기기에서 '움직임 줄이기'를 켜면 모두 끈다 */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+    :where(button, .pill-dark, .pill-soft, .btn-primary-toss, .btn-toss, .chip):active { transform: none !important; }
 }

@@ -63,7 +63,7 @@ class PortfolioAnalysisService {
         if (totalStocks == 0) return BigDecimal.ZERO;
 
         long profitableStocks = portfolio.myStocks().stream()
-                .filter(stock -> stock.returnRate().compareTo(BigDecimal.ZERO) >= 0)
+                .filter(stock -> stock.returnRate() != null && stock.returnRate().compareTo(BigDecimal.ZERO) >= 0)
                 .count();
 
         return BigDecimal.valueOf(profitableStocks)

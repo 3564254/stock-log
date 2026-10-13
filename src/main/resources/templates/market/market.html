@@ -15,19 +15,10 @@
   <style>
     /* ── 디자인 토큰 ── */
     :root {
-        --toss-blue-light: rgba(49, 130, 246, 0.08);
-        --toss-red-light: rgba(240, 68, 82, 0.08);
-        --bg-color: var(--canvas);
-        --card-bg: #ffffff;
-        --text-main: var(--ink);
-        --text-sub: var(--label-text);
-        --border-color: var(--hairline);
         --good: var(--status-green);
         --good-text: var(--status-green-text);
         --good-tint: var(--status-green-tint);
         --caution: var(--caution-amber);
-        --neutral-fill: var(--fog);
-        --text-strong-sub: var(--slate);
         --page-gutter: 40px;
         --page-bottom: 100px;
         --content-max: 1680px;
@@ -39,16 +30,16 @@
     .toss-card { position: relative; }
 
     /* ── 타이틀 위계: 히어로(진단)는 크고 진하게, 하위 패널은 조용하게 ── */
-    .section-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: var(--text-sub); letter-spacing: -0.1px; }
-    .section-title i { color: var(--text-sub); font-size: 14px; margin-right: 6px; font-weight: 400; }
-    .section-title.hero-title { font-size: 19px; color: var(--text-main); letter-spacing: -0.3px; }
-    .section-title.hero-title i { color: var(--text-strong-sub); font-size: 18px; }
+    .section-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: var(--text-muted); }
+    .section-title i { color: var(--text-muted); font-size: 14px; margin-right: 6px; font-weight: 400; }
+    .section-title.hero-title { font-size: 18px; color: var(--text-strong); letter-spacing: -0.02em; }
+    .section-title.hero-title i { color: var(--text-sub); font-size: 18px; }
 
     /* ── 투자 나침반 ── */
     .compass-card { padding: 24px; transition: 0.2s; display: flex; flex-direction: column; justify-content: center; }
 
     .confidence-gauge { background: rgba(0, 0, 0, 0.05); height: 8px; border-radius: 4px; overflow: hidden; position: relative; cursor: help;}
-    .gauge-fill { height: 100%; border-radius: 4px; background: var(--text-strong-sub); }
+    .gauge-fill { height: 100%; border-radius: 4px; background: var(--text-sub); }
 
     /* 서브 점수 게이지: -100~100 스코어를 0(중앙)에서 좌우로 뻗어나가는 바로 표현 */
     .score-gauge-track { position: relative; height: 8px; background: var(--canvas); border-radius: 4px; overflow: hidden; }
@@ -56,21 +47,21 @@
     .score-gauge-fill { position: absolute; top: 0; height: 100%; border-radius: 4px; }
 
     /* ── 진단 배지: 상태 톤 (good · neutral · caution · alert) ── */
-    .regime-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+    .regime-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; }
     .regime-badge .k { font-weight: 500; opacity: .85; }
     .tone-good    { background: var(--good-tint);    color: var(--good-text); }
-    .tone-neutral { background: var(--canvas);             color: var(--text-strong-sub); }
+    .tone-neutral { background: var(--canvas);             color: var(--text-sub); }
     .tone-caution { background: var(--caution-tint); color: var(--caution-text); }
     .tone-alert   { background: var(--alert-tint);   color: var(--alert-text); }
     .tone-alert::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
-    .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--neutral-fill); }
+    .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--fog); }
     .status-dot.good { background: var(--good); }
     .status-dot.caution { background: var(--caution); }
     .status-dot.alert { background: var(--alert-text); }
     .score-delta.up { color: var(--good-text); }
     .score-delta.down { color: var(--alert-text); }
-    .score-delta { font-size: 12px; font-weight: 600; color: var(--text-strong-sub); font-variant-numeric: tabular-nums; }
-    .callout { border-radius: 12px; padding: 14px 16px; border: 1px solid; }
+    .score-delta { font-size: 12px; font-weight: 600; color: var(--text-sub); font-variant-numeric: tabular-nums; }
+    .callout { border-radius: 14px; padding: 14px 16px; border: 0; }
     .callout-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
     .callout-body { color: var(--ink-body); line-height: 1.6; word-break: keep-all; }
     .callout.alert   { background: var(--alert-tint);   border-color: var(--alert-line); }
@@ -79,24 +70,24 @@
     .callout.caution .callout-title { color: var(--caution-text); }
     .text-up { color: var(--toss-red-deep) !important; }
     .text-down { color: var(--toss-blue-deep) !important; }
-    .text-dark { color: var(--text-main) !important; }
+    .text-dark { color: var(--text-strong) !important; }
 
     /* ── 컴팩트 인디케이터 리스트 ── */
-    .compact-indicator-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-color); text-decoration: none !important; transition: background-color 0.15s; margin: 0 -12px; padding-left: 12px; padding-right: 12px; border-radius: 8px; }
+    .compact-indicator-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--line); text-decoration: none !important; transition: background-color 0.15s; margin: 0 -12px; padding-left: 12px; padding-right: 12px; border-radius: 8px; }
     .compact-indicator-row:hover { background-color: var(--surface-soft); }
     .compact-indicator-row:focus-visible { background-color: var(--surface-soft); outline: 2px solid var(--toss-blue); outline-offset: -2px; }
     .compact-indicator-row:last-child { border-bottom: none; }
 
-    .compact-name { font-size: 14px; font-weight: 600; color: var(--text-main); line-height: 1.3; word-break: keep-all; }
-    .compact-date { font-size: 11px; color: var(--text-sub); font-weight: 500; margin-top: 2px; }
+    .compact-name { font-size: 14px; font-weight: 600; color: var(--text-strong); line-height: 1.3; word-break: keep-all; }
+    .compact-date { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-top: 2px; }
 
     .compact-value { font-size: 15px; font-weight: 700; text-align: right; line-height: 1.2; }
-    .compact-change { font-size: 11.5px; font-weight: 600; text-align: right; margin-top: 3px; letter-spacing: -0.2px; }
+    .compact-change { font-size: 12px; font-weight: 600; text-align: right; margin-top: 3px; }
     .compact-sparkline { width: 50px; height: 24px; flex-shrink: 0; }
 
     /* ── 뉴스 그리드 ── */
     .news-row { display: flex; gap: 20px; transition: background 0.15s ease, transform 0.15s ease; cursor: pointer; text-decoration: none; color: inherit; }
-    .news-row:hover { background-color: var(--surface-soft); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+    .news-row:hover { background-color: var(--surface-soft); }
     .news-content { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; }
     .news-title { font-size: 16px; font-weight: 700; color: var(--ink); line-height: 1.5; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: break-word; }
     .news-summary { font-size: 14px; color: var(--label-text); font-weight: 500; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: break-word; margin-bottom: 12px; }
@@ -109,27 +100,27 @@
 
     /* ── 차트 및 탭 ── */
     #market-chart-container { width: 100%; height: 320px; position: relative; border-radius: 12px; background: transparent; }
-    .tab-nav { display: flex; gap: 4px; background: var(--bg-color); border-radius: 10px; padding: 4px; flex-wrap: wrap; }
-    .tab-btn { padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--text-sub); border: none; background: transparent; cursor: pointer; transition: all 0.15s; }
-    .tab-btn:hover { color: var(--text-main); }
-    .tab-btn.active { background: white; color: var(--text-main); box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+    .tab-nav { display: flex; gap: 4px; background: var(--canvas); border-radius: 999px; padding: 4px; flex-wrap: wrap; }
+    .tab-btn { padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--text-muted); border: none; background: transparent; cursor: pointer; transition: all 0.15s; }
+    .tab-btn:hover { color: var(--text-strong); }
+    .tab-btn.active { background: var(--paper); color: var(--text-strong); box-shadow: var(--shadow-raised); }
 
-    .text-neutral { color: var(--text-sub) !important; }
+    .text-neutral { color: var(--text-muted) !important; }
 
     .news-pagination { display: flex; justify-content: center; align-items: center; gap: 4px; padding: 24px 0 8px; }
     .page-num-btn, .page-nav-btn { display: flex; align-items: center; justify-content: center; min-width: 32px; height: 32px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--label-text); text-decoration: none; transition: background-color 0.15s ease, color 0.15s ease; }
     .page-num-btn:hover, .page-nav-btn:hover { background-color: var(--canvas); }
     .page-num-btn.active { background-color: var(--toss-blue-deep); color: #ffffff; font-weight: 700; }
-    .lw-tooltip { position: absolute; display: none; background: rgba(255, 255, 255, 0.95); padding: 12px 16px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); border: 1px solid var(--hairline); pointer-events: none; z-index: 10; }
+    .lw-tooltip { position: absolute; display: none; background: rgba(255, 255, 255, 0.95); padding: 12px 16px; border-radius: 8px; box-shadow: var(--shadow-dropdown); border: 1px solid var(--hairline); pointer-events: none; z-index: 10; }
 
     /* 섹션 단위 실패/빈 상태 */
     .section-state { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-    .section-state-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
-    .section-state-desc { font-size: 14px; font-weight: 500; color: var(--text-strong-sub); margin-top: 2px; word-break: keep-all; }
-    .retry-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--canvas); color: var(--text-strong-sub); border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; }
-    .retry-btn:hover { background: var(--canvas-hover); color: var(--text-main); }
+    .section-state-title { font-size: 15px; font-weight: 700; color: var(--text-strong); }
+    .section-state-desc { font-size: 14px; font-weight: 500; color: var(--text-sub); margin-top: 2px; word-break: keep-all; }
+    .retry-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--canvas); color: var(--text-sub); border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+    .retry-btn:hover { background: var(--canvas-hover); color: var(--text-strong); }
     .chart-empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; background: rgba(255,255,255,0.92); z-index: 5; border-radius: 12px; }
-    .compact-missing { font-size: 13px; font-weight: 600; color: var(--text-strong-sub); }
+    .compact-missing { font-size: 13px; font-weight: 600; color: var(--text-sub); }
     .news-empty { min-height: 160px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 4px; }
     @media (prefers-reduced-motion: reduce) { .fu { animation: none; } .news-row:hover { transform: none; } }
 
@@ -137,9 +128,9 @@
     @media (max-width: 768px) {
       .main-content { padding-bottom: 24px; overflow-x: hidden; }
       .content-container { padding-top: 16px; }
-      .toss-card { padding: 18px; margin-bottom: 16px; border-radius: 14px; }
+      .toss-card { padding: 18px; margin-bottom: 16px; }
       .compass-card { padding: 18px; }
-      .section-title.hero-title { font-size: 17px; }
+      .section-title.hero-title { font-size: 16px; }
       .callout, .ai-comment-text, .section-state-desc, .compact-name, .news-summary { word-break: keep-all; overflow-wrap: break-word; }
 
       /* 상단 국내/해외 토글: 전체 폭 */
@@ -185,21 +176,21 @@
     <div class="content-container">
       <div class="mb-4 fu d1 d-flex justify-content-between align-items-end flex-wrap gap-3">
         <div>
-          <h2 class="fw-bold mb-2 text-dark" style="font-size: 24px;">시장 동향</h2>
-          <p class="m-0" style="font-size: 15px; color: var(--label-text); font-weight: 500;"
+          <h2 class="page-title mb-2">시장 동향</h2>
+          <p class="m-0" style="font-size: 14px; color: var(--text-muted); font-weight: 500;"
              th:text="${loginMember != null ? loginMember.username + '님, 오늘 시장의 흐름과 주요 뉴스를 모아봤어요' : '오늘 시장의 흐름과 주요 뉴스를 모아봤어요'}"></p>
         </div>
 
-        <div class="d-flex p-1" style="background-color: var(--canvas); border-radius: 10px; width: 240px;">
+        <div class="d-flex p-1" style="background-color: var(--canvas-hover); border-radius: 999px; width: 240px;">
           <button class="flex-fill border-0 fw-bold d-flex justify-content-center align-items-center gap-1"
-                  style="border-radius: 8px; padding: 10px 14px; font-size: 14px; transition: 0.15s;"
-                  :style="mainTab === 'market' ? 'background: white; color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,0.05);' : 'background: transparent; color: var(--label-text);'"
+                  style="border-radius: 999px; padding: 10px 14px; font-size: 14px; transition: 0.15s;"
+                  :style="mainTab === 'market' ? 'background: white; color: var(--ink); box-shadow: var(--shadow-raised);' : 'background: transparent; color: var(--label-text);'"
                   @click="mainTab = 'market'; $nextTick(() => { if(!chartInitialized) { createChart(); updateChartData(); chartInitialized=true; } })">
             거시 경제
           </button>
           <button class="flex-fill border-0 fw-bold d-flex justify-content-center align-items-center gap-1"
-                  style="border-radius: 8px; padding: 10px 14px; font-size: 14px; transition: 0.15s;"
-                  :style="mainTab === 'news' ? 'background: white; color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,0.05);' : 'background: transparent; color: var(--label-text);'"
+                  style="border-radius: 999px; padding: 10px 14px; font-size: 14px; transition: 0.15s;"
+                  :style="mainTab === 'news' ? 'background: white; color: var(--ink); box-shadow: var(--shadow-raised);' : 'background: transparent; color: var(--label-text);'"
                   @click="mainTab = 'news'">
             뉴스 속보
           </button>
@@ -250,18 +241,18 @@
                 </div>
 
                 <!-- 2. 2D 기반 해석 -->
-                <div class="fw-bold mb-4" style="font-size: 18px; color: var(--text-main); line-height: 1.5; letter-spacing: -0.3px;"
+                <div class="fw-bold mb-4" style="font-size: 18px; color: var(--text-strong); line-height: 1.5; letter-spacing: -0.02em;"
                      th:text="${dto.regimeDescription}">
                 </div>
 
                 <!-- 3. 시장 종합 스코어 및 서브 점수 -->
-                <div class="p-4 mb-4 rounded-4" style="background: var(--surface-soft); border: 1px solid var(--canvas);" th:if="${diag != null}">
+                <div class="p-4 mb-4 rounded-4" style="background: var(--surface-soft);" th:if="${diag != null}">
 
                   <!-- 종합 스코어 및 모멘텀 (1D/5D) -->
                   <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom" style="border-color: var(--hairline) !important;">
-                    <span class="fw-bold" style="font-size: 14px; color: var(--text-sub);"><i class="bi bi-bar-chart-fill me-1"></i>시장 종합 컨디션 스코어</span>
+                    <span class="fw-bold" style="font-size: 14px; color: var(--text-muted);"><i class="bi bi-bar-chart-fill me-1"></i>시장 종합 컨디션 스코어</span>
                     <div class="d-flex align-items-center gap-3">
-                      <span class="fw-bold d-inline-flex align-items-center gap-2" style="font-size: 24px; color: var(--text-main); font-variant-numeric: tabular-nums;">
+                      <span class="fw-bold d-inline-flex align-items-center gap-2" style="font-size: 24px; color: var(--text-strong); font-variant-numeric: tabular-nums;">
                         <span class="status-dot" aria-hidden="true"
                               th:classappend="${diag.compositeScore >= 5 ? 'good' : (diag.compositeScore <= -5 ? 'caution' : '')}"></span>
                         <span th:text="${#numbers.formatDecimal(diag.compositeScore, 1, 1)} + '점'"></span>
@@ -280,39 +271,39 @@
                   <!-- 3대 서브 그룹 점수: -100~100 양방향 스코어라서, 0을 기준으로 좌우로 뻗어나가는 게이지로 표시 (음수를 abs()로만 그리면 양수와 구분이 안 됨) -->
                   <div class="d-flex flex-column gap-3">
                     <div class="d-flex align-items-center justify-content-between">
-                      <span style="font-size: 13px; font-weight: 600; color: var(--text-sub); width: 85px;">가격 모멘텀</span>
+                      <span style="font-size: 13px; font-weight: 600; color: var(--text-muted); width: 85px;">가격 모멘텀</span>
                       <div class="score-gauge-track flex-grow-1 mx-3">
                         <div class="score-gauge-fill"
                              th:style="${diag.marketPriceScore >= 0 ? ('left: 50%; width: ' + (diag.marketPriceScore / 100 * 50) + '%; background: ' + (diag.marketPriceScore >= 5 ? 'var(--status-green)' : (diag.marketPriceScore <= -5 ? 'var(--caution-amber)' : 'var(--fog)')) + ';') : ('left: ' + (50 + diag.marketPriceScore / 100 * 50) + '%; width: ' + (-diag.marketPriceScore / 100 * 50) + '%; background: ' + (diag.marketPriceScore >= 5 ? 'var(--status-green)' : (diag.marketPriceScore <= -5 ? 'var(--caution-amber)' : 'var(--fog)')) + ';')}"></div>
                       </div>
-                      <span style="font-size: 14px; font-weight: 700; width: 36px; text-align: right; color: var(--text-main); font-variant-numeric: tabular-nums;"
+                      <span style="font-size: 14px; font-weight: 700; width: 36px; text-align: right; color: var(--text-strong); font-variant-numeric: tabular-nums;"
                             th:text="${#numbers.formatDecimal(diag.marketPriceScore, 1, 0)}"></span>
                     </div>
                     <div class="d-flex align-items-center justify-content-between">
-                      <span style="font-size: 13px; font-weight: 600; color: var(--text-sub); width: 85px;">거시 유동성</span>
+                      <span style="font-size: 13px; font-weight: 600; color: var(--text-muted); width: 85px;">거시 유동성</span>
                       <div class="score-gauge-track flex-grow-1 mx-3">
                         <div class="score-gauge-fill"
                              th:style="${diag.macroLiquidityScore >= 0 ? ('left: 50%; width: ' + (diag.macroLiquidityScore / 100 * 50) + '%; background: ' + (diag.macroLiquidityScore >= 5 ? 'var(--status-green)' : (diag.macroLiquidityScore <= -5 ? 'var(--caution-amber)' : 'var(--fog)')) + ';') : ('left: ' + (50 + diag.macroLiquidityScore / 100 * 50) + '%; width: ' + (-diag.macroLiquidityScore / 100 * 50) + '%; background: ' + (diag.macroLiquidityScore >= 5 ? 'var(--status-green)' : (diag.macroLiquidityScore <= -5 ? 'var(--caution-amber)' : 'var(--fog)')) + ';')}"></div>
                       </div>
-                      <span style="font-size: 14px; font-weight: 700; width: 36px; text-align: right; color: var(--text-main); font-variant-numeric: tabular-nums;"
+                      <span style="font-size: 14px; font-weight: 700; width: 36px; text-align: right; color: var(--text-strong); font-variant-numeric: tabular-nums;"
                             th:text="${#numbers.formatDecimal(diag.macroLiquidityScore, 1, 0)}"></span>
                     </div>
                     <div class="d-flex align-items-center justify-content-between">
-                      <span style="font-size: 13px; font-weight: 600; color: var(--text-sub); width: 85px;">섹터 로테이션</span>
+                      <span style="font-size: 13px; font-weight: 600; color: var(--text-muted); width: 85px;">섹터 로테이션</span>
                       <div class="score-gauge-track flex-grow-1 mx-3">
                         <div class="score-gauge-fill"
                              th:style="${diag.sectorScore >= 0 ? ('left: 50%; width: ' + (diag.sectorScore / 100 * 50) + '%; background: ' + (diag.sectorScore >= 5 ? 'var(--status-green)' : (diag.sectorScore <= -5 ? 'var(--caution-amber)' : 'var(--fog)')) + ';') : ('left: ' + (50 + diag.sectorScore / 100 * 50) + '%; width: ' + (-diag.sectorScore / 100 * 50) + '%; background: ' + (diag.sectorScore >= 5 ? 'var(--status-green)' : (diag.sectorScore <= -5 ? 'var(--caution-amber)' : 'var(--fog)')) + ';')}"></div>
                       </div>
-                      <span style="font-size: 14px; font-weight: 700; width: 36px; text-align: right; color: var(--text-main); font-variant-numeric: tabular-nums;"
+                      <span style="font-size: 14px; font-weight: 700; width: 36px; text-align: right; color: var(--text-strong); font-variant-numeric: tabular-nums;"
                             th:text="${#numbers.formatDecimal(diag.sectorScore, 1, 0)}"></span>
                     </div>
                     <div class="d-flex align-items-center justify-content-between">
-                      <span style="font-size: 13px; font-weight: 600; color: var(--text-sub); width: 85px;">크로스 에셋</span>
+                      <span style="font-size: 13px; font-weight: 600; color: var(--text-muted); width: 85px;">크로스 에셋</span>
                       <div class="score-gauge-track flex-grow-1 mx-3">
                         <div class="score-gauge-fill"
                              th:style="${diag.crossAssetScore >= 0 ? ('left: 50%; width: ' + (diag.crossAssetScore / 100 * 50) + '%; background: ' + (diag.crossAssetScore >= 5 ? 'var(--status-green)' : (diag.crossAssetScore <= -5 ? 'var(--caution-amber)' : 'var(--fog)')) + ';') : ('left: ' + (50 + diag.crossAssetScore / 100 * 50) + '%; width: ' + (-diag.crossAssetScore / 100 * 50) + '%; background: ' + (diag.crossAssetScore >= 5 ? 'var(--status-green)' : (diag.crossAssetScore <= -5 ? 'var(--caution-amber)' : 'var(--fog)')) + ';')}"></div>
                       </div>
-                      <span style="font-size: 14px; font-weight: 700; width: 36px; text-align: right; color: var(--text-main); font-variant-numeric: tabular-nums;"
+                      <span style="font-size: 14px; font-weight: 700; width: 36px; text-align: right; color: var(--text-strong); font-variant-numeric: tabular-nums;"
                             th:text="${#numbers.formatDecimal(diag.crossAssetScore, 1, 0)}"></span>
                     </div>
                   </div>
@@ -322,10 +313,10 @@
                 <div class="d-flex flex-column gap-3 mt-auto" style="font-size: 14px; font-weight: 500;">
                   <div th:if="${!#lists.isEmpty(dto.leadership)}">
                     <span class="fw-bold text-dark me-2">주도 섹터:</span>
-                    <span style="color: var(--text-sub);" th:each="item, stat : ${dto.leadership}" th:text="${!stat.last ? item + ', ' : item}"></span>
+                    <span style="color: var(--text-muted);" th:each="item, stat : ${dto.leadership}" th:text="${!stat.last ? item + ', ' : item}"></span>
                   </div>
 
-                  <div th:if="${#lists.isEmpty(dto.warnings) or (#lists.size(dto.warnings) == 1 and dto.warnings[0] == 'None')}" style="color: var(--text-sub);">
+                  <div th:if="${#lists.isEmpty(dto.warnings) or (#lists.size(dto.warnings) == 1 and dto.warnings[0] == 'None')}" style="color: var(--text-muted);">
                     <span class="fw-bold me-2">시장 경고:</span>특이사항 없음
                   </div>
                   <div th:if="${not #lists.isEmpty(dto.warnings) and not (#lists.size(dto.warnings) == 1 and dto.warnings[0] == 'None')}"
@@ -336,7 +327,7 @@
                     </div>
                   </div>
 
-                  <div th:if="${#lists.isEmpty(dto.divergences) or (#lists.size(dto.divergences) == 1 and dto.divergences[0] == 'None')}" style="color: var(--text-sub);">
+                  <div th:if="${#lists.isEmpty(dto.divergences) or (#lists.size(dto.divergences) == 1 and dto.divergences[0] == 'None')}" style="color: var(--text-muted);">
                     <span class="fw-bold me-2">특이 동향:</span>특이사항 없음
                   </div>
                   <div th:if="${not #lists.isEmpty(dto.divergences) and not (#lists.size(dto.divergences) == 1 and dto.divergences[0] == 'None')}"
@@ -364,14 +355,14 @@
                   <i class="bi" :class="getRegimeIcon()" style="font-size: 36px;" aria-hidden="true"></i>
                 </div>
                 <div style="font-size: 13px; color: var(--label-text); font-weight: 600; margin-bottom: 4px;">현재 시장의 방향성</div>
-                <h4 class="fw-bold m-0" style="font-size: 24px; letter-spacing: -0.5px; color: var(--text-main);" x-text="regimeStatus.label" th:text="${dto.regime}"></h4>
-                <p class="mt-3 mb-0 px-2" style="font-size: 14px; color: var(--text-sub); font-weight: 500; line-height: 1.5; word-break: keep-all;" x-text="getCompassDescription()"></p>
+                <h4 class="fw-bold m-0" style="font-size: 24px; letter-spacing: -0.03em; color: var(--text-strong);" x-text="regimeStatus.label" th:text="${dto.regime}"></h4>
+                <p class="mt-3 mb-0 px-2" style="font-size: 14px; color: var(--text-muted); font-weight: 500; line-height: 1.5; word-break: keep-all;" x-text="getCompassDescription()"></p>
               </div>
 
               <!-- 하단 선호도 & 신뢰도 통합 박스 -->
-              <div class="p-3 rounded-4 mt-auto" style="background: var(--surface-soft); border: 1px solid var(--canvas);">
+              <div class="p-3 rounded-4 mt-auto" style="background: var(--surface-soft);">
                 <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom" style="border-color: var(--hairline) !important;">
-                  <span style="font-size: 13px; color: var(--text-sub); font-weight: 600;">투자자 선호도 (Risk)</span>
+                  <span style="font-size: 13px; color: var(--text-muted); font-weight: 600;">투자자 선호도 (Risk)</span>
                   <div class="d-inline-flex align-items-center gap-1 px-2 py-1 rounded-2" :class="'tone-' + statusOf('risk', regimeData?.risk).tone">
                     <i class="bi" :class="getRiskIcon()" aria-hidden="true"></i>
                     <span class="fw-bold" style="font-size: 13px;" x-text="statusOf('risk', regimeData?.risk).label" th:text="${dto.risk}"></span>
@@ -380,8 +371,8 @@
 
                 <div>
                   <div class="d-flex justify-content-between align-items-end mb-2">
-                    <span style="font-size: 13px; color: var(--text-sub); font-weight: 600;">분석 신뢰도</span>
-                    <span class="fw-bold" style="font-size: 15px; color: var(--text-main); font-variant-numeric: tabular-nums;" th:text="${dto.confidence} + ' / 100'"></span>
+                    <span style="font-size: 13px; color: var(--text-muted); font-weight: 600;">분석 신뢰도</span>
+                    <span class="fw-bold" style="font-size: 15px; color: var(--text-strong); font-variant-numeric: tabular-nums;" th:text="${dto.confidence} + ' / 100'"></span>
                   </div>
                   <div class="confidence-gauge mt-0" title="수치가 낮을수록 지표 간 의견이 엇갈림을 의미해요">
                     <div class="gauge-fill" :style="{ width: (regimeData?.confidence || 0) + '%' }"></div>
@@ -398,18 +389,18 @@
           <div class="col-12">
             <div class="toss-card mb-0 d-flex flex-column" style="background-color: var(--surface-soft);">
               <div class="d-flex align-items-center mb-3">
-                <i class="bi bi-magic me-2" style="color: var(--text-strong-sub); font-size: 16px;" aria-hidden="true"></i>
+                <i class="bi bi-magic me-2" style="color: var(--text-sub); font-size: 16px;" aria-hidden="true"></i>
                 <span class="fw-bold text-dark" style="font-size: 15px;">AI 수석 전략가 종합 시황</span>
               </div>
               <!-- 기본은 3~4줄만 보여주고, '더보기'를 눌러야 전체가 펼쳐짐. white-space: pre-wrap으로 AI가 생성한 줄바꿈(\n)은 그대로 유지. -->
               <div class="ai-comment-text" :class="{ 'expanded': aiCommentExpanded }"
-                   style="font-size: 14.5px; color: var(--ink-body); line-height: 1.75; white-space: pre-wrap; word-break: keep-all;"
+                   style="font-size: 14px; color: var(--ink-body); line-height: 1.75; white-space: pre-wrap; word-break: keep-all;"
                    th:text="${marketAnalysis.diagnosisDto.comment}">
               </div>
               <button type="button" class="align-self-start mt-2" @click="aiCommentExpanded = !aiCommentExpanded"
                       style="border: none; background: none; padding: 0; font-size: 13px; font-weight: 700; color: var(--toss-blue-deep);">
                 <span x-text="aiCommentExpanded ? '접기' : '더보기'"></span>
-                <i class="bi" :class="aiCommentExpanded ? 'bi-chevron-up' : 'bi-chevron-down'" style="font-size: 11px; margin-left: 2px;"></i>
+                <i class="bi" :class="aiCommentExpanded ? 'bi-chevron-up' : 'bi-chevron-down'" style="font-size: 12px; margin-left: 2px;"></i>
               </button>
             </div>
           </div>

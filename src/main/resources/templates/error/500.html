@@ -12,7 +12,7 @@
         --page-bottom: 24px;
     }
     body { letter-spacing: -0.015em; }
-    .main-content { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .main-content { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - var(--topnav-height, 64px)); }
     .error-card {
       background: #fff; border-radius: 24px; padding: 48px 40px; text-align: center;
       width: 100%; max-width: 480px; box-shadow: 0 2px 12px rgba(0,0,0,.04);

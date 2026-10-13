@@ -28,13 +28,13 @@
     --status-green-soft: rgba(5, 192, 114, 0.10);
     --status-green-tint: #eefaf4;
     --status-green-line: #c9eedc;
-    --caution-amber: #f5a623;           /* 점·아이콘 전용 */
-    --caution-text: #9a5800;
-    --caution-tint: #fff8ec;
-    --caution-line: #fbe3b8;
-    --alert-text: #7a4300;
-    --alert-tint: #fdebd3;
-    --alert-line: #f6d2a6;
+    --caution-amber: #fd7e14;           /* 점·아이콘 전용 (주황) */
+    --caution-text: #c2410c;            /* 주황 글자: 연한 주황 바탕 위 4.8:1 */
+    --caution-tint: #fff4ed;
+    --caution-line: #ffdcc7;
+    --alert-text: #b8390a;              /* 더 진한 주황: 바탕 위 5.2:1 */
+    --alert-tint: #ffe9df;
+    --alert-line: #ffcdb5;
 
     /* ── 회색 사다리 ── */
     --ink: #191f28;                     /* 제목, 숫자, 본문 */
@@ -72,7 +72,9 @@
     --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
 
     /* ── 레이아웃 (페이지가 자기 :root 에서 덮어쓴다) ── */
-    --sidebar-width: 250px;
+    --sidebar-width: 0px;               /* 사이드바를 상단 내비게이션으로 바꿔서 0 (예전 화면 CSS 호환용) */
+    --topnav-height: 64px;
+    --nav-max: 1200px;                  /* 상단 내비게이션 폭: 화면마다 본문 폭이 달라도 내비게이션은 고정 */
     --content-max: 1200px;              /* 본문 최대 폭 */
     --content-top: 32px;                /* 헤더 아래 본문 시작 여백 */
     --content-top-m: 16px;              /* 768px 이하 */
@@ -80,14 +82,38 @@
     --page-gutter: 60px;
     --page-bottom: 80px;
     --page-bottom-m: 16px;
-    --card-radius: var(--radius-lg);
+    --card-radius: var(--radius-xl);    /* 20px: 테두리 없는 흰 카드 */
+    --card-radius-m: 18px;
     --card-pad: 28px;
     --card-pad-m: 20px;
     --sheet-max: 480px;
+
+    /* ── 글자 역할 — 페이지는 회색 사다리 대신 이 이름을 쓴다 (페이지 :root 에서 다시 정의하지 않는다) ── */
+    --text-strong: var(--ink);          /* 제목, 숫자 */
+    --text-body: var(--ink-body);       /* 본문 */
+    --text-sub: var(--slate);           /* 보조 글자 */
+    --text-muted: var(--label-text);    /* 라벨·캡션·단위 */
+    --text-faint: var(--mist);          /* 아이콘 전용 (글자 X) */
+    --line: var(--hairline);            /* 카드·칸 테두리 */
+    --line-soft: var(--canvas);         /* 옅은 구분선, 회색 칸 */
+
+    /* ── 글자 크기 단계 — 이 9단계 밖의 크기는 쓰지 않는다 (아이콘 제외) ──
+       12 캡션·배지 · 13 보조·버튼 · 14 본문 · 15 강조 본문·카드 라벨 · 16 목록 제목·모바일 카드 제목
+       18 카드 제목·모달 제목 · 20 요약 숫자·모바일 페이지 제목 · 24 페이지 제목 · 28 대표 숫자 */
+    --fs-caption: 12px;
+    --fs-small: 13px;
+    --fs-body: 14px;
+    --fs-emph: 15px;
+    --fs-list: 16px;
+    --fs-title: 18px;
+    --fs-summary: 20px;
+    --fs-page: 24px;
+    --fs-display: 28px;
 
     /* ── 예전 페이지 변수 이름 (새 코드에서는 위 이름을 쓴다) ── */
     --toss-gray-bg: var(--canvas);
     --toss-green: var(--status-green);
     --toss-warning: var(--caution-amber);
     --text-dark: var(--ink);
+    --toss-orange: var(--caution-amber);   /* analysis.html에서 정의 없이 쓰던 이름 */
 }

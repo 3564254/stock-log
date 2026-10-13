@@ -1,5 +1,7 @@
 package com.stocklog.modules.purchase.portfolio.service;
 
+import com.stocklog.modules.market.exchange.dto.ExchangeRateInfo;
+import com.stocklog.modules.market.service.ExchangeService;
 import com.stocklog.modules.member.application.usecase.GetMemberUseCase;
 import com.stocklog.modules.member.entity.Member;
 import com.stocklog.modules.purchase.portfolio.dto.request.HoldingUpdateRequest;
@@ -10,12 +12,14 @@ import com.stocklog.modules.purchase.portfolio.repository.HoldingRepository;
 import com.stocklog.modules.stock.application.usecase.StockSummaryUseCase;
 import com.stocklog.modules.stock.info.dto.StockInfoDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -24,6 +28,7 @@ class PortfolioService {
     private final HoldingRepository holdingRepository;
     private final StockSummaryUseCase summaryUseCase;
     private final GetMemberUseCase memberUsecase;
+    private final ExchangeService exchangeService;
 
     PortfolioResponse getMyPortfolio(Long memberId) {
         // TODO(JPA): HoldingRepository의 EntityGraph 덕분에 holding -> stock의 DB N+1은 피하고 있다.
@@ -32,13 +37,34 @@ class PortfolioService {
         List<Holding> holdings = holdingRepository.findAllByMemberId(memberId);
 
         List<HoldingResponse> holdingResponses = holdings.stream()
-                .map(holding -> {
-                    BigDecimal currentPrice = summaryUseCase.getStockSummary(holding.getStock().getCode()).price().currentPrice();
-                    return HoldingResponse.of(holding, currentPrice);
-                })
+                .map(holding -> HoldingResponse.of(holding, fetchCurrentPrice(holding.getStock().getCode())))
                 .toList();
 
-        return PortfolioResponse.of(holdingResponses);
+        // 수량을 입력한 달러 종목이 있을 때만 환율을 가져온다 (비중을 원화 기준으로 맞추기 위해)
+        boolean needsFx = holdingResponses.stream().anyMatch(h -> h.marketValue() != null && !h.domestic());
+        return PortfolioResponse.of(holdingResponses, needsFx ? fetchUsdKrw() : null);
+    }
+
+    // 외부 시세 API가 한 종목에서 실패해도 화면 전체가 오류가 나지 않도록, 그 종목만 현재가 없음(null)으로 둔다.
+    // 화면은 현재가·수익률을 '-'로 보여 준다.
+    private BigDecimal fetchCurrentPrice(String code) {
+        try {
+            return summaryUseCase.getStockSummary(code).price().currentPrice();
+        } catch (RuntimeException e) {
+            log.warn("[Portfolio] {} 현재가 조회 실패, 이 종목만 비워 둠: {}", code, e.getMessage());
+            return null;
+        }
+    }
+
+    // 환율을 못 가져와도 포트폴리오 화면은 떠야 하므로 실패는 null로 넘긴다 (달러 종목만 비중에서 빠짐)
+    private BigDecimal fetchUsdKrw() {
+        try {
+            ExchangeRateInfo fx = exchangeService.fetchExchangeRate();
+            return (fx != null && fx.baseRate() != null && fx.baseRate().signum() > 0) ? fx.baseRate() : null;
+        } catch (RuntimeException e) {
+            log.warn("포트폴리오 비중 계산용 환율 조회 실패: {}", e.getMessage());
+            return null;
+        }
     }
 
     @Transactional
@@ -46,9 +72,10 @@ class PortfolioService {
 
         holdingRepository.findByMemberIdAndStockCode(memberId, request.code())
                 .ifPresentOrElse(
-                        holding -> holding.updateAveragePrice(
-                                request.averagePrice()
-                        ),
+                        holding -> {
+                            holding.updateAveragePrice(request.averagePrice());
+                            holding.updateQuantity(request.quantity());
+                        },
                         () -> saveNewHolding(memberId, request)
                 );
     }
@@ -69,6 +96,7 @@ class PortfolioService {
                 .member(member)
                 .stock(StockInfoDto.toEntity(info))
                 .averagePrice(request.averagePrice())
+                .quantity(request.quantity())
                 .build());
     }
 }

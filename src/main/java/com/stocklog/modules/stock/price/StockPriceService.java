@@ -8,6 +8,7 @@ import com.stocklog.modules.stock.stock.dto.StockDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Collections;
 import java.util.List;
@@ -23,14 +24,34 @@ public class StockPriceService {
     private final List<StockPriceProvider> providers;
     private final StockService stockService;
 
+    private static final long RETRY_DELAY_MS = 300;
+
     public StockPriceDto fetchPrice(String code) {
         StockDto stock = stockService.getStockDto(code);
-        StockPriceResponse response = providers.stream()
-                .filter(provider -> provider.supports(stock.market()))
+        StockPriceProvider provider = providers.stream()
+                .filter(p -> p.supports(stock.market()))
                 .findFirst()
-                .map(provider -> provider.fetchPrice(StockRequest.from(stock)))
                 .orElseThrow(() -> new IllegalArgumentException("지원하지 않는 시장이거나 존재하지 않는 종목입니다: " + code));
-        return StockPriceDto.from(response);
+        return StockPriceDto.from(fetchWithRetry(provider, StockRequest.from(stock), code));
+    }
+
+    // KIS는 초당 호출 한도를 넘거나 순간적으로 불안정하면 500/429를 돌려준다.
+    // 종목 여러 개를 연달아 부를 때 자주 생기므로, 이런 일시 오류만 잠깐 쉬었다가 한 번 더 시도한다.
+    private StockPriceResponse fetchWithRetry(StockPriceProvider provider, StockRequest request, String code) {
+        try {
+            return provider.fetchPrice(request);
+        } catch (WebClientResponseException e) {
+            boolean transientError = e.getStatusCode().is5xxServerError() || e.getStatusCode().value() == 429;
+            if (!transientError) throw e;
+            log.info("[StockPriceService] {} 일시 오류({}), {}ms 뒤 한 번 더 시도", code, e.getStatusCode().value(), RETRY_DELAY_MS);
+            try {
+                Thread.sleep(RETRY_DELAY_MS);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                throw e;
+            }
+            return provider.fetchPrice(request);
+        }
     }
 
     // 다건 조회 (외부 API 비동기 병렬 호출)

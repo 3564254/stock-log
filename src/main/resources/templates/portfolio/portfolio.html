@@ -9,13 +9,6 @@
 
   <style>
     :root {
-        --text-strong: var(--ink);
-        --text-body: var(--ink-body);
-        --text-sub: var(--slate);
-        --text-mute: var(--label-text);
-        --text-faint: var(--mist);
-        --line: var(--hairline);
-        --line-soft: var(--canvas);
         --good-text: var(--status-green-text);
         --good-tint: var(--status-green-tint);
         --sheet-max: 520px;
@@ -26,33 +19,33 @@
 
     /* ---------- 카드 / 공통 ---------- */
     .toss-card { margin-bottom: 0; }
-    .card-title { font-size: 18px; font-weight: 700; color: var(--text-strong); margin: 0; }
-    .card-sub { color: var(--text-mute); font-size: 13px; font-weight: 500; margin-top: 4px; }
-    .btn-toss { background: var(--toss-blue-deep); color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: 13px; padding: 8px 14px; white-space: nowrap; transition: .15s; }
-    .btn-toss:hover { background: var(--toss-blue-press); color: #fff; }
-    .btn-toss:disabled { background: #c9dcfb; color: #fff; }
-    .btn-ghost { background: var(--line-soft); color: var(--text-sub); border: none; border-radius: 8px; font-weight: 700; font-size: 13px; padding: 8px 14px; white-space: nowrap; transition: .15s; }
-    .btn-ghost:hover { background: var(--line); }
-    .btn-soft-blue { background: rgba(49,130,246,0.08); color: var(--toss-blue-deep); border: none; border-radius: 999px; font-weight: 700; font-size: 12px; padding: 6px 12px; white-space: nowrap; }
+    .card-title { font-size: 18px; font-weight: 700; color: var(--text-strong); margin: 0; letter-spacing: -0.02em; }
+    .card-sub { color: var(--text-muted); font-size: 13px; font-weight: 500; margin-top: 4px; }
+    .btn-toss { background: var(--ink); color: #fff; border: none; border-radius: 999px; font-weight: 700; font-size: 13px; padding: 9px 16px; white-space: nowrap; transition: .15s; }
+    .btn-toss:hover { background: var(--ink-body); color: #fff; }
+    .btn-toss:disabled { background: var(--fog); color: #fff; }
+    .btn-ghost { background: var(--canvas); color: var(--ink); border: none; border-radius: 999px; font-weight: 700; font-size: 13px; padding: 9px 16px; white-space: nowrap; transition: .15s; }
+    .btn-ghost:hover { background: var(--canvas-hover); }
+    .btn-soft-blue { background: var(--toss-blue-soft); color: var(--toss-blue-deep); border: none; border-radius: 999px; font-weight: 700; font-size: 12px; padding: 6px 12px; white-space: nowrap; }
     .btn-soft-blue:hover { background: rgba(49,130,246,0.15); }
-    .btn-soft-red { background: rgba(240,68,82,0.08); color: var(--toss-red-deep); border: none; border-radius: 999px; font-weight: 700; font-size: 12px; padding: 6px 12px; white-space: nowrap; }
+    .btn-soft-red { background: var(--toss-red-soft); color: var(--toss-red-deep); border: none; border-radius: 999px; font-weight: 700; font-size: 12px; padding: 6px 12px; white-space: nowrap; }
     .btn-soft-red:hover { background: rgba(240,68,82,0.15); }
-    .btn-icon-delete { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; color: var(--text-faint); transition: 0.15s; cursor: pointer; background: transparent; border: none; flex-shrink: 0; }
-    .btn-icon-delete:hover { color: var(--toss-red-deep); background: rgba(240,68,82,0.08); }
-    .btn-icon-edit { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; color: var(--text-faint); transition: 0.15s; cursor: pointer; background: transparent; border: none; flex-shrink: 0; }
-    .btn-icon-edit:hover { color: var(--toss-blue-deep); background: rgba(49,130,246,0.08); }
+    .btn-icon-delete { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; color: var(--text-faint); transition: 0.15s; cursor: pointer; background: transparent; border: none; flex-shrink: 0; }
+    .btn-icon-delete:hover { color: var(--toss-red-deep); background: var(--toss-red-soft); }
+    .btn-icon-edit { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; color: var(--text-faint); transition: 0.15s; cursor: pointer; background: transparent; border: none; flex-shrink: 0; }
+    .btn-icon-edit:hover { color: var(--toss-blue-deep); background: var(--toss-blue-soft); }
 
     /* ---------- 상단 요약 ---------- */
     .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 24px; }
-    .summary-tile { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; min-width: 0; }
-    .summary-label { font-size: 13px; color: var(--text-mute); font-weight: 600; display: flex; align-items: center; gap: 6px; }
-    .summary-value { font-size: 22px; font-weight: 800; margin-top: 6px; color: var(--text-strong); }
-    .summary-foot { font-size: 12px; color: var(--text-mute); font-weight: 500; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .summary-tile { background: var(--paper); border: 0; border-radius: 16px; padding: 18px 20px; min-width: 0; }
+    .summary-label { font-size: 13px; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .summary-value { font-size: 20px; font-weight: 800; margin-top: 6px; color: var(--text-strong); }
+    .summary-foot { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .winbar { display: flex; height: 6px; border-radius: 6px; overflow: hidden; background: var(--line-soft); margin-top: 10px; }
     .winbar > div { height: 100%; }
 
     /* ---------- 톤(배지) ---------- */
-    .tone { font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
+    .tone { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
     /* good = 진입 계획 가능·충족, caution = 주의, alert = 하락·이탈(점 표시로 색 없이도 구분), gray = 관망·정보 */
     .tone-good    { background: var(--good-tint);    color: var(--good-text); }
     .tone-caution { background: var(--caution-tint); color: var(--caution-text); }
@@ -67,31 +60,31 @@
 
     /* ---------- 필터 칩 / 정렬 ---------- */
     .chip-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
-    .chip { border: 1px solid var(--line); background: #fff; color: var(--text-sub); font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; cursor: pointer; transition: .15s; }
-    .chip .cnt { color: var(--text-mute); margin-left: 4px; font-weight: 600; }
-    .chip.active { background: var(--text-strong); border-color: var(--text-strong); color: #fff; }
+    .chip { border: 1px solid transparent; background: var(--canvas); color: var(--text-sub); font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: 999px; cursor: pointer; transition: .15s; }
+    .chip .cnt { color: var(--text-muted); margin-left: 4px; font-weight: 600; }
+    .chip.active { background: var(--ink); border-color: var(--ink); color: #fff; }
     .chip.active .cnt { color: rgba(255,255,255,0.72); }
-    .sort-select { border: 1px solid var(--line); background: #fff; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--text-sub); padding: 6px 28px 6px 10px; appearance: none; outline: none;
+    .sort-select { border: 1px solid transparent; background-color: var(--canvas); border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--text-sub); padding: 6px 28px 6px 10px; appearance: none; outline: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238b95a1' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 10px center; }
+      background-repeat: no-repeat; background-position: right 12px center; padding-left: 14px; }
 
     /* ---------- 리스트 행 ---------- */
-    .list-row { display: flex; align-items: center; gap: 14px; padding: 16px 20px; background: #fff; border: 1px solid var(--line-soft); border-radius: 12px; margin-bottom: 10px; transition: .15s; }
-    .list-row:hover { border-color: var(--line); background: var(--surface-soft); }
+    .list-row { display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--surface-soft); border: 1px solid transparent; border-radius: 14px; margin-bottom: 10px; transition: .15s; }
+    .list-row:hover { border-color: transparent; background: var(--canvas); }
     .list-row:last-child { margin-bottom: 0; }
-    .stock-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--line-soft); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: var(--text-sub); flex-shrink: 0; }
+    .stock-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--line-soft); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: var(--text-sub); flex-shrink: 0; }
     .row-name { font-size: 15px; font-weight: 700; color: var(--text-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .name-line { column-gap: 8px; row-gap: 2px; }
-    .row-meta { font-size: 12px; font-weight: 500; color: var(--text-mute); }
-    .price-col { text-align: right; min-width: 120px; }
+    .row-meta { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+    .price-col { text-align: right; min-width: 100px; }
     .price-main { font-size: 15px; font-weight: 700; }
-    .price-sub { font-size: 12px; color: var(--text-mute); font-weight: 500; margin-top: 2px; }
-    .return-col { text-align: right; min-width: 84px; }
+    .price-sub { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-top: 2px; }
+    .return-col { text-align: right; min-width: 76px; }
     .return-val { font-size: 16px; font-weight: 800; }
-    .phase-desc { font-size: 12px; color: var(--text-mute); font-weight: 500; }
-    .verify-stamp { font-size: 11px; font-weight: 600; color: var(--text-mute); }
+    .phase-desc { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+    .verify-stamp { font-size: 12px; font-weight: 600; color: var(--text-muted); }
 
-    .empty-state { text-align: center; padding: 36px 20px; color: var(--text-mute); background: var(--surface-soft); border: 1px dashed var(--line); border-radius: 12px; }
+    .empty-state { text-align: center; padding: 36px 20px; color: var(--text-muted); background: var(--surface-soft); border: 0; border-radius: 14px; }
     .empty-state i { font-size: 1.8rem; display: block; margin-bottom: 10px; color: var(--haze); }
     .empty-state .title { font-size: 14px; font-weight: 700; color: var(--text-sub); }
     .empty-state .desc { font-size: 13px; font-weight: 500; margin-top: 4px; }
@@ -101,8 +94,8 @@
     .legend-row .tone { min-width: 104px; flex: 0 0 104px; justify-content: center; white-space: nowrap; }
 
     /* ---------- 규칙 ---------- */
-    .rule-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border: 1px solid var(--line-soft); border-radius: 12px; margin-bottom: 10px; background: #fff; transition: .15s; }
-    .rule-item.inactive { background: var(--surface-soft); }
+    .rule-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border: 1px solid transparent; border-radius: 14px; margin-bottom: 10px; background: var(--surface-soft); transition: .15s; }
+    .rule-item.inactive { background: var(--paper); border-color: var(--line); }
     .rule-item.inactive .rule-title, .rule-item.inactive .rule-cond { opacity: .5; }
     .rule-title { font-size: 15px; font-weight: 700; color: var(--text-strong); }
     .rule-cond { font-size: 13px; font-weight: 600; color: var(--text-sub); margin-top: 4px; }
@@ -118,8 +111,8 @@
     /* ---------- 입력 ---------- */
     select.toss-input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%238b95a1' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 16px 12px; padding-right: 2.5rem; }
     .field-label { font-size: 14px; font-weight: 700; color: var(--text-sub); margin-bottom: 8px; display: block; }
-    .field-hint { font-size: 12px; color: var(--text-mute); font-weight: 500; margin-top: 8px; }
-    .rule-preview { background: var(--surface-soft); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; font-size: 14px; font-weight: 600; color: var(--text-body); }
+    .field-hint { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-top: 8px; }
+    .rule-preview { background: var(--surface-soft); border: 0; border-radius: 12px; padding: 14px 16px; font-size: 14px; font-weight: 600; color: var(--text-body); }
     .rule-preview b { color: var(--text-strong); font-weight: 800; }
 
     /* ---------- 모달 ---------- */
@@ -132,7 +125,7 @@
 
     .search-box { display: flex; align-items: center; background: #fff; padding: 12px 16px; border: 1px solid var(--line); border-radius: 12px; transition: .15s; }
     .search-box.focus { border-color: var(--toss-blue); }
-    .search-dropdown { position: absolute; left: 0; right: 0; background: #fff; margin-top: 8px; padding: 6px; border: 1px solid var(--line); border-radius: 12px; z-index: 1060; max-height: 280px; overflow-y: auto; box-shadow: 0 6px 20px rgba(0,0,0,0.06); }
+    .search-dropdown { position: absolute; left: 0; right: 0; background: var(--paper); margin-top: 8px; padding: 6px; border: 1px solid var(--line); border-radius: 12px; z-index: 1060; max-height: 280px; overflow-y: auto; box-shadow: var(--shadow-dropdown); }
     .search-item { padding: 12px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
     .search-item:hover { background: var(--surface-soft); }
     .search-item.disabled, .search-item:disabled { cursor: default; opacity: .55; }
@@ -141,9 +134,9 @@
     .search-item:focus-visible, .indicator-option:focus-visible { background: var(--surface-soft); outline: 2px solid var(--toss-blue); outline-offset: -2px; }
     .indicator-trigger:focus-visible, .preset-chip:focus-visible, .btn-toss:focus-visible, .btn-ghost:focus-visible, .text-link-btn:focus-visible,
     .modal-sheet .btn-close:focus-visible { outline: 2px solid var(--toss-blue); outline-offset: 2px; box-shadow: none; }
-    .selected-stock { background: var(--toss-blue-tint); border: 1px solid var(--toss-blue-tint-line); border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+    .selected-stock { background: var(--toss-blue-tint); border: 0; border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
 
-    .preset-chip { border: 1px solid var(--line); background: #fff; font-size: 12px; font-weight: 600; color: var(--text-sub); padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+    .preset-chip { border: 1px solid transparent; background: var(--canvas); font-size: 12px; font-weight: 600; color: var(--text-sub); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
     .preset-chip:hover { border-color: var(--toss-blue); color: var(--toss-blue-deep); }
 
     .indicator-option { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-radius: 8px; cursor: pointer; }
@@ -153,7 +146,7 @@
     /* ---------- 토스트 ---------- */
     .toast-stack { position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%); z-index: 20000; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
     .toast-item { background: rgba(25,31,40,.92); color: #fff; font-size: 14px; font-weight: 600; padding: 12px 18px; border-radius: 12px; display: flex; align-items: center; gap: 8px; animation: fadeIn .2s ease; }
-    .toast-item .ic-ok { color: #3fd696; }
+    .toast-item .ic-ok { color: var(--status-green); }
     .toast-item .ic-err { color: var(--caution-amber); }
     .text-link-btn { background: none; border: 0; padding: 0; font-size: 13px; font-weight: 700; color: var(--toss-blue-deep); cursor: pointer; }
     .text-link-btn:hover { text-decoration: underline; text-underline-offset: 3px; }
@@ -179,7 +172,7 @@
 
       /* 요약 타일: 설명이 잘리지 않게 최대 2줄까지 */
       .summary-tile { padding: 16px; }
-      .summary-value { font-size: 19px; }
+      .summary-value { font-size: 18px; }
       .summary-foot { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.4; }
 
       /* 필터 칩: 줄바꿈 대신 가로 스크롤 */
@@ -188,8 +181,8 @@
       .chip { flex-shrink: 0; white-space: nowrap; }
 
       /* 리스트 행: 카드 속 카드 대신 구분선만 쓰고, 글자는 한 단계씩 줄인다 */
-      .card-title { font-size: 17px; }
-      .card-sub { font-size: 12.5px; }
+      .card-title { font-size: 16px; }
+      .card-sub { font-size: 12px; }
       .list-row { flex-wrap: wrap; padding: 14px 0; gap: 6px 12px; background: transparent; border: 0; border-bottom: 1px solid var(--line-soft); border-radius: 0; margin-bottom: 0; }
       .list-row:hover { background: transparent; }
       .list-row:last-child { border-bottom: 0; padding-bottom: 0; }
@@ -202,7 +195,7 @@
 
       /* 보유 종목: [아이콘 | 이름·코드 | 수익률] / [        | 현재가 · 평단 | 버튼들] */
       .list-row.row-holding { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; column-gap: 12px; row-gap: 4px; align-items: center; }
-      .list-row.row-holding .stock-icon { width: 36px; height: 36px; border-radius: 10px; font-size: 13px; grid-row: 1 / span 2; align-self: start; }
+      .list-row.row-holding .stock-icon { width: 36px; height: 36px; border-radius: 12px; font-size: 13px; grid-row: 1 / span 2; align-self: start; }
       .list-row.row-holding .row-main { grid-column: 2; grid-row: 1; flex: none; }
       .list-row.row-holding .return-col { grid-column: 3; grid-row: 1; text-align: right; }
       .list-row.row-holding .return-val { font-size: 16px; }
@@ -225,6 +218,23 @@
       /* 하단 탭바 위로 */
       .toast-stack { bottom: calc(76px + env(safe-area-inset-bottom)); }
     }
+    /* ── 비중 막대 ── */
+    .weight-box { border: 0; border-radius: 14px; padding: 14px 16px; margin-bottom: 16px; background: var(--surface-soft); }
+    .weight-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+    .weight-title { font-size: 14px; font-weight: 700; color: var(--text-strong); }
+    .weight-total { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+    .weight-bar { display: flex; gap: 2px; height: 10px; border-radius: 999px; overflow: hidden; background: var(--paper); }
+    .weight-bar span { display: block; height: 100%; min-width: 3px; }
+    .weight-bar { animation: wb-reveal .5s cubic-bezier(.2, .7, .2, 1) both; }
+    @keyframes wb-reveal { from { clip-path: inset(0 100% 0 0 round 999px); } to { clip-path: inset(0 0 0 0 round 999px); } }
+    .weight-legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 20px; margin-top: 12px; }
+    .weight-row { display: flex; align-items: center; gap: 8px; font-size: 13px; min-width: 0; }
+    .weight-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+    .weight-name { font-weight: 600; color: var(--text-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .weight-pct { margin-left: auto; font-weight: 700; color: var(--text-strong); }
+    .weight-note { font-size: 12px; color: var(--text-muted); margin-top: 10px; word-break: keep-all; }
+    .weight-empty { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; word-break: keep-all; }
+    @media (max-width: 768px) { .weight-legend { grid-template-columns: minmax(0, 1fr); } }
   </style>
 </head>
 
@@ -243,7 +253,7 @@
 
       <!-- 페이지 타이틀 -->
       <div class="mb-3">
-        <h2 class="fw-bold m-0" style="font-size: 22px;">내 투자 전략</h2>
+        <h2 class="page-title">내 투자 전략</h2>
         <div class="card-sub">보유 종목 상태 → 관심 종목 타이밍 → 매매 규칙 순서로 점검하세요</div>
       </div>
 
@@ -292,11 +302,39 @@
               <button class="btn-toss" @click="openPickModal('holding')"><i class="bi bi-plus me-1"></i>종목 추가</button>
             </div>
 
+            <!-- 비중: 수량을 입력한 종목의 원화 환산 평가금액 기준 -->
+            <div class="weight-box" x-show="weightItems.length > 0" x-cloak>
+              <div class="weight-head">
+                <span class="weight-title">비중</span>
+                <span class="weight-total num" x-text="'평가금액 ' + formatKrw(portfolio.totalMarketValueKrw)"></span>
+              </div>
+              <div class="weight-bar" role="img" :aria-label="weightItems.map(w => `${w.name} ${w.weight.toFixed(1)}%`).join(', ')">
+                <template x-for="w in weightItems" :key="w.key">
+                  <span :style="`width:${w.weight}%; background:${w.color}`"></span>
+                </template>
+              </div>
+              <div class="weight-legend">
+                <template x-for="w in weightItems" :key="w.key">
+                  <div class="weight-row">
+                    <span class="weight-dot" :style="`background:${w.color}`" aria-hidden="true"></span>
+                    <span class="weight-name" x-text="w.name"></span>
+                    <span class="tone tone-caution" x-show="w.concentrated" :title="`한 종목 비중이 ${CONCENTRATION_LIMIT}% 이상이에요`">집중</span>
+                    <span class="weight-pct num" x-text="w.weight.toFixed(1) + '%'"></span>
+                  </div>
+                </template>
+              </div>
+              <div class="weight-note" x-show="weightNote" x-text="weightNote"></div>
+            </div>
+            <div class="weight-empty" x-show="holdings.length > 0 && weightItems.length === 0" x-cloak>
+              보유 수량을 입력하면 종목별 비중을 볼 수 있어요. 연필 버튼으로 추가할 수 있어요.
+            </div>
+
             <div class="d-flex justify-content-end mb-3" x-show="holdings.length > 1">
               <select class="sort-select" x-model="holdingSort" aria-label="보유 종목 정렬">
                 <option value="return_desc">수익률 높은 순</option>
                 <option value="return_asc">수익률 낮은 순</option>
                 <option value="drawdown">고점 대비 하락 큰 순</option>
+                <template x-if="weightItems.length > 0"><option value="weight">비중 큰 순</option></template>
                 <option value="name">이름순</option>
               </select>
             </div>
@@ -313,7 +351,7 @@
                     </span>
                   </div>
                   <div class="row-meta mt-1">
-                    <span x-text="stock.stockCode"></span><span x-show="stock.sector" x-text="' · ' + stock.sector"></span>
+                    <span x-text="stock.stockCode"></span><span class="num" x-show="stock.quantity != null" x-text="' · ' + formatQty(stock.quantity) + '주'"></span><span x-show="stock.sector" x-text="' · ' + stock.sector"></span>
                   </div>
                   <template x-if="lastVerify['SELL:' + stock.stockCode]">
                     <div class="verify-stamp mt-1">
@@ -334,7 +372,7 @@
 
                 <div class="row-actions d-flex align-items-center gap-1 flex-shrink-0">
                   <button class="btn-soft-red" @click="openVerify('SELL', stock.stockCode, stock.korName)" :aria-label="(stock.korName || stock.stockCode) + ' 매도 검증'">매도 검증</button>
-                  <button class="btn-icon-edit" @click="openEditHolding(stock)" title="평단가 수정" aria-label="평단가 수정"><i class="bi bi-pencil"></i></button>
+                  <button class="btn-icon-edit" @click="openEditHolding(stock)" title="보유 정보 수정" aria-label="보유 정보 수정"><i class="bi bi-pencil"></i></button>
                   <button class="btn-icon-delete" @click="deleteHolding(stock)" title="보유 종목에서 삭제" aria-label="보유 종목 삭제"><i class="bi bi-trash3"></i></button>
                 </div>
               </div>
@@ -401,7 +439,7 @@
             </div>
 
             <div x-data="{ open: false }" x-show="watchList.length > 0">
-              <button class="btn btn-link p-0 mt-3 text-decoration-none fw-semibold" style="font-size: 13px; color: var(--text-mute);" @click="open = !open">
+              <button class="btn btn-link p-0 mt-3 text-decoration-none fw-semibold" style="font-size: 13px; color: var(--text-muted);" @click="open = !open">
                 <i class="bi" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i> 단계 설명 보기
               </button>
               <div class="legend" x-show="open" x-transition x-cloak>
@@ -470,7 +508,7 @@
   <div class="modal-sheet" style="overflow: visible;" role="dialog" aria-modal="true" aria-labelledby="pick-modal-title" tabindex="-1"
        x-dialog="showPickModal">
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 id="pick-modal-title" class="fw-bold m-0" style="font-size: 18px;" x-text="{ watch: '관심 종목 추가', holding: '보유 종목 추가', edit: '평단가 수정' }[pickMode]"></h3>
+      <h2 id="pick-modal-title" class="fw-bold m-0" style="font-size: 18px;" x-text="{ watch: '관심 종목 추가', holding: '보유 종목 추가', edit: '보유 정보 수정' }[pickMode]"></h3>
       <button type="button" @click="closePickModal()" class="btn-close shadow-none" aria-label="닫기"></button>
     </div>
 
@@ -497,8 +535,12 @@
             <span x-show="!isAlreadyAdded(item.stock?.code)" class="flex-shrink-0" style="font-size: 13px; font-weight: 600; color: var(--text-sub);">선택 <i class="bi bi-chevron-right" aria-hidden="true"></i></span>
           </button>
         </template>
-        <div x-show="isSearchLoading" class="text-center p-3" role="status">
-          <div class="spinner-border text-primary" style="width: 1.3rem; height: 1.3rem;" aria-hidden="true"></div>
+        <div x-show="isSearchLoading" class="p-1" role="status">
+          <div aria-hidden="true">
+              <div class="sk-row"><span class="skeleton sk-avatar"></span><span class="sk-lines"><span class="skeleton sk-line sk-w-60"></span><span class="skeleton sk-line sk-w-35"></span></span></div>
+              <div class="sk-row"><span class="skeleton sk-avatar"></span><span class="sk-lines"><span class="skeleton sk-line sk-w-75"></span><span class="skeleton sk-line sk-w-35"></span></span></div>
+              <div class="sk-row"><span class="skeleton sk-avatar"></span><span class="sk-lines"><span class="skeleton sk-line sk-w-60"></span><span class="skeleton sk-line sk-w-35"></span></span></div>
+          </div>
           <span class="visually-hidden">검색 중</span>
         </div>
         <div x-show="!isSearchLoading && searchError" class="p-4 text-center" role="alert">
@@ -527,12 +569,19 @@
                :placeholder="isKrCode(pickForm.code) ? '예: 72000 (원)' : '예: 182.50 (달러)'"
                @keydown.enter="submitPick()">
       </div>
+      <div class="mt-3" x-show="pickMode !== 'watch'">
+        <label for="pick-quantity" class="field-label">보유 수량 <span style="font-weight: 500; color: var(--text-muted);">(선택)</span></label>
+        <input type="number" id="pick-quantity" step="any" min="0" inputmode="decimal" class="toss-input" x-model="pickForm.quantity"
+               placeholder="예: 10" @keydown.enter="submitPick()">
+        <div class="field-hint" x-show="!quantityInvalid">입력하면 평가금액과 종목별 비중을 볼 수 있어요.</div>
+        <div class="field-hint" style="color: var(--toss-red-deep);" x-show="quantityInvalid">수량은 0보다 큰 숫자로 입력해 주세요.</div>
+      </div>
       <div class="field-hint" x-show="pickMode === 'watch'">등록한 뒤 '매수 검증'을 누르면 차트 단계와 1차 진입가가 계산돼요.</div>
     </div>
 
     <button type="button" class="btn-toss w-100" style="padding: 16px; font-size: 16px;"
             :disabled="!canSubmitPick || submitting" :aria-busy="submitting.toString()" @click="submitPick()">
-      <span x-show="!submitting" x-text="{ watch: '관심 종목으로 등록', holding: '보유 종목 등록', edit: '평단가 저장' }[pickMode]"></span>
+      <span x-show="!submitting" x-text="{ watch: '관심 종목으로 등록', holding: '보유 종목 등록', edit: '저장' }[pickMode]"></span>
       <span x-show="submitting" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
       <span x-show="submitting" class="visually-hidden">저장 중</span>
     </button>
@@ -543,7 +592,7 @@
 <div x-show="showRuleModal" class="modal-backdrop-custom" x-cloak @click.self="showRuleModal = false">
   <div class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="rule-modal-title" tabindex="-1" x-dialog="showRuleModal">
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 id="rule-modal-title" class="fw-bold m-0" style="font-size: 20px;">새로운 매매 규칙</h2>
+      <h2 id="rule-modal-title" class="fw-bold m-0" style="font-size: 18px;">새로운 매매 규칙</h2>
       <button type="button" @click="showRuleModal = false" class="btn-close shadow-none" aria-label="닫기"></button>
     </div>
 
@@ -725,6 +774,9 @@
       /* 상수 노출 */
       PHASES, PHASE_ORDER, WATCH_FILTERS, INDICATORS, INDICATOR_GROUPS, OPERATORS, RULE_PRESETS,
       DRAWDOWN_ALERT: 10, // 고점 대비 이 % 이상 하락하면 경고
+      CONCENTRATION_LIMIT: 40, // 한 종목 비중이 이 % 이상이면 '집중' 표시
+      // 상위 4개 색 (파랑·청록·보라·분홍). 이웃한 색끼리 색약에서도 구분되는지 검사한 조합. 나머지는 '기타'(회색)
+      WEIGHT_COLORS: ['#3182f6', '#1baf7a', '#6250d6', '#e87ba4'],
 
       sidebarOpen: true,
 
@@ -742,7 +794,7 @@
 
       /* 종목 선택 모달 */
       showPickModal: false, pickMode: 'watch',
-      pickForm: { code: '', name: '', averagePrice: '' },
+      pickForm: { code: '', name: '', averagePrice: '', quantity: '' },
       searchQuery: '', searchResults: [], isSearchOpen: false, isSearchLoading: false,
       searchPage: 0, searchHasMore: true, searchToken: 0, searchError: '',
 
@@ -756,16 +808,36 @@
       get holdings() { return this.portfolio?.myStocks || []; },
       get avgReturn() {
         if (!this.holdings.length) return 0;
-        return this.holdings.reduce((s, h) => s + Number(h.returnRate || 0), 0) / this.holdings.length;
+        const rated = this.holdings.filter(h => h.returnRate != null); // 현재가를 못 가져온 종목은 평균에서 제외
+        return rated.length ? rated.reduce((s, h) => s + Number(h.returnRate), 0) / rated.length : 0;
       },
       get winCount()  { return this.holdings.filter(h => Number(h.returnRate) > 0).length; },
       get lossCount() { return this.holdings.filter(h => Number(h.returnRate) < 0).length; },
       get winRatio()  { const n = this.winCount + this.lossCount; return n ? this.winCount / n * 100 : 50; },
       get bestHolding() {
         if (!this.holdings.length) return null;
-        return [...this.holdings].sort((a, b) => Number(b.returnRate) - Number(a.returnRate))[0];
+        return [...this.holdings].filter(h => h.returnRate != null).sort((a, b) => Number(b.returnRate) - Number(a.returnRate))[0] || null;
       },
       get alertCount() { return this.holdings.filter(h => this.isDrawdownAlert(h)).length; },
+      get weightItems() {
+        const list = this.holdings.filter(h => h.weight != null && Number(h.weight) > 0)
+                                  .sort((a, b) => Number(b.weight) - Number(a.weight));
+        const items = list.slice(0, 4).map((h, i) => ({
+          key: h.stockCode, name: h.korName || h.stockCode, weight: Number(h.weight),
+          color: this.WEIGHT_COLORS[i], concentrated: Number(h.weight) >= this.CONCENTRATION_LIMIT
+        }));
+        const rest = list.slice(4).reduce((s, h) => s + Number(h.weight), 0);
+        if (rest > 0) items.push({ key: '__etc', name: `기타 ${list.length - 4}개`, weight: rest, color: 'var(--haze)', concentrated: false });
+        return items;
+      },
+      get weightNote() {
+        const total = this.holdings.length, n = this.portfolio?.weightedCount || 0;
+        if (!n || n >= total) return '';
+        const missingQty = this.holdings.filter(h => h.quantity == null).length;
+        return missingQty > 0
+          ? `${total}개 중 ${n}개 종목으로 계산했어요. 나머지 종목도 수량을 넣으면 함께 계산돼요.`
+          : `${total}개 중 ${n}개 종목으로 계산했어요. 환율을 불러오지 못한 달러 종목은 빠졌어요.`;
+      },
       get sortedHoldings() {
         const list = [...this.holdings];
         const dd = (h) => this.drawdown(h) ?? 0;
@@ -773,6 +845,7 @@
           case 'return_asc': return list.sort((a, b) => Number(a.returnRate) - Number(b.returnRate));
           case 'drawdown':   return list.sort((a, b) => dd(a) - dd(b));
           case 'name':       return list.sort((a, b) => (a.korName || '').localeCompare(b.korName || '', 'ko'));
+          case 'weight':     return list.sort((a, b) => Number(b.weight ?? -1) - Number(a.weight ?? -1));
           default:           return list.sort((a, b) => Number(b.returnRate) - Number(a.returnRate));
         }
       },
@@ -846,6 +919,11 @@
         if (!this.isKrCode(code)) return '$' + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
         return new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 0 }).format(n) + '원';
       },
+      formatKrw(val) {
+        if (val === null || val === undefined || isNaN(Number(val))) return '-';
+        return new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 0 }).format(Number(val)) + '원';
+      },
+      formatQty(val) { return new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 6 }).format(Number(val)); },
       formatRate(val) {
         if (val === null || val === undefined || isNaN(Number(val))) return '-';
         const n = Number(val);
@@ -918,13 +996,13 @@
       openEditHolding(stock) {
         this.pickMode = 'edit';
         this.searchQuery = ''; this.searchResults = []; this.isSearchOpen = false;
-        this.pickForm = { code: stock.stockCode, name: stock.korName, averagePrice: stock.averagePrice };
+        this.pickForm = { code: stock.stockCode, name: stock.korName, averagePrice: stock.averagePrice, quantity: stock.quantity ?? '' };
         this.showPickModal = true;
         this.$nextTick(() => this.$refs.avgInput?.focus());
       },
       closePickModal() { this.showPickModal = false; },
       clearPick() {
-        this.pickForm = { code: '', name: '', averagePrice: '' };
+        this.pickForm = { code: '', name: '', averagePrice: '', quantity: '' };
         this.searchQuery = ''; this.searchResults = []; this.isSearchOpen = false;
       },
       isAlreadyAdded(code) {
@@ -939,10 +1017,19 @@
         this.pickForm.name = stock.name;
         this.isSearchOpen = false;
       },
+      // 수량은 선택: 비어 있으면 null, 입력했다면 0보다 커야 한다
+      get pickQuantity() {
+        const q = this.pickForm.quantity;
+        return (q === '' || q === null || q === undefined) ? null : parseFloat(q);
+      },
+      get quantityInvalid() {
+        const q = this.pickQuantity;
+        return q !== null && !(q > 0);
+      },
       get canSubmitPick() {
         if (!this.pickForm.code) return false;
         if (this.pickMode === 'watch') return true;
-        return Number(this.pickForm.averagePrice) > 0;
+        return Number(this.pickForm.averagePrice) > 0 && !this.quantityInvalid;
       },
       searchNew() {
         this.searchPage = 0; this.searchResults = []; this.searchHasMore = true; this.searchError = '';
@@ -983,23 +1070,33 @@
           } else if (this.pickMode === 'edit') {
             const code = this.pickForm.code;
             const avg = parseFloat(this.pickForm.averagePrice);
-            await this.postJson('/api/portfolio/holdings/update', { code, averagePrice: avg });
+            const qty = this.pickQuantity;
+            const before = this.holdings.find(h => h.stockCode === code);
+            await this.postJson('/api/portfolio/holdings/update', { code, averagePrice: avg, quantity: qty });
+            if (Number(before?.quantity ?? NaN) !== Number(qty ?? NaN) && !(before?.quantity == null && qty === null)) {
+              // 수량이 바뀌면 비중·평가금액을 서버에서 다시 계산해야 한다 (원화 환산 포함)
+              this.toast('보유 정보를 수정했어요');
+              this.closePickModal();
+              setTimeout(() => location.reload(), 500);
+              return;
+            }
             // Holding.calculateReturnRate와 같은 식으로 화면 수익률 즉시 재계산
             this.portfolio = { ...this.portfolio, myStocks: this.holdings.map(h => h.stockCode !== code ? h : {
                 ...h, averagePrice: avg,
                 returnRate: Number(h.currentPrice) > 0 ? (Number(h.currentPrice) - avg) / avg * 100 : h.returnRate
               }) };
-            this.toast('평단가를 수정했어요');
+            this.toast('보유 정보를 수정했어요');
             this.closePickModal();
           } else {
             await this.postJson('/api/portfolio/holdings', {
-              code: this.pickForm.code, name: this.pickForm.name, averagePrice: parseFloat(this.pickForm.averagePrice)
+              code: this.pickForm.code, name: this.pickForm.name, averagePrice: parseFloat(this.pickForm.averagePrice),
+              quantity: this.pickQuantity
             });
             this.toast('보유 종목을 등록했어요');
             setTimeout(() => location.reload(), 500); // 현재가·수익률은 서버 계산이 필요
           }
         } catch (e) {
-          this.toast(this.failMessage({ watch: '관심 종목을 추가', holding: '보유 종목을 등록', edit: '평단가를 저장' }[this.pickMode], e), 'error');
+          this.toast(this.failMessage({ watch: '관심 종목을 추가', holding: '보유 종목을 등록', edit: '보유 정보를 저장' }[this.pickMode], e), 'error');
         } finally {
           this.submitting = false;
         }

@@ -14,5 +14,9 @@ public record AddPortfolioStockRequest(
 
         @NotNull(message = "평균 매수단가를 입력해주세요.")
         @DecimalMin(value = "0.0", message = "단가는 0 이상이어야 합니다.")
-        BigDecimal averagePrice
+        BigDecimal averagePrice,
+
+        // 선택 입력: 비워 두면 null
+        @Positive(message = "보유 수량은 0보다 커야 합니다.")
+        BigDecimal quantity
 ) {}

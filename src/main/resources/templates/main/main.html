@@ -9,109 +9,171 @@
 
     <style>
     :root {
-        --text-sub: var(--slate);
-        --text-muted: var(--label-text);
-        --line: var(--hairline);
-        --line-soft: var(--canvas);
-        --blue-soft: var(--toss-blue-soft);
-        --red-soft: var(--toss-red-soft);
-        --green-soft: var(--status-green-soft);
         --content-max: 1200px;
         --content-top: 24px;
-        --card-radius: var(--radius-xl);
     }
-        body { color: var(--ink-body); letter-spacing: -0.01em; }
+        body { color: var(--ink-body); }
 
         /* ── 카드 / 섹션 ── */
         .section-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; gap: 12px; }
-        .section-title { font-size: 18px; font-weight: 800; color: var(--text-dark); margin: 0; display: flex; align-items: center; gap: 8px; }
-        .section-sub { color: var(--text-muted); font-size: 13.5px; font-weight: 500; margin-top: 4px; }
-        .count-pill { font-size: 12px; font-weight: 700; color: var(--toss-blue-deep); background: var(--blue-soft); border-radius: 999px; padding: 2px 9px; }
-        .ghost-btn { background: var(--line-soft); color: var(--text-sub); font-size: 13px; font-weight: 700; border-radius: 8px; padding: 8px 14px; border: none; text-decoration: none; white-space: nowrap; transition: background .15s; }
-        .ghost-btn:hover { background: var(--canvas-hover); color: var(--text-dark); }
+        .section-title { font-size: 18px; font-weight: 700; color: var(--text-strong); margin: 0; display: flex; align-items: center; gap: 8px; letter-spacing: -0.02em; }
+        .section-sub { color: var(--text-muted); font-size: 13px; font-weight: 500; margin-top: 4px; }
+        .count-pill { font-size: 12px; font-weight: 700; color: var(--toss-blue-deep); background: var(--toss-blue-soft); border-radius: 999px; padding: 2px 8px; }
+        .ghost-btn { background: var(--canvas); color: var(--ink); font-size: 13px; font-weight: 700; border-radius: 999px; padding: 8px 14px; border: none; text-decoration: none; white-space: nowrap; transition: background .15s; }
+        .ghost-btn:hover { background: var(--canvas-hover); color: var(--ink); }
 
         /* ── 상단 요약 ── */
         .home-hero { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
-        .hero-title { font-size: 24px; font-weight: 800; color: var(--text-dark); letter-spacing: -0.03em; margin: 0; }
-        .hero-sub { color: var(--text-muted); font-size: 14px; font-weight: 500; margin-top: 4px; }
         .stat-chips { display: flex; gap: 10px; flex-wrap: wrap; }
-        .stat-chip { background: white; border: 1px solid var(--line); border-radius: 14px; padding: 12px 18px; min-width: 112px; }
+        .stat-chip { background: var(--paper); border: 0; border-radius: 16px; padding: 12px 18px; min-width: 112px; }
         .stat-chip .k { font-size: 12px; font-weight: 600; color: var(--text-muted); }
-        .stat-chip .v { font-size: 20px; font-weight: 800; color: var(--text-dark); margin-top: 2px; line-height: 1.2; }
+        .stat-chip .v { font-size: 20px; font-weight: 800; color: var(--text-strong); margin-top: 2px; line-height: 1.2; font-variant-numeric: tabular-nums; }
         .stat-chip .v small { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-left: 2px; }
-        .stat-chip.hot { border-color: rgba(49,130,246,0.35); background: linear-gradient(180deg, #fff 0%, #f5f9ff 100%); }
+        .stat-chip.hot { background: var(--toss-blue-tint); }
         .stat-chip.hot .v { color: var(--toss-blue-deep); }
+
+        /* ── 로그인 전 랜딩 (lp-) : 첫 화면에만 쓰는 큰 제목은 글자 크기 단계의 예외 ── */
+        .lp, .lp * { box-sizing: border-box; }
+        .lp { background: var(--paper); border-radius: 28px; padding: 0 24px 40px; }
+        .lp-hero { text-align: center; padding-block: 80px 48px; }
+        .lp-headline { margin: 0; font-size: clamp(44px, 6.6vw, 92px); font-weight: 800; line-height: 1.02; letter-spacing: -0.05em; color: var(--text-strong); }
+        .lp-line { display: block; white-space: nowrap; }
+        .lp-chip { display: inline-grid; place-items: center; width: 0.86em; height: 0.86em; margin-inline: 0.06em; border-radius: 0.24em; vertical-align: -0.1em; }
+        .lp-chip svg { width: 52%; height: 52%; }
+        .lp-chip-check { background: var(--toss-blue-deep); }
+        .lp-chip-chart { background: var(--paper); border: max(1.5px, 0.02em) solid var(--line); box-shadow: 0 0.04em 0.12em rgba(0, 0, 0, 0.06); }
+        .lp-chip-chart svg { width: 62%; height: 62%; }
+        .lp-sub { margin: 24px auto 0; max-width: 30em; font-size: clamp(16px, 1.5vw, 18px); font-weight: 500; line-height: 1.6; color: var(--text-muted); word-break: keep-all; text-wrap: balance; }
+        .lp-actions { display: flex; justify-content: center; gap: 10px; margin-top: 32px; flex-wrap: wrap; }
+        .lp-btn { display: inline-flex; align-items: center; gap: 8px; height: 52px; padding: 0 24px; border-radius: 999px; font-size: 16px; font-weight: 700; text-decoration: none; transition: background-color .15s, transform .15s; }
+        .lp-btn:active { transform: scale(.97); }
+        .lp-btn svg { width: 18px; height: 18px; }
+        .lp-btn-dark { background: var(--ink); color: #fff; }
+        .lp-btn-dark:hover { background: var(--ink-body); color: #fff; }
+        .lp-btn-soft { background: var(--canvas); color: var(--ink); }
+        .lp-btn-soft:hover { background: var(--canvas-hover); color: var(--ink); }
+
+        .lp-stage { margin: 0 auto; max-width: 880px; padding: 48px 24px; border-radius: 24px; background: var(--canvas); display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; scroll-margin-top: 24px; }
+        .lp-card { width: 100%; max-width: 420px; background: var(--paper); border-radius: 20px; padding: 24px; box-shadow: var(--shadow-dropdown); text-align: left; }
+        .lp-head { display: flex; align-items: center; gap: 12px; }
+        .lp-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--canvas); display: grid; place-items: center; font-size: 15px; font-weight: 800; color: var(--text-sub); flex: none; }
+        .lp-title { font-size: 16px; font-weight: 700; color: var(--text-strong); }
+        .lp-meta { font-size: 13px; font-weight: 500; color: var(--text-muted); margin-top: 2px; }
+        .lp-tag { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--toss-blue-deep); background: var(--toss-blue-soft); padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+        .lp-label { margin-top: 20px; font-size: 13px; font-weight: 600; color: var(--text-muted); display: flex; justify-content: space-between; }
+        .lp-label b { color: var(--text-strong); font-weight: 700; font-variant-numeric: tabular-nums; }
+        .lp-rules { margin-top: 10px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+        .lp-rule { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
+        .lp-rule + .lp-rule { border-top: 1px solid var(--line-soft); }
+        .lp-rule-text { flex: 1; min-width: 0; }
+        .lp-rule-title { font-size: 14px; font-weight: 700; color: var(--text-body); }
+        .lp-rule-meta { font-size: 13px; font-weight: 500; color: var(--text-muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
+        .lp-now { transition: opacity .25s; }
+        .lp-mark { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+        .lp-mark svg { width: 14px; height: 14px; }
+        .lp-rule.ok .lp-mark { background: var(--status-green-tint); color: var(--status-green-text); }
+        .lp-rule.no .lp-mark { background: var(--canvas); color: var(--mist); }
+        .lp-rule.ok .i-no, .lp-rule.no .i-ok { display: none; }
+        .lp-rule.pending .lp-mark { border: 2px solid var(--line); border-top-color: var(--toss-blue); animation: lp-spin .7s linear infinite; }
+        .lp-rule.pending .lp-mark svg { display: none; }
+        .lp-rule.pending .lp-now { opacity: 0; }
+        .lp-signal { margin-top: 12px; display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--caution-tint); transition: opacity .3s, transform .3s; }
+        .lp-card.running .lp-signal.hide { opacity: 0; transform: translateY(4px); }
+        .lp-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--caution-amber); flex: none; margin-top: 6px; }
+        .lp-signal-text { font-size: 14px; font-weight: 700; color: var(--caution-text); word-break: keep-all; }
+        .lp-signal-text small { display: block; font-size: 13px; font-weight: 500; margin-top: 2px; }
+        .lp-foot { margin-top: 14px; font-size: 12px; font-weight: 500; color: var(--text-muted); line-height: 1.5; word-break: keep-all; }
+
+        .lp-features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; max-width: 960px; margin: 0 auto; padding-top: 56px; }
+        .lp-feat { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: start; }
+        .lp-feat-icon { grid-row: span 2; width: 40px; height: 40px; border-radius: 12px; background: var(--canvas); display: grid; place-items: center; color: var(--text-sub); font-size: 18px; }
+        .lp-feat h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--text-strong); padding-top: 2px; }
+        .lp-feat p { margin: 0; font-size: 14px; font-weight: 500; line-height: 1.6; color: var(--text-muted); word-break: keep-all; }
+
+        @keyframes lp-spin { to { transform: rotate(360deg); } }
+        @keyframes lp-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+        @keyframes lp-pop { from { opacity: 0; transform: scale(.6) rotate(-8deg); } to { opacity: 1; transform: none; } }
+        .lp-line, .lp-sub, .lp-actions { animation: lp-rise .7s cubic-bezier(.2, .7, .2, 1) both; }
+        .lp-line:nth-child(2) { animation-delay: .08s; }
+        .lp-sub { animation-delay: .18s; }
+        .lp-actions { animation-delay: .26s; }
+        .lp-chip { animation: lp-pop .5s cubic-bezier(.2, .7, .2, 1) both; animation-delay: .35s; }
+        .lp-line:nth-child(2) .lp-chip { animation-delay: .45s; }
+        .lp-stage { animation: lp-rise .8s cubic-bezier(.2, .7, .2, 1) both; animation-delay: .32s; }
+        @media (prefers-reduced-motion: reduce) {
+            .lp *, .lp { animation: none !important; transition: none !important; }
+        }
 
         /* ── 장 운영 상태 칩 ── */
         .home-hero > div:first-child { min-width: 0; }
         .mkt-status { display: flex; gap: 8px; margin-top: 12px; min-height: 30px; flex-wrap: wrap; }
         .mkt-chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px;
-                    background: #fff; border: 1px solid var(--line); font-size: 13px; font-weight: 600; color: var(--text-sub); white-space: nowrap; }
-        .mkt-chip b { color: var(--text-dark); font-weight: 700; }
-        .mkt-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: #b0b8c1; flex: none; }
-        .mkt-chip.on .dot { background: var(--status-green, #12b886); box-shadow: 0 0 0 3px rgba(18,184,134,0.18); }
+                    background: var(--paper); border: 0; font-size: 13px; font-weight: 600; color: var(--text-sub); white-space: nowrap; }
+        .mkt-chip b { color: var(--text-strong); font-weight: 700; }
+        .mkt-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--fog); flex: none; }
+        .mkt-chip.on .dot { background: var(--status-green); box-shadow: 0 0 0 3px var(--status-green-soft); }
 
         /* ── 검색 ── */
-        .search-box { display: flex; align-items: center; background: white; padding: 14px 20px; border: 1px solid var(--line); border-radius: 14px; transition: border-color .15s, box-shadow .15s; }
+        .search-box { display: flex; align-items: center; background: var(--paper); padding: 14px 22px; border: 1px solid transparent; border-radius: 999px; transition: border-color .15s, box-shadow .15s; }
         .search-box.focused { border-color: var(--toss-blue); box-shadow: var(--focus-halo); }
-        .search-dropdown { z-index: 1050; max-height: 400px; overflow-y: auto; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,0.08); }
-        .search-item { cursor: pointer; border-radius: 10px; padding: 12px 14px; transition: background .12s; }
+        .search-dropdown { z-index: 1050; max-height: 400px; overflow-y: auto; border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-dropdown); }
+        .search-item { cursor: pointer; border-radius: 8px; padding: 12px 14px; transition: background .12s; }
         .search-item:hover { background: var(--surface-soft); }
 
         /* ── 아바타 ── */
-        .stock-icon { width: 44px; height: 44px; border-radius: 14px; background: var(--line-soft); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; color: var(--text-sub); flex-shrink: 0; }
+        .stock-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--line-soft); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; color: var(--text-sub); flex-shrink: 0; }
 
         /* ── 관심 종목 ── */
-        .watch-item { display: flex; align-items: center; padding: 16px 18px; background: #fff; border: 1px solid var(--line-soft); border-radius: 16px; margin-bottom: 10px; gap: 14px; transition: border-color .15s, background .15s, transform .15s; }
+        .watch-item { display: flex; align-items: center; padding: 16px 18px; background: var(--surface-soft); border: 1px solid transparent; border-radius: 14px; margin-bottom: 10px; gap: 14px; transition: border-color .15s, background .15s, transform .15s; }
         .watch-item:last-child { margin-bottom: 0; }
-        .watch-item:hover { border-color: var(--line); background: var(--surface-soft); }
-        .watch-item.is-ready { border-color: rgba(49,130,246,0.35); background: linear-gradient(90deg, #f5f9ff 0%, #fff 70%); }
+        .watch-item:hover { border-color: transparent; background: var(--canvas); }
+        .watch-item.is-ready { border-color: transparent; background: var(--toss-blue-tint); }
 
         .phase-badge { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
         .phase-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-        .tone-bad     { background: var(--red-soft);   color: var(--toss-red-deep); }
-        .tone-good    { background: var(--green-soft); color: #03a45e; }
-        .tone-info    { background: var(--blue-soft);  color: var(--toss-blue-deep); }
+        .tone-bad     { background: var(--toss-red-soft);   color: var(--toss-red-deep); }
+        .tone-good    { background: var(--status-green-soft); color: var(--status-green-text); }
+        .tone-info    { background: var(--toss-blue-soft);  color: var(--toss-blue-deep); }
         .tone-neutral { background: var(--line-soft);  color: var(--text-sub); }
 
         .target-price-badge { background: var(--line-soft); color: var(--text-sub); font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; }
 
-        .btn-verify { font-size: 13px; font-weight: 700; color: var(--toss-blue-deep); background: var(--blue-soft); border-radius: 10px; padding: 9px 16px; border: none; white-space: nowrap; transition: background .15s; }
+        .btn-verify { font-size: 13px; font-weight: 700; color: var(--toss-blue-deep); background: var(--toss-blue-soft); border-radius: 999px; padding: 8px 16px; border: none; white-space: nowrap; transition: background .15s; }
         .btn-verify:hover { background: rgba(49,130,246,0.16); }
-        .btn-verify.sell { color: var(--toss-red-deep); background: var(--red-soft); }
+        .btn-verify.sell { color: var(--toss-red-deep); background: var(--toss-red-soft); }
         .btn-verify.sell:hover { background: rgba(240,68,82,0.16); }
 
         /* ── 포트폴리오 ── */
         .stock-row { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--line-soft); gap: 14px; }
         .stock-row:last-child { border-bottom: none; padding-bottom: 0; }
         .stock-row:first-child { padding-top: 0; }
-        .stock-name { font-size: 15px; font-weight: 700; color: var(--text-dark); }
+        .stock-name { font-size: 15px; font-weight: 700; color: var(--text-strong); }
         .stock-meta { font-size: 13px; font-weight: 500; color: var(--text-muted); margin-top: 2px; }
-        .profit-badge { font-size: 14px; font-weight: 800; padding: 5px 11px; border-radius: 8px; font-variant-numeric: tabular-nums; }
-        .badge-profit { background: var(--red-soft); color: var(--toss-red-deep); }
-        .badge-loss   { background: var(--blue-soft); color: var(--toss-blue-deep); }
+        .profit-badge { font-size: 14px; font-weight: 800; padding: 4px 10px; border-radius: 999px; font-variant-numeric: tabular-nums; }
+        .badge-profit { background: var(--toss-red-soft); color: var(--toss-red-deep); }
+        .badge-loss   { background: var(--toss-blue-soft); color: var(--toss-blue-deep); }
         .badge-flat   { background: var(--line-soft); color: var(--text-sub); }
         .btn-verify:disabled { opacity: .45; cursor: not-allowed; }
         .text-up { color: var(--toss-red-deep) !important; }
         .text-down { color: var(--toss-blue-deep) !important; }
 
         /* ── 준비 중 위젯 ── */
-        .widget-placeholder { background: var(--surface-soft); border: 1px dashed #d8dde3; border-radius: 14px; padding: 28px 20px; text-align: center; color: var(--text-muted); transition: .15s ease; }
-        .widget-placeholder:hover { background: var(--line-soft); border-color: #c9cfd6; }
+        .widget-placeholder { background: var(--surface-soft); border: 0; border-radius: 14px; padding: 28px 20px; text-align: center; color: var(--text-muted); transition: .15s ease; }
+        .widget-placeholder:hover { background: var(--line-soft); }
         .widget-icon { font-size: 1.6rem; margin-bottom: 10px; color: var(--fog); display: block; }
-        .soon-pill { display: inline-block; margin-top: 10px; font-size: 11.5px; font-weight: 700; color: var(--text-muted); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; }
+        .soon-pill { display: inline-block; margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--text-muted); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; }
 
         /* ── 환율 ── */
         .fx-pair { font-size: 12px; font-weight: 700; color: var(--text-sub); background: var(--line-soft); border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
         .fx-main { display: flex; align-items: baseline; gap: 4px; }
-        .fx-rate { font-size: 28px; font-weight: 800; color: var(--text-dark); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1.2; }
-        .fx-unit { font-size: 16px; font-weight: 700; color: var(--text-dark); }
+        .fx-rate { font-size: 28px; font-weight: 800; color: var(--text-strong); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1.2; }
+        .fx-unit { font-size: 16px; font-weight: 700; color: var(--text-strong); }
         .fx-dir { font-size: 14px; margin-left: 4px; align-self: center; }
         .fx-label { font-size: 13px; font-weight: 500; color: var(--text-muted); margin-top: 4px; }
         .fx-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line-soft);
-                   font-size: 12.5px; font-weight: 500; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+                   font-size: 12px; font-weight: 500; color: var(--text-muted); font-variant-numeric: tabular-nums; }
         .fx-empty { display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--surface-soft); border-radius: 12px; }
-        .fx-empty > i { font-size: 22px; color: #b0b8c1; }
+        .fx-empty > i { font-size: 22px; color: var(--fog); }
         .fx-empty-title { font-size: 14px; font-weight: 700; color: var(--text-sub); }
         .fx-empty-desc { font-size: 13px; font-weight: 500; color: var(--text-muted); margin-top: 2px; }
 
@@ -126,24 +188,32 @@
         .hover-up:hover { opacity: 0.88; }
 
         @media (max-width: 768px) {
-            .hero-title { font-size: 21px; }
             .stat-chips { width: 100%; }
             .stat-chip { flex: 1; min-width: 0; padding: 10px 14px; }
             .home-hero > div:first-child { width: 100%; }
+            .lp { padding: 0 16px 28px; border-radius: 22px; }
+            .lp-hero { padding-block: 48px 36px; }
+            .lp-headline { font-size: min(44px, calc((100vw - 64px) / 7.6)); }   /* 'Check ☑ before'이 한 줄에 들어가게 */
+            .lp-sub { margin-top: 18px; }
+            .lp-actions { margin-top: 24px; }
+            .lp-btn { height: 48px; padding: 0 20px; font-size: 15px; }
+            .lp-stage { padding: 20px 12px; border-radius: 18px; }
+            .lp-card { padding: 20px; }
+            .lp-features { grid-template-columns: minmax(0, 1fr); gap: 20px; padding-top: 36px; }
             .mkt-status { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-top: 10px; }
             .mkt-status::-webkit-scrollbar { display: none; }
             .mkt-chip { font-size: 12px; height: 28px; padding: 0 10px; }
             .watch-item { padding: 14px; gap: 10px; }
             /* 포트폴리오 행: 한 줄에 [아이콘 | 이름·평단 | 수익률 | 매도 검증] */
             .section-head { flex-wrap: wrap; gap: 6px 12px; margin-bottom: 14px; }
-            .section-title { font-size: 17px; }
-            .section-sub { font-size: 12.5px; word-break: keep-all; }
+            .section-title { font-size: 16px; }
+            .section-sub { font-size: 12px; word-break: keep-all; }
             .stock-row { flex-wrap: nowrap; gap: 10px; padding: 12px 0; }
-            .stock-icon { width: 36px; height: 36px; border-radius: 11px; font-size: 13px; }
+            .stock-icon { width: 36px; height: 36px; border-radius: 12px; font-size: 13px; }
             .stock-name { font-size: 15px; }
             .stock-meta { font-size: 12px; }
             .stock-row .profit-badge { background: transparent; padding: 0; font-size: 15px; }
-            .btn-verify { font-size: 12px; padding: 7px 10px; border-radius: 8px; flex-shrink: 0; }
+            .btn-verify { font-size: 12px; padding: 8px 10px; border-radius: 999px; flex-shrink: 0; }
         }
     </style>
 </head>
@@ -157,42 +227,128 @@
 
         <div class="content-container">
 
-            <!-- 비로그인 상태 안내 (Landing) -->
-            <div th:if="${loginMember == null}" class="mt-2">
-                <div class="toss-card text-center mb-4" style="min-height: 340px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(120% 120% at 50% 0%, #f1f6ff 0%, #ffffff 60%);">
-                    <div class="mb-3 d-inline-flex align-items-center justify-content-center" style="width: 56px; height: 56px; border-radius: 18px; background: var(--blue-soft);">
-                        <i class="bi bi-shield-check" style="font-size: 1.6rem; color: var(--toss-blue-deep);"></i>
+            <!-- 비로그인 상태: 랜딩 (한 문장 + 검증 화면 예시 + 기능 3줄) -->
+            <div th:if="${loginMember == null}" class="lp">
+                <section class="lp-hero">
+                    <h1 class="lp-headline">
+                        <span class="lp-line">Check <span class="lp-chip lp-chip-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span> before</span>
+                        <span class="lp-line">you <span class="lp-chip lp-chip-chart" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M3 17l5-5.5 4 3L21 5" stroke="var(--toss-red)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="21" cy="5" r="2" fill="var(--toss-red)"/></svg></span> trade.</span>
+                    </h1>
+                    <p class="lp-sub">내가 정한 매매 규칙과 차트 신호로, 사기 전과 팔기 전에 한 번 더 확인해요.</p>
+                    <div class="lp-actions">
+                        <a th:href="@{/auth/login}" class="lp-btn lp-btn-dark">시작하기</a>
+                        <a href="#lp-demo" class="lp-btn lp-btn-soft">확인하는 화면 보기
+                            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 4v12m0 0l-5-5m5 5l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </a>
                     </div>
-                    <h1 class="fw-bold mb-3 text-dark" style="font-size: 30px; letter-spacing: -0.04em; line-height: 1.35;">AI로 지키는<br>나만의 투자 원칙</h1>
-                    <p class="mb-5" style="color: var(--text-sub); font-size: 16px; line-height: 1.6;">감정에 휘둘리지 않도록, 내가 설정한 규칙에<br>맞는 타이밍인지 AI가 미리 확인해 드려요</p>
-                    <a th:href="@{/auth/login}" class="btn border-0 hover-up fw-bold" style="background: var(--toss-blue-deep); color: white; border-radius: 12px; padding: 14px 44px; font-size: 16px;">시작하기</a>
-                </div>
+                </section>
 
-                <div class="row g-4 mt-1">
-                    <div class="col-md-4">
-                        <div class="toss-card h-100 text-start mb-0">
-                            <div class="stock-icon mb-3" style="background: var(--blue-soft); color: var(--toss-blue-deep);"><i class="bi bi-crosshair fs-5"></i></div>
-                            <h4 class="fw-bold mb-2 text-dark" style="font-size: 17px;">관심 종목 대기열</h4>
-                            <p class="mb-0" style="color: var(--label-text); font-size: 14px; line-height: 1.6; word-break: keep-all;">원하는 타이밍이 올 때까지 종목을 보관하고 흐름을 지켜보는 공간</p>
+                <section class="lp-stage" id="lp-demo" aria-label="매수 검증 화면 예시">
+                    <div class="lp-card" id="lp-card">
+                        <div class="lp-head">
+                            <div class="lp-icon" aria-hidden="true">마</div>
+                            <div>
+                                <div class="lp-title">마이크로소프트</div>
+                                <div class="lp-meta">MSFT · 예시 화면</div>
+                            </div>
+                            <span class="lp-tag">매수 검증</span>
                         </div>
+                        <div class="lp-label"><span>내 매매 규칙</span><b id="lp-count">3개 중 2개 충족</b></div>
+                        <div class="lp-rules">
+                        <div class="lp-rule ok">
+                            <span class="lp-mark" aria-hidden="true"><svg class="i-ok" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5l3 3 6-6.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="i-no" viewBox="0 0 16 16" fill="none"><path d="M4.5 4.5l7 7m0-7l-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+                            <div class="lp-rule-text">
+                                <div class="lp-rule-title">RSI 30 이하에서 사기</div>
+                                <div class="lp-rule-meta">기준 ≤ 30 <span class="lp-now">· 현재 28.4</span></div>
+                            </div>
+                        </div>
+                        <div class="lp-rule ok">
+                            <span class="lp-mark" aria-hidden="true"><svg class="i-ok" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5l3 3 6-6.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="i-no" viewBox="0 0 16 16" fill="none"><path d="M4.5 4.5l7 7m0-7l-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+                            <div class="lp-rule-text">
+                                <div class="lp-rule-title">20일 이동평균선 위에서만</div>
+                                <div class="lp-rule-meta">기준 위 <span class="lp-now">· 현재 위 (+1.8%)</span></div>
+                            </div>
+                        </div>
+                        <div class="lp-rule no">
+                            <span class="lp-mark" aria-hidden="true"><svg class="i-ok" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5l3 3 6-6.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="i-no" viewBox="0 0 16 16" fill="none"><path d="M4.5 4.5l7 7m0-7l-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+                            <div class="lp-rule-text">
+                                <div class="lp-rule-title">거래량이 평균의 1.5배 이상</div>
+                                <div class="lp-rule-meta">기준 ≥ 1.5배 <span class="lp-now">· 현재 1.1배</span></div>
+                            </div>
+                        </div>
+                        </div>
+                        <div class="lp-signal" id="lp-signal">
+                            <span class="lp-dot" aria-hidden="true"></span>
+                            <span class="lp-signal-text">차트 신호 · 관망 구간<small>거래량 조건이 아직 채워지지 않았어요</small></span>
+                        </div>
+                        <div class="lp-foot">내 규칙과 차트 지표로 계산한 참고 정보예요. 투자 권유가 아니에요.</div>
                     </div>
+                </section>
 
-                    <div class="col-md-4">
-                        <div class="toss-card h-100 text-start mb-0">
-                            <div class="stock-icon mb-3" style="background: var(--green-soft); color: #03a45e;"><i class="bi bi-robot fs-5"></i></div>
-                            <h4 class="fw-bold mb-2 text-dark" style="font-size: 17px;">AI 매수 타점 검증</h4>
-                            <p class="mb-0" style="color: var(--label-text); font-size: 14px; line-height: 1.6; word-break: keep-all;">매수하기 직전, 내 기준에 딱 맞는 자리인지 AI가 한 번 더 객관적으로 분석해요</p>
-                        </div>
+                <section class="lp-features" aria-label="주요 기능">
+                    <div class="lp-feat">
+                        <div class="lp-feat-icon" aria-hidden="true"><i class="bi bi-star"></i></div>
+                        <h3>관심 종목</h3>
+                        <p>사고 싶은 종목을 모아 두고, 지금 어느 차트 구간에 있는지 봐요.</p>
                     </div>
+                    <div class="lp-feat">
+                        <div class="lp-feat-icon" aria-hidden="true"><i class="bi bi-bar-chart-line"></i></div>
+                        <h3>시장 진단</h3>
+                        <p>추세, 금리, 신용 지표와 뉴스를 묶어 지금 시장이 어떤 구간인지 정리해요.</p>
+                    </div>
+                    <div class="lp-feat">
+                        <div class="lp-feat-icon" aria-hidden="true"><i class="bi bi-calendar-check"></i></div>
+                        <h3>매매 기록과 복기</h3>
+                        <p>거래를 기록하고 달력에서 돌아보며, 규칙대로 했는지 확인해요.</p>
+                    </div>
+                </section>
 
-                    <div class="col-md-4">
-                        <div class="toss-card h-100 text-start mb-0">
-                            <div class="stock-icon mb-3" style="background: var(--red-soft); color: var(--toss-red-deep);"><i class="bi bi-pie-chart fs-5"></i></div>
-                            <h4 class="fw-bold mb-2 text-dark" style="font-size: 17px;">포트폴리오 분산 점검</h4>
-                            <p class="mb-0" style="color: var(--label-text); font-size: 14px; line-height: 1.6; word-break: keep-all;">투자금이 한 곳에 쏠리지 않도록, 종목들이 안전하게 분산되어 있는지 확인해요</p>
-                        </div>
-                    </div>
-                </div>
+                <!-- 검증 흐름: 처음엔 완성된 화면, 화면에 보일 때만 규칙을 하나씩 다시 확인하는 루프 -->
+                <script th:inline="none">
+                    (function () {
+                        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+                        var card = document.getElementById('lp-card');
+                        if (!card) return;
+                        var rows = Array.prototype.slice.call(card.querySelectorAll('.lp-rule'));
+                        var signal = document.getElementById('lp-signal');
+                        var count = document.getElementById('lp-count');
+                        var results = rows.map(function (r) { return r.classList.contains('ok'); });
+                        var STEP = 650, HOLD = 3800, START = 1400;
+                        var visible = true, running = false;
+                        function wait(ms) { return new Promise(function (res) { setTimeout(res, ms); }); }
+
+                        async function play() {
+                            if (running) return;
+                            running = true;
+                            while (visible && !document.hidden) {
+                                card.classList.add('running');
+                                signal.classList.add('hide');
+                                count.textContent = '확인 중';
+                                rows.forEach(function (r) { r.classList.remove('ok', 'no'); r.classList.add('pending'); });
+                                await wait(500);
+                                var met = 0;
+                                for (var i = 0; i < rows.length; i++) {
+                                    await wait(STEP);
+                                    rows[i].classList.remove('pending');
+                                    rows[i].classList.add(results[i] ? 'ok' : 'no');
+                                    if (results[i]) met++;
+                                }
+                                await wait(250);
+                                count.textContent = rows.length + '개 중 ' + met + '개 충족';
+                                signal.classList.remove('hide');
+                                await wait(HOLD);
+                            }
+                            running = false;
+                        }
+
+                        new IntersectionObserver(function (entries) {
+                            visible = entries[0].isIntersecting;
+                            if (visible) play();
+                        }, { threshold: 0.4 }).observe(card);
+                        document.addEventListener('visibilitychange', function () { if (!document.hidden && visible) play(); });
+                        setTimeout(play, START);
+                    })();
+                </script>
             </div>
 
             <!-- 로그인 상태 대시보드 -->
@@ -201,8 +357,8 @@
                 <!-- 상단: 타이틀 + 요약 -->
                 <div class="home-hero">
                     <div>
-                        <h2 class="hero-title">시장 모니터링 홈</h2>
-                        <div class="hero-sub">시장의 흐름과 내 종목 상태를 한눈에 확인하세요</div>
+                        <h2 class="page-title">시장 모니터링 홈</h2>
+                        <div class="page-sub">시장의 흐름과 내 종목 상태를 한눈에 확인하세요</div>
                         <!-- 장 운영 상태: 처음은 model 값, 장 상태가 바뀌는 시각에만 /api/marketData/calendar 재조회 -->
                         <div class="mkt-status" x-data="marketStatus" th:if="${marketCalendar != null}">
                             <span class="mkt-src" hidden
@@ -262,19 +418,23 @@
                             </a>
                         </template>
 
-                        <div x-show="isGlobalLoading" class="text-center p-3" role="status">
-                            <div class="spinner-border" style="width: 1.5rem; height: 1.5rem; color: var(--toss-blue-deep);" aria-hidden="true"></div>
+                        <div x-show="isGlobalLoading" class="p-2" role="status">
+                            <div aria-hidden="true">
+                                <div class="sk-row"><span class="skeleton sk-avatar"></span><span class="sk-lines"><span class="skeleton sk-line sk-w-60"></span><span class="skeleton sk-line sk-w-35"></span></span></div>
+                                <div class="sk-row"><span class="skeleton sk-avatar"></span><span class="sk-lines"><span class="skeleton sk-line sk-w-75"></span><span class="skeleton sk-line sk-w-35"></span></span></div>
+                                <div class="sk-row"><span class="skeleton sk-avatar"></span><span class="sk-lines"><span class="skeleton sk-line sk-w-60"></span><span class="skeleton sk-line sk-w-35"></span></span></div>
+                            </div>
                             <span class="visually-hidden">검색 중</span>
                         </div>
 
                         <!-- 실패: 결과가 없다고 말하지 않고, 실패했다고 말한다 -->
                         <div x-show="!isGlobalLoading && globalSearchError" class="p-4 text-center" role="alert">
-                            <div class="fw-bold" style="font-size: 14px; color: var(--text-dark);" x-text="globalSearchError"></div>
+                            <div class="fw-bold" style="font-size: 14px; color: var(--text-strong);" x-text="globalSearchError"></div>
                             <button type="button" class="ghost-btn mt-3" @click="retryGlobalSearch()">다시 시도</button>
                         </div>
 
                         <div x-show="!isGlobalLoading && !globalSearchError && searchedQuery && globalSearchResults.length === 0" class="p-4 text-center" role="status">
-                            <div class="fw-bold" style="font-size: 14px; color: var(--text-dark); word-break: break-all;" x-text="`'${searchedQuery}'에 맞는 종목이 없어요`"></div>
+                            <div class="fw-bold" style="font-size: 14px; color: var(--text-strong); word-break: break-all;" x-text="`'${searchedQuery}'에 맞는 종목이 없어요`"></div>
                             <div class="mt-1" style="font-size: 13px; font-weight: 500; color: var(--text-sub);">종목명을 짧게 줄이거나 종목 코드로 검색해 보세요</div>
                         </div>
                     </div>
@@ -395,7 +555,7 @@
                                       fxUp=${fxDir == 'UP' or fxDir == 'RISE' or fxDir == 'INCREASE'},
                                       fxDown=${fxDir == 'DOWN' or fxDir == 'FALL' or fxDir == 'DECREASE'}">
                             <div class="section-head" style="margin-bottom: 14px;">
-                                <h3 class="section-title" style="font-size: 17px;">환율</h3>
+                                <h3 class="section-title">환율</h3>
                                 <span class="fx-pair"
                                       th:text="${(fx?.baseCurrency ?: 'USD') + ' / ' + (fx?.quoteCurrency ?: 'KRW')}">USD / KRW</span>
                             </div>
@@ -431,7 +591,7 @@
 
                         <div class="toss-card mb-0">
                             <div class="section-head" style="margin-bottom: 14px;">
-                                <h3 class="section-title" style="font-size: 17px;">주도주 및 거래대금</h3>
+                                <h3 class="section-title">주도주 및 거래대금</h3>
                             </div>
                             <div class="widget-placeholder">
                                 <i class="bi bi-bar-chart-line widget-icon"></i>
@@ -443,7 +603,7 @@
 
                         <div class="toss-card mb-0 flex-grow-1 d-flex flex-column">
                             <div class="section-head" style="margin-bottom: 14px;">
-                                <h3 class="section-title" style="font-size: 17px;">실시간 핵심 뉴스</h3>
+                                <h3 class="section-title">실시간 핵심 뉴스</h3>
                             </div>
                             <div class="widget-placeholder flex-grow-1 d-flex flex-column justify-content-center align-items-center" style="min-height: 200px;">
                                 <i class="bi bi-newspaper widget-icon"></i>

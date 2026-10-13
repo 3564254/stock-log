@@ -7,6 +7,7 @@ import com.stocklog.modules.market.exchange.repository.ExchangeRateRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ClassUtils;
 
@@ -27,7 +28,8 @@ public class ExchangeService {
 
     // TODO: 외부 API 호출이 트랜잭션 안에 있다. 호출 빈도가 낮아(최대 10분에 1번) 당장은 두지만,
     //       나중에 조회(트랜잭션 밖)와 저장(짧은 트랜잭션)을 분리한다.
-    @Transactional
+    // 포트폴리오 조회(readOnly 트랜잭션) 안에서도 불리므로, 갱신 저장이 막히지 않게 별도 트랜잭션으로 연다
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ExchangeRateInfo fetchExchangeRate() {
         LocalDateTime now = LocalDateTime.now(KST);
         Optional<ExchangeRate> saved = exchangeRateRepository.findMainRate();

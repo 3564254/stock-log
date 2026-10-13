@@ -10,31 +10,30 @@
     <style>
     :root {
         --page-bottom: 60px;
-        --content-max: 900px;
+        --content-max: 1200px;
         --sheet-max: 480px;
     }
 
-        .btn-add { display: inline-flex; align-items: center; gap: 6px; background: var(--toss-blue-soft); color: var(--toss-blue-deep); border: none; padding: 10px 16px; border-radius: var(--radius-md); font-weight: 700; transition: background-color .15s ease; font-size: 14px; }
-        .btn-add:hover { background: rgba(49, 130, 246, 0.16); color: var(--toss-blue-deep); }
+        .btn-add { display: inline-flex; align-items: center; gap: 6px; background: var(--ink); color: #fff; border: none; padding: 10px 18px; border-radius: 999px; font-weight: 700; transition: background-color .15s ease; font-size: 14px; }
+        .btn-add:hover { background: var(--ink-body); color: #fff; }
 
-        .friend-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px 8px 8px; border-radius: 12px; transition: background 0.15s; border: 1px solid transparent; }
-        .friend-row:hover { background-color: var(--surface-soft); border-color: var(--hairline); }
+        .friend-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px 8px 8px; border-radius: 14px; transition: background 0.15s; border: 1px solid transparent; }
+        .friend-row:hover { background-color: var(--surface-soft); border-color: transparent; }
         .friend-link { display: flex; align-items: center; flex: 1 1 auto; min-width: 0; padding: 8px 12px; border-radius: 10px; text-decoration: none !important; color: inherit; }
         .friend-link:focus-visible, .btn-delete-friend:focus-visible, .btn-add:focus-visible, .req-btn:focus-visible, .settings-link:focus-visible,
         .search-btn:focus-visible, .modal-sheet .btn-close:focus-visible, .modal-sheet .btn:focus-visible { outline: 2px solid var(--toss-blue); outline-offset: 2px; box-shadow: none; }
-        .req-btn { border: 0; font-weight: 700; border-radius: 8px; padding: 8px 16px; min-height: 40px; font-size: 14px; }
+        .req-btn { border: 0; font-weight: 700; border-radius: 999px; padding: 8px 16px; min-height: 40px; font-size: 14px; }
         .req-btn:disabled { opacity: .6; }
 
         .modal-sheet { padding: 32px; animation: fadeIn 0.2s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .toss-input { border-radius: var(--radius-sm); }
         .toss-input[aria-invalid="true"] { border-color: var(--toss-red-deep); }
 
         .text-up { color: var(--toss-red-deep) !important; }
         .text-down { color: var(--toss-blue-deep) !important; }
 
-        .btn-delete-friend { background: none; border: none; color: var(--label-text); width: 44px; height: 44px; flex-shrink: 0; border-radius: 8px; transition: 0.15s; display: flex; align-items: center; justify-content: center; }
+        .btn-delete-friend { background: none; border: none; color: var(--label-text); width: 44px; height: 44px; flex-shrink: 0; border-radius: 999px; transition: 0.15s; display: flex; align-items: center; justify-content: center; }
         .btn-delete-friend:hover { background-color: rgba(240, 68, 82, 0.08); color: var(--toss-red-deep); }
 
         @media (max-width: 768px) {
@@ -54,34 +53,34 @@
     <main class="main-content" :class="!sidebarOpen ? 'expanded' : ''">
         <div th:replace="~{fragments/header :: headerFragment}"></div>
 
-        <div th:if="${successMessage}" class="alert alert-success border-0 rounded-3 fw-bold shadow-sm mx-auto mt-3" style="max-width: 900px;" role="status" th:text="${successMessage}"></div>
-        <div th:if="${errorMessage}" class="alert alert-danger border-0 rounded-3 fw-bold shadow-sm mx-auto mt-3" style="max-width: 900px;" role="alert" th:text="${errorMessage}"></div>
-        <div th:if="${param.error != null and param.error[0] == 'not-friend'}" class="alert alert-warning border-0 rounded-3 fw-bold mx-auto mt-3" style="max-width: 900px; color: var(--caution-text); background: var(--caution-tint);" role="alert">
+        <div th:if="${successMessage}" class="alert alert-success border-0 fw-bold mx-auto mt-3" style="max-width: var(--content-max); border-radius: 14px; background: var(--status-green-tint); color: var(--status-green-text);" role="status" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger border-0 fw-bold mx-auto mt-3" style="max-width: var(--content-max); border-radius: 14px; background: var(--toss-red-tint); color: var(--toss-red-deep);" role="alert" th:text="${errorMessage}"></div>
+        <div th:if="${param.error != null and param.error[0] == 'not-friend'}" class="alert alert-warning border-0 fw-bold mx-auto mt-3" style="max-width: var(--content-max); border-radius: 14px; color: var(--caution-text); background: var(--caution-tint);" role="alert">
             친구로 연결된 사람의 포트폴리오만 볼 수 있어요. 친구 요청이 수락됐는지 확인해 주세요.
         </div>
 
         <div class="content-container">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="fw-bold m-0 text-dark" style="font-size: 24px;">내 친구 <span class="fs-5 ms-1 fw-bold" style="color: var(--label-text);" th:text="${friendCount}" th:attr="aria-label=${friendCount} + '명'">0</span></h1>
+                <h1 class="page-title">내 친구 <span class="fs-5 ms-1 fw-bold" style="color: var(--label-text);" th:text="${friendCount}" th:attr="aria-label=${friendCount} + '명'">0</span></h1>
                 <button type="button" @click="openSearchModal()" class="btn-add" aria-haspopup="dialog"><i class="bi bi-person-plus" aria-hidden="true"></i>친구 추가</button>
             </div>
 
             <section class="toss-card d-flex align-items-center mb-4 p-4">
                 <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white me-4 flex-shrink-0" aria-hidden="true"
-                     style="width: 56px; height: 56px; background-color: var(--toss-blue-deep); font-size: 20px;">
+                     style="width: 56px; height: 56px; background-color: var(--ink); font-size: 20px;">
                     나
                 </div>
                 <div class="flex-grow-1">
                     <div class="fw-bold text-dark text-break" style="font-size: 18px;" th:text="${me != null ? '내 프로필 (' + me.username + ')' : '내 프로필 (사용자)'}">나</div>
                 </div>
-                <a th:href="@{/auth/info}" class="btn border-0 fw-bold settings-link" aria-label="내 정보 설정" style="background: var(--canvas); color: var(--slate); border-radius: 8px; padding: 8px 20px; font-size: 14px;">설정</a>
+                <a th:href="@{/auth/info}" class="btn border-0 fw-bold settings-link" aria-label="내 정보 설정" style="background: var(--canvas); color: var(--ink); border-radius: 999px; padding: 9px 20px; font-size: 14px;">설정</a>
             </section>
 
             <section th:if="${pendingRequests != null and !#lists.isEmpty(pendingRequests)}" class="toss-card p-4 mb-4" style="background-color: var(--surface-soft); box-shadow: none;">
                 <h2 class="fw-bold mb-3 text-dark" style="font-size: 16px;">나에게 온 친구 요청</h2>
 
                 <div class="d-flex flex-column gap-2">
-                    <div th:each="req : ${pendingRequests}" class="d-flex align-items-center justify-content-between flex-wrap gap-2 p-3 rounded-3 bg-white border" style="border-color: var(--hairline) !important;"
+                    <div th:each="req : ${pendingRequests}" class="d-flex align-items-center justify-content-between flex-wrap gap-2 p-3 bg-white" style="border-radius: 14px;"
                          th:with="reqName=${req.requesterName != null ? req.requesterName : '알 수 없는 사용자'}">
                         <div class="d-flex align-items-center ms-2" style="min-width: 0;">
                             <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold me-3 text-white flex-shrink-0" aria-hidden="true"
@@ -94,12 +93,12 @@
                         <div class="d-flex gap-2 me-2">
                             <form th:action="@{/friends/accept}" method="post" class="m-0" onsubmit="this.querySelector('button').disabled = true">
                                 <input type="hidden" name="friendshipId" th:value="${req.friendshipId}">
-                                <button type="submit" class="req-btn" style="background: var(--toss-blue-deep); color: white;" th:attr="aria-label=${reqName} + '님의 친구 요청 수락'">수락</button>
+                                <button type="submit" class="req-btn" style="background: var(--ink); color: white;" th:attr="aria-label=${reqName} + '님의 친구 요청 수락'">수락</button>
                             </form>
                             <form th:action="@{/friends/reject}" method="post" class="m-0"
                                   onsubmit="if (!confirm('이 친구 요청을 거절할까요?')) return false; this.querySelector('button').disabled = true;">
                                 <input type="hidden" name="friendshipId" th:value="${req.friendshipId}">
-                                <button type="submit" class="req-btn" style="background: var(--canvas); color: var(--slate);" th:attr="aria-label=${reqName} + '님의 친구 요청 거절'">거절</button>
+                                <button type="submit" class="req-btn" style="background: var(--paper); color: var(--ink); box-shadow: inset 0 0 0 1px var(--hairline);" th:attr="aria-label=${reqName} + '님의 친구 요청 거절'">거절</button>
                             </form>
                         </div>
                     </div>
@@ -159,7 +158,7 @@
                     <input type="search" id="friend-search" x-model="searchQuery" class="toss-input flex-grow-1 mb-0" style="min-width: 0;"
                            placeholder="친구의 아이디를 입력해 주세요" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="20" data-autofocus
                            :aria-invalid="searchError ? 'true' : 'false'" aria-describedby="friend-search-status">
-                    <button type="submit" class="btn fw-bold px-4 mb-0 search-btn" style="background: var(--canvas); color: var(--slate); border: none; border-radius: 8px; min-width: 80px;" :disabled="isSearching" :aria-busy="isSearching.toString()">
+                    <button type="submit" class="btn fw-bold px-4 mb-0 search-btn" style="background: var(--canvas); color: var(--ink); border: none; border-radius: 999px; min-width: 80px;" :disabled="isSearching" :aria-busy="isSearching.toString()">
                         <span x-show="!isSearching">검색</span>
                         <span x-show="isSearching" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
                         <span x-show="isSearching" class="visually-hidden">검색 중</span>
@@ -168,13 +167,13 @@
             </form>
 
             <div style="min-height: 120px;" id="friend-search-status" aria-live="polite">
-                <div x-show="!searchResult && !searchError && !isSearching" class="text-center py-5 rounded-3" style="background: var(--surface-soft); border: 1px dashed var(--hairline);">
+                <div x-show="!searchResult && !searchError && !isSearching" class="text-center py-5" style="background: var(--surface-soft); border-radius: 14px;">
                     <p class="m-0" style="font-size: 13px; font-weight: 500; color: var(--label-text);">함께 투자할 친구를 찾아보세요</p>
                 </div>
 
-                <div x-show="searchError && !isSearching" class="text-center py-5 px-3 rounded-3" style="background: var(--toss-red-tint); color: var(--toss-red-deep); font-size: 14px; font-weight: 600; word-break: keep-all;" role="alert" x-text="searchError"></div>
+                <div x-show="searchError && !isSearching" class="text-center py-5 px-3" style="border-radius: 14px; background: var(--toss-red-tint); color: var(--toss-red-deep); font-size: 14px; font-weight: 600; word-break: keep-all;" role="alert" x-text="searchError"></div>
 
-                <div x-show="searchResult && searchResult.username && !isSearching" class="p-3 rounded-3 border d-flex align-items-center justify-content-between" style="background: white; border-color: var(--hairline) !important;">
+                <div x-show="searchResult && searchResult.username && !isSearching" class="p-3 d-flex align-items-center justify-content-between" style="background: var(--surface-soft); border-radius: 14px;">
                     <div class="d-flex align-items-center gap-3">
                         <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white flex-shrink-0" aria-hidden="true"
                              style="width: 48px; height: 48px; background-color: var(--slate-mid); font-size: 18px;"
@@ -186,7 +185,7 @@
                         </div>
                     </div>
 
-                    <button type="button" @click="sendFriendRequest()" class="btn border-0 fw-bold flex-shrink-0" style="background: var(--toss-blue-deep); color: white; border-radius: 8px; padding: 10px 16px; font-size: 14px;" :disabled="isSending" :aria-busy="isSending.toString()">
+                    <button type="button" @click="sendFriendRequest()" class="btn border-0 fw-bold flex-shrink-0" style="background: var(--ink); color: white; border-radius: 999px; padding: 10px 18px; font-size: 14px;" :disabled="isSending" :aria-busy="isSending.toString()">
                         <span x-show="!isSending">친구 요청</span>
                         <span x-show="isSending" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
                         <span x-show="isSending" class="visually-hidden">요청 보내는 중</span>

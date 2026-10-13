@@ -9,9 +9,23 @@
     :root {
         --toss-gray-dark: var(--slate);
     }
-    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 0; }
+    body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; min-height: 100vh; padding: 40px 16px; }
 
-    .auth-card { background: white; width: 100%; max-width: 440px; border-radius: 20px; padding: 48px 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.02); border: 1px solid var(--hairline); }
+    /* 랜딩·상단 내비게이션과 같은 로고 */
+    .auth-logo { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: var(--ink); }
+    .auth-logo:hover { color: var(--ink); opacity: .85; }
+    .auth-mark { width: 32px; height: 32px; border-radius: 9px; background: var(--ink); display: grid; place-items: center; }
+    .auth-mark i { color: #fff; font-size: 15px; }
+    .auth-logo span:last-child { font-size: 20px; font-weight: 800; letter-spacing: -0.03em; }
+
+    .auth-card { background: var(--paper); width: 100%; max-width: 440px; border-radius: 24px; padding: 44px 40px; }
+    .auth-title { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; color: var(--text-strong); margin: 0; }
+    .auth-sub { font-size: 15px; font-weight: 500; color: var(--text-muted); margin: 8px 0 0; word-break: keep-all; }
+    .auth-label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 700; color: var(--text-sub); }
+    .auth-error-box { display: flex; align-items: center; gap: 8px; padding: 14px 16px; border-radius: 14px; background: var(--toss-red-tint); color: var(--toss-red-deep); font-size: 13px; font-weight: 600; }
+    .auth-foot { text-align: center; font-size: 14px; font-weight: 500; color: var(--text-muted); }
+    .auth-link { margin-left: 6px; font-weight: 700; color: var(--ink); text-decoration: none; }
+    .auth-link:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
     .toss-input { padding: 16px; }
     .field-hint { color: var(--label-text); font-size: 13px; font-weight: 500; margin-top: 6px; }
     .btn-primary-toss:focus-visible, .auth-link:focus-visible { outline: 2px solid var(--toss-blue); outline-offset: 2px; }
@@ -24,21 +38,25 @@
 
     /* 에러 메시지 스타일 */
     .error-msg { color: var(--toss-red-deep); font-size: 13px; font-weight: 600; margin-top: 6px; }
-    .global-error { background-color: var(--toss-red-tint); color: var(--toss-red-deep); padding: 16px; border-radius: 12px; font-weight: 600; font-size: 13px; margin-bottom: 24px; border: 1px solid var(--toss-red-tint-line); }
+    .global-error { background-color: var(--toss-red-tint); color: var(--toss-red-deep); padding: 14px 16px; border-radius: 14px; font-weight: 600; font-size: 13px; margin-bottom: 8px; }
 
     @media (max-width: 768px) {
-      body { padding: 20px; }
-      .auth-card { padding: 40px 24px !important; border-radius: 16px; }
+      body { padding: 32px 16px; gap: 20px; }
+      .auth-card { padding: 32px 22px !important; border-radius: 20px; }
       .btn-primary-toss { padding: 16px; }
     }
   </style>
 </head>
 <body>
 
+<a th:href="@{/}" class="auth-logo" aria-label="StockLog 홈으로">
+  <span class="auth-mark" aria-hidden="true"><i class="bi bi-bar-chart-fill"></i></span><span>StockLog</span>
+</a>
+
 <div class="auth-card">
-  <div class="mb-5">
-    <h1 class="fw-bold m-0 text-dark" style="font-size: 26px;">회원가입</h1>
-    <p class="text-sub fw-medium mt-2" style="font-size: 15px;">나만의 투자 원칙을 만들어 보세요.</p>
+  <div class="mb-4 pb-2">
+    <h1 class="auth-title">회원가입</h1>
+    <p class="auth-sub">매매 규칙을 정해 두고, 사기 전에 확인해요.</p>
   </div>
 
   <form th:action="@{/auth/signup}" th:object="${signupRequest}" method="post" class="d-flex flex-column gap-3"
@@ -51,7 +69,7 @@
     </div>
 
     <div>
-      <label for="username" class="fw-bold mb-2 d-block" style="color: var(--slate); font-size: 13px;">이름</label>
+      <label for="username" class="auth-label">이름</label>
       <input type="text" th:field="*{username}" class="toss-input"
              th:classappend="${#fields.hasErrors('username')} ? 'is-invalid' : ''"
              th:attr="aria-invalid=${#fields.hasErrors('username')} ? 'true' : 'false',
@@ -61,7 +79,7 @@
     </div>
 
     <div>
-      <label for="loginId" class="fw-bold mb-2 d-block" style="color: var(--slate); font-size: 13px;">아이디</label>
+      <label for="loginId" class="auth-label">아이디</label>
       <input type="text" th:field="*{loginId}" class="toss-input"
              th:classappend="${#fields.hasErrors('loginId')} ? 'is-invalid' : ''"
              th:attr="aria-invalid=${#fields.hasErrors('loginId')} ? 'true' : 'false',
@@ -71,7 +89,7 @@
     </div>
 
     <div>
-      <label for="password" class="fw-bold mb-2 d-block" style="color: var(--slate); font-size: 13px;">비밀번호</label>
+      <label for="password" class="auth-label">비밀번호</label>
       <input type="password" th:field="*{password}" class="toss-input"
              th:classappend="${#fields.hasErrors('password')} ? 'is-invalid' : ''"
              th:attr="aria-invalid=${#fields.hasErrors('password')} ? 'true' : 'false',
@@ -82,7 +100,7 @@
     </div>
 
     <div class="mb-3">
-      <label for="passwordConfirm" class="fw-bold mb-2 d-block" style="color: var(--slate); font-size: 13px;">비밀번호 확인</label>
+      <label for="passwordConfirm" class="auth-label">비밀번호 확인</label>
       <input type="password" th:field="*{passwordConfirm}" class="toss-input"
              th:classappend="${#fields.hasErrors('passwordConfirm')} ? 'is-invalid' : ''"
              th:attr="aria-invalid=${#fields.hasErrors('passwordConfirm')} ? 'true' : 'false',
@@ -95,8 +113,8 @@
     </th:block>
   </form>
 
-  <div class="text-center mt-4 pt-2">
-    <a th:href="@{/auth/login}" class="text-sub text-decoration-none fw-bold auth-link" style="font-size: 14px;">이미 계정이 있나요? 로그인하기</a>
+  <div class="auth-foot mt-4 pt-1">
+    이미 계정이 있나요?<a th:href="@{/auth/login}" class="auth-link">로그인</a>
   </div>
 </div>
 
