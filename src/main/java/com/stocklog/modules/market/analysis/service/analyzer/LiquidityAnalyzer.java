@@ -77,15 +77,19 @@ public class LiquidityAnalyzer implements MarketAnalyzer {
         return score;
     }
 
+    /** M2는 월간 데이터라 일간 지표의 '20칸'을 그대로 쓰면 20개월이 된다. 3개월 단위로 비교한다 */
+    private static final int M2_MONTHS = 3;
+
     /**
      * [팩터 2] 통화량 M2 (최대 ±30점)
      * 시중 통화량 증가 시 긍정적. 단, 둔화 시 감점 적용.
+     * 최근 3개월 증가율 vs 그 이전 3개월 증가율 (월간 7개면 계산 가능)
      */
     private double analyzeM2(List<Double> closes) {
-        if (closes == null || closes.size() < 41) return 0.0;
+        if (closes == null || closes.size() < M2_MONTHS * 2 + 1) return 0.0;
 
-        double currentMomentum = computeReturn(closes, closes.size() - 1, 20);
-        double pastMomentum = computeReturn(closes, closes.size() - 21, 20);
+        double currentMomentum = computeReturn(closes, closes.size() - 1, M2_MONTHS);
+        double pastMomentum = computeReturn(closes, closes.size() - 1 - M2_MONTHS, M2_MONTHS);
         double acceleration = currentMomentum - pastMomentum;
 
         double score = 0;

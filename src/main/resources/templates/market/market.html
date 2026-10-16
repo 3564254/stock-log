@@ -34,6 +34,27 @@
     .section-title i { color: var(--text-muted); font-size: 14px; margin-right: 6px; font-weight: 400; }
     .section-title.hero-title { font-size: 18px; color: var(--text-strong); letter-spacing: -0.02em; }
     .section-title.hero-title i { color: var(--text-sub); font-size: 18px; }
+    /* ── 시간축별 판정 ── */
+    .hz-summary { font-size: 14px; font-weight: 500; color: var(--text-sub); margin: 0 0 16px; line-height: 1.55; word-break: keep-all; }
+    .hz-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 24px; }
+    .hz-tile { background: var(--surface-soft); border-radius: 16px; padding: 16px; min-width: 0; }
+    .hz-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .hz-name { font-size: 14px; font-weight: 700; color: var(--text-strong); }
+    .hz-span { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+    .hz-label { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
+    .hz-label::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+    .tone-text-good { color: var(--status-green-text); } .tone-text-caution { color: var(--caution-text); } .tone-text-neutral { color: var(--text-sub); }
+    .tone-bg-good { background: var(--status-green); } .tone-bg-caution { background: var(--caution-amber); } .tone-bg-neutral { background: var(--slate); }
+    .hz-streak { font-size: 12px; font-weight: 500; color: var(--text-muted); margin-top: 2px; }
+    .hz-track { position: relative; height: 6px; background: var(--canvas); border-radius: 99px; margin: 12px 0 5px; }
+    .hz-track::after { content: ''; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--haze); }
+    .hz-fill { position: absolute; top: 0; height: 100%; border-radius: 99px; }
+    .hz-scale { display: flex; justify-content: space-between; font-size: 11px; font-weight: 500; color: var(--text-muted); }
+    .hz-drivers { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--canvas); display: grid; gap: 5px; font-size: 13px; font-weight: 500; color: var(--text-sub); line-height: 1.45; word-break: keep-all; }
+    .hz-drivers b { color: var(--text-strong); font-weight: 700; }
+    .hz-up { color: var(--status-green-text); font-size: 11px; } .hz-dn { color: var(--caution-text); font-size: 11px; }
+    @media (max-width: 992px) { .hz-grid { grid-template-columns: minmax(0, 1fr); } }
+    .diag-basis { font-size: 12px; font-weight: 500; color: var(--text-muted); line-height: 1.55; margin: 0 0 16px; word-break: keep-all; }
 
     /* ── 투자 나침반 ── */
     .compass-card { padding: 24px; transition: 0.2s; display: flex; flex-direction: column; justify-content: center; }
@@ -78,6 +99,22 @@
     .compact-indicator-row:focus-visible { background-color: var(--surface-soft); outline: 2px solid var(--toss-blue); outline-offset: -2px; }
     .compact-indicator-row:last-child { border-bottom: none; }
 
+    /* ── 지표 탭 패널: 카테고리 하나만 보여줘서 페이지가 길게 늘어지지 않게 ── */
+    .ind-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .ind-head .section-title { margin: 0; color: var(--text-strong); font-size: 18px; letter-spacing: -0.02em; }
+    .ind-hint { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+    .ind-tabs { display: flex; gap: 4px; background: var(--canvas); border-radius: 999px; padding: 4px; width: 100%; max-width: 100%; overflow-x: auto; scrollbar-width: none; margin-bottom: 8px; }
+    .ind-tabs::-webkit-scrollbar { display: none; }
+    .ind-tab { padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--text-muted); border: 0; background: transparent; cursor: pointer; white-space: nowrap; transition: color .15s, background-color .15s; flex: 1 0 auto; text-align: center; }
+    .ind-tab:hover { color: var(--text-strong); }
+    .ind-tab.active { background: var(--paper); color: var(--text-strong); box-shadow: var(--shadow-raised); }
+    .ind-tab:focus-visible { outline: 2px solid var(--toss-blue); outline-offset: -2px; }
+    .ind-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 40px; min-height: 192px; align-content: start; animation: indFade .18s ease-out; }
+    .ind-grid > .compact-indicator-row { border-bottom: 0; border-top: 1px solid var(--line-soft, var(--line)); }
+    .ind-grid > div.compact-indicator-row:nth-of-type(-n+2) { border-top: 0; }
+    @keyframes indFade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { .ind-grid { animation: none; } }
+
     .compact-name { font-size: 14px; font-weight: 600; color: var(--text-strong); line-height: 1.3; word-break: keep-all; }
     .compact-date { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-top: 2px; }
 
@@ -111,6 +148,7 @@
     .page-num-btn, .page-nav-btn { display: flex; align-items: center; justify-content: center; min-width: 32px; height: 32px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--label-text); text-decoration: none; transition: background-color 0.15s ease, color 0.15s ease; }
     .page-num-btn:hover, .page-nav-btn:hover { background-color: var(--canvas); }
     .page-num-btn.active { background-color: var(--toss-blue-deep); color: #ffffff; font-weight: 700; }
+    button.page-num-btn, button.page-nav-btn { border: 0; background: transparent; cursor: pointer; }
     .lw-tooltip { position: absolute; display: none; background: rgba(255, 255, 255, 0.95); padding: 12px 16px; border-radius: 8px; box-shadow: var(--shadow-dropdown); border: 1px solid var(--hairline); pointer-events: none; z-index: 10; }
 
     /* 섹션 단위 실패/빈 상태 */
@@ -147,6 +185,10 @@
 
       /* 지표 행 */
       .compact-indicator-row { gap: 10px; }
+      .ind-tab { flex: 0 0 auto; }
+      .ind-tabs { width: auto; -webkit-mask-image: linear-gradient(to right, #000 92%, transparent); mask-image: linear-gradient(to right, #000 92%, transparent); }
+      .ind-grid { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+      .ind-grid > div.compact-indicator-row:nth-of-type(2) { border-top: 1px solid var(--line-soft, var(--line)); }
       .compact-name { font-size: 14px; }
 
       /* 뉴스 */
@@ -185,13 +227,13 @@
           <button class="flex-fill border-0 fw-bold d-flex justify-content-center align-items-center gap-1"
                   style="border-radius: 999px; padding: 10px 14px; font-size: 14px; transition: 0.15s;"
                   :style="mainTab === 'market' ? 'background: white; color: var(--ink); box-shadow: var(--shadow-raised);' : 'background: transparent; color: var(--label-text);'"
-                  @click="mainTab = 'market'; $nextTick(() => { if(!chartInitialized) { createChart(); updateChartData(); chartInitialized=true; } })">
+                  @click="mainTab = 'market'; syncTabUrl(); $nextTick(() => { if(!chartInitialized) { createChart(); updateChartData(); chartInitialized=true; } })">
             거시 경제
           </button>
           <button class="flex-fill border-0 fw-bold d-flex justify-content-center align-items-center gap-1"
                   style="border-radius: 999px; padding: 10px 14px; font-size: 14px; transition: 0.15s;"
                   :style="mainTab === 'news' ? 'background: white; color: var(--ink); box-shadow: var(--shadow-raised);' : 'background: transparent; color: var(--label-text);'"
-                  @click="mainTab = 'news'">
+                  @click="openNewsTab()">
             뉴스 속보
           </button>
         </div>
@@ -219,7 +261,11 @@
           <!-- AI 퀀트 진단 리포트 (좌측 70%) -->
           <div class="col-xl-8 col-lg-12">
             <div class="toss-card diagnosis-card h-100 mb-0 d-flex flex-column">
-              <h3 class="section-title hero-title"><i class="bi bi-cpu"></i>AI 퀀트 진단</h3>
+              <h3 class="section-title hero-title mb-1"><i class="bi bi-cpu"></i>AI 퀀트 진단</h3>
+              <!-- 엔진은 중장기 흐름 위주라 며칠 사이 급등락엔 늦게 반응한다는 점과 데이터 기준일을 함께 알린다 -->
+              <p class="diag-basis">
+                <span th:if="${marketAnalysis.dataDate != null}" th:text="|${#temporals.format(marketAnalysis.dataDate, 'M월 d일')} 미국 종가 기준 · |"></span>중장기 흐름을 보는 분석이라 며칠 사이의 급등락에는 천천히 반응해요. 단기 급락은 별도로 감지해 알려 드려요.
+              </p>
 
               <!-- th:with를 사용하여 DTO 두 개를 모두 변수로 매핑 -->
               <div th:with="dto=${marketAnalysis.marketRegimeDto}, diag=${marketAnalysis.diagnosisDto}">
@@ -241,9 +287,33 @@
                 </div>
 
                 <!-- 2. 2D 기반 해석 -->
-                <div class="fw-bold mb-4" style="font-size: 18px; color: var(--text-strong); line-height: 1.5; letter-spacing: -0.02em;"
+                <div class="fw-bold" style="font-size: 18px; color: var(--text-strong); line-height: 1.5; letter-spacing: -0.02em;"
+                     th:classappend="${marketAnalysis.horizons != null ? 'mb-1' : 'mb-4'}"
                      th:text="${dto.regimeDescription}">
                 </div>
+
+                <!-- 2-1. 시간축별 판정 (단기 1~2주 · 중기 1~3개월 · 장기 6~12개월) -->
+                <th:block th:if="${marketAnalysis.horizons != null}" th:with="hz=${marketAnalysis.horizons}">
+                  <p class="hz-summary" th:text="${hz.summary}"></p>
+                  <div class="hz-grid">
+                    <div class="hz-tile" th:each="h : ${hz.horizons}">
+                      <div class="hz-top"><span class="hz-name" th:text="${h.title}"></span><span class="hz-span" th:text="${h.span}"></span></div>
+                      <div class="hz-label" th:classappend="${'tone-text-' + h.tone}" th:text="${h.label}"></div>
+                      <div class="hz-streak" th:text="${h.streakText}"></div>
+                      <div class="hz-track" role="img" th:attr="aria-label=|${h.title} 점수 ${#numbers.formatDecimal(h.score, 1, 0)} (-100~100)|">
+                        <div class="hz-fill" th:classappend="${'tone-bg-' + h.tone}"
+                             th:style="${h.score >= 0} ? |left: 50%; width: ${h.score / 2}%;| : |left: ${50 + h.score / 2}%; width: ${-h.score / 2}%;|"></div>
+                      </div>
+                      <div class="hz-scale"><span>약세</span><span>강세</span></div>
+                      <div class="hz-drivers" th:if="${!#lists.isEmpty(h.drivers)}">
+                        <div th:each="dv : ${h.drivers}">
+                          <span th:class="${dv.positive ? 'hz-up' : 'hz-dn'}" th:text="${dv.positive ? '▲' : '▼'}"></span>
+                          <b th:text="${dv.title}"></b> · <span th:text="${dv.detail}"></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </th:block>
 
                 <!-- 3. 시장 종합 스코어 및 서브 점수 -->
                 <div class="p-4 mb-4 rounded-4" style="background: var(--surface-soft);" th:if="${diag != null}">
@@ -458,17 +528,25 @@
           </div>
         </div>
 
-        <!-- Bottom Row: 지표 패널 (분석 엔진 카테고리 기준, indicatorPanels 배열로 관리) -->
+        <!-- Bottom Row: 지표 패널 — 카테고리 탭으로 하나씩 (구성은 indicatorPanels 배열에서만 관리) -->
         <div class="row g-4 mb-4 fu d4">
-          <template x-for="panel in indicatorPanels" :key="panel.title">
-            <div class="col-xxl-6 col-xl-6 col-12">
-              <div class="toss-card h-100 mb-0 p-4">
-                <h4 class="section-title mb-3"><i class="bi" :class="panel.icon"></i><span x-text="panel.title"></span></h4>
-                <div class="d-flex flex-column">
+          <div class="col-12">
+            <div class="toss-card mb-0">
+              <div class="ind-head">
+                <h3 class="section-title">주요 지표</h3>
+                <span class="ind-hint">누르면 위 차트에서 크게 볼 수 있어요</span>
+              </div>
+              <div class="ind-tabs" role="tablist" aria-label="지표 카테고리">
+                <template x-for="(panel, i) in indicatorPanels" :key="panel.title">
+                  <button type="button" class="ind-tab" role="tab" :class="panelIdx === i ? 'active' : ''"
+                          :aria-selected="(panelIdx === i).toString()" @click="selectPanel(i, $el)" x-text="panel.short"></button>
+                </template>
+              </div>
+              <template x-for="panel in [indicatorPanels[panelIdx]]" :key="panel.title">
+                <div class="ind-grid" role="tabpanel" :aria-label="panel.title">
                   <template x-for="type in panel.types" :key="type">
                     <div class="compact-indicator-row" style="cursor: pointer;" role="button" tabindex="0"
-                         @click="selectIndicator(type)" @keydown.enter.prevent="selectIndicator(type)" @keydown.space.prevent="selectIndicator(type)"
-                         title="누르면 위 차트에서 크게 볼 수 있어요">
+                         @click="selectIndicator(type)" @keydown.enter.prevent="selectIndicator(type)" @keydown.space.prevent="selectIndicator(type)">
                       <div style="flex: 1; min-width: 0; padding-right: 12px;">
                         <div class="compact-name" x-text="getDisplayName(type)"></div>
                         <div class="compact-date" x-text="formatDate(type)"></div>
@@ -490,66 +568,80 @@
                     </div>
                   </template>
                 </div>
-              </div>
+              </template>
             </div>
-          </template>
+          </div>
         </div>
       </div>
 
       <!-- ========================================== -->
       <!-- 2. 뉴스 속보 탭 영역 -->
       <!-- ========================================== -->
-      <div x-show="mainTab === 'news'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
-        <div class="row g-4">
-          <th:block th:if="${news != null and !#lists.isEmpty(news.newsList)}">
-            <div class="col-xxl-6 col-12" th:each="item : ${news.newsList}">
-              <a th:href="${item.url}" target="_blank" rel="noopener noreferrer" class="toss-card news-row h-100 mb-0 p-4 d-flex">
+      <div x-show="mainTab === 'news'" x-cloak x-ref="newsTop" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+        <!-- 페이지 이동은 /api/marketData/news 로 뉴스만 바꿔 끼운다 (시장 진단을 다시 하지 않도록) -->
+        <div class="row g-4" :style="newsLoading && newsData ? 'opacity: .55; transition: opacity .15s;' : ''" :aria-busy="newsLoading">
+          <!-- 첫 로딩 -->
+          <template x-for="n in (newsLoading && !newsData ? 4 : 0)" :key="'sk' + n">
+            <div class="col-xxl-6 col-12">
+              <div class="toss-card news-row h-100 mb-0 p-4 d-flex">
                 <div class="news-content pe-3">
                   <div>
-                    <h4 class="news-title" th:text="${item.headline}">뉴스 제목</h4>
-                    <p class="news-summary" th:text="${item.summary}">뉴스 요약 내용</p>
+                    <div class="skeleton mb-2" style="height: 16px; width: 86%;"></div>
+                    <div class="skeleton mb-3" style="height: 16px; width: 58%;"></div>
+                    <div class="skeleton mb-2" style="height: 12px; width: 92%;"></div>
+                  </div>
+                  <div class="skeleton" style="height: 11px; width: 32%;"></div>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <template x-for="item in (newsData?.newsList || [])" :key="item.newsId">
+            <div class="col-xxl-6 col-12">
+              <a :href="item.url" target="_blank" rel="noopener noreferrer" class="toss-card news-row h-100 mb-0 p-4 d-flex">
+                <div class="news-content pe-3">
+                  <div>
+                    <h4 class="news-title" x-text="item.headline"></h4>
+                    <p class="news-summary" x-show="item.summary && item.summary !== item.headline" x-text="item.summary"></p>
                   </div>
                   <div class="news-meta">
-                    <span th:text="${item.source}">언론사</span> ·
-                    <span th:text="${#temporals.format(item.dateTime, 'yyyy-MM-dd HH:mm')}">시간</span>
+                    <span x-text="item.source"></span> · <span x-text="newsTime(item.dateTime)"></span>
                   </div>
                 </div>
-                <img th:if="${item.image != null and !item.image.isEmpty()}" th:src="${item.image}" class="news-thumbnail" alt="" loading="lazy"
-                     referrerpolicy="no-referrer" onerror="this.remove()">
+                <template x-if="item.image">
+                  <img :src="item.image" class="news-thumbnail" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">
+                </template>
               </a>
             </div>
-          </th:block>
+          </template>
 
-          <th:block th:if="${news == null}">
-            <div class="col-12">
-              <div class="toss-card mb-0 p-4 news-empty" role="alert">
-                <div class="section-state-title">뉴스를 불러오지 못했어요</div>
-                <div class="section-state-desc mb-2">뉴스 제공처 응답이 없어요. 잠시 후 다시 시도해 주세요.</div>
-                <a th:href="@{/market(mainTab='news')}" class="retry-btn"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i>다시 시도</a>
-              </div>
+          <div class="col-12" x-show="newsError && !newsLoading">
+            <div class="toss-card mb-0 p-4 news-empty" role="alert">
+              <div class="section-state-title">뉴스를 불러오지 못했어요</div>
+              <div class="section-state-desc mb-2">뉴스 제공처 응답이 없어요. 잠시 후 다시 시도해 주세요.</div>
+              <button type="button" class="retry-btn border-0" @click="loadNews(newsPage)"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i>다시 시도</button>
             </div>
-          </th:block>
-          <th:block th:if="${news != null and #lists.isEmpty(news.newsList)}">
-            <div class="col-12">
-              <div class="toss-card mb-0 p-4 news-empty" role="status">
-                <div class="section-state-title">아직 표시할 뉴스가 없어요</div>
-                <div class="section-state-desc">새 뉴스가 들어오면 여기에 모여요.</div>
-              </div>
+          </div>
+          <div class="col-12" x-show="!newsError && !newsLoading && newsData && !(newsData.newsList || []).length">
+            <div class="toss-card mb-0 p-4 news-empty" role="status">
+              <div class="section-state-title">아직 표시할 뉴스가 없어요</div>
+              <div class="section-state-desc">새 뉴스가 들어오면 여기에 모여요.</div>
             </div>
-          </th:block>
+          </div>
         </div>
 
-        <div class="news-pagination" th:if="${news != null and !#lists.isEmpty(news.newsList) and news.totalPages > 1}">
-          <a th:if="${news.page > 0}" th:href="@{/market(mainTab='news', page=${news.page - 1})}" class="page-nav-btn" aria-label="이전 페이지">
+        <nav class="news-pagination" x-show="newsPages.length" aria-label="뉴스 페이지">
+          <button type="button" class="page-nav-btn" x-show="newsData?.page > 0" @click="goNewsPage(newsData.page - 1)" aria-label="이전 페이지">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </a>
-          <a th:each="i : ${#numbers.sequence(T(java.lang.Math).max(0, news.page - 2), T(java.lang.Math).min(news.totalPages - 1, news.page + 2))}"
-             th:href="@{/market(mainTab='news', page=${i})}" th:text="${i + 1}" th:classappend="${i == news.page} ? ' active'"
-             th:attr="aria-current=${i == news.page} ? 'page' : null, aria-label=${(i + 1) + '페이지'}" class="page-num-btn"></a>
-          <a th:if="${news.hasNext}" th:href="@{/market(mainTab='news', page=${news.page + 1})}" class="page-nav-btn" aria-label="다음 페이지">
+          </button>
+          <template x-for="i in newsPages" :key="'pg' + i">
+            <button type="button" class="page-num-btn" :class="i === newsData.page ? 'active' : ''" @click="goNewsPage(i)"
+                    :aria-current="i === newsData.page ? 'page' : null" :aria-label="(i + 1) + '페이지'" x-text="i + 1"></button>
+          </template>
+          <button type="button" class="page-nav-btn" x-show="newsData?.hasNext" @click="goNewsPage(newsData.page + 1)" aria-label="다음 페이지">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </a>
-        </div>
+          </button>
+        </nav>
       </div>
 
     </div>
@@ -562,7 +654,11 @@
       return {
         mainTab: new URLSearchParams(window.location.search).get('mainTab') === 'news' ? 'news' : 'market',
         chartEmpty: false, chartUnavailable: false,
-        activeTab: 'SP500', chart: null, areaSeries: null, toolTip: null, chartInitialized: false, aiCommentExpanded: false,
+
+        // 뉴스 탭 (Finnhub) — 처음 열 때 불러오고, 페이지 이동도 API로만
+        newsData: null, newsLoading: false, newsError: false, newsReq: 0,
+        newsPage: Math.max(0, parseInt(new URLSearchParams(window.location.search).get('page'), 10) || 0),
+        activeTab: 'SP500', chart: null, pointCount: 0, areaSeries: null, toolTip: null, chartInitialized: false, aiCommentExpanded: false,
 
         // MarketRegimeDto 매핑
         regimeData: /*[[${marketAnalysis != null ? marketAnalysis.marketRegimeDto : null}]]*/ null,
@@ -635,18 +731,91 @@
 
         // 하단 지표 패널 구성 (분석 엔진 카테고리 기준 — 패널 추가/순서 변경은 여기서만)
         indicatorPanels: [
-          { title: '증시 지수 & 환율', icon: 'bi-graph-up', types: ['SP500', 'NASDAQ100', 'DOW_JONES', 'USD_JPY', 'DOLLAR_INDEX'] },
-          { title: '변동성 · 신용 · 원자재', icon: 'bi-shield-exclamation', types: ['VIX', 'HIGH_YIELD_SPREAD', 'FINANCIAL_STRESS', 'WTI', 'BITCOIN'] },
-          { title: '금리 & 채권', icon: 'bi-bank', types: ['FED_FUNDS_RATE', 'US10Y', 'US2Y', 'T10Y2Y'] },
-          { title: '물가 & 고용', icon: 'bi-people', types: ['CPI', 'CORE_PCE', 'UNEMPLOYMENT', 'NONFARM_PAYROLLS', 'INITIAL_CLAIMS'] },
-          { title: '경기 & 소비', icon: 'bi-cart3', types: ['GDP', 'RETAIL_SALES', 'CONSUMER_SENTIMENT', 'CONSUMER_REVOLVING_LOANS'] },
-          { title: '유동성 (연준)', icon: 'bi-droplet', types: ['FED_TOTAL_ASSETS', 'REVERSE_REPO', 'M2'] },
-          { title: '반도체 & AI', icon: 'bi-cpu', types: ['PHLX_SEMI', 'NASDAQ_AI_BIGDATA', 'NASDAQ_CAPEX_ACHIEVERS', 'IND_SEMI'] },
-          { title: '성장 테마 섹터', icon: 'bi-rocket-takeoff', types: ['NASDAQ_ISE_CYBERSECURITY', 'NASDAQ_BIOTECH', 'NASDAQ_CLEAN_ENERGY', 'PHLX_GOLD_SILVER'] },
-          { title: '전통 섹터 & 실물경기', icon: 'bi-building', types: ['NASDAQ_CONSUMER_STAPLES', 'SECTOR_DISCRETIONARY_DURABLE', 'SECTOR_FINANCIALS', 'SECTOR_REAL_ESTATE', 'SECTOR_INDUSTRIALS', 'US_INDPRO'] }
+          { title: '증시 지수 & 환율', short: '증시·환율', icon: 'bi-graph-up', types: ['SP500', 'NASDAQ100', 'DOW_JONES', 'USD_JPY', 'DOLLAR_INDEX'] },
+          { title: '변동성 · 신용 · 원자재', short: '변동성·원자재', icon: 'bi-shield-exclamation', types: ['VIX', 'HIGH_YIELD_SPREAD', 'FINANCIAL_STRESS', 'WTI', 'BITCOIN'] },
+          { title: '금리 & 채권', short: '금리·채권', icon: 'bi-bank', types: ['FED_FUNDS_RATE', 'US10Y', 'US2Y', 'T10Y2Y'] },
+          { title: '물가 & 고용', short: '물가·고용', icon: 'bi-people', types: ['CPI', 'CORE_PCE', 'UNEMPLOYMENT', 'NONFARM_PAYROLLS', 'INITIAL_CLAIMS'] },
+          { title: '경기 & 소비', short: '경기·소비', icon: 'bi-cart3', types: ['GDP', 'RETAIL_SALES', 'CONSUMER_SENTIMENT', 'CONSUMER_REVOLVING_LOANS'] },
+          { title: '유동성 (연준)', short: '유동성', icon: 'bi-droplet', types: ['FED_TOTAL_ASSETS', 'REVERSE_REPO', 'M2'] },
+          { title: '반도체 & AI', short: '반도체·AI', icon: 'bi-cpu', types: ['PHLX_SEMI', 'NASDAQ_AI_BIGDATA', 'NASDAQ_CAPEX_ACHIEVERS', 'IND_SEMI'] },
+          { title: '성장 테마 섹터', short: '성장 섹터', icon: 'bi-rocket-takeoff', types: ['NASDAQ_ISE_CYBERSECURITY', 'NASDAQ_BIOTECH', 'NASDAQ_CLEAN_ENERGY', 'PHLX_GOLD_SILVER'] },
+          { title: '전통 섹터 & 실물경기', short: '전통 섹터', icon: 'bi-building', types: ['NASDAQ_CONSUMER_STAPLES', 'SECTOR_DISCRETIONARY_DURABLE', 'SECTOR_FINANCIALS', 'SECTOR_REAL_ESTATE', 'SECTOR_INDUSTRIALS', 'US_INDPRO'] }
         ],
 
+        // 지표 탭: 마지막으로 본 카테고리를 기억 (저장소를 못 쓰면 첫 탭)
+        panelIdx: (() => { try { return parseInt(localStorage.getItem('market.indPanel'), 10) || 0; } catch (e) { return 0; } })(),
+        selectPanel(i, el) {
+          this.panelIdx = i;
+          try { localStorage.setItem('market.indPanel', String(i)); } catch (e) {}
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+        },
+
+        openNewsTab() {
+          this.mainTab = 'news';
+          this.syncTabUrl();
+          if (!this.newsData && !this.newsLoading) this.loadNews(this.newsPage);
+        },
+
+        async loadNews(page = 0) {
+          const req = ++this.newsReq;
+          this.newsLoading = true;
+          this.newsError = false;
+          try {
+            const res = await fetch(`/api/marketData/news?page=${page}&size=10`, { headers: { 'Accept': 'application/json' } });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            if (req !== this.newsReq) return;
+            this.newsData = data;
+            this.newsPage = data.page ?? page;
+            this.syncTabUrl();
+          } catch (e) {
+            if (req === this.newsReq) this.newsError = true;
+          } finally {
+            if (req === this.newsReq) this.newsLoading = false;
+          }
+        },
+
+        async goNewsPage(p) {
+          if (this.newsLoading || p < 0 || (this.newsData && (p >= this.newsData.totalPages || p === this.newsData.page))) return;
+          await this.loadNews(p);
+          this.$refs.newsTop?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        },
+
+        get newsPages() {
+          const d = this.newsData;
+          if (!d || !(d.totalPages > 1)) return [];
+          const out = [];
+          for (let i = Math.max(0, d.page - 2); i <= Math.min(d.totalPages - 1, d.page + 2); i++) out.push(i);
+          return out;
+        },
+
+        // 새로고침해도 같은 탭·페이지로 돌아오게 주소만 바꾼다 (재요청 없음)
+        syncTabUrl() {
+          try {
+            const u = new URL(window.location.href);
+            u.searchParams.set('mainTab', this.mainTab);
+            if (this.mainTab === 'news' && this.newsPage > 0) u.searchParams.set('page', this.newsPage);
+            else u.searchParams.delete('page');
+            history.replaceState(null, '', u);
+          } catch (e) {}
+        },
+
+        // 서버 시각은 KST LocalDateTime(오프셋 없음)
+        newsTime(s) {
+          if (!s) return '';
+          const d = new Date(Array.isArray(s) ? Date.UTC(s[0], s[1] - 1, s[2], (s[3] || 0) - 9, s[4] || 0) : (/[zZ]|[+-]\d\d:\d\d$/.test(s) ? s : s + '+09:00'));
+          if (isNaN(d)) return '';
+          const day = x => x.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
+          const hm = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' });
+          const now = new Date();
+          if (day(d) === day(now)) return hm;
+          if (day(d) === day(new Date(now.getTime() - 86400000))) return '어제 ' + hm;
+          return new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: 'long', day: 'numeric' }).format(d) + ' ' + hm;
+        },
+
         init() {
+          if (this.mainTab === 'news') this.loadNews(this.newsPage);
+          if (!(this.panelIdx >= 0 && this.panelIdx < this.indicatorPanels.length)) this.panelIdx = 0;
           this.$nextTick(() => {
             if (this.mainTab === 'market') {
               this.createChart();
@@ -868,8 +1037,34 @@
             autoSize: true,   // 창 크기·회전·사이드바 변화에 맞춰 다시 맞춘다
             layout: { background: { type: 'solid', color: 'transparent' }, textColor: '#6b7684', fontFamily: 'Pretendard' },
             grid: { vertLines: { visible: false }, horzLines: { color: '#f2f4f6' } },
-            timeScale: { borderVisible: false, rightOffset: 5 },
+            timeScale: { borderVisible: false, rightOffset: 5, fixLeftEdge: true },
             crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
+          });
+
+          // 카드 폭이 바뀌면 (첫 렌더 뒤 레이아웃 확정, 창 크기 변경) 전체 기간을 다시 폭에 맞춘다.
+          // 안 하면 막대 간격은 그대로 두고 늘어난 폭을 왼쪽 빈칸으로 채워서 차트 절반이 비어 보인다
+          let fitRaf = 0;
+          new ResizeObserver(() => {
+            cancelAnimationFrame(fitRaf);
+            fitRaf = requestAnimationFrame(() => this.chart && this.chart.timeScale().fitContent());
+          }).observe(container);
+
+          // 끌거나 축소해도 데이터 바깥(첫 데이터 이전)이 빈칸으로 보이지 않게 범위를 데이터 안으로 되돌린다
+          const ts = this.chart.timeScale();
+          let clamping = false;
+          ts.subscribeVisibleLogicalRangeChange((r) => {
+            const n = this.pointCount || 0;
+            if (!r || clamping || n < 2) return;
+            const span = r.to - r.from;
+            const last = n - 1 + 5;                                               // 최신 데이터 + 오른쪽 여백(rightOffset)
+            let next = null;
+            if (span >= last) next = { from: 0, to: last };                       // 너무 축소: 전체 기간으로
+            else if (r.from < 0) next = { from: 0, to: span };                    // 왼쪽으로 너무 끌면: 첫 데이터에 붙임
+            else if (r.to > last + 0.5) next = { from: last - span, to: last };   // 오른쪽으로 너무 끌면: 최신 데이터에 붙임
+            if (!next) return;
+            clamping = true;
+            ts.setVisibleLogicalRange(next);
+            requestAnimationFrame(() => { clamping = false; });
           });
 
           this.areaSeries = this.chart.addAreaSeries({ lineColor: '#3182f6', topColor: 'rgba(49, 130, 246, 0.15)', bottomColor: 'rgba(49, 130, 246, 0.01)', lineWidth: 2 });
@@ -915,6 +1110,7 @@
           }
 
           this.chartEmpty = formatted.length === 0;
+          this.pointCount = formatted.length;
           if (formatted.length === 0) {
             this.areaSeries.setData([]);   // 이전 지표의 선이 새 제목 아래 남지 않게 비운다
             return;

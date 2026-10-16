@@ -41,7 +41,13 @@ public enum ErrorCode {
     // ── 트레이드 및 관심종목 (Trade) ──
     WATCH_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "T001", "관심 종목 대기열에서 해당 종목을 찾을 수 없음"),
     DUPLICATE_WATCH_ITEM(HttpStatus.CONFLICT, "T002", "이미 관심 종목 대기열에 등록된 주식"),
-    TRADING_RULE_NOT_FOUND(HttpStatus.NOT_FOUND, "T003", "해당 매매 규칙을 찾을 수 없음");
+    TRADING_RULE_NOT_FOUND(HttpStatus.NOT_FOUND, "T003", "해당 매매 규칙을 찾을 수 없음"),
+
+    // ── 커뮤니티 (Board) ──
+    POST_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "존재하지 않거나 삭제된 게시글"),
+    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "B002", "존재하지 않거나 삭제된 댓글"),
+    INVALID_COMMENT_PARENT(HttpStatus.BAD_REQUEST, "B003", "답글을 달 수 없는 댓글"),
+    TOO_MANY_STOCK_TAGS(HttpStatus.BAD_REQUEST, "B004", "종목 태그는 글 하나에 5개까지");
 
     private final HttpStatus status;
     private final String code;

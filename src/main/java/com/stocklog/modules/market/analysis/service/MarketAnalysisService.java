@@ -44,6 +44,9 @@ public class MarketAnalysisService {
     private final SectorRotationAnalyzer sectorAnalyzer;
     private final DefensiveAnalyzer defensiveAnalyzer;
 
+    // ── 4-1. 단기 충격 (급락·변동성 급등) ──
+    private final ShortTermShockDetector shockDetector;
+
     // ── 5. 최종 종합 엔진 ──
     private final MarketRegimeEngine regimeEngine;
 
@@ -58,6 +61,15 @@ public class MarketAnalysisService {
         MarketRegimeDto finalResult = getTotalResult().marketRegimeDto();
         log.info("시장 국면 분석 완료: {}", finalResult.regimeDescription());
         return finalResult;
+    }
+
+    private static java.time.LocalDate latestDate(MarketChartData data) {
+        if (data == null || data.chartDataList() == null) return null;
+        return data.chartDataList().stream()
+                .map(c -> c.date())
+                .filter(java.util.Objects::nonNull)
+                .max(java.util.Comparator.naturalOrder())
+                .orElse(null);
     }
 
     public TotalResult getTotalResult() {
@@ -86,17 +98,21 @@ public class MarketAnalysisService {
         MarketAnalyzerScore sectorScore = sectorAnalyzer.analyze(snapshot);
         MarketAnalyzerScore defensiveScore = defensiveAnalyzer.analyze(snapshot);
 
+        // Short-term shock
+        MarketAnalyzerScore shockScore = shockDetector.analyze(snapshot);
+
         // 3. 분석 결과 종합 (Engine Input 생성)
         EngineInput engineInput = new EngineInput(
                 trendScore, momentumScore, breadthScore, riskScore,
                 ratesScore, liquidityScore, macroScore, creditScore,
-                sectorScore, defensiveScore, crossAssetScore, divergenceScore
+                sectorScore, defensiveScore, crossAssetScore, divergenceScore,
+                shockScore
         );
 
         // 4. 엔진을 통한 최종 Market Regime 도출 및 반환
         MarketRegimeDto finalResult = regimeEngine.evaluate(engineInput);
         log.info("[MARKET]: {}", finalResult.regimeDescription());
-        return new TotalResult(engineInput, finalResult);
+        return new TotalResult(engineInput, finalResult, latestDate(snapshot.get(IndexType.SP500)));
     }
 
 }

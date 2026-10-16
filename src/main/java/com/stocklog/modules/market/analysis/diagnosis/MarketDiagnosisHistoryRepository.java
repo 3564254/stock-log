@@ -12,4 +12,9 @@ public interface MarketDiagnosisHistoryRepository extends JpaRepository<MarketDi
     Optional<MarketDiagnosisHistory> findTopByOrderByDateDesc();
 
     List<MarketDiagnosisHistory> findAllByOrderByDateDesc(Pageable pageable);
+
+    Optional<MarketDiagnosisHistory> findByDate(java.time.LocalDate date);
+
+    // 시간축 판정의 이전 상태 계산용: 특정 날짜 이전 기록을 최신순으로 최대 120건
+    List<MarketDiagnosisHistory> findTop120ByDateBeforeOrderByDateDesc(java.time.LocalDate date);
 }

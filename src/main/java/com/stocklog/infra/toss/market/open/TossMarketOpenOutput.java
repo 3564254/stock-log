@@ -1,4 +1,4 @@
-package com.stocklog.infra.toss.market.calendar;
+package com.stocklog.infra.toss.market.open;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record TossMarketCalendarOutput(
+public record TossMarketOpenOutput(
         Day today,
         Day previousBusinessDay,
         Day nextBusinessDay

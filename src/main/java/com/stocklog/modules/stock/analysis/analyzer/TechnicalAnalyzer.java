@@ -26,8 +26,8 @@ public class TechnicalAnalyzer {
         int score = 0;
 
         score += scoreTrend(dailyPrices, weeklyPrices, signals); // 0~12점
-        score += scoreCross(dailyPrices, signals);               // 0~10점
-        score += scoreVolatility(dailyPrices, signals);          // 0~8점
+        score += scoreCross(dailyPrices, signals);               // 0~10점 (MA20 × MA60)
+        score += scoreVolatility(dailyPrices, signals);          // 0~8점 (평소 대비 밴드 폭)
 
         return TechnicalScore.of(score, signals);
     }
@@ -85,76 +85,112 @@ public class TechnicalAnalyzer {
         return 3;
     }
 
-    // ── [2] 크로스 판정: 일봉 기준 정확한 타점 분석 ───────────────────────────
+    // ── [2] 크로스 판정: 중기 이평(MA20 × MA60) ───────────────────────────────
+    // 예전에는 MA5 × MA20을 봤는데, [1] 추세의 MA5/MA20 배열, 모멘텀의 20일선 이격도와 사실상 같은 신호라
+    // 20일선 하나에 점수가 몰렸다(하루 이틀 20일선 아래로 빠지면 최대 30점 가까이 동시에 빠짐).
+    // 크로스는 한 단계 긴 MA20 × MA60으로 보아 '중기 추세 전환'을 담당하게 한다.
+    private static final int CROSS_FAST = 20;
+    private static final int CROSS_SLOW = 60;
+
     private int scoreCross(List<Double> p, List<String> signals) {
-        if (p.size() < 22) return 0; // MA20 계산 + 이전 봉 비교를 위한 최소치
+        if (p.size() < CROSS_SLOW + 2) {
+            signals.add("중기 크로스 판단 데이터 부족 (일봉 62개 미만)");
+            return 5; // 판단 불가는 중립값
+        }
+        double fastNow = sma(p, CROSS_FAST, 0);
+        double slowNow = sma(p, CROSS_SLOW, 0);
+        double fastPrev = sma(p, CROSS_FAST, 1);
+        double slowPrev = sma(p, CROSS_SLOW, 1);
 
-        // offset 0 = 오늘(가장 최신), offset 1 = 어제
-        double ma5Now = sma(p, 5, 0);
-        double ma20Now = sma(p, 20, 0);
+        boolean upNow = fastNow > slowNow;
+        boolean upPrev = fastPrev > slowPrev;
 
-        double ma5Prev = sma(p, 5, 1);
-        double ma20Prev = sma(p, 20, 1);
-
-        boolean crossedUpNow = ma5Now > ma20Now;
-        boolean crossedUpPrev = ma5Prev > ma20Prev;
-
-        // 오늘 골든크로스 발생
-        if (crossedUpNow && !crossedUpPrev) {
-            signals.add(String.format("🔥 일봉 골든크로스 포착 (MA5 %.0f > MA20 %.0f)", ma5Now, ma20Now));
+        if (upNow && !upPrev) {
+            signals.add(String.format("🔥 일봉 골든크로스 포착 (MA20 %.0f > MA60 %.0f) — 중기 추세 전환", fastNow, slowNow));
             return 10;
         }
-        // 오늘 데드크로스 발생
-        if (!crossedUpNow && crossedUpPrev) {
-            signals.add(String.format("⚠️ 일봉 데드크로스 포착 (MA5 %.0f < MA20 %.0f)", ma5Now, ma20Now));
+        if (!upNow && upPrev) {
+            signals.add(String.format("⚠️ 일봉 데드크로스 포착 (MA20 %.0f < MA60 %.0f) — 중기 추세 약화", fastNow, slowNow));
             return 0;
         }
-
-        // 골든크로스 유지 중
-        if (crossedUpNow) {
+        if (upNow) {
             int daysSince = countDaysSinceCross(p, true);
-            if (daysSince <= 10) { // 약 2주 이내
-                signals.add(String.format("골든크로스 초기 유지 중 (%d일 경과)", daysSince));
-                return 6;
+            if (daysSince <= 15) { // 약 3주 이내
+                signals.add(String.format("골든크로스 초기 유지 중 (MA20 > MA60, %d일 경과)", daysSince));
+                return 8;
             }
-            signals.add("골든크로스 장기 유지 — 추세 안착");
-            return 4;
+            signals.add("골든크로스 장기 유지 — 중기 추세 안착 (MA20 > MA60)");
+            return 7;
         }
-
-        // 데드크로스 유지 중
-        signals.add("데드크로스 유지 중 — 매수 신중");
-        return 1;
+        signals.add("데드크로스 유지 중 (MA20 < MA60) — 중기 추세 약세");
+        return 2;
     }
 
-    // ── [3] 변동성(볼린저 스퀴즈) 평가 ────────────────────────────────────────
+    // ── [3] 변동성: '그 종목의 평소' 대비 볼린저 밴드 폭 ───────────────────────
+    // 예전에는 20일 종가의 변동계수(CV) 절대값으로 매겨서, 평소 CV가 5% 미만인 대형 우량주는
+    // 늘 '볼린저 스퀴즈' 4점, 출렁이는 중소형주가 만점(8점)을 받는 역전이 있었다.
+    // 이제는 최근 밴드 폭이 그 종목의 지난 최대 120일 분포에서 어디쯤인지(백분위)로 본다.
+    private static final int BAND_PERIOD = 20;
+    private static final int BAND_LOOKBACK = 120;
+    private static final int BAND_MIN_SAMPLES = 40;
+    private static final double EXTREME_DAILY_VOL = 5.0; // 일간 수익률 표준편차(%)가 이 이상이면 종목 자체가 초고변동
+
     private int scoreVolatility(List<Double> p, List<String> signals) {
-        int period = Math.min(20, p.size()); // 최근 20일 기준
-        if (period == 0) return 0;
+        int samples = Math.min(BAND_LOOKBACK, p.size() - BAND_PERIOD + 1);
+        if (samples < BAND_MIN_SAMPLES) {
+            signals.add("변동성 비교 데이터 부족 — 평소 대비 판단 보류");
+            return 5;
+        }
+        double[] widths = new double[samples];
+        for (int i = 0; i < samples; i++) widths[i] = bandWidth(p, samples - 1 - i); // 오래된 → 최신
+        double now = widths[samples - 1];
+        int below = 0;
+        for (double w : widths) if (w < now) below++;
+        double pct = 100.0 * below / samples;                       // 0 = 최근 중 가장 좁음, 100 = 가장 넓음
 
-        int start = p.size() - period;
-        double sum = 0;
+        double dailyVol = dailyReturnStdPct(p, BAND_PERIOD);
+        if (dailyVol >= EXTREME_DAILY_VOL) {
+            signals.add(String.format("초고변동성 (일간 변동폭 %.1f%%) — 리스크 관리 필수", dailyVol));
+            return 0;
+        }
+        if (pct <= 20) {
+            signals.add(String.format("볼린저 스퀴즈 (밴드 폭 최근 %d일 중 하위 %.0f%%) — 방향성 대기", samples, pct));
+            return 6;
+        }
+        if (pct <= 60) {
+            signals.add(String.format("평소 수준 변동성 (밴드 폭 백분위 %.0f%%)", pct));
+            return 8;
+        }
+        if (pct <= 85) {
+            signals.add(String.format("변동성 확대 (밴드 폭 백분위 %.0f%%) — 평소보다 출렁임이 큼", pct));
+            return 5;
+        }
+        signals.add(String.format("변동성 급확대 (밴드 폭 백분위 %.0f%%) — 급등락 구간", pct));
+        return 2;
+    }
+
+    /** offset일 전 기준 볼린저 밴드 폭 = 4σ / MA (%). */
+    private double bandWidth(List<Double> p, int offset) {
+        double mean = sma(p, BAND_PERIOD, offset);
+        if (mean <= 0) return 0;
+        int end = p.size() - 1 - offset;
+        double var = 0;
+        for (int i = end - BAND_PERIOD + 1; i <= end; i++) var += Math.pow(p.get(i) - mean, 2);
+        return 4 * Math.sqrt(var / BAND_PERIOD) / mean * 100.0;
+    }
+
+    /** 최근 n일 일간 수익률의 표준편차 (%) */
+    private double dailyReturnStdPct(List<Double> p, int n) {
+        int start = Math.max(1, p.size() - n);
+        List<Double> r = new ArrayList<>();
         for (int i = start; i < p.size(); i++) {
-            sum += p.get(i);
+            double prev = p.get(i - 1);
+            if (prev > 0) r.add((p.get(i) / prev - 1) * 100.0);
         }
-        double mean = sum / period;
-
-        double varSum = 0;
-        for (int i = start; i < p.size(); i++) {
-            varSum += Math.pow(p.get(i) - mean, 2);
-        }
-        double stdDev = Math.sqrt(varSum / period);
-        double cv = (mean > 0) ? (stdDev / mean) * 100 : 0;
-
-        if (cv < 5) {
-            signals.add(String.format("볼린저 스퀴즈 (CV %.1f%%) — 극단적 저변동, 방향성 폭발 대기", cv));
-            return 4;
-        }
-        if (cv < 12) { signals.add(String.format("안정적 변동성 (CV %.1f%%)", cv)); return 8; }
-        if (cv < 20) { signals.add(String.format("보통 변동성 (CV %.1f%%)", cv)); return 5; }
-        if (cv < 35) { signals.add(String.format("높은 변동성 (CV %.1f%%)", cv)); return 2; }
-
-        signals.add(String.format("초고변동성 (CV %.1f%%) — 리스크 관리 필수", cv));
-        return 0;
+        if (r.size() < 2) return 0;
+        double m = r.stream().mapToDouble(Double::doubleValue).average().orElse(0);
+        double v = r.stream().mapToDouble(x -> (x - m) * (x - m)).sum() / (r.size() - 1);
+        return Math.sqrt(v);
     }
 
     // ── [유틸] 과거 시점(offset) 기준 이동평균선 산출 ──────────────────────────
@@ -171,24 +207,15 @@ public class TechnicalAnalyzer {
         return sum / period;
     }
 
-    // ── [유틸] 가장 최근 크로스 경과 일수 탐색 (개선됨) ────────────────────────────────
+    // ── [유틸] 가장 최근 크로스(MA20 × MA60) 경과 일수 ─────────────────────────
     private int countDaysSinceCross(List<Double> p, boolean goldenCross) {
-        // MA20을 계산할 수 있는 최대 과거 시점(offset) 계산
-        int maxOffset = p.size() - 20;
+        int maxOffset = p.size() - CROSS_SLOW - 1;
         int maxLookback = Math.min(60, maxOffset);
-
-        // 탐색할 수 있는 데이터가 부족하면 탐색 중단
         if (maxLookback <= 1) return 99;
 
         for (int i = 1; i < maxLookback; i++) {
-            double ma5Cur = sma(p, 5, i);
-            double ma20Cur = sma(p, 20, i);
-            double ma5Prev = sma(p, 5, i + 1);
-            double ma20Prev = sma(p, 20, i + 1);
-
-            boolean curState = ma5Cur > ma20Cur;
-            boolean prevState = ma5Prev > ma20Prev;
-
+            boolean curState = sma(p, CROSS_FAST, i) > sma(p, CROSS_SLOW, i);
+            boolean prevState = sma(p, CROSS_FAST, i + 1) > sma(p, CROSS_SLOW, i + 1);
             if (goldenCross && curState && !prevState) return i;
             if (!goldenCross && !curState && prevState) return i;
         }

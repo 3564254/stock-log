@@ -25,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/stock")
@@ -64,6 +65,11 @@ public class StockApiController {
     @GetMapping("/{code}")
     public StockPriceDto getPrice(@PathVariable String code) {
         return priceService.fetchPrice(code);
+    }
+
+    @GetMapping("/prices")
+    public Map<String, StockPriceDto> getPricesInBulk(@RequestParam List<String> codes) {
+        return priceService.fetchPricesInBulk(codes);
     }
 
     @GetMapping("/{code}/info")

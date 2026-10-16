@@ -1,6 +1,7 @@
 package com.stocklog.modules.market.news.dto;
 
 import com.stocklog.modules.market.news.News;
+import com.stocklog.modules.market.news.NewsSource;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
@@ -32,7 +33,12 @@ public record NewsDto(
     }
 
     public static News toEntity(NewsDto newsDto) {
+        return toEntity(newsDto, NewsSource.UNKNOWN);
+    }
+
+    public static News toEntity(NewsDto newsDto, NewsSource source) {
         return News.builder()
+                .provider(source)
                 .newsId(newsDto.newsId())
                 .related(newsDto.related())
                 .category(newsDto.category())

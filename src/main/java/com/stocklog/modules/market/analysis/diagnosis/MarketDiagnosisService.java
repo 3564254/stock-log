@@ -42,6 +42,20 @@ public class MarketDiagnosisService {
 
         if (todayDiagnosis.isPresent()) {
             MarketDiagnosis diagnosis = todayDiagnosis.get();
+
+            // 오늘 이미 만든 진단이라도, 그 뒤 새 종가가 들어와 엔진 결과(국면·문구·신뢰도)가 바뀌었으면 다시 만든다.
+            // 예전에는 그날 처음 만든 진단을 하루 종일 재사용해서, 장 마감 뒤 급락이 다음 날까지 반영되지 않았다.
+            if (isStale(diagnosis, regimeDto)) {
+                log.info("[시장 진단] 엔진 결과가 바뀌어 오늘 진단을 다시 만듭니다: {} → {}",
+                        diagnosis.getRegimeDescription(), regimeDto.regimeDescription());
+                diagnosisRepository.delete(diagnosis);
+                historyRepository.findByDate(today).ifPresent(historyRepository::delete);
+                // 날짜 unique 제약: 새로 넣기 전에 삭제를 먼저 DB에 반영한다 (Hibernate는 기본적으로 insert를 delete보다 먼저 보낸다)
+                diagnosisRepository.flush();
+                historyRepository.flush();
+                return createNewDiagnosisAndHistory(input, regimeDto, newsList, today);
+            }
+
             if (isCommentError(diagnosis.getComment())) {
                 String newComment = fetchMarketDiagnosisComment(input, newsList);
                 diagnosis.updateComment(newComment);
@@ -52,6 +66,14 @@ public class MarketDiagnosisService {
         }
 
         return createNewDiagnosisAndHistory(input, regimeDto, newsList, today);
+    }
+
+    private boolean isStale(MarketDiagnosis saved, MarketRegimeDto fresh) {
+        if (fresh == null) return false;
+        return saved.getRegime() != mapToRegimeType(fresh.regime())
+                || saved.getRisk() != mapToRiskType(fresh.risk())
+                || !java.util.Objects.equals(saved.getRegimeDescription(), fresh.regimeDescription())
+                || Math.abs(saved.getConfidence() - fresh.confidence()) >= 5;   // 소수점 흔들림으로 AI 코멘트를 매번 새로 만들지 않게
     }
 
     private MarketDiagnosisDto createNewDiagnosisAndHistory(EngineInput input, MarketRegimeDto regimeDto, List<NewsDto> newsList, LocalDate today) {

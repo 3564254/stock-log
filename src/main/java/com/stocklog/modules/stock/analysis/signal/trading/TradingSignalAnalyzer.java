@@ -60,9 +60,12 @@ public class TradingSignalAnalyzer {
             EntrySignalText.explain(in, zones, ctx, builder); // 진입 신호가 없어도 "어디를 보고 무엇을 기다릴지"는 알려준다
         }
 
-        double trailing = atrOk ? EntryPlanner.trailingStop(phase, in, zones) : 0.0;
+        // 보유 기준 손절선: 진입 계획이 없어도(하락 국면이어도) 항상 낸다
+        EntryPlanner.HoldingStop hold = atrOk ? EntryPlanner.holdingStop(in, zones) : EntryPlanner.HoldingStop.NONE;
+        // 보유 기준 익절 목표: 현재가 위 가장 가까운 저항 (없으면 NONE)
+        EntryPlanner.HoldingTarget holdTarget = atrOk ? EntryPlanner.holdingTarget(in, zones) : EntryPlanner.HoldingTarget.NONE;
         TradingSignalResult.Narrative narrative = TradingNarrative.build(phase, ctx, verdict, setup);
         return TradingResultMapper.toResult(symbol, phase, ctx, verdict, setup, in, zones,
-                narrative, trailing, builder.build());
+                narrative, hold, holdTarget, builder.build());
     }
 }

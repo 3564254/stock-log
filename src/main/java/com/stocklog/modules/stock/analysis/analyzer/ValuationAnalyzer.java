@@ -109,38 +109,56 @@ public class ValuationAnalyzer {
         Double peg = toDouble(v.peg());
         Double roe = toDouble(f != null ? f.roe() : null);
 
-        // ROE-PBR 적정성 (10점)
+        // ROE-PBR 적정성 (10점). 단계를 촘촘히 나눠 '조금 비싸면 0점'이 되지 않게 한다.
         if (pbr != null && pbr > 0 && roe != null) {
             possibleScore += 10;
             double requiredReturn = (Nation.KR.equals(info.nation())) ? 12.0 : 10.0;
             double fairPbr = Math.max(0.1, roe / requiredReturn);
             double ratio = pbr / fairPbr;
-
             if (roe <= 0) {
                 signals.add("ROE 마이너스 — PBR 가치 정당화 불가");
             } else if (ratio < 0.7) {
                 earnedScore += 10;
                 signals.add(String.format("PBR %.2f (적정 %.2f 대비 저렴) — 수익성 대비 극저평가", pbr, fairPbr));
-            } else if (ratio < 1.2) {
-                earnedScore += 7;
+            } else if (ratio < 1.0) {
+                earnedScore += 8;
+                signals.add(String.format("PBR %.2f (적정 %.2f 이하) — 수익성 대비 저평가", pbr, fairPbr));
+            } else if (ratio < 1.5) {
+                earnedScore += 5;
                 signals.add(String.format("PBR %.2f (적정 %.2f 부근) — 현재 수익성에 부합하는 주가", pbr, fairPbr));
+            } else if (ratio < 2.5) {
+                earnedScore += 2;
+                signals.add(String.format("PBR %.2f (적정 %.2f 대비 높음) — 성장 기대가 반영된 가격", pbr, fairPbr));
             } else {
                 signals.add("PBR 과다 — 현재 수익성 대비 주가 부담 구간");
             }
+        } else if (pbr != null && pbr > 0) {
+            // ROE가 없으면 섹터별 PBR 기준표 [극저평가, 저평가, 적정, 고평가 상한]로 대신 본다 (예전엔 기준표가 있어도 안 썼다)
+            possibleScore += 10;
+            double[] b = valuationBand.getPbrBand(info.sector(), info.nation());
+            if (pbr < b[0])      { earnedScore += 10; signals.add(String.format("PBR %.2f — 섹터 기준 극저평가", pbr)); }
+            else if (pbr < b[1]) { earnedScore += 8;  signals.add(String.format("PBR %.2f — 섹터 기준 저평가", pbr)); }
+            else if (pbr < b[2]) { earnedScore += 5;  signals.add(String.format("PBR %.2f — 섹터 기준 적정 수준", pbr)); }
+            else if (pbr < b[3]) { earnedScore += 2;  signals.add(String.format("PBR %.2f — 섹터 기준 다소 높음", pbr)); }
+            else                 { signals.add(String.format("PBR %.2f — 섹터 기준 고평가", pbr)); }
         }
 
-        // PER 섹터 밴드 평가 (7점)
+        // PER 섹터 밴드 평가 (7점): 기준표 [저평가 상한, 적정 상한, 고평가 상한]을 모두 쓴다
+        // (예전엔 저평가 상한만 쓰고 나머지를 '저평가 × 2'로 대신해서, 성장 섹터가 늘 0점에 가까웠다)
         if (per != null && per > 0) {
             possibleScore += 7;
-            double[] perBands = valuationBand.getPerBand(info.sector(), info.nation());
-            double lowBand = perBands[0];
-
-            if (per < lowBand) {
+            double[] b = valuationBand.getPerBand(info.sector(), info.nation());
+            if (per < b[0]) {
                 earnedScore += 7;
                 signals.add(String.format("PER %.1f — 섹터 하단 밴드 내 저평가", per));
-            } else if (per < lowBand * 2.0) {
-                earnedScore += 3;
+            } else if (per < b[1]) {
+                earnedScore += 5;
                 signals.add(String.format("PER %.1f — 섹터 내 적정 주가 수준", per));
+            } else if (per < b[2]) {
+                earnedScore += 2;
+                signals.add(String.format("PER %.1f — 섹터 적정 범위 상단 (다소 높음)", per));
+            } else {
+                signals.add(String.format("PER %.1f — 섹터 대비 고평가", per));
             }
         }
 
@@ -151,6 +169,8 @@ public class ValuationAnalyzer {
                 earnedScore += 3;
                 signals.add(String.format("PEG %.2f — 이익 성장세 대비 저렴한 가격", peg));
             } else if (peg < 1.5) {
+                earnedScore += 2;
+            } else if (peg < 2.0) {
                 earnedScore += 1;
             }
         }

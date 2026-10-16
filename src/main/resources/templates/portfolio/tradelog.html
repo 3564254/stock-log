@@ -80,6 +80,8 @@
     .toss-input { margin-bottom: 14px; }
     .search-item { transition: background 0.15s; cursor: pointer; border-radius: 8px; padding: 12px 14px; margin-bottom: 4px; }
     .search-item:hover { background: var(--surface-soft); }
+    .quote { font-variant-numeric: tabular-nums; }
+    .q-up { color: var(--toss-red-deep); } .q-down { color: var(--toss-blue-deep); }
     .spinner-wrap { display: flex; justify-content: center; padding: 20px; }
 
     .empty-state { text-align: center; padding: 48px 0; color: var(--label-text); }
@@ -475,11 +477,14 @@
         <span class="visually-hidden">검색 중</span>
       </div>
       <div style="max-height: 38vh; overflow-y: auto;" x-ref="tradeResults" x-arrow-nav>
-        <template x-for="item in searchResults" :key="item.info?.code">
+        <!-- /api/stock/search 응답: { stock: { code, name }, currentPrice, changeRate } (예전엔 item.info를 읽어서 결과가 비어 보였다) -->
+        <template x-for="item in searchResults" :key="item.stock?.code">
           <button type="button" data-nav-item @click="selectStock(item)" class="search-item d-flex justify-content-between align-items-center">
             <div style="min-width: 0;">
-              <div class="fw-bold text-dark text-truncate" style="font-size: 15px;" x-text="item.info?.name || item.info?.code"></div>
-              <div class="small mt-1" style="color: var(--label-text); font-weight: 500;" x-text="item.info?.code"></div>
+              <div class="fw-bold text-dark text-truncate" style="font-size: 15px;" x-text="item.stock?.name || item.stock?.code"></div>
+              <div class="small mt-1" style="color: var(--label-text); font-weight: 500;">
+                <span x-text="item.stock?.code"></span><span class="quote" x-show="Number(item.currentPrice) > 0"> · <span x-text="fmtPrice(item.currentPrice, item.stock?.code)"></span> <span :class="rateClass(item.changeRate)" x-text="fmtRate(item.changeRate)"></span></span>
+              </div>
             </div>
             <div class="flex-shrink-0" style="font-size: 13px; font-weight: 600; color: var(--slate);">
               선택 <i class="bi bi-chevron-right" aria-hidden="true"></i>
@@ -505,7 +510,9 @@
         <div class="d-flex align-items-center justify-content-between p-3 rounded-3 mb-4" style="background: var(--toss-blue-tint); border: 1px solid var(--toss-blue-tint-line);">
           <div>
             <div class="fw-bold text-dark" style="font-size: 15px;" x-text="selectedStock.name"></div>
-            <div class="small mt-1" style="color: var(--label-text); font-weight: 500;" x-text="selectedStock.code"></div>
+            <div class="small mt-1" style="color: var(--label-text); font-weight: 500;">
+              <span x-text="selectedStock.code"></span><span class="quote" x-show="Number(selectedStock.price) > 0"> · 현재가 <b style="color: var(--ink);" x-text="fmtPrice(selectedStock.price, selectedStock.code)"></b> <span :class="rateClass(selectedStock.rate)" x-text="fmtRate(selectedStock.rate)"></span></span>
+            </div>
           </div>
           <button type="button" @click="step = 1; $nextTick(() => document.getElementById('trade-search')?.focus())" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold" style="font-size: 13px; border-color: var(--hairline); color: var(--slate);" aria-label="다른 종목 선택">변경</button>
         </div>
@@ -798,7 +805,28 @@
         }
       },
 
-      selectStock(item) { this.selectedStock = { name: item.info?.name, code: item.info?.code }; this.step = 2; },
+      selectStock(item) {
+        this.selectedStock = { name: item.stock?.name, code: item.stock?.code, price: item.currentPrice, rate: item.changeRate };
+        this.step = 2;
+      },
+      // 다른 화면에서 종목만 넘어온 경우 현재가를 따로 불러온다 (/api/stock/{code} → StockPriceDto)
+      async loadQuote(code) {
+        try {
+          const res = await fetch(`/api/stock/${encodeURIComponent(code)}`, { headers: { 'Accept': 'application/json' } });
+          if (!res.ok || res.redirected) return;
+          const p = await res.json();
+          if (this.selectedStock.code === code) this.selectedStock = { ...this.selectedStock, price: p?.currentPrice, rate: p?.changeRate };
+        } catch (e) { /* 현재가는 보조 정보라 실패해도 그대로 둔다 */ }
+      },
+      fmtPrice(v, code) {
+        const n = Number(v);
+        if (!(n > 0)) return '-';
+        return /^\d+$/.test(code || '')
+                ? n.toLocaleString('ko-KR', { maximumFractionDigits: 0 }) + '원'
+                : '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      },
+      fmtRate(v) { const n = Number(v); return Number.isFinite(n) ? (n > 0 ? '+' : '') + n.toFixed(2) + '%' : ''; },
+      rateClass(v) { const n = Number(v); return n > 0 ? 'q-up' : n < 0 ? 'q-down' : ''; },
       openModal()  {
         this.step = 1; this.searchQuery = ''; this.searchResults = []; this.page = 0; this.hasMore = true;
         this.searchError = ''; this.searchedQuery = ''; this.tradeSubmitting = false;
@@ -812,6 +840,7 @@
         const params = new URLSearchParams(window.location.search);
         if (params.get('code')) {
           this.selectedStock = { code: params.get('code'), name: params.get('name') || params.get('code') };
+          this.loadQuote(params.get('code'));
           this.step = 2;
           this.showModal = true;
           window.history.replaceState(null, '', window.location.pathname);

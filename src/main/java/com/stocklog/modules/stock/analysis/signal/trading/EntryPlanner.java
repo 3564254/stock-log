@@ -122,11 +122,23 @@ public final class EntryPlanner {
     // ------------------------------------------------------------------
     // 판정 + 트리거 + RR(마지막 단계)
     // ------------------------------------------------------------------
+    /**
+     * 위쪽에 유의미한 저항 구간이 없을 때(신고가 돌파 등) 손익비를 가늠할 기본 목표 폭.
+     * 화면의 목표가로는 쓰지 않고, '손익비 검사를 건너뛰어 진입 가능으로 판정'되는 것만 막는다.
+     */
+    private static final double FALLBACK_TARGET_ATR = 3.0;
+
     public static Verdict judge(EntryType type, SignalInputs in, EntrySetup setup) {
         if (in.price() > setup.entry().high()) {
             return type == EntryType.PULLBACK ? Verdict.WAIT_FOR_ZONE : Verdict.CHASE_RISK;
         }
-        if (Double.isFinite(setup.rr()) && setup.rr() < MIN_RR) {
+        double rr = setup.rr();
+        if (!Double.isFinite(rr)) {
+            // 목표 저항이 없으면 예전엔 손익비 검사 없이 통과했다. ATR 기준 목표로 손익비를 추정한다
+            double risk = setup.refPrice() - setup.stop();
+            rr = risk > 0 ? (FALLBACK_TARGET_ATR * in.atr()) / risk : Double.NaN;
+        }
+        if (!Double.isFinite(rr) || rr < MIN_RR) {
             return Verdict.RR_TOO_LOW;
         }
         if (!bullishTrigger(in)) {
@@ -141,16 +153,69 @@ public final class EntryPlanner {
         return in.price() > in.open();
     }
 
+    /** 보유 기준 손절선과 그 근거 (예: "지지 구간 하단 (MA20·POC)") */
+    public record HoldingStop(double price, String basis) {
+        public static final HoldingStop NONE = new HoldingStop(0.0, "");
+    }
+
+    /** 현재가에 이보다 가까운 손절선은 일상적인 흔들림에도 걸리므로 건너뛴다 */
+    private static final double HOLD_MIN_GAP_ATR = 0.5;
+    /** 지지 구간도 최근 저점도 쓸 수 없을 때의 기본 폭 */
+    private static final double HOLD_FALLBACK_ATR = 2.0;
+
     /**
-     * 보유 관점의 추적 손절: 현재가 아래 가장 가까운 유의미한 지지 구간 하단 - 버퍼.
-     * 이 함수는 무상태라서, 호출하는 쪽이 이전 값과 max()를 취해 아래로 내려가지 않게 해야 한다.
+     * 보유 관점의 손절선(이탈 기준선). 차트 국면과 상관없이 ATR만 있으면 항상 값을 낸다.
+     * 예전에는 강한 보유·진입 준비 같은 좋은 국면에서만 계산해서, 손절선이 가장 필요한 하락 국면에 비어 있었다.
+     *
+     * 1. 현재가 아래 유의미한 지지 구간 하단 - 버퍼 (가까운 구간부터, 현재가에 너무 붙은 건 건너뜀)
+     * 2. 없으면 최근 저점 - 버퍼
+     * 3. 그것도 안 되면 현재가 - 2 ATR
+     *
+     * 무상태라서, 보유 중 손절선을 올리기만 하려면 호출하는 쪽이 이전 값과 max()를 취해야 한다.
      */
-    public static double trailingStop(ChartPhase phase, SignalInputs in, List<PriceZone> zones) {
-        if (phase != ChartPhase.STRONG_HOLD && !PLANNABLE.contains(phase)) return 0.0;
+    public static HoldingStop holdingStop(SignalInputs in, List<PriceZone> zones) {
+        double price = in.price();
+        double atr = in.atr();
+        if (!(price > 0) || !(atr > 0)) return HoldingStop.NONE;
+        double ceiling = price - HOLD_MIN_GAP_ATR * atr;
+
+        Optional<HoldingStop> bySupport = zones.stream()
+                .filter(z -> z.strength() >= MIN_SUPPORT_STRENGTH && z.high() < price)
+                .sorted(Comparator.comparingDouble(PriceZone::high).reversed())
+                .map(z -> new HoldingStop(z.low() - STOP_BUFFER_ATR * atr,
+                        "지지 구간 하단 (" + String.join("·", z.sources()) + ")"))
+                .filter(h -> h.price() > 0 && h.price() <= ceiling)
+                .findFirst();
+        if (bySupport.isPresent()) return bySupport.get();
+
+        double low = in.recentLow();
+        if (Double.isFinite(low) && low < price) {
+            double stop = low - STOP_BUFFER_ATR * atr;
+            if (stop > 0 && stop <= ceiling) return new HoldingStop(stop, "최근 저점 아래");
+        }
+
+        double stop = price - HOLD_FALLBACK_ATR * atr;
+        return stop > 0 ? new HoldingStop(stop, "변동폭(ATR) 2배 아래") : HoldingStop.NONE;
+    }
+
+    /** 보유 관점의 익절 목표: 현재가 위 가장 가까운 유의미한 저항 구간 하단과 그 근거 */
+    public record HoldingTarget(double price, String basis) {
+        public static final HoldingTarget NONE = new HoldingTarget(0.0, "");
+    }
+
+    /**
+     * 보유 관점의 익절 목표. 현재가보다 최소 0.5 ATR 위에 있는 가장 가까운 유의미한 저항 구간의 하단.
+     * 위쪽에 저항이 없으면(신고가 구간 등) 목표를 지어내지 않고 NONE을 돌려준다.
+     */
+    public static HoldingTarget holdingTarget(SignalInputs in, List<PriceZone> zones) {
+        double price = in.price();
+        double atr = in.atr();
+        if (!(price > 0) || !(atr > 0)) return HoldingTarget.NONE;
+        double floor = price + HOLD_MIN_GAP_ATR * atr;
         return zones.stream()
-                .filter(z -> z.strength() >= MIN_SUPPORT_STRENGTH && z.high() < in.price())
-                .max(Comparator.comparingDouble(PriceZone::high))
-                .map(z -> z.low() - STOP_BUFFER_ATR * in.atr())
-                .orElse(0.0);
+                .filter(z -> z.strength() >= MIN_TARGET_STRENGTH && z.low() >= floor)
+                .min(Comparator.comparingDouble(PriceZone::low))
+                .map(z -> new HoldingTarget(z.low(), "저항 구간 하단 (" + String.join("·", z.sources()) + ")"))
+                .orElse(HoldingTarget.NONE);
     }
 }

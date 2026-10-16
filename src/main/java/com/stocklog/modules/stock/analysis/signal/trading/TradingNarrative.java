@@ -284,7 +284,10 @@ public final class TradingNarrative {
                             "warn");
                 case RR_TOO_LOW:
                     return new Action("⚖️ 손익비 부족 (" + type + ")",
-                            "진입 구간은 유효하지만 손절 거리 대비 위쪽 저항이 가까워 기대 수익이 작습니다." + rr + " 이번 자리는 건너뛰는 선택지도 있습니다.",
+                            (plan.hasStructuralTarget()
+                                    ? "진입 구간은 유효하지만 손절 거리 대비 위쪽 저항이 가까워 기대 수익이 작습니다." + rr
+                                    : "위쪽에 뚜렷한 저항은 없지만, 손절 거리가 변동폭(ATR)에 비해 길어 기대 수익 대비 위험이 큽니다.")
+                                    + " 이번 자리는 건너뛰는 선택지도 있습니다.",
                             "warn");
                 default:
                     break;

@@ -16,6 +16,13 @@ public interface NewsRepository extends JpaRepository<News, Long> {
     @Query("SELECT s FROM News s WHERE s.related IS NULL OR s.related = ''")
     Page<News> findMarketNews(Pageable pageable);
 
+    /** 출처별 시장 뉴스 (종목 태그가 없는 기사) */
+    @Query("SELECT s FROM News s WHERE s.provider = :provider AND (s.related IS NULL OR s.related = '')")
+    Page<News> findMarketNewsByProvider(@Param("provider") NewsSource provider, Pageable pageable);
+
+    /** 출처별 최신 N건 (종목 기사 포함) — PageRequest.of(0, n)으로 개수 제한 */
+    List<News> findByProviderOrderByDateTimeDesc(NewsSource provider, Pageable pageable);
+
     @Query("SELECT s FROM News s WHERE s.related = :code")
     Page<News> findStockNews(@Param("code") String code, Pageable pageable);
 

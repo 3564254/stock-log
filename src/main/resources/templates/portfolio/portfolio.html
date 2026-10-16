@@ -76,6 +76,12 @@
     .row-name { font-size: 15px; font-weight: 700; color: var(--text-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .name-line { column-gap: 8px; row-gap: 2px; }
     .row-meta { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+    /* 관심 종목: 1차 진입가까지 남은 거리 */
+    .entry-gap { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+    .entry-gap.is-near    { color: var(--toss-blue-deep); }
+    .entry-gap.is-reached { color: var(--good-text); background: var(--good-tint); padding: 2px 8px; border-radius: 999px; }
+    .entry-gap.is-below   { color: var(--caution-text); }
+    /* 보유 종목 기준선 한 줄: 손절(또는 수익 보호) · 목표 */
     .price-col { text-align: right; min-width: 100px; }
     .price-main { font-size: 15px; font-weight: 700; }
     .price-sub { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-top: 2px; }
@@ -285,7 +291,8 @@
         <div class="summary-tile">
           <div class="summary-label"><i class="bi bi-exclamation-triangle"></i>점검 필요</div>
           <div class="summary-value num"><span class="status-dot caution" x-show="alertCount > 0" aria-hidden="true"></span><span x-text="alertCount + '개'"></span></div>
-          <div class="summary-foot" x-text="`고점 대비 -${DRAWDOWN_ALERT}% 이상 하락 보유 종목`"></div>
+          <div class="summary-foot" x-text="!hasAnyStop ? `고점 대비 -${DRAWDOWN_ALERT}% 이상 하락 보유 종목`
+                : (profitReviewCount > 0 ? `손절선 이탈·근접 · 차익 실현 검토 ${profitReviewCount}개` : `손절선 이탈 또는 ${STOP_NEAR}% 이내 근접`)"></div>
         </div>
       </div>
 
@@ -297,7 +304,7 @@
             <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
               <div>
                 <h3 class="card-title">보유 중인 종목</h3>
-                <div class="card-sub">수익률과 고점 대비 하락폭으로 매도 시점을 점검해요</div>
+                <div class="card-sub">손절선·목표에 가까워지면 알려 드려요. 자세한 기준은 매도 검증에서 볼 수 있어요</div>
               </div>
               <button class="btn-toss" @click="openPickModal('holding')"><i class="bi bi-plus me-1"></i>종목 추가</button>
             </div>
@@ -333,6 +340,7 @@
               <select class="sort-select" x-model="holdingSort" aria-label="보유 종목 정렬">
                 <option value="return_desc">수익률 높은 순</option>
                 <option value="return_asc">수익률 낮은 순</option>
+                <template x-if="hasAnyStop"><option value="stop">기준선 가까운 순</option></template>
                 <option value="drawdown">고점 대비 하락 큰 순</option>
                 <template x-if="weightItems.length > 0"><option value="weight">비중 큰 순</option></template>
                 <option value="name">이름순</option>
@@ -346,9 +354,9 @@
                 <div class="row-main flex-grow-1" style="min-width: 0;">
                   <div class="d-flex align-items-center flex-wrap name-line">
                     <span class="row-name" x-text="stock.korName"></span>
-                    <span class="tone tone-caution" x-show="isDrawdownAlert(stock)" :aria-label="`매수 후 최고가 대비 ${formatRate(drawdown(stock))}`">
-                      <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i><span x-text="'고점 대비 ' + formatRate(drawdown(stock))"></span>
-                    </span>
+                    <!-- 종목당 배지 하나: 손절선 이탈 > 손절선 근접 > 수익 보호선 이탈 > 목표 근접 (기준선이 없으면 예전 '고점 대비 하락') -->
+                    <span class="tone" x-show="levelBadge(stock)" :class="'tone-' + (levelBadge(stock)?.tone || 'gray')"
+                          :title="levelBadge(stock)?.hint || ''" x-text="levelBadge(stock)?.text || ''"></span>
                   </div>
                   <div class="row-meta mt-1">
                     <span x-text="stock.stockCode"></span><span class="num" x-show="stock.quantity != null" x-text="' · ' + formatQty(stock.quantity) + '주'"></span><span x-show="stock.sector" x-text="' · ' + stock.sector"></span>
@@ -416,10 +424,16 @@
                   </div>
                   <div class="d-flex align-items-center flex-wrap gap-2 mt-1">
                     <span class="row-meta num" x-show="item.targetPrice" x-text="'1차 진입가 ' + formatPrice(item.targetPrice, item.stockCode)"></span>
+                    <span class="entry-gap num" x-show="entryState(item)" :class="'is-' + (entryState(item)?.tone || '')" x-text="entryState(item)?.text"></span>
                     <template x-if="lastVerify['BUY:' + item.stockCode]">
                       <span class="verify-stamp" x-text="(item.targetPrice ? '· ' : '') + '최근 검증 ' + lastVerify['BUY:' + item.stockCode].summary + ' · ' + lastVerify['BUY:' + item.stockCode].at"></span>
                     </template>
                   </div>
+                </div>
+
+                <div class="price-col" x-show="quoteOf(item.stockCode)">
+                  <div class="price-main num" x-text="formatPrice(quoteOf(item.stockCode)?.currentPrice, item.stockCode)"></div>
+                  <div class="price-sub num" :class="returnClass(quoteOf(item.stockCode)?.changeRate)" x-text="fmtChange(quoteOf(item.stockCode)?.changeRate)"></div>
                 </div>
 
                 <div class="row-actions d-flex align-items-center gap-1 flex-shrink-0">
@@ -526,10 +540,12 @@
            x-ref="pickResults" x-arrow-nav @keydown.escape.stop="isSearchOpen = false; $refs.pickSearch.focus()">
         <template x-for="item in searchResults" :key="item.stock?.code">
           <button type="button" data-nav-item class="search-item" :class="isAlreadyAdded(item.stock?.code) ? 'disabled' : ''"
-                  :disabled="isAlreadyAdded(item.stock?.code)" @click="selectStock(item.stock)">
+                  :disabled="isAlreadyAdded(item.stock?.code)" @click="selectStock(item.stock, item)">
             <div>
               <div class="fw-bold text-truncate" style="font-size: 15px;" x-text="item.stock?.name || item.stock?.code"></div>
-              <div class="row-meta mt-1" x-text="item.stock?.code"></div>
+              <div class="row-meta mt-1">
+                <span x-text="item.stock?.code"></span><span class="num" x-show="Number(item.currentPrice) > 0"> · <span x-text="formatPrice(item.currentPrice, item.stock?.code)"></span> <span :class="returnClass(item.changeRate)" x-show="item.changeRate != null" x-text="formatRate(item.changeRate)"></span></span>
+              </div>
             </div>
             <span x-show="isAlreadyAdded(item.stock?.code)" class="tone tone-gray flex-shrink-0">등록됨</span>
             <span x-show="!isAlreadyAdded(item.stock?.code)" class="flex-shrink-0" style="font-size: 13px; font-weight: 600; color: var(--text-sub);">선택 <i class="bi bi-chevron-right" aria-hidden="true"></i></span>
@@ -556,15 +572,22 @@
 
     <div x-show="pickForm.code" class="mb-3">
       <div class="selected-stock">
-        <div>
-          <span class="fw-bold" x-text="pickForm.name"></span>
-          <span class="row-meta ms-2" x-text="pickForm.code"></span>
+        <div style="min-width: 0;">
+          <div><span class="fw-bold" x-text="pickForm.name"></span><span class="row-meta ms-2" x-text="pickForm.code"></span></div>
+          <div class="row-meta mt-1 num" x-show="Number(pickForm.price) > 0">
+            현재가 <b style="color: var(--text-strong);" x-text="formatPrice(pickForm.price, pickForm.code)"></b>
+            <span :class="returnClass(pickForm.rate)" x-show="pickForm.rate != null" x-text="formatRate(pickForm.rate)"></span>
+          </div>
         </div>
         <button type="button" class="text-link-btn" x-show="pickMode !== 'edit'" @click="clearPick(); $nextTick(() => $refs.pickSearch?.focus())">다른 종목 선택</button>
       </div>
 
       <div class="mt-3" x-show="pickMode !== 'watch'">
-        <label for="pick-avg-price" class="field-label">평균 매수 단가</label>
+        <div class="d-flex justify-content-between align-items-baseline">
+          <label for="pick-avg-price" class="field-label">평균 매수 단가</label>
+          <button type="button" class="text-link-btn" x-show="Number(pickForm.price) > 0 && pickMode === 'holding'"
+                  @click="pickForm.averagePrice = String(pickForm.price); $nextTick(() => $refs.avgInput?.focus())">현재가로 입력</button>
+        </div>
         <input type="number" id="pick-avg-price" step="any" min="0" inputmode="decimal" class="toss-input" x-ref="avgInput" x-model="pickForm.averagePrice"
                :placeholder="isKrCode(pickForm.code) ? '예: 72000 (원)' : '예: 182.50 (달러)'"
                @keydown.enter="submitPick()">
@@ -773,7 +796,9 @@
     Alpine.data('portfolioApp', () => ({
       /* 상수 노출 */
       PHASES, PHASE_ORDER, WATCH_FILTERS, INDICATORS, INDICATOR_GROUPS, OPERATORS, RULE_PRESETS,
-      DRAWDOWN_ALERT: 10, // 고점 대비 이 % 이상 하락하면 경고
+      DRAWDOWN_ALERT: 10, // 고점 대비 이 % 이상 하락하면 경고 (손절 기준선을 못 구한 종목에만 쓴다)
+      STOP_NEAR: 3,       // 현재가가 아래 기준선 위 이 % 이내면 '근접'
+      TARGET_NEAR: 2,     // 현재가가 익절 목표 아래 이 % 이내면 '목표 근접'
       CONCENTRATION_LIMIT: 40, // 한 종목 비중이 이 % 이상이면 '집중' 표시
       // 상위 4개 색 (파랑·청록·보라·분홍). 이웃한 색끼리 색약에서도 구분되는지 검사한 조합. 나머지는 '기타'(회색)
       WEIGHT_COLORS: ['#3182f6', '#1baf7a', '#6250d6', '#e87ba4'],
@@ -784,6 +809,7 @@
       watchList: Array.isArray(initialWatchList) ? initialWatchList : [],
       tradingRules: (Array.isArray(initialRules) ? initialRules : []).map(r => ({ ...r, isActive: !!(r.isActive ?? r.active) })),
       portfolio: initialPortfolio || { myStocks: [], averageReturnRate: 0 },
+      stops: {},          // { 종목코드: { stop, basis, target, targetBasis, phase } } — /api/portfolio/holding-stops (화면을 띄운 뒤 따로 불러옴)
 
       /* 보기 상태 */
       holdingSort: 'return_desc',
@@ -802,6 +828,36 @@
       showRuleModal: false, showIndicatorSheet: false,
       ruleForm: { title: '', indicatorType: 'RSI', operator: 'LESS_THAN_OR_EQUAL_TO', targetValue: null },
 
+      // ── 관심 종목 현재가 (/api/stock/prices, 화면을 띄운 뒤 한 번에) ──
+      quotes: {},        // { 종목코드: StockPriceDto }
+      async loadQuotes() {
+        const codes = this.watchList.map(w => w.stockCode).filter(c => c && !(c in this.quotes));
+        if (!codes.length) return;
+        try {
+          const res = await fetch('/api/stock/prices?codes=' + encodeURIComponent(codes.join(',')), { headers: { 'Accept': 'application/json' } });
+          if (!res.ok || res.redirected) return;
+          const data = await res.json();
+          if (data && typeof data === 'object') this.quotes = { ...this.quotes, ...data };
+        } catch (e) { /* 현재가는 보조 정보라 실패해도 목록은 그대로 */ }
+      },
+      quoteOf(code) { const q = this.quotes[code]; return q && Number(q.currentPrice) > 0 ? q : null; },
+      // 현재가에서 1차 진입가까지 몇 % (음수 = 더 내려와야 함, 양수 = 이미 진입가 아래)
+      entryGap(item) {
+        const q = this.quoteOf(item.stockCode), t = Number(item.targetPrice);
+        if (!q || !(t > 0)) return null;
+        const cur = Number(q.currentPrice);
+        return (t - cur) / cur * 100;
+      },
+      /** { text, tone }: 진입가까지 -1.8% / 진입가 도달 / 진입가보다 4.2% 아래 */
+      entryState(item) {
+        const g = this.entryGap(item);
+        if (g === null) return null;
+        if (g < 0) return { text: '진입가까지 ' + g.toFixed(1) + '%', tone: Math.abs(g) <= 2 ? 'near' : 'far' };
+        if (g <= 3) return { text: '진입가 도달', tone: 'reached' };
+        return { text: '진입가보다 ' + g.toFixed(1) + '% 아래', tone: 'below' };
+      },
+      fmtChange(v) { const n = Number(v); return Number.isFinite(n) ? (n > 0 ? '+' : '') + n.toFixed(2) + '%' : ''; },
+
       /* ======================= 계산 값 ======================= */
       get anyModalOpen() { return this.showPickModal || this.showRuleModal || this.showIndicatorSheet; },
 
@@ -818,7 +874,9 @@
         if (!this.holdings.length) return null;
         return [...this.holdings].filter(h => h.returnRate != null).sort((a, b) => Number(b.returnRate) - Number(a.returnRate))[0] || null;
       },
-      get alertCount() { return this.holdings.filter(h => this.isDrawdownAlert(h)).length; },
+      get alertCount() { return this.holdings.filter(h => this.needsCheck(h)).length; },
+      get hasAnyStop() { return this.holdings.some(h => this.stopOf(h)); },
+      get profitReviewCount() { return this.holdings.filter(h => ['profitBroken', 'targetNear'].includes(this.levelState(h))).length; },
       get weightItems() {
         const list = this.holdings.filter(h => h.weight != null && Number(h.weight) > 0)
                                   .sort((a, b) => Number(b.weight) - Number(a.weight));
@@ -844,6 +902,7 @@
         switch (this.holdingSort) {
           case 'return_asc': return list.sort((a, b) => Number(a.returnRate) - Number(b.returnRate));
           case 'drawdown':   return list.sort((a, b) => dd(a) - dd(b));
+          case 'stop':       return list.sort((a, b) => (this.stopGap(a) ?? 999) - (this.stopGap(b) ?? 999));
           case 'name':       return list.sort((a, b) => (a.korName || '').localeCompare(b.korName || '', 'ko'));
           case 'weight':     return list.sort((a, b) => Number(b.weight ?? -1) - Number(a.weight ?? -1));
           default:           return list.sort((a, b) => Number(b.returnRate) - Number(a.returnRate));
@@ -911,6 +970,66 @@
       },
       isDrawdownAlert(h) { const d = this.drawdown(h); return d !== null && d <= -this.DRAWDOWN_ALERT; },
 
+      // ── 보유 기준 손절선 (차트 지지 구간·최근 저점·변동폭으로 서버가 계산) ──
+      stopOf(h) { const s = this.stops[h.stockCode]; return s && Number(s.stop) > 0 ? s : null; },
+      // 현재가가 손절선보다 몇 % 위에 있는지 (0 이하면 이탈)
+      stopGap(h) {
+        const s = this.stopOf(h), cur = Number(h.currentPrice);
+        if (!s || !(cur > 0)) return null;
+        return (cur - Number(s.stop)) / cur * 100;
+      },
+      // 아래 기준선이 평단 이상이면 팔아도 수익이 남는 '수익 보호선', 아니면 '손절선'
+      isProfitLine(h) {
+        const s = this.stopOf(h), avg = Number(h.averagePrice);
+        return !!s && avg > 0 && Number(s.stop) >= avg;
+      },
+      stopHint(h) {
+        const s = this.stopOf(h), avg = Number(h.averagePrice);
+        if (!s) return '';
+        const atLine = avg > 0 ? ` · 이 가격에 팔면 ${this.formatRate((Number(s.stop) / avg - 1) * 100)}` : '';
+        return (s.basis || '') + atLine;
+      },
+      targetOf(h) { const s = this.stops[h.stockCode]; return s && Number(s.target) > 0 ? s : null; },
+      // 현재가에서 목표까지 남은 % (양수)
+      targetGap(h) {
+        const s = this.targetOf(h), cur = Number(h.currentPrice);
+        if (!s || !(cur > 0)) return null;
+        return (Number(s.target) - cur) / cur * 100;
+      },
+      /** 종목 상태 하나: lossBroken, lossNear, profitBroken, targetNear, ok, (기준선 없으면) drawdown / null */
+      levelState(h) {
+        const g = this.stopGap(h);
+        if (g === null) return this.isDrawdownAlert(h) ? 'drawdown' : null;
+        const profit = this.isProfitLine(h);
+        if (g <= 0) return profit ? 'profitBroken' : 'lossBroken';
+        if (!profit && g <= this.STOP_NEAR) return 'lossNear';
+        const t = this.targetGap(h);
+        if (t !== null && t <= this.TARGET_NEAR) return 'targetNear';
+        return 'ok';
+      },
+      levelBadge(h) {
+        switch (this.levelState(h)) {
+          case 'lossBroken':   return { tone: 'alert',   text: '손절선 이탈', hint: this.stopHint(h) };
+          case 'lossNear':     return { tone: 'caution', text: `손절선까지 ${(this.stopGap(h) ?? 0).toFixed(1)}%`, hint: this.stopHint(h) };
+          case 'profitBroken': return { tone: 'gray',    text: '수익 보호선 이탈', hint: '차익 실현을 검토해 보세요 · ' + this.stopHint(h) };
+          case 'targetNear':   return { tone: 'good',    text: `목표까지 ${(this.targetGap(h) ?? 0).toFixed(1)}%`, hint: this.targetOf(h)?.targetBasis || '' };
+          case 'drawdown':     return { tone: 'caution', text: '고점 대비 ' + this.formatRate(this.drawdown(h)), hint: '매수 후 최고가 대비 하락폭' };
+          default:             return null;
+        }
+      },
+      // 점검 필요: 손실 쪽만 (손절선 이탈·근접, 기준선이 없으면 예전 '고점 대비 -10%')
+      needsCheck(h) { return ['lossBroken', 'lossNear', 'drawdown'].includes(this.levelState(h)); },
+      async loadStops() {
+        const codes = this.holdings.map(h => h.stockCode).filter(c => c && !(c in this.stops));
+        if (!codes.length) return;
+        try {
+          const res = await fetch('/api/portfolio/holding-stops?codes=' + encodeURIComponent(codes.join(',')), { headers: { 'Accept': 'application/json' } });
+          if (!res.ok || res.redirected) return;
+          const data = await res.json();
+          if (data && typeof data === 'object') this.stops = { ...this.stops, ...data };
+        } catch (e) { /* 손절선을 못 불러오면 예전 기준(고점 대비)으로 점검한다 */ }
+      },
+
       /* ======================= 포맷 ======================= */
       isKrCode(code) { return typeof code === 'string' && /^\d+$/.test(code); },
       formatPrice(val, code) {
@@ -967,6 +1086,13 @@
 
       // 홈·검증 모달에서 넘어온 경우: ?add=rule → 규칙 추가 창, ?add=holding&code=&name= → 종목이 채워진 보유 종목 추가 창
       init() {
+        // 보유 기준 손절선은 화면을 먼저 띄운 뒤 불러오고, 종목이 추가되면 새 종목만 다시 불러온다
+        this.loadStops();
+        this.$watch('portfolio', () => this.loadStops());
+        // 관심 종목 현재가: 종목이 추가되면 새 종목만 다시 불러온다
+        this.loadQuotes();
+        this.$watch('watchList', () => this.loadQuotes());
+
         const params = new URLSearchParams(window.location.search);
         if (params.get('add') === 'rule') {
           window.history.replaceState(null, '', window.location.pathname);
@@ -996,13 +1122,14 @@
       openEditHolding(stock) {
         this.pickMode = 'edit';
         this.searchQuery = ''; this.searchResults = []; this.isSearchOpen = false;
-        this.pickForm = { code: stock.stockCode, name: stock.korName, averagePrice: stock.averagePrice, quantity: stock.quantity ?? '' };
+        this.pickForm = { code: stock.stockCode, name: stock.korName, averagePrice: stock.averagePrice, quantity: stock.quantity ?? '',
+                          price: stock.currentPrice, rate: null };
         this.showPickModal = true;
         this.$nextTick(() => this.$refs.avgInput?.focus());
       },
       closePickModal() { this.showPickModal = false; },
       clearPick() {
-        this.pickForm = { code: '', name: '', averagePrice: '', quantity: '' };
+        this.pickForm = { code: '', name: '', averagePrice: '', quantity: '', price: null, rate: null };
         this.searchQuery = ''; this.searchResults = []; this.isSearchOpen = false;
       },
       isAlreadyAdded(code) {
@@ -1011,11 +1138,24 @@
                 ? this.watchList.some(w => w.stockCode === code)
                 : this.holdings.some(h => h.stockCode === code);
       },
-      selectStock(stock) {
+      // quote: 검색 결과 { currentPrice, changeRate }. 없으면(다른 화면에서 종목만 넘어온 경우) 현재가를 따로 불러온다
+      selectStock(stock, quote) {
         if (!stock || this.isAlreadyAdded(stock.code)) return;
         this.pickForm.code = stock.code;
         this.pickForm.name = stock.name;
+        this.pickForm.price = quote?.currentPrice ?? null;
+        this.pickForm.rate = quote?.changeRate ?? null;
         this.isSearchOpen = false;
+        if (!(Number(this.pickForm.price) > 0)) this.loadQuote(stock.code);
+      },
+      async loadQuote(code) {
+        try {
+          const p = await this.api(`/api/stock/${encodeURIComponent(code)}`);   // StockPriceDto
+          if (this.pickForm.code === code && Number(p?.currentPrice) > 0) {
+            this.pickForm.price = p.currentPrice;
+            this.pickForm.rate = p.changeRate ?? null;
+          }
+        } catch (e) { /* 현재가는 보조 정보라 실패해도 등록은 그대로 할 수 있다 */ }
       },
       // 수량은 선택: 비어 있으면 null, 입력했다면 0보다 커야 한다
       get pickQuantity() {
@@ -1177,10 +1317,19 @@
 
       /* ======================= 매수·매도 검증 (공용 모달) ======================= */
       openVerify(type, stockCode, stockName) {
+        const h = type === 'SELL' ? this.holdings.find(x => x.stockCode === stockCode) : null;
         this.$dispatch('open-verify', {
           type, stockCode, stockName,
+          // 매도 검증은 평단·현재가로 손절선/수익 보호선을 구분한다
+          holding: h ? { averagePrice: h.averagePrice, currentPrice: h.currentPrice } : null,
           ruleConditions: this.ruleConditionMap,
-          canCreateRule: true
+          canCreateRule: true,
+          // 확인 중 화면에 미리 보여 줄 켜 둔 규칙 (결과가 오면 서버 목록으로 바뀐다)
+          rules: this.tradingRules.filter(r => r.isActive).map(r => ({
+            id: r.id,
+            title: r.title || this.indicatorMeta(r.indicatorType).name,
+            cond: this.ruleConditionMap[r.id] || null
+          }))
         });
       },
       onVerifyDone(d) {

@@ -21,7 +21,7 @@ public class CreditAnalyzer implements MarketAnalyzer {
             double hySpreadScore,
             double financialStressScore,
             double consumerLoansScore,
-            double sectorFinancialsScore,
+            double businessLoansScore,
             boolean creditDivergence,
             String creditRegime
     ) {}
@@ -32,7 +32,7 @@ public class CreditAnalyzer implements MarketAnalyzer {
         List<Double> hySpreadCloses = getDoubles(data, IndexType.HIGH_YIELD_SPREAD);
         List<Double> finStressCloses = getDoubles(data, IndexType.FINANCIAL_STRESS);
         List<Double> loansCloses = getDoubles(data, IndexType.US_CONSUMER_REVOLVING_LOANS);
-        List<Double> financialsCloses = getDoubles(data, IndexType.SECTOR_FINANCIALS);
+        List<Double> businessLoansCloses = getDoubles(data, IndexType.SECTOR_FINANCIALS);   // TOTCI: 상업·산업 대출 총액 (주간)
 
         // 다이버전스 체크용 데이터
         List<Double> sp500Closes = getDoubles(data, IndexType.SP500);
@@ -42,10 +42,10 @@ public class CreditAnalyzer implements MarketAnalyzer {
         double hySpreadScore = analyzeHySpread(hySpreadCloses);
         double financialStressScore = analyzeFinancialStress(finStressCloses);
         double consumerLoansScore = analyzeConsumerLoans(loansCloses);
-        double sectorFinancialsScore = analyzeSectorFinancials(financialsCloses, sp500Closes);
+        double businessLoansScore = analyzeBusinessLoans(businessLoansCloses);
 
         // 총합 계산 및 -100 ~ +100 정규화
-        double totalScore = hySpreadScore + financialStressScore + consumerLoansScore + sectorFinancialsScore;
+        double totalScore = hySpreadScore + financialStressScore + consumerLoansScore + businessLoansScore;
         totalScore = Math.max(-100.0, Math.min(100.0, totalScore));
 
         // Credit Divergence 판별
@@ -56,7 +56,7 @@ public class CreditAnalyzer implements MarketAnalyzer {
 
         ScoreCategory category = MarketAnalyzerScore.categorize(totalScore);
         CreditDetails details = new CreditDetails(
-                hySpreadScore, financialStressScore, consumerLoansScore, sectorFinancialsScore, hasDivergence, regime
+                hySpreadScore, financialStressScore, consumerLoansScore, businessLoansScore, hasDivergence, regime
         );
 
         return new MarketAnalyzerScore("CreditHealth", totalScore, category, details);
@@ -104,20 +104,25 @@ public class CreditAnalyzer implements MarketAnalyzer {
         return score;
     }
 
-    // [팩터 3] 섹터 금융주 강세 여부 (최대 ±20점) - SP500 대비 상대강도
-    private double analyzeSectorFinancials(List<Double> financials, List<Double> sp500) {
-        if (financials == null || sp500 == null || financials.size() < 21) return 0.0;
+    /** 기업 대출은 주간 데이터라 13주(약 한 분기) 단위로 비교한다 */
+    private static final int LOAN_WEEKS = 13;
+
+    // [팩터 3] 기업 대출 증가세 (최대 ±20점) - 은행 신용 공급이 늘면 긍정적
+    // 예전에는 TOTCI(대출 총액)를 '금융주'처럼 보고 S&P 500 20일 수익률과 비교했는데,
+    // 가격이 아니고 주기도 달라(20칸 = 20주) 비교가 성립하지 않아 대출 자체의 증가세로 바꿨다.
+    private double analyzeBusinessLoans(List<Double> loans) {
+        if (loans == null || loans.size() < LOAN_WEEKS * 2 + 1) return 0.0;
         double score = 0;
 
-        double finReturn20 = computeReturn(financials, financials.size() - 1, 20);
-        double sp500Return20 = computeReturn(sp500, sp500.size() - 1, 20);
+        double recent = computeReturn(loans, loans.size() - 1, LOAN_WEEKS);
+        double prior = computeReturn(loans, loans.size() - 1 - LOAN_WEEKS, LOAN_WEEKS);
 
-        // 금융주의 절대적 상승 여부
-        if (finReturn20 > 0) score += 10;
+        // 대출이 늘고 있는지
+        if (recent > 0) score += 10;
         else score -= 10;
 
-        // 시장(SP500) 대비 아웃퍼폼 여부
-        if (finReturn20 > sp500Return20) score += 10;
+        // 증가 속도가 빨라지는지 (둔화·위축이면 감점)
+        if (recent > prior) score += 10;
         else score -= 10;
 
         return score;

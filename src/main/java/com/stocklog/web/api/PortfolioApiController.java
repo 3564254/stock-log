@@ -16,6 +16,7 @@ import com.stocklog.modules.purchase.trade.dto.request.TradingRuleSaveRequest;
 import com.stocklog.modules.purchase.trade.dto.request.WatchItemRequest;
 import com.stocklog.modules.purchase.trade.dto.response.TradingRuleCheckResponse;
 import com.stocklog.modules.purchase.trade.service.TradeFacadeService;
+import com.stocklog.modules.stock.analysis.HoldingStopService;
 import com.stocklog.modules.stock.analysis.StockAnalysisService;
 import com.stocklog.modules.stock.analysis.signal.trading.TradingSignalResult;
 import com.stocklog.modules.stock.application.usecase.GetStockSignalUseCase;
@@ -41,6 +42,7 @@ public class PortfolioApiController {
     private final GetStockSignalUseCase stockSignalUseCase;
 
     private final StockAnalysisService analysisService;
+    private final HoldingStopService holdingStopService;
     private final PortfolioFacadeService portfolioService;
     private final TradeFacadeService tradeService;
     private final AiProvider provider;
@@ -98,6 +100,18 @@ public class PortfolioApiController {
         PortfolioResponse myPortfolio = portfolioService.getMyPortfolio(loginMember.getId());
         PortfolioAnalysisResponse analysis = portfolioService.analyzePortfolio(myPortfolio);
         return provider.getPortfolioAnalysis(PortfolioAnalysisResult.of(myPortfolio.myStocks(), analysis));
+    }
+
+    /**
+     * 보유 종목별 '보유 기준 손절선' (차트 국면과 상관없이 지지 구간·최근 저점·변동폭으로 정함).
+     * 화면을 먼저 띄운 뒤 따로 불러오고, 서버에서 종목당 30분간 재사용한다.
+     * 예: /api/portfolio/holding-stops?codes=005930,AAPL
+     */
+    @GetMapping("/holding-stops")
+    public Map<String, HoldingStopService.HoldingStopDto> getHoldingStops(@LoginUser MemberResponse loginMember,
+                                                                         @RequestParam(defaultValue = "") String codes) {
+        if (loginMember == null) throw new BusinessException(ErrorCode.UNAUTHORIZED_ACCESS);
+        return holdingStopService.getStops(java.util.Arrays.asList(codes.split(",")));
     }
 
     @PostMapping("/verify/buy")

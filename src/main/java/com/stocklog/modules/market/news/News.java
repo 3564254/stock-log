@@ -43,12 +43,16 @@ public class News {
     private String image;
 
     @Column(name = "date_time")
-    private LocalDateTime dateTime;
+    private LocalDateTime dateTime;     // KST 기준
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "provider", length = 20)
+    private NewsSource provider;
 
 
     @Builder
 
-    public News(Long id, String newsId, String category, String headline, String summary, String source, String related, String url, String image, LocalDateTime dateTime) {
+    public News(Long id, String newsId, String category, String headline, String summary, String source, String related, String url, String image, LocalDateTime dateTime, NewsSource provider) {
         this.id = id;
         this.newsId = newsId;
         this.category = category;
@@ -59,5 +63,6 @@ public class News {
         this.url = url;
         this.image = image;
         this.dateTime = dateTime;
+        this.provider = provider;
     }
 }

@@ -19,7 +19,8 @@ public final class TradingResultMapper {
     public static TradingSignalResult toResult(String symbol, ChartPhase phase, MarketContext ctx,
                                                Verdict verdict, EntrySetup setup,
                                                SignalInputs in, List<PriceZone> zones,
-                                               TradingSignalResult.Narrative narrative, double trailing,
+                                               TradingSignalResult.Narrative narrative, EntryPlanner.HoldingStop hold,
+                                               EntryPlanner.HoldingTarget holdTarget,
                                                SignalStrengthBuilder.SignalResult r) {
         return new TradingSignalResult(
                 symbol != null ? symbol : "UNKNOWN",
@@ -29,7 +30,7 @@ public final class TradingResultMapper {
                 new TradingSignalResult.ChartAnalysis(phase, ctx),
                 entryPlan(setup, in, zones),
                 narrative,
-                priceTarget(setup, trailing),
+                priceTarget(setup, hold, holdTarget),
                 riskOf(verdict, setup),
                 verdict.name(),
                 LocalDateTime.now());
@@ -57,14 +58,19 @@ public final class TradingResultMapper {
                 setup.type(), entry.low(), entry.high(), strength, nz(setup.rr()), trigger);
     }
 
-    private static TradingSignalResult.PriceTarget priceTarget(EntrySetup setup, double trailing) {
+    private static TradingSignalResult.PriceTarget priceTarget(EntrySetup setup, EntryPlanner.HoldingStop hold,
+                                                               EntryPlanner.HoldingTarget holdTarget) {
+        double trailing = hold != null ? hold.price() : 0.0;
+        String basis = hold != null ? hold.basis() : "";
+        double target = holdTarget != null ? holdTarget.price() : 0.0;
+        String targetBasis = holdTarget != null ? holdTarget.basis() : "";
         if (setup == null) {
-            return new TradingSignalResult.PriceTarget(0, 0, 0, 0, 0, trailing);
+            return new TradingSignalResult.PriceTarget(0, 0, 0, 0, 0, trailing, basis, target, targetBasis);
         }
         // primary: 지금 체결을 가정한 기준가(구간 안이면 현재가, 위면 구간 상단), secondary: 구간 하단
         return new TradingSignalResult.PriceTarget(
                 setup.refPrice(), setup.entry().low(), setup.stop(),
-                nz(setup.target1()), nz(setup.target2()), trailing);
+                nz(setup.target1()), nz(setup.target2()), trailing, basis, target, targetBasis);
     }
 
     /**

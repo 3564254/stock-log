@@ -28,6 +28,7 @@ public class MarketFacadeService {
     private final NewsService newsService;
     private final MarketAnalysisService analysisService;
     private final MarketDiagnosisService diagnosisService;
+    private final com.stocklog.modules.market.analysis.service.horizon.HorizonService horizonService;
 
     // ============== Exchange Service ============== //
     public ExchangeRateInfo fetchExchangeRate() {
@@ -57,11 +58,23 @@ public class MarketFacadeService {
         return MarketRegimeResponse.builder()
                 .marketRegimeDto(totalResult.marketRegimeDto())
                 .diagnosisDto(marketDiagnosisDto)
+                .dataDate(totalResult.dataDate())
+                .horizons(safeHorizons(totalResult))
                 .build();
 
     }
 
 
+
+    // 시간축 판정이 실패해도 시장 진단 전체는 보여 준다
+    private com.stocklog.modules.market.analysis.service.horizon.HorizonService.HorizonReport safeHorizons(TotalResult totalResult) {
+        try {
+            return horizonService.evaluate(totalResult.engineInput());
+        } catch (Exception e) {
+            org.slf4j.LoggerFactory.getLogger(MarketFacadeService.class).warn("[시장 진단] 시간축 판정 실패: {}", e.getMessage());
+            return null;
+        }
+    }
 
     // ============== News Service ============== //
     public NewsResponse fetchStockNews(StockDto stockDto, Pageable pageable) {
@@ -70,6 +83,10 @@ public class MarketFacadeService {
 
     public NewsResponse fetchMarketNews(Pageable pageable) {
         return newsService.getMarketNews(pageable);
+    }
+
+    public List<NewsDto> fetchKoreanHeadlines(int n) {
+        return newsService.getKoreanHeadlines(n);
     }
 
     public List<NewsDto> fetchNewsDtoList(int n) {

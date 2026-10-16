@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockLog - 커뮤니티</title>
+    <th:block th:replace="~{fragments/head :: assets}"></th:block>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <!--
+      글 상세. 글은 /api/community/posts/{id}, 댓글은 /api/community/posts/{id}/comments 에서 받는다.
+      좋아요·댓글·수정은 페이지를 다시 그리지 않고 그 부분만 바꾼다.
+      본문·댓글은 x-text 로만 넣는다(XSS 방지). 줄바꿈은 white-space: pre-wrap 으로 살린다.
+    -->
+    <style>
+        :root { --content-max: 760px; }
+
+        .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-body); font-weight: 700; color: var(--slate); text-decoration: none; margin-bottom: 16px; padding: 6px 10px 6px 4px; border-radius: var(--radius-pill); }
+        .back-link:hover { color: var(--ink); background: var(--paper); }
+
+        .tag { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: var(--radius-pill); background: var(--toss-blue-tint); color: var(--toss-blue-deep); font-size: var(--fs-small); font-weight: 700; text-decoration: none; white-space: nowrap; }
+        a.tag:hover { background: var(--toss-blue-tint-line); color: var(--toss-blue-deep); }
+
+        .post-box { background: var(--paper); border-radius: var(--card-radius); padding: 28px; margin-bottom: 16px; }
+        .post-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+        .post-title { font-size: var(--fs-summary); font-weight: 800; color: var(--ink); letter-spacing: -0.03em; line-height: 1.4; margin: 0 0 10px; word-break: keep-all; overflow-wrap: anywhere; }
+        .post-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: var(--fs-small); color: var(--label-text); padding-bottom: 18px; border-bottom: 1px solid var(--hairline); margin-bottom: 20px; }
+        .post-meta .author { color: var(--ink-body); font-weight: 700; }
+        .post-meta .dot::before { content: "·"; }
+        .owner-actions { margin-left: auto; display: flex; gap: 4px; }
+        .owner-actions button { border: 0; background: transparent; color: var(--slate); font-weight: 700; font-size: var(--fs-small); padding: 6px 10px; border-radius: var(--radius-pill); }
+        .owner-actions button:hover { background: var(--canvas); color: var(--ink); }
+        .owner-actions button.danger:hover { background: var(--toss-red-tint); color: var(--toss-red-deep); }
+        .post-content { font-size: var(--fs-list); color: var(--ink-body); line-height: 1.75; white-space: pre-wrap; word-break: break-word; min-height: 60px; }
+
+        .like-row { display: flex; align-items: center; justify-content: center; margin-top: 28px; }
+        .like-btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--hairline); background: var(--paper); color: var(--ink); font-weight: 700; font-size: var(--fs-emph); padding: 10px 20px; border-radius: var(--radius-pill); transition: background-color .15s ease, border-color .15s ease; }
+        .like-btn:hover:not(:disabled) { background: var(--surface-soft); }
+        .like-btn i { font-size: 18px; color: var(--mist); }
+        .like-btn.on { border-color: var(--toss-red-tint-line); background: var(--toss-red-tint); }
+        .like-btn.on i { color: var(--toss-red); }
+        .like-btn:disabled { opacity: .7; }
+
+        .edit-area .toss-input { margin-bottom: 10px; }
+        .edit-area textarea { min-height: 220px; resize: vertical; line-height: 1.6; }
+        .edit-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+        /* 댓글 */
+        .comments-box { background: var(--paper); border-radius: var(--card-radius); padding: 24px 28px; }
+        .comments-head { font-size: var(--fs-list); font-weight: 800; color: var(--ink); margin: 0 0 14px; }
+        .comments-head .n { color: var(--label-text); font-weight: 700; margin-left: 4px; }
+        .composer { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 8px; }
+        .composer textarea { min-height: 48px; height: 48px; resize: none; line-height: 1.5; padding: 12px 14px; }
+        .composer textarea:focus { height: 88px; }
+        .composer .pill-dark { flex-shrink: 0; padding: 14px 18px; border-radius: var(--radius-md); }
+        .c-item { padding: 16px 0; border-top: 1px solid var(--hairline); }
+        .c-item:first-of-type { border-top: 0; }
+        .c-head { display: flex; align-items: center; gap: 8px; font-size: var(--fs-small); color: var(--label-text); margin-bottom: 4px; }
+        .c-head .author { color: var(--ink-body); font-weight: 700; }
+        .c-head .mine-badge { font-size: 11px; font-weight: 700; color: var(--slate); background: var(--canvas); padding: 1px 6px; border-radius: 6px; }
+        .c-body { font-size: var(--fs-emph); color: var(--ink-body); line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+        .c-body.deleted { color: var(--label-text); font-style: italic; }
+        .c-actions { display: flex; gap: 2px; margin-top: 4px; margin-left: -8px; }
+        .c-actions button { border: 0; background: transparent; color: var(--label-text); font-size: var(--fs-caption); font-weight: 700; padding: 4px 8px; border-radius: 6px; }
+        .c-actions button:hover { background: var(--canvas); color: var(--ink); }
+        .replies { margin: 8px 0 0 16px; padding-left: 14px; border-left: 2px solid var(--hairline); }
+        .replies .c-item { padding: 10px 0; border-top: 0; }
+        .reply-composer { margin-top: 8px; }
+        .c-empty { text-align: center; color: var(--label-text); font-size: var(--fs-body); padding: 24px 0 8px; }
+        .c-more { width: 100%; margin-top: 8px; padding: 12px; border: 0; border-radius: var(--radius-md); background: var(--surface-soft); color: var(--slate); font-weight: 700; font-size: var(--fs-small); }
+        .c-more:hover:not(:disabled) { background: var(--canvas); color: var(--ink); }
+
+        .inline-error { background: var(--toss-red-tint); color: var(--toss-red-deep); font-weight: 600; font-size: var(--fs-small); border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 12px; }
+        .state-box { background: var(--paper); border-radius: var(--card-radius); padding: 48px 24px; text-align: center; color: var(--label-text); }
+        .state-box .title { font-size: var(--fs-list); font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+
+        @media (max-width: 768px) {
+            .post-box, .comments-box { padding: 20px; border-radius: var(--card-radius-m); }
+            .post-title { font-size: var(--fs-title); }
+            .post-content { font-size: var(--fs-emph); }
+            .replies { margin-left: 4px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="layout-wrapper" x-data="postDetail">
+    <aside th:replace="~{fragments/sidebar :: sidebarFragment('community')}"></aside>
+
+    <main class="main-content">
+        <div class="content-container">
+            <a href="/community" class="back-link"><i class="bi bi-chevron-left" aria-hidden="true"></i>커뮤니티</a>
+
+            <!-- 불러오는 중 -->
+            <div class="post-box" x-show="loading" aria-hidden="true">
+                <span class="skeleton" style="width: 90px; height: 22px; margin-bottom: 14px;"></span>
+                <span class="skeleton" style="width: 75%; height: 26px; margin-bottom: 12px;"></span>
+                <span class="skeleton" style="width: 35%; height: 14px; margin-bottom: 28px;"></span>
+                <span class="skeleton" style="width: 100%; height: 16px; margin-bottom: 8px;"></span>
+                <span class="skeleton" style="width: 92%; height: 16px; margin-bottom: 8px;"></span>
+                <span class="skeleton" style="width: 60%; height: 16px;"></span>
+            </div>
+
+            <!-- 없거나 실패 -->
+            <div class="state-box" x-show="!loading && loadError" x-cloak role="alert">
+                <div class="title" x-text="loadError"></div>
+                <a href="/community" class="pill-soft mt-2">목록으로</a>
+            </div>
+
+            <template x-if="post">
+                <div>
+                    <article class="post-box">
+                        <div class="post-tags" x-show="post.tags.length > 0">
+                            <template x-for="t in post.tags" :key="t.code">
+                                <a class="tag" :href="'/community?stock=' + encodeURIComponent(t.code)" x-text="'#' + t.name"></a>
+                            </template>
+                        </div>
+
+                        <!-- 읽기 -->
+                        <div x-show="!editing">
+                            <h1 class="post-title" x-text="post.title"></h1>
+                            <div class="post-meta">
+                                <span class="author" x-text="post.authorName"></span>
+                                <span class="dot"></span><span x-text="timeAgo(post.createdAt)" :title="post.createdAt"></span>
+                                <template x-if="post.edited"><span>(수정됨)</span></template>
+                                <span class="dot"></span><span x-text="'조회 ' + post.viewCount"></span>
+                                <div class="owner-actions" x-show="post.mine">
+                                    <button type="button" @click="startEdit()">수정</button>
+                                    <button type="button" class="danger" @click="removePost()" :disabled="deleting">삭제</button>
+                                </div>
+                            </div>
+                            <div class="inline-error" x-show="postError" x-text="postError" role="alert"></div>
+                            <div class="post-content" x-text="post.content"></div>
+
+                            <div class="like-row">
+                                <button type="button" class="like-btn" :class="post.liked && 'on'" @click="toggleLike()" :disabled="liking"
+                                        :aria-pressed="post.liked ? 'true' : 'false'">
+                                    <i class="bi" :class="post.liked ? 'bi-heart-fill' : 'bi-heart'" aria-hidden="true"></i>
+                                    <span x-text="'좋아요 ' + post.likeCount"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 수정 -->
+                        <form class="edit-area" x-show="editing" @submit.prevent="saveEdit()" novalidate>
+                            <div class="inline-error" x-show="editError" x-text="editError" role="alert"></div>
+                            <label class="visually-hidden" for="e-title">제목</label>
+                            <input id="e-title" type="text" class="toss-input" x-model="edit.title" maxlength="100">
+                            <label class="visually-hidden" for="e-content">내용</label>
+                            <textarea id="e-content" class="toss-input" x-model="edit.content" maxlength="5000"></textarea>
+                            <div class="edit-actions">
+                                <button type="button" class="pill-soft" @click="editing = false" :disabled="saving">취소</button>
+                                <button type="submit" class="pill-dark" :disabled="saving || !edit.title.trim() || !edit.content.trim()">
+                                    <span x-text="saving ? '저장 중…' : '저장'"></span>
+                                </button>
+                            </div>
+                        </form>
+                    </article>
+
+                    <!-- 댓글 -->
+                    <section class="comments-box" aria-labelledby="c-title">
+                        <h2 id="c-title" class="comments-head">댓글<span class="n" x-text="post.commentCount"></span></h2>
+
+                        <form class="composer" @submit.prevent="addComment()">
+                            <label class="visually-hidden" for="c-new">댓글 쓰기</label>
+                            <textarea id="c-new" class="toss-input" x-model="newComment" maxlength="1000" placeholder="댓글을 남겨 보세요"
+                                      @keydown.ctrl.enter.prevent="addComment()" @keydown.meta.enter.prevent="addComment()"></textarea>
+                            <button type="submit" class="pill-dark" :disabled="posting || !newComment.trim()">등록</button>
+                        </form>
+                        <div class="inline-error" x-show="commentError" x-text="commentError" role="alert"></div>
+
+                        <div x-show="cLoading && comments.length === 0" class="c-empty">불러오는 중…</div>
+                        <div x-show="!cLoading && comments.length === 0" class="c-empty">첫 댓글을 남겨 보세요.</div>
+
+                        <template x-for="c in comments" :key="c.id">
+                            <div class="c-item">
+                                <div class="c-head" x-show="!c.deleted">
+                                    <span class="author" x-text="c.authorName"></span>
+                                    <span class="mine-badge" x-show="c.byPostAuthor">글쓴이</span>
+                                    <span x-text="timeAgo(c.createdAt)"></span>
+                                </div>
+                                <div class="c-body" :class="c.deleted && 'deleted'" x-text="c.deleted ? '삭제된 댓글이에요.' : c.content"></div>
+                                <div class="c-actions" x-show="!c.deleted">
+                                    <button type="button" @click="openReply(c.id)">답글</button>
+                                    <button type="button" x-show="c.mine" @click="removeComment(c)">삭제</button>
+                                </div>
+
+                                <div class="replies" x-show="c.replies.length > 0 || replyTo === c.id">
+                                    <template x-for="r in c.replies" :key="r.id">
+                                        <div class="c-item">
+                                            <div class="c-head">
+                                                <span class="author" x-text="r.authorName"></span>
+                                                <span class="mine-badge" x-show="r.byPostAuthor">글쓴이</span>
+                                                <span x-text="timeAgo(r.createdAt)"></span>
+                                            </div>
+                                            <div class="c-body" x-text="r.content"></div>
+                                            <div class="c-actions" x-show="r.mine">
+                                                <button type="button" @click="removeComment(r, c)">삭제</button>
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                    <form class="composer reply-composer" x-show="replyTo === c.id" @submit.prevent="addReply(c)">
+                                        <label class="visually-hidden" :for="'r-' + c.id">답글 쓰기</label>
+                                        <textarea :id="'r-' + c.id" class="toss-input" x-model="replyText" maxlength="1000" placeholder="답글을 남겨 보세요"
+                                                  @keydown.escape="replyTo = null"></textarea>
+                                        <button type="submit" class="pill-dark" :disabled="posting || !replyText.trim()">등록</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </template>
+
+                        <button type="button" class="c-more" x-show="cHasNext" @click="loadComments(true)" :disabled="cLoading">
+                            <span x-text="cLoading ? '불러오는 중…' : '댓글 더 보기'"></span>
+                        </button>
+                    </section>
+                </div>
+            </template>
+        </div>
+    </main>
+</div>
+
+<script th:inline="javascript">
+    const POST_ID = /*[[${postId}]]*/ 0;
+
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('postDetail', () => ({
+            post: null, loading: true, loadError: '',
+            postError: '', deleting: false, liking: false,
+            editing: false, saving: false, editError: '', edit: { title: '', content: '' },
+
+            comments: [], cCursor: null, cHasNext: false, cLoading: false,
+            newComment: '', replyTo: null, replyText: '', posting: false, commentError: '',
+
+            async init() {
+                try {
+                    this.post = await api('/api/community/posts/' + POST_ID);
+                    document.title = 'StockLog - ' + this.post.title;
+                    this.loadComments();
+                } catch (e) {
+                    this.loadError = e.message || '글을 불러오지 못했어요.';
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            // ── 좋아요 ──
+            async toggleLike() {
+                if (this.liking) return;   // 연타 방지 (서버는 유니크 제약으로 한 번 더 막는다)
+                this.liking = true; this.postError = '';
+                try {
+                    const r = await api('/api/community/posts/' + POST_ID + '/like', { method: 'POST' });
+                    this.post.liked = r.liked;
+                    this.post.likeCount = r.likeCount;
+                } catch (e) {
+                    this.postError = e.message;
+                } finally {
+                    this.liking = false;
+                }
+            },
+
+            // ── 수정 · 삭제 ──
+            startEdit() {
+                this.edit = { title: this.post.title, content: this.post.content };
+                this.editError = ''; this.editing = true;
+            },
+            async saveEdit() {
+                if (this.saving) return;
+                this.saving = true; this.editError = '';
+                try {
+                    // stockCodes 를 보내지 않으면 태그는 그대로 둔다
+                    await api('/api/community/posts/' + POST_ID, { method: 'PUT', body: { title: this.edit.title, content: this.edit.content } });
+                    this.post.title = this.edit.title.trim();
+                    this.post.content = this.edit.content.trim();
+                    this.post.edited = true;
+                    this.editing = false;
+                } catch (e) {
+                    this.editError = e.message;
+                } finally {
+                    this.saving = false;
+                }
+            },
+            async removePost() {
+                if (this.deleting || !confirm('이 글을 삭제할까요?')) return;
+                this.deleting = true; this.postError = '';
+                try {
+                    await api('/api/community/posts/' + POST_ID, { method: 'DELETE' });
+                    location.href = '/community';
+                } catch (e) {
+                    this.postError = e.message;
+                    this.deleting = false;
+                }
+            },
+
+            // ── 댓글 ──
+            async loadComments(more = false) {
+                this.cLoading = true;
+                try {
+                    const q = more && this.cCursor ? '?cursor=' + this.cCursor : '';
+                    const data = await api('/api/community/posts/' + POST_ID + '/comments' + q);
+                    this.comments = more ? this.comments.concat(data.items) : data.items;
+                    this.cCursor = data.nextCursor;
+                    this.cHasNext = data.hasNext;
+                } catch (e) {
+                    this.commentError = e.message;
+                } finally {
+                    this.cLoading = false;
+                }
+            },
+            async addComment() {
+                if (this.posting || !this.newComment.trim()) return;
+                this.posting = true; this.commentError = '';
+                try {
+                    const c = await api('/api/community/posts/' + POST_ID + '/comments', { method: 'POST', body: { content: this.newComment } });
+                    // 오래된 순 목록이라, 다음 페이지가 남아 있으면 맨 끝에 붙이지 않는다(더 보기로 이어서 나온다)
+                    if (!this.cHasNext) this.comments.push(c);
+                    this.newComment = '';
+                    this.post.commentCount++;
+                } catch (e) {
+                    this.commentError = e.message;
+                } finally {
+                    this.posting = false;
+                }
+            },
+            openReply(id) {
+                this.replyTo = this.replyTo === id ? null : id;
+                this.replyText = '';
+                if (this.replyTo) this.$nextTick(() => document.getElementById('r-' + id)?.focus());
+            },
+            async addReply(parent) {
+                if (this.posting || !this.replyText.trim()) return;
+                this.posting = true; this.commentError = '';
+                try {
+                    const r = await api('/api/community/posts/' + POST_ID + '/comments', { method: 'POST', body: { content: this.replyText, parentId: parent.id } });
+                    parent.replies.push(r);
+                    this.replyText = ''; this.replyTo = null;
+                    this.post.commentCount++;
+                } catch (e) {
+                    this.commentError = e.message;
+                } finally {
+                    this.posting = false;
+                }
+            },
+            async removeComment(c, parent = null) {
+                if (!confirm('댓글을 삭제할까요?')) return;
+                this.commentError = '';
+                try {
+                    await api('/api/community/comments/' + c.id, { method: 'DELETE' });
+                    this.post.commentCount = Math.max(0, this.post.commentCount - 1);
+                    if (parent) {
+                        parent.replies = parent.replies.filter(r => r.id !== c.id);
+                        if (parent.deleted && parent.replies.length === 0) this.comments = this.comments.filter(x => x.id !== parent.id);
+                    } else if (c.replies.length > 0) {
+                        // 답글이 달린 댓글은 자리를 남긴다
+                        Object.assign(c, { deleted: true, content: null, authorName: null, mine: false, byPostAuthor: false });
+                    } else {
+                        this.comments = this.comments.filter(x => x.id !== c.id);
+                    }
+                } catch (e) {
+                    this.commentError = e.message;
+                }
+            },
+
+            timeAgo
+        }));
+    });
+
+    async function api(url, { method = 'GET', body } = {}) {
+        const res = await fetch(url, {
+            method,
+            headers: body ? { 'Content-Type': 'application/json', 'Accept': 'application/json' } : { 'Accept': 'application/json' },
+            body: body ? JSON.stringify(body) : undefined
+        });
+        if (res.redirected && res.url.includes('/auth/login')) { location.href = res.url; throw new Error('로그인이 필요해요.'); }
+        if (res.status === 204) return null;
+        let data = null;
+        try { data = await res.json(); } catch (_) { /* 본문 없음 */ }
+        if (!res.ok) throw new Error((data && data.message) || '요청을 처리하지 못했어요.');
+        return data;
+    }
+
+    function timeAgo(iso) {
+        if (!iso) return '';
+        const t = new Date(iso);
+        const sec = Math.floor((Date.now() - t.getTime()) / 1000);
+        if (sec < 60) return '방금 전';
+        if (sec < 3600) return Math.floor(sec / 60) + '분 전';
+        if (sec < 86400) return Math.floor(sec / 3600) + '시간 전';
+        if (sec < 86400 * 7) return Math.floor(sec / 86400) + '일 전';
+        const sameYear = t.getFullYear() === new Date().getFullYear();
+        return (sameYear ? '' : t.getFullYear() + '. ') + (t.getMonth() + 1) + '. ' + t.getDate() + '.';
+    }
+</script>
+</body>
+</html>

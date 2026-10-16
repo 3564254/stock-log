@@ -5,7 +5,8 @@
 
   여는 법:  $dispatch('open-verify', { type: 'BUY' | 'SELL', stockCode, stockName,
                                         ruleConditions?: { [ruleId]: '≤ 30' },   // 규칙 기준값 표시용
-                                        canCreateRule?: true })                 // 이 페이지에서 규칙 모달을 바로 열 수 있으면
+                                        canCreateRule?: true,                  // 이 페이지에서 규칙 모달을 바로 열 수 있으면
+                                        rules?: [{ id, title, cond }] })       // 켜 둔 규칙 (확인 중 화면에 미리 보여 줄 목록)
   결과 알림: window 'verify-done'  { type, stockCode, placeholder, summary, chartPhase, targetPrice, at }
   규칙 만들기: canCreateRule이면 window 'verify-create-rule', 아니면 /portfolio?add=rule 로 이동
 
@@ -18,90 +19,129 @@
 <style>
     .vm-root {
         display: contents;
-        --vm-blue: var(--toss-blue); --vm-blue-deep: var(--toss-blue-deep); --vm-blue-soft: var(--toss-blue-soft);
-        --vm-ink: var(--ink); --vm-body: var(--ink-body); --vm-sub: var(--slate);
-        --vm-line: var(--hairline); --vm-line-soft: var(--canvas); --vm-surface: var(--surface-soft);
-        --vm-good-text: var(--status-green-text); --vm-good-tint: var(--status-green-tint); --vm-good-line: var(--status-green-line);
-        --vm-caution-text: var(--caution-text); --vm-caution-tint: var(--caution-tint); --vm-caution-line: var(--caution-line);
+        --vm-blue: var(--toss-blue); --vm-blue-deep: var(--toss-blue-deep);
+        --vm-ink: var(--ink); --vm-body: var(--ink-body); --vm-sub: var(--slate); --vm-muted: var(--label-text);
+        --vm-line-soft: var(--canvas); --vm-surface: var(--surface-soft);
+        --vm-good: var(--status-green); --vm-good-text: var(--status-green-text); --vm-good-tint: var(--status-green-tint);
+        --vm-caution-text: var(--caution-text);
         /* 서버가 만든 리포트 HTML(generateVerdict)이 참조하는 변수 */
         --text-dark: var(--ink); --text-secondary: var(--slate); --toss-orange: var(--caution-amber);
     }
     .vm-backdrop { position: fixed; inset: 0; z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 16px;
                    background: var(--scrim); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
-    .vm-sheet { background: #fff; width: 100%; max-width: 520px; max-height: 90vh; max-height: 90dvh; border-radius: 20px;
-                display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+    .vm-sheet { background: #fff; width: 100%; max-width: 480px; max-height: 90vh; max-height: 90dvh; border-radius: 24px;
+                display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,0.16);
                 font-family: 'Pretendard', sans-serif; letter-spacing: -0.01em; color: var(--vm-ink); outline: none;
                 animation: vmIn .2s cubic-bezier(.2,.8,.2,1); }
     @keyframes vmIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
-    @media (prefers-reduced-motion: reduce) { .vm-sheet { animation: none; } }
 
-    .vm-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 20px 24px; border-bottom: 1px solid var(--vm-line-soft); }
-    .vm-stock { font-size: 13px; font-weight: 600; color: var(--vm-sub); margin-bottom: 2px; word-break: keep-all; }
-    .vm-title { font-size: 20px; font-weight: 800; letter-spacing: -0.03em; margin: 0; color: var(--vm-ink); }
-    .vm-close { width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 12px; background: transparent; color: var(--vm-sub);
-                display: inline-flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; transition: background-color .15s ease; }
-    .vm-close:hover { background: var(--vm-line-soft); color: var(--vm-ink); }
-    .vm-body { overflow-y: auto; padding: 24px; }
+    /* 머리: 종목명 + 검증 종류. 구분선 없이 */
+    .vm-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 22px 24px 4px; }
+    .vm-stock { font-size: 13px; font-weight: 600; color: var(--vm-muted); word-break: keep-all; }
+    .vm-title { font-size: 15px; font-weight: 700; margin: 2px 0 0; color: var(--vm-sub); }
+    .vm-close { width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 999px; background: var(--vm-line-soft); color: var(--vm-sub);
+                display: inline-flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; transition: background-color .15s ease; }
+    .vm-close:hover { background: var(--canvas-hover); color: var(--vm-ink); }
+    .vm-body { overflow-y: auto; padding: 12px 24px 24px; }
 
-    .vm-center { text-align: center; padding: 28px 0 8px; }
-    .vm-spinner { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--vm-line-soft); border-top-color: var(--vm-blue); margin: 0 auto; animation: vmSpin .8s linear infinite; }
-    @keyframes vmSpin { to { transform: rotate(360deg); } }
-    @media (prefers-reduced-motion: reduce) { .vm-spinner { animation-duration: 2.4s; } }
-    .vm-state-title { font-size: 18px; font-weight: 700; color: var(--vm-ink); margin-top: 18px; word-break: keep-all; }
-    .vm-state-desc { font-size: 14px; font-weight: 500; color: var(--vm-sub); margin-top: 6px; line-height: 1.6; word-break: keep-all; }
+    /* 결론 한 줄: 가장 크게 */
+    .vm-hero { margin: 4px 0 18px; }
+    .vm-hero-title { font-size: 24px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.3; color: var(--vm-ink); word-break: keep-all; margin: 0; }
+    .vm-hero-title .ok { color: var(--vm-good-text); }
+    .vm-hero-sub { font-size: 14px; font-weight: 500; color: var(--vm-sub); margin-top: 6px; line-height: 1.55; word-break: keep-all; }
+    .vm-hero-wait { display: inline-flex; align-items: center; gap: 8px; }
 
-    .vm-block { margin-bottom: 24px; }
-    .vm-block-title { font-size: 15px; font-weight: 700; color: var(--vm-ink); margin-bottom: 10px; }
+    .vm-section-k { font-size: 13px; font-weight: 600; color: var(--vm-muted); margin: 0 0 8px; }
+    .vm-block { margin-bottom: 20px; }
 
-    .vm-verdict { display: flex; gap: 14px; align-items: flex-start; padding: 18px 20px; border-radius: 14px; border: 1px solid var(--vm-line); }
-    .vm-verdict > i { font-size: 20px; line-height: 1.2; flex-shrink: 0; }
-    .vm-verdict-title { font-size: 18px; font-weight: 800; color: var(--vm-ink); letter-spacing: -0.02em; word-break: keep-all; }
-    .vm-verdict-sub { font-size: 14px; font-weight: 500; color: var(--vm-sub); margin-top: 4px; line-height: 1.5; word-break: keep-all; }
-    .vm-good    { background: var(--vm-good-tint);    border-color: var(--vm-good-line); }
-    .vm-good > i { color: var(--vm-good-text); }
-    .vm-caution { background: var(--vm-caution-tint); border-color: var(--vm-caution-line); }
-    .vm-caution > i { color: var(--vm-caution-text); }
-    .vm-neutral { background: var(--vm-surface);      border-color: var(--vm-line); }
-    .vm-neutral > i { color: var(--vm-sub); }
-
-    .vm-rules { border: 1px solid var(--vm-line); border-radius: 14px; overflow: hidden; margin-top: 12px; }
-    .vm-rule { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 13px 16px; }
+    /* 규칙 목록: 랜딩 데모와 같은 모양 (확인 중 → ✓ / –) */
+    .vm-rules { background: var(--vm-surface); border-radius: 16px; padding: 4px 0; }
+    .vm-rule { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
     .vm-rule + .vm-rule { border-top: 1px solid var(--vm-line-soft); }
+    .vm-rule-text { flex: 1; min-width: 0; }
     .vm-rule-title { font-size: 14px; font-weight: 700; color: var(--vm-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .vm-rule-meta { font-size: 13px; font-weight: 500; color: var(--vm-sub); margin-top: 2px; font-variant-numeric: tabular-nums; }
-    .vm-pill { flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
-    .vm-pill-good    { background: var(--vm-good-tint);    color: var(--vm-good-text); }
-    .vm-pill-caution { background: var(--vm-caution-tint); color: var(--vm-caution-text); }
+    .vm-rule-meta { font-size: 13px; font-weight: 500; color: var(--vm-muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .vm-mark { width: 24px; height: 24px; border-radius: 50%; flex: none; display: grid; place-items: center; font-size: 13px;
+               transition: background-color .2s ease, color .2s ease, transform .2s ease; }
+    .vm-rule.ok .vm-mark { background: var(--vm-good-tint); color: var(--vm-good-text); animation: vmPop .24s ease-out; }
+    .vm-rule.no .vm-mark { background: var(--vm-line-soft); color: var(--mist); animation: vmPop .24s ease-out; }
+    .vm-rule.no .vm-rule-title { color: var(--vm-sub); }
+    .vm-rule.pending .vm-mark { border: 2px solid var(--hairline); border-top-color: var(--vm-blue); animation: vmSpin .7s linear infinite; }
+    .vm-rule.pending .vm-mark i { display: none; }
+    @keyframes vmPop { 0% { transform: scale(.6); } 70% { transform: scale(1.08); } 100% { transform: scale(1); } }
+    @keyframes vmSpin { to { transform: rotate(360deg); } }
+    .vm-rule .skeleton { border-radius: 6px; }
 
-    .vm-signal { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--vm-line); border-radius: 14px; }
+    .vm-empty { background: var(--vm-surface); border-radius: 16px; padding: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .vm-empty-text { font-size: 14px; font-weight: 500; color: var(--vm-sub); word-break: keep-all; }
+
+    /* 차트 신호: 한 줄 */
+    .vm-signal { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: var(--vm-surface); border-radius: 16px; padding: 14px 16px; }
     .vm-signal-label { font-size: 15px; font-weight: 700; color: var(--vm-ink); }
-    .vm-signal-desc { font-size: 13px; font-weight: 500; color: var(--vm-sub); margin-top: 2px; word-break: keep-all; }
+    .vm-signal-desc { font-size: 13px; font-weight: 500; color: var(--vm-sub); margin-top: 2px; word-break: keep-all; line-height: 1.5; }
     .vm-price { text-align: right; flex-shrink: 0; }
-    .vm-price-k { font-size: 12px; font-weight: 600; color: var(--vm-sub); }
+    .vm-price-k { font-size: 12px; font-weight: 600; color: var(--vm-muted); }
     .vm-price-v { font-size: 15px; font-weight: 800; color: var(--vm-ink); font-variant-numeric: tabular-nums; }
 
-    .vm-report { background: var(--vm-surface); border: 1px solid var(--vm-line); border-radius: 14px; padding: 18px 20px; font-size: 14px; font-weight: 500;
+    /* AI 리포트: 기본은 몇 줄만, 펼치기 */
+    .vm-report { background: var(--vm-surface); border-radius: 16px; padding: 16px 18px; font-size: 14px; font-weight: 500;
                  line-height: 1.7; color: var(--vm-sub); word-break: keep-all; overflow-wrap: break-word; }
-    .vm-report.is-text { white-space: pre-line; }
-    .vm-foot { font-size: 13px; font-weight: 500; color: var(--vm-sub); line-height: 1.6; word-break: keep-all; margin: 0 0 16px; }
+    .vm-report-text { max-height: 120px; overflow: hidden; -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
+    .vm-report-text.open { max-height: none; -webkit-mask-image: none; mask-image: none; }
+    .vm-report-text.is-text { white-space: pre-line; }
+    .vm-report-more { margin-top: 8px; }
 
+    .vm-foot { font-size: 12px; font-weight: 500; color: var(--vm-muted); line-height: 1.6; word-break: keep-all; margin: 4px 0 16px; }
+
+    /* 버튼: 사이트 공통 알약 (주요 동작 하나만 검정) */
     .vm-actions { display: flex; gap: 8px; }
     .vm-actions > * { flex: 1 1 0; }
-    .vm-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 12px; padding: 15px 16px;
-              font-family: inherit; font-size: 16px; font-weight: 700; text-decoration: none; cursor: pointer; transition: background-color .15s ease; }
-    .vm-btn-solid { background: var(--vm-blue-deep); color: #fff; }
-    .vm-btn-solid:hover { background: var(--toss-blue-press); color: #fff; }
-    .vm-btn-soft { background: var(--vm-line-soft); color: var(--vm-sub); }
+    .vm-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 999px; padding: 14px 16px;
+              font-family: inherit; font-size: 15px; font-weight: 700; text-decoration: none; cursor: pointer; transition: background-color .15s ease, transform .1s ease; }
+    .vm-btn:active { transform: scale(.97); }
+    .vm-btn-solid { background: var(--vm-ink); color: #fff; }
+    .vm-btn-solid:hover { background: var(--vm-body); color: #fff; }
+    .vm-btn-soft { background: var(--vm-line-soft); color: var(--vm-ink); }
     .vm-btn-soft:hover { background: var(--canvas-hover); color: var(--vm-ink); }
-    .vm-link { background: none; border: 0; padding: 0; font-family: inherit; font-size: 14px; font-weight: 700; color: var(--vm-blue-deep); text-decoration: none; cursor: pointer; }
-    .vm-link:hover { text-decoration: underline; text-underline-offset: 3px; color: var(--vm-blue-deep); }
+    .vm-link { background: none; border: 0; padding: 0; font-family: inherit; font-size: 13px; font-weight: 700; color: var(--vm-sub); text-decoration: none; cursor: pointer; white-space: nowrap; }
+    .vm-link:hover { color: var(--vm-ink); text-decoration: underline; text-underline-offset: 3px; }
     .vm-btn:focus-visible, .vm-close:focus-visible, .vm-link:focus-visible { outline: 2px solid var(--vm-blue); outline-offset: 2px; }
 
+    /* 실패 */
+    .vm-center { text-align: center; padding: 20px 0 4px; }
+    .vm-state-title { font-size: 18px; font-weight: 700; color: var(--vm-ink); margin-top: 14px; word-break: keep-all; }
+    .vm-state-desc { font-size: 14px; font-weight: 500; color: var(--vm-sub); margin-top: 6px; line-height: 1.6; word-break: keep-all; }
+
+    /* 매도 검증: 결론 색 + 가격 사다리 */
+    .vm-hero-title.t-alert { color: var(--alert-text); }
+    .vm-hero-title.t-caution { color: var(--vm-caution-text); }
+    .vm-ladder { position: relative; background: var(--vm-surface); border-radius: 16px; padding: 6px 0; }
+    .vm-ladder::before { content: ''; position: absolute; left: 23px; top: 22px; bottom: 22px; width: 2px; background: var(--hairline); }
+    .vm-step { position: relative; display: flex; align-items: center; gap: 12px; padding: 10px 16px; }
+    .vm-step-dot { width: 16px; height: 16px; flex: none; border-radius: 50%; background: #fff; border: 2px solid var(--mist); position: relative; z-index: 1; }
+    .vm-step.is-target .vm-step-dot { border-color: var(--vm-good); }
+    .vm-step.is-line .vm-step-dot { border-color: var(--vm-caution-text); }
+    .vm-step.is-current { background: #fff; margin: 2px 8px; padding: 10px 8px; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+    .vm-step.is-current .vm-step-dot { background: var(--vm-ink); border-color: var(--vm-ink); }
+    .vm-step-text { flex: 1; min-width: 0; }
+    .vm-step-k { font-size: 14px; font-weight: 700; color: var(--vm-body); }
+    .vm-step.is-current .vm-step-k { color: var(--vm-ink); }
+    .vm-step-note { font-size: 12px; font-weight: 500; color: var(--vm-muted); margin-top: 1px; word-break: keep-all; }
+    .vm-step-v { text-align: right; flex: none; font-size: 15px; font-weight: 800; color: var(--vm-ink); font-variant-numeric: tabular-nums; }
+    .vm-step-d { font-size: 12px; font-weight: 600; color: var(--vm-muted); margin-top: 1px; }
+    .vm-fade { animation: vmFade .25s ease-out; }
+    @keyframes vmFade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+    @media (prefers-reduced-motion: reduce) {
+        .vm-sheet, .vm-fade, .vm-rule.ok .vm-mark, .vm-rule.no .vm-mark { animation: none; }
+        .vm-rule.pending .vm-mark { animation-duration: 2.4s; }
+    }
     @media (max-width: 768px) {
         .vm-backdrop { align-items: flex-end; padding: 0; }
-        .vm-sheet { max-width: none; border-radius: 20px 20px 0 0; max-height: 92vh; max-height: 92dvh; padding-bottom: env(safe-area-inset-bottom); }
-        .vm-head { padding: 18px 20px; }
-        .vm-body { padding: 20px; }
+        .vm-sheet { max-width: none; border-radius: 24px 24px 0 0; max-height: 92vh; max-height: 92dvh; padding-bottom: env(safe-area-inset-bottom); }
+        .vm-head { padding: 20px 20px 4px; }
+        .vm-body { padding: 12px 20px 20px; }
+        .vm-hero-title { font-size: 22px; }
     }
 </style>
 
@@ -112,24 +152,17 @@
             <div class="vm-head">
                 <div style="min-width: 0;">
                     <div class="vm-stock" x-text="target?.stockName || ''"></div>
-                    <h2 class="vm-title" id="vm-title" x-text="type === 'BUY' ? '매수 검증' : '매도 검증'"></h2>
+                    <h2 class="vm-title" id="vm-title" x-text="type === 'BUY' ? '매수 전 확인' : '매도 전 확인'"></h2>
                 </div>
                 <button type="button" class="vm-close" @click="close()" aria-label="닫기"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
             </div>
 
             <div class="vm-body">
 
-                <!-- 진행 중 -->
-                <div x-show="loading" class="vm-center" role="status" aria-live="polite">
-                    <div class="vm-spinner" aria-hidden="true"></div>
-                    <div class="vm-state-title" x-text="type === 'BUY' ? '매매 규칙과 차트 신호를 확인하고 있어요' : '보유 종목 정보를 확인하고 있어요'"></div>
-                    <div class="vm-state-desc">AI 리포트까지 만들어서 조금 걸릴 수 있어요</div>
-                </div>
-
                 <!-- 실패 -->
                 <div x-show="error && !loading" class="vm-center" role="alert">
-                    <i class="bi bi-exclamation-circle" style="font-size: 48px; color: var(--vm-caution-text);" aria-hidden="true"></i>
-                    <div class="vm-state-title">검증을 완료하지 못했어요</div>
+                    <i class="bi bi-exclamation-circle" style="font-size: 44px; color: var(--vm-caution-text);" aria-hidden="true"></i>
+                    <div class="vm-state-title">확인을 끝내지 못했어요</div>
                     <div class="vm-state-desc" x-text="error"></div>
                     <div class="vm-actions" style="margin-top: 24px;">
                         <button type="button" class="vm-btn vm-btn-soft" @click="close()">닫기</button>
@@ -137,82 +170,164 @@
                     </div>
                 </div>
 
-                <!-- 결과 -->
-                <div x-show="result && !loading" aria-live="polite">
+                <!-- 매도 검증: 서버가 아직 고정 문구만 돌려준다 -->
+                <template x-if="result && result.placeholder && !loading">
+                    <div class="vm-fade">
+                        <div class="vm-hero">
+                            <p class="vm-hero-title">매도 확인은 아직 준비 중이에요</p>
+                            <div class="vm-hero-sub">지금은 분석 결과를 제공하지 않아요. 보유 수익률과 차트를 직접 확인해 판단해 주세요.</div>
+                        </div>
+                    </div>
+                </template>
 
-                    <!-- 매도 검증: 서버가 아직 고정 문구만 돌려준다 -->
-                    <template x-if="result && result.placeholder">
-                        <div class="vm-block">
-                            <div class="vm-verdict vm-neutral">
-                                <i class="bi bi-tools" aria-hidden="true"></i>
-                                <div>
-                                    <div class="vm-verdict-title">매도 검증은 아직 준비 중이에요</div>
-                                    <div class="vm-verdict-sub">지금은 실제 분석 결과를 제공하지 않아요. 매도 여부는 보유 수익률과 차트를 직접 확인해 판단해 주세요.</div>
-                                </div>
+                <!-- 매도 검증 확인 중 -->
+                <div x-show="type === 'SELL' && loading" class="vm-hero" role="status">
+                    <p class="vm-hero-title">보유 종목 정보를 확인하고 있어요</p>
+                </div>
+
+                <!-- 매도 검증: 결론 한 줄 + 가격 사다리 (목표 · 현재가 · 평단 · 손절/수익 보호를 가격 순서대로) -->
+                <template x-if="result && result.sell && !loading && sellView">
+                    <div class="vm-fade">
+                        <div class="vm-hero">
+                            <p class="vm-hero-title" :class="'t-' + sellView.tone" x-text="sellView.title"></p>
+                            <div class="vm-hero-sub" x-text="sellView.sub"></div>
+                        </div>
+                        <div class="vm-block" x-show="sellView.rows.length > 1">
+                            <div class="vm-section-k d-flex justify-content-between"><span>가격 위치</span><span style="font-weight: 500;">%는 현재가 대비</span></div>
+                            <div class="vm-ladder">
+                                <template x-for="r in sellView.rows" :key="r.k">
+                                    <div class="vm-step" :class="{ 'is-current': r.current, 'is-line': r.line, 'is-target': r.target }">
+                                        <span class="vm-step-dot" aria-hidden="true"></span>
+                                        <div class="vm-step-text">
+                                            <div class="vm-step-k" x-text="r.k"></div>
+                                            <div class="vm-step-note" x-show="r.note" x-text="r.note"></div>
+                                            <div class="vm-step-note" x-show="r.note2" x-text="r.note2"></div>
+                                        </div>
+                                        <div class="vm-step-v">
+                                            <div x-text="formatPrice(r.v)"></div>
+                                            <div class="vm-step-d" x-show="r.d !== null" x-text="r.d === null ? '' : pct(r.d)"></div>
+                                        </div>
+                                    </div>
+                                </template>
                             </div>
                         </div>
-                    </template>
+                    </div>
+                </template>
 
-                    <template x-if="result && !result.placeholder">
-                        <div>
-                            <!-- 내 규칙 -->
-                            <div class="vm-block">
-                                <div class="vm-block-title">내 매매 규칙</div>
-                                <div class="vm-verdict" :class="'vm-' + ruleSummary.tone">
-                                    <i class="bi" :class="ruleSummary.icon" aria-hidden="true"></i>
-                                    <div>
-                                        <div class="vm-verdict-title" x-text="ruleSummary.title"></div>
-                                        <div class="vm-verdict-sub" x-show="ruleSummary.sub" x-text="ruleSummary.sub"></div>
-                                        <button type="button" class="vm-link" style="margin-top: 8px;" x-show="details.length === 0" @click="createRule()">
-                                            규칙 만들기 <i class="bi bi-chevron-right" aria-hidden="true"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="vm-rules" x-show="details.length > 0">
-                                    <template x-for="(d, i) in sortedDetails" :key="d.ruleId || i">
-                                        <div class="vm-rule">
-                                            <div style="min-width: 0;">
-                                                <div class="vm-rule-title" x-text="d.ruleTitle"></div>
-                                                <div class="vm-rule-meta" x-text="ruleMeta(d)"></div>
+                <!-- 매수 검증: 확인 중 + 결과를 한 화면에서 (랜딩 데모와 같은 흐름) -->
+                <div x-show="((type === 'BUY' && loading) || (result && !result.placeholder && !result.sell)) && !error" aria-live="polite">
+
+                    <!-- 결론 -->
+                    <div class="vm-hero">
+                        <template x-if="!settled">
+                            <div>
+                                <p class="vm-hero-title">내 규칙을 확인하고 있어요</p>
+                                <div class="vm-hero-sub" role="status"
+                                     x-text="slowHint ? 'AI 리포트까지 쓰고 있어서 조금 더 걸려요' : '결과가 나오면 규칙을 하나씩 체크해 드려요'"></div>
+                            </div>
+                        </template>
+                        <template x-if="settled">
+                            <div class="vm-fade">
+                                <p class="vm-hero-title" x-html="heroTitleHtml"></p>
+                                <div class="vm-hero-sub" x-show="ruleSummary.sub" x-text="ruleSummary.sub"></div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- 내 규칙 -->
+                    <div class="vm-block">
+                        <div class="vm-section-k">내 매매 규칙</div>
+
+                        <!-- 결과가 왔는데 규칙이 없을 때 -->
+                        <template x-if="result && details.length === 0">
+                            <div class="vm-empty">
+                                <span class="vm-empty-text">켜 둔 규칙이 없어서 대조할 게 없어요</span>
+                                <button type="button" class="vm-link" @click="createRule()">규칙 만들기 <i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+                            </div>
+                        </template>
+
+                        <div class="vm-rules" x-show="!(result && details.length === 0)">
+                            <!-- 확인 중인데 미리 받은 규칙 목록이 없으면 자리표시 줄 -->
+                            <template x-if="ruleRows.length === 0">
+                                <div>
+                                    <template x-for="n in 3" :key="n">
+                                        <div class="vm-rule pending" aria-hidden="true">
+                                            <span class="vm-mark"><i class="bi bi-check-lg"></i></span>
+                                            <div class="vm-rule-text" style="display: grid; gap: 7px;">
+                                                <div class="skeleton" style="height: 12px;" :style="{ width: [62, 48, 56][n - 1] + '%' }"></div>
+                                                <div class="skeleton" style="height: 10px; width: 30%;"></div>
                                             </div>
-                                            <span class="vm-pill" :class="d.passed ? 'vm-pill-good' : 'vm-pill-caution'">
-                                                <i class="bi" :class="d.passed ? 'bi-check-lg' : 'bi-dash-lg'" aria-hidden="true"></i>
-                                                <span x-text="d.passed ? '충족' : '미충족'"></span>
-                                            </span>
                                         </div>
                                     </template>
                                 </div>
-                            </div>
+                            </template>
+                            <template x-for="row in ruleRows" :key="row.key">
+                                <div class="vm-rule" :class="row.state">
+                                    <span class="vm-mark" aria-hidden="true">
+                                        <i class="bi" :class="row.state === 'ok' ? 'bi-check-lg' : 'bi-dash-lg'"></i>
+                                    </span>
+                                    <div class="vm-rule-text">
+                                        <div class="vm-rule-title" x-text="row.title"></div>
+                                        <div class="vm-rule-meta" x-text="row.meta"></div>
+                                    </div>
+                                    <span class="visually-hidden" x-text="row.state === 'ok' ? '충족' : row.state === 'no' ? '미충족' : '확인 중'"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
 
-                            <!-- 차트 신호 (매수만) -->
-                            <div class="vm-block" x-show="type === 'BUY'">
-                                <div class="vm-block-title">차트 진입 신호</div>
-                                <div class="vm-signal">
-                                    <div style="min-width: 0;">
-                                        <div class="vm-signal-label" x-text="signalMeta.label"></div>
-                                        <div class="vm-signal-desc" x-text="signalMeta.desc"></div>
-                                    </div>
-                                    <div class="vm-price" x-show="Number(result?.targetPrice) > 0">
-                                        <div class="vm-price-k">1차 진입가</div>
-                                        <div class="vm-price-v" x-text="formatPrice(result?.targetPrice)"></div>
-                                    </div>
+                    <!-- 차트 신호 -->
+                    <div class="vm-block" x-show="type === 'BUY'">
+                        <div class="vm-section-k">차트 진입 신호</div>
+                        <template x-if="!settled">
+                            <div class="vm-signal" aria-hidden="true">
+                                <div style="flex: 1; display: grid; gap: 7px;">
+                                    <div class="skeleton" style="height: 13px; width: 30%;"></div>
+                                    <div class="skeleton" style="height: 10px; width: 70%;"></div>
                                 </div>
                             </div>
-
-                            <!-- AI 리포트 -->
-                            <div class="vm-block" x-show="result?.verdictComment">
-                                <div class="vm-block-title">AI 분석 리포트</div>
-                                <div class="vm-report" :class="reportIsHtml ? '' : 'is-text'" x-html="reportHtml"></div>
+                        </template>
+                        <template x-if="settled">
+                            <div class="vm-signal vm-fade">
+                                <div style="min-width: 0;">
+                                    <div class="vm-signal-label" x-text="signalMeta.label"></div>
+                                    <div class="vm-signal-desc" x-text="signalMeta.desc"></div>
+                                </div>
+                                <div class="vm-price" x-show="Number(result?.targetPrice) > 0">
+                                    <div class="vm-price-k">1차 진입가</div>
+                                    <div class="vm-price-v" x-text="formatPrice(result?.targetPrice)"></div>
+                                </div>
                             </div>
-                        </div>
-                    </template>
+                        </template>
+                    </div>
 
+                    <!-- AI 리포트 -->
+                    <div class="vm-block" x-show="!settled || result?.verdictComment">
+                        <div class="vm-section-k">AI 분석 리포트</div>
+                        <template x-if="!settled">
+                            <div class="vm-report" aria-hidden="true" style="display: grid; gap: 9px;">
+                                <div class="skeleton" style="height: 11px; width: 92%;"></div>
+                                <div class="skeleton" style="height: 11px; width: 84%;"></div>
+                                <div class="skeleton" style="height: 11px; width: 58%;"></div>
+                            </div>
+                        </template>
+                        <template x-if="settled && result?.verdictComment">
+                            <div class="vm-report vm-fade">
+                                <div class="vm-report-text" :class="[reportIsHtml ? '' : 'is-text', reportOpen ? 'open' : '']" x-html="reportHtml"></div>
+                                <button type="button" class="vm-link vm-report-more" @click="reportOpen = !reportOpen" :aria-expanded="reportOpen.toString()"
+                                        x-text="reportOpen ? '접기' : '리포트 전체 보기'"></button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- 다음 행동 -->
+                <div x-show="result && settled && !loading" class="vm-fade">
                     <p class="vm-foot">
-                        <span x-text="analyzedAt ? analyzedAt + ' 기준 · ' : ''"></span>내 규칙과 차트 지표로 계산한 참고 정보예요.<br>
-                        투자 판단과 책임은 본인에게 있어요.
+                        <span x-text="analyzedAt ? analyzedAt + ' 기준 · ' : ''"></span><span x-text="type === 'SELL' ? '차트 지지·저항으로 계산한 참고 정보예요.' : '내 규칙과 차트 지표로 계산한 참고 정보예요.'"></span> 투자 판단과 책임은 본인에게 있어요.
                     </p>
 
-                    <!-- 다음 행동: 규칙이 있고 모두 충족했을 때만 '기록'을 앞세운다 -->
+                    <!-- 규칙이 있고 모두 충족했을 때만 '기록'을 앞세운다 -->
                     <template x-if="isRecordFirst">
                         <div class="vm-actions">
                             <button type="button" class="vm-btn vm-btn-soft" @click="close()">닫기</button>
@@ -222,7 +337,7 @@
                     <template x-if="!isRecordFirst">
                         <div>
                             <div class="vm-actions">
-                                <button type="button" class="vm-btn vm-btn-soft" @click="run()">다시 검증</button>
+                                <button type="button" class="vm-btn vm-btn-soft" @click="run()">다시 확인</button>
                                 <button type="button" class="vm-btn vm-btn-solid" @click="close()">닫기</button>
                             </div>
                             <div style="text-align: center; margin-top: 14px;" x-show="type === 'BUY'">
@@ -289,22 +404,46 @@
             analyzedAt: '',
             token: 0,
             returnFocus: null,
+            rulePreview: [],     // 여는 쪽이 넘겨 준 규칙 (확인 중에 미리 보여 줌)
+            holding: null,       // 매도 검증용 보유 정보 { averagePrice, currentPrice } (여는 쪽이 넘겨 줌)
+            revealed: 0,         // 결과가 온 뒤 위에서부터 체크된 줄 수
+            revealTimer: null,
+            slowTimer: null,
+            slowHint: false,
+            reportOpen: false,
 
             get details() { return Array.isArray(this.result?.details) ? this.result.details : []; },
             get sortedDetails() { return [...this.details].sort((a, b) => Number(a.passed) - Number(b.passed)); },
             get passedCount() { return this.details.filter(d => d.passed).length; },
+            // 결과가 도착하고 규칙 체크 연출까지 끝났는지
+            get settled() { return !this.loading && !!this.result && this.revealed >= this.details.length; },
+            // 화면의 규칙 줄: 확인 중에는 미리 받은 목록(전부 확인 중), 결과가 오면 위에서부터 하나씩 ✓ / –
+            get ruleRows() {
+                if (this.result && !this.result.placeholder) {
+                    return this.details.map((d, i) => ({
+                        key: 'r' + (d.ruleId ?? i), title: d.ruleTitle, meta: this.ruleMeta(d),
+                        state: i < this.revealed ? (d.passed ? 'ok' : 'no') : 'pending'
+                    }));
+                }
+                return this.rulePreview.map((r, i) => ({
+                    key: 'p' + (r.id ?? i), title: r.title,
+                    meta: r.cond ? `기준 ${r.cond}` : '확인 중', state: 'pending'
+                }));
+            },
+            get heroTitleHtml() {
+                const total = this.details.length, passed = this.passedCount;
+                if (total === 0) return '켜 둔 매매 규칙이 없어요';
+                if (passed === total) return `내 규칙 ${total}개를 <span class="ok">모두 충족</span>했어요`;
+                return `규칙 ${total}개 중 ${passed}개 충족`;
+            },
             get ruleSummary() {
                 const total = this.details.length, passed = this.passedCount;
                 if (total === 0) {
-                    return { tone: 'neutral', icon: 'bi-journal-plus', title: '켜 둔 매매 규칙이 없어요',
-                             sub: '규칙을 만들어 두면 매수 전에 하나씩 대조해 드려요.' };
+                    return { title: '켜 둔 매매 규칙이 없어요', sub: '규칙을 만들어 두면 매수 전에 하나씩 대조해 드려요.' };
                 }
-                if (passed === total) {
-                    return { tone: 'good', icon: 'bi-check-circle-fill', title: `내 규칙 ${total}개를 모두 충족했어요`, sub: '' };
-                }
-                return { tone: 'caution', icon: 'bi-exclamation-circle-fill',
-                         title: `내 규칙 ${total}개 중 ${passed}개를 충족했어요`,
-                         sub: `아직 ${total - passed}개 규칙이 기준에 못 미쳐요.` };
+                if (passed === total) return { title: `내 규칙 ${total}개를 모두 충족했어요`, sub: '' };
+                return { title: `내 규칙 ${total}개 중 ${passed}개를 충족했어요`,
+                         sub: `${total - passed}개 규칙이 아직 기준에 못 미쳐요.` };
             },
             get signalMeta() {
                 return SIGNALS[this.result?.signalVerdict]
@@ -312,6 +451,7 @@
             },
             get isRecordFirst() {
                 if (!this.result) return false;
+                if (this.result.sell) return !!this.sellView?.urgent;
                 if (this.result.placeholder) return true;
                 return this.details.length > 0 && this.passedCount === this.details.length;
             },
@@ -334,10 +474,97 @@
             },
             // 서버 결과 한 줄 요약 (목록의 '최근 검증' 표시용)
             get summary() {
+                if (this.result?.sell) return this.sellView?.short || '';
                 if (!this.result || this.result.placeholder) return '';
                 const total = this.details.length, passed = this.passedCount;
                 if (total === 0) return '규칙 없음';
                 return passed === total ? `규칙 ${total}개 모두 충족` : `규칙 ${passed}/${total} 충족`;
+            },
+
+            pct(v) { const n = Number(v) || 0; return (n > 0 ? '+' : '') + n.toFixed(1) + '%'; },
+
+            /**
+             * 매도 검증 화면 모델. 기준선(현재가 아래)이 평단 이상이면 '수익 보호선', 아니면 '손절선'.
+             * 상태: lossBroken · lossNear · profitBroken · targetNear · holdProfit · holdLoss · unknown
+             */
+            get sellView() {
+                const s = this.result?.sell;
+                if (!s) return null;
+                const { cur, avg, stop, target } = s;
+                const pct = this.pct;
+                const ret = avg > 0 && cur > 0 ? (cur / avg - 1) * 100 : null;
+                const hasStop = stop > 0 && cur > 0;
+                const profitLine = hasStop && avg > 0 && stop >= avg;
+                const lineName = profitLine ? '수익 보호선' : '손절선';
+                const gap = hasStop ? (cur - stop) / cur * 100 : null;           // 기준선 위 여유 (%)
+                const tgap = target > 0 && cur > 0 ? (target - cur) / cur * 100 : null;
+                const atLine = hasStop && avg > 0 ? (stop / avg - 1) * 100 : null; // 기준선에서 팔면 수익률
+
+                let state, title, sub, tone, short;
+                if (!hasStop) {
+                    state = 'unknown'; tone = 'neutral'; short = '기준선 계산 불가';
+                    title = '차트 기준선을 계산하지 못했어요';
+                    sub = '차트 데이터가 부족해요. 수익률과 차트를 직접 확인해 판단해 주세요.';
+                } else if (gap <= 0 && !profitLine) {
+                    state = 'lossBroken'; tone = 'alert'; short = '손절선 이탈';
+                    title = '손절선을 이미 깨고 내려왔어요';
+                    sub = '세워 둔 기준대로라면 정리를 검토할 때예요.' + (ret !== null ? ` 지금 팔면 ${pct(ret)}예요.` : '');
+                } else if (gap <= 0) {
+                    state = 'profitBroken'; tone = 'caution'; short = '수익 보호선 이탈';
+                    title = '수익 보호선 아래로 내려왔어요';
+                    sub = (ret !== null ? `지금 정리해도 ${pct(ret)} 수익이에요. ` : '') + '수익을 지키려면 일부 차익 실현을 검토해 보세요.';
+                } else if (!profitLine && gap <= 3) {
+                    state = 'lossNear'; tone = 'caution'; short = `손절선까지 ${gap.toFixed(1)}%`;
+                    title = `손절선까지 ${gap.toFixed(1)}% 남았어요`;
+                    sub = '이 아래로 내려가면 손절 기준에 걸려요. 어떻게 대응할지 미리 정해 두세요.';
+                } else if (tgap !== null && tgap <= 2) {
+                    state = 'targetNear'; tone = 'good'; short = `목표까지 ${tgap.toFixed(1)}%`;
+                    title = `목표가까지 ${tgap.toFixed(1)}% 남았어요`;
+                    sub = '위쪽 저항 구간에 가까워요. 일부 차익 실현을 고려할 만한 자리예요.';
+                } else if (profitLine) {
+                    state = 'holdProfit'; tone = 'good'; short = '보유 유지 · 수익 보호 중';
+                    title = '수익을 지키며 보유 중이에요';
+                    sub = `수익 보호선까지 ${gap.toFixed(1)}% 여유가 있어요. 이 선을 지키는 동안은 보유 흐름이에요.`;
+                } else {
+                    state = 'holdLoss'; tone = 'neutral'; short = '보유 유지';
+                    title = '손절선 위에서 보유 중이에요';
+                    sub = `손절선까지 ${gap.toFixed(1)}% 여유가 있어요.` + (tgap !== null ? ` 목표까지는 ${tgap.toFixed(1)}%예요.` : '');
+                }
+
+                // 가격 사다리: 위에서 아래로 높은 가격 순
+                const rows = [];
+                if (target > 0) rows.push({ k: '목표', v: target, d: tgap, note: s.targetBasis || '위쪽 저항 구간', target: true });
+                if (cur > 0) rows.push({ k: '현재가', v: cur, d: null, note: ret !== null ? `평단 대비 ${pct(ret)}` : '', current: true });
+                if (avg > 0) rows.push({ k: '평단', v: avg, d: cur > 0 ? (avg - cur) / cur * 100 : null, note: '' });
+                if (hasStop) rows.push({ k: lineName, v: stop, d: -gap, line: true,
+                        note: s.basis || '', note2: atLine !== null ? `이 가격에 팔면 ${pct(atLine)}` : '' });
+                rows.sort((a, b) => b.v - a.v);
+
+                const urgent = ['lossBroken', 'lossNear', 'profitBroken', 'targetNear'].includes(state);
+                return { state, title, sub, tone, short, rows, urgent };
+            },
+
+            /** 매도 검증 데이터: 보유 기준선·목표(/holding-stops) + 평단·현재가(여는 쪽 보유 정보, 없으면 현재가 조회) */
+            async buildSell(code) {
+                const h = this.holding || {};
+                let cur = Number(h.currentPrice), avg = Number(h.averagePrice);
+                const res = await fetch('/api/portfolio/holding-stops?codes=' + encodeURIComponent(code), { headers: { 'Accept': 'application/json' } });
+                if (res.status === 401 || res.status === 403 || (res.redirected && res.url.includes('/auth/login'))) {
+                    throw Object.assign(new Error('login'), { login: true });
+                }
+                let s = null;
+                if (res.ok) { const data = await res.json(); s = data?.[code] || null; }
+                if (!(cur > 0)) {
+                    try {
+                        const p = await (await fetch(`/api/stock/${encodeURIComponent(code)}`, { headers: { 'Accept': 'application/json' } })).json();
+                        cur = Number(p?.currentPrice);
+                    } catch (e) { /* 현재가 없이도 기준선은 보여 준다 */ }
+                }
+                return { details: [], sell: {
+                    cur: cur > 0 ? cur : 0, avg: avg > 0 ? avg : 0,
+                    stop: Number(s?.stop) || 0, basis: s?.basis || '',
+                    target: Number(s?.target) || 0, targetBasis: s?.targetBasis || ''
+                } };
             },
 
             ruleMeta(d) {
@@ -360,6 +587,8 @@
                 this.target = { stockCode: detail.stockCode, stockName: detail.stockName || detail.stockCode };
                 this.ruleConditions = detail.ruleConditions || {};
                 this.canCreateRule = !!detail.canCreateRule;
+                this.rulePreview = Array.isArray(detail.rules) ? detail.rules.filter(r => r && r.title) : [];
+                this.holding = detail.holding || null;
                 this.returnFocus = document.activeElement;
                 this.open = true;
                 document.body.style.overflow = 'hidden';
@@ -369,6 +598,7 @@
 
             close() {
                 this.token++;                 // 진행 중인 요청의 결과는 버린다
+                this.stopTimers();
                 this.open = false;
                 this.loading = false;
                 this.result = null;
@@ -378,6 +608,23 @@
                 const el = this.returnFocus;
                 this.returnFocus = null;
                 if (el && el.isConnected && typeof el.focus === 'function') el.focus();
+            },
+
+            stopTimers() {
+                clearInterval(this.revealTimer); this.revealTimer = null;
+                clearTimeout(this.slowTimer); this.slowTimer = null;
+            },
+            // 결과는 한 번에 오지만, 규칙 줄은 위에서부터 차례로 체크해 보여 준다 (움직임 줄이기 설정이면 바로)
+            reveal() {
+                clearInterval(this.revealTimer);
+                const n = this.details.length;
+                const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+                if (n === 0 || reduce) { this.revealed = n; return; }
+                this.revealed = 0;
+                this.revealTimer = setInterval(() => {
+                    this.revealed++;
+                    if (this.revealed >= n) { clearInterval(this.revealTimer); this.revealTimer = null; }
+                }, 160);
             },
 
             createRule() {
@@ -408,6 +655,31 @@
                 this.loading = true;
                 this.result = null;
                 this.error = '';
+                this.revealed = 0;
+                this.reportOpen = false;
+                this.slowHint = false;
+                this.stopTimers();
+                this.slowTimer = setTimeout(() => { if (token === this.token) this.slowHint = true; }, 6000);
+
+                if (type === 'SELL') {
+                    try {
+                        const r = await this.buildSell(code);
+                        if (token !== this.token) return;
+                        this.result = r;
+                        this.analyzedAt = new Intl.DateTimeFormat('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
+                        window.dispatchEvent(new CustomEvent('verify-done', { detail: {
+                            type, stockCode: code, placeholder: false, summary: this.summary,
+                            chartPhase: null, targetPrice: null, at: this.analyzedAt
+                        } }));
+                    } catch (err) {
+                        if (token !== this.token) return;
+                        this.error = err.login ? '로그인이 만료됐어요. 다시 로그인한 뒤 확인해 주세요.'
+                                               : '보유 종목 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
+                    } finally {
+                        if (token === this.token) { this.loading = false; clearTimeout(this.slowTimer); }
+                    }
+                    return;
+                }
 
                 const controller = new AbortController();
                 const timer = setTimeout(() => controller.abort(), 60000);   // 차트 분석 + AI 리포트까지 기다린다
@@ -443,6 +715,8 @@
                     }
                     // decision이 없으면 매도 검증 임시 응답({ status, feedback })이다 — 실제 결과처럼 보여 주지 않는다
                     this.result = raw.decision ? raw : { placeholder: true, details: [] };
+                    this.loading = false;
+                    this.reveal();
                     this.analyzedAt = new Intl.DateTimeFormat('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
 
                     window.dispatchEvent(new CustomEvent('verify-done', { detail: {
@@ -461,7 +735,7 @@
                         : '서버에 연결하지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.';
                 } finally {
                     clearTimeout(timer);
-                    if (token === this.token) this.loading = false;
+                    if (token === this.token) { this.loading = false; clearTimeout(this.slowTimer); }
                 }
             }
         }));

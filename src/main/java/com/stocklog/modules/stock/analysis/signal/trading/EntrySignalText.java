@@ -21,7 +21,9 @@ public final class EntrySignalText {
         String risk = String.format("구조적 손절 %s", fmt(p.stop()));
         String tgt = p.hasStructuralTarget()
                 ? String.format("1차 목표 %s, RR %.1f", fmt(p.target1()), p.rr())
-                : "위쪽에 뚜렷한 저항 구간 없음(RR 산출 불가)";
+                : (verdict == Verdict.RR_TOO_LOW
+                        ? "위쪽 저항 없음 · ATR 기준 추정 손익비도 부족"
+                        : "위쪽에 뚜렷한 저항 구간 없음(ATR 기준 추정 손익비로 확인)");
         String label = p.type().getTitle();
 
         switch (verdict) {

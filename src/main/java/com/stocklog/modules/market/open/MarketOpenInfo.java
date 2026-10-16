@@ -4,7 +4,7 @@ import com.stocklog.modules.common.type.Nation;
 
 import java.time.LocalDateTime;
 
-public record MarketCalendarInfo(
+public record MarketOpenInfo(
         Nation nation,
         MarketOpenType marketOpenType,
         LocalDateTime startTime,

@@ -1,12 +1,12 @@
-package com.stocklog.infra.toss.market.calendar;
+package com.stocklog.infra.toss.market.open;
 
 import com.stocklog.infra.toss.common.TossResponse;
 import com.stocklog.infra.toss.config.auth.TossTokenManager;
-import com.stocklog.infra.toss.market.calendar.TossMarketCalendarOutput.Day;
-import com.stocklog.infra.toss.market.calendar.TossMarketCalendarOutput.Session;
+import com.stocklog.infra.toss.market.open.TossMarketOpenOutput.Day;
+import com.stocklog.infra.toss.market.open.TossMarketOpenOutput.Session;
 import com.stocklog.modules.common.type.Nation;
-import com.stocklog.modules.market.open.MarketCalendarProvider;
-import com.stocklog.modules.market.open.MarketCalendarInfo;
+import com.stocklog.modules.market.open.MarketOpenProvider;
+import com.stocklog.modules.market.open.MarketOpenInfo;
 import com.stocklog.modules.market.open.MarketOpenType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @Slf4j
-public class TossMarketCalendarProvider implements MarketCalendarProvider {
+public class TossMarketOpenProvider implements MarketOpenProvider {
 
     private static final String KR_PATH = "/api/v1/market-calendar/KR";
     private static final String US_PATH = "/api/v1/market-calendar/US";
@@ -40,20 +40,20 @@ public class TossMarketCalendarProvider implements MarketCalendarProvider {
 
     /** 장 시간은 하루 단위로만 바뀌므로 국가별로 그날 응답을 한 번만 받아 둔다 */
     private final Map<Nation, Cached> cache = new ConcurrentHashMap<>();
-    private record Cached(LocalDate date, TossMarketCalendarOutput output) {}
+    private record Cached(LocalDate date, TossMarketOpenOutput output) {}
 
     /** 세션 하나 = 종류 + 시간 */
     private record Slot(MarketOpenType type, Session session) {}
 
-    public TossMarketCalendarProvider(@Qualifier("tossWebClient") WebClient webClient, TossTokenManager tossTokenManager) {
+    public TossMarketOpenProvider(@Qualifier("tossWebClient") WebClient webClient, TossTokenManager tossTokenManager) {
         this.webClient = webClient;
         this.tossTokenManager = tossTokenManager;
     }
 
     @Override
-    public MarketCalendarInfo fetchMarketOpenInfo(Nation nation) {
+    public MarketOpenInfo fetchMarketOpenInfo(Nation nation) {
         OffsetDateTime now = OffsetDateTime.now(KST);
-        TossMarketCalendarOutput output = getCalendar(nation, now.toLocalDate());
+        TossMarketOpenOutput output = getCalendar(nation, now.toLocalDate());
         if (output == null) return closed(nation, null);
 
         // 미국장은 자정을 넘겨 이어지므로 전날·오늘·다음 영업일 세션을 시간순으로 함께 본다
@@ -64,7 +64,7 @@ public class TossMarketCalendarProvider implements MarketCalendarProvider {
 
         for (Slot slot : slots) {
             if (slot.session().contains(now)) {
-                return new MarketCalendarInfo(nation, slot.type(),
+                return new MarketOpenInfo(nation, slot.type(),
                         toKst(slot.session().startTime()), toKst(slot.session().endTime()), true);
             }
         }
@@ -77,11 +77,11 @@ public class TossMarketCalendarProvider implements MarketCalendarProvider {
         return closed(nation, next);
     }
 
-    private TossMarketCalendarOutput getCalendar(Nation nation, LocalDate today) {
+    private TossMarketOpenOutput getCalendar(Nation nation, LocalDate today) {
         Cached cached = cache.get(nation);
         if (cached != null && cached.date().equals(today)) return cached.output();
 
-        TossMarketCalendarOutput output = callApi(nation == Nation.KR ? KR_PATH : US_PATH);
+        TossMarketOpenOutput output = callApi(nation == Nation.KR ? KR_PATH : US_PATH);
         if (output != null) cache.put(nation, new Cached(today, output));
         return output;
     }
@@ -105,8 +105,8 @@ public class TossMarketCalendarProvider implements MarketCalendarProvider {
         if (session != null) slots.add(new Slot(type, session));
     }
 
-    private static MarketCalendarInfo closed(Nation nation, Session next) {
-        return new MarketCalendarInfo(nation, MarketOpenType.CLOSED,
+    private static MarketOpenInfo closed(Nation nation, Session next) {
+        return new MarketOpenInfo(nation, MarketOpenType.CLOSED,
                 next != null ? toKst(next.startTime()) : null,
                 next != null ? toKst(next.endTime()) : null,
                 false);
@@ -116,12 +116,12 @@ public class TossMarketCalendarProvider implements MarketCalendarProvider {
         return t == null ? null : t.atZoneSameInstant(KST).toLocalDateTime();
     }
 
-    private TossMarketCalendarOutput callApi(String path) {
-        TossResponse<TossMarketCalendarOutput> response = webClient.get()
+    private TossMarketOpenOutput callApi(String path) {
+        TossResponse<TossMarketOpenOutput> response = webClient.get()
                 .uri(path)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + tossTokenManager.getAccessToken())
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<TossResponse<TossMarketCalendarOutput>>() {})
+                .bodyToMono(new ParameterizedTypeReference<TossResponse<TossMarketOpenOutput>>() {})
                 .block(CALL_TIMEOUT);
         return response != null ? response.getResult() : null;
     }

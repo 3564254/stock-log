@@ -77,6 +77,7 @@ public class IndexService {
         LocalDate latestSavedDate = marketIndexHistoryRepository.findMaxDateBySymbol(seriesId)
                 .orElse(LocalDate.of(1900, 1, 1));
 
+
         List<MarketIndexHistory> newHistories = indexChartData.stream()
                 .filter(data -> data.date().isAfter(latestSavedDate))
                 .map(data -> MarketIndexHistory.builder()
@@ -111,26 +112,23 @@ public class IndexService {
     // ── 2. 백그라운드 데이터 동기화 스케줄러 (느려도 사용자에게 영향 없음) ──
     // TODO 해결: 외부 API 호출(Thread.sleep 포함)과 DB 저장을 완전히 분리했습니다.
     // 매시간 정각 또는 지정된 시간에 서버가 스스로 API를 호출하여 DB를 최신화합니다.
-    @Scheduled(cron = "0 5 * * * *") // 매분 0초마다 실행 (1분 간격)
+    // 매시 7분에 실행. FRED는 전날 종가를 다음 날 중 아무 때나 올리므로, 하루 한 번이 아니라 매시간 확인한다.
+    // (예전 '오늘 이미 받았으면 건너뛰기'는 저장 날짜를 한국 날짜로, 비교를 미국 날짜로 해서
+    //  한국 오후~다음 날 오후 사이에 새로 올라온 종가를 하루 늦게 받는 문제가 있었다.
+    //  저장은 마지막 저장일 이후 데이터만 넣으므로 매시간 돌려도 중복이 생기지 않는다.)
+    @Scheduled(cron = "0 7 * * * *")
     public void syncAllMarketIndices() {
         log.info("[Index Sync] 전체 시장 지수 백그라운드 동기화 시작");
-        LocalDate todayInUS = LocalDate.now(ZoneId.of("America/New_York"));
 
         for (IndexType type : IndexType.values()) {
             try {
-                MarketIndex marketIndex = marketIndexRepository.findById(type.getSeriesId()).orElse(null);
-                boolean isUpdatedToday = marketIndex != null && marketIndex.getUpdatedAt() != null
-                        && marketIndex.getUpdatedAt().equals(todayInUS);
+                // API Rate Limit 방어를 위한 대기 (트랜잭션 밖에서 실행되므로 DB 커넥션을 물고 있지 않음)
+                Thread.sleep(300);
 
-                if (!isUpdatedToday) {
-                    // API Rate Limit 방어를 위한 대기 (트랜잭션 밖에서 실행되므로 DB 커넥션을 물고 있지 않음)
-                    Thread.sleep(300);
+                IndexDto apiResponse = provider.fetchIndexResponse(type);
 
-                    IndexDto apiResponse = provider.fetchIndexResponse(type);
-
-                    // @Transactional 프록시를 정상적으로 타기 위해 self 객체로 저장 로직 호출
-                    self.saveIndexHistory(apiResponse);
-                }
+                // @Transactional 프록시를 정상적으로 타기 위해 self 객체로 저장 로직 호출
+                self.saveIndexHistory(apiResponse);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 log.error("[Index Sync] 스레드 대기 중단됨: {}", e.getMessage());

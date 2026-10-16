@@ -44,7 +44,13 @@ public final class ZoneBuilder {
         }
     }
 
-    /** ATR 이내로 붙어 있는 레벨을 하나의 구간으로 묶는다. (연쇄 클러스터링: 인접 레벨 기준) */
+    /**
+     * 구간 최대 폭(ATR 배수). 인접 레벨끼리 이어 붙이는 방식이라 레벨이 촘촘하면 구간이 끝없이 늘어날 수 있다.
+     * 구간이 넓어지면 손절(구간 하단 - 버퍼)이 멀어져 손익비가 나빠지므로 이 폭을 넘으면 새 구간으로 끊는다.
+     */
+    private static final double MAX_ZONE_WIDTH_ATR = 2.0;
+
+    /** ATR 이내로 붙어 있는 레벨을 하나의 구간으로 묶는다. (연쇄 클러스터링: 인접 레벨 기준, 최대 폭 제한) */
     private static List<PriceZone> cluster(List<Level> levels, double atr) {
         List<Level> sorted = levels.stream()
                 .sorted(Comparator.comparingDouble(Level::price)).toList();
@@ -52,7 +58,8 @@ public final class ZoneBuilder {
         List<Level> group = new ArrayList<>();
         for (Level lv : sorted) {
             if (!group.isEmpty()
-                    && lv.price() - group.get(group.size() - 1).price() > atr * CLUSTER_ATR) {
+                    && (lv.price() - group.get(group.size() - 1).price() > atr * CLUSTER_ATR
+                        || lv.price() - group.get(0).price() > atr * MAX_ZONE_WIDTH_ATR)) {
                 zones.add(toZone(group, atr));
                 group = new ArrayList<>();
             }

@@ -21,9 +21,10 @@ public class MomentumAnalyzer {
         double w52Position = calculateW52Position(priceDto);
         score += scoreW52Position(priceDto, w52Position, signals);
 
-        // 2. 일봉 기반 단기 모멘텀 분석 (이격도, 최대 10점)
-        if (isValidChart(dailyCharts, 20)) {
-            score += scoreShortTermMomentum(dailyCharts, signals);
+        // 2. 중기 가격 모멘텀 (3개월 수익률, 최대 10점)
+        //    예전에는 20일선 이격도를 봤는데, 기술적 분석의 MA5/MA20 배열과 같은 신호라 20일선에 점수가 몰렸다.
+        if (isValidChart(dailyCharts, RETURN_DAYS + 1)) {
+            score += scoreMediumTermReturn(dailyCharts, signals);
         }
 
         // 3. 단기 RSI 상대강도지수 분석 (최대 5점)
@@ -67,45 +68,49 @@ public class MomentumAnalyzer {
         return 0;
     }
 
-    // ── [2] 단기 모멘텀 (20일선 이격도) ────────────────────────
-    private int scoreShortTermMomentum(List<StockChartDto> charts, List<String> signals) {
-        double ma20 = calculateSMA(charts, 20);
-        double curPrice = getLatestClose(charts);
+    // ── [2] 중기 가격 모멘텀 (약 3개월 = 60거래일 수익률) ─────────────────────
+    private static final int RETURN_DAYS = 60;
 
-        if (ma20 == 0) return 0;
-        double disparity = (curPrice / ma20) * 100.0; // 이격도 계산
+    private int scoreMediumTermReturn(List<StockChartDto> charts, List<String> signals) {
+        double cur = getLatestClose(charts);
+        double past = charts.get(charts.size() - 1 - RETURN_DAYS).close().doubleValue();
+        if (past <= 0) return 0;
+        double ret = (cur / past - 1) * 100.0;
 
-        if (disparity > 115) {
-            signals.add(String.format("20일선 대비 과도한 급등 (이격도 %.1f%%) — 단기 과열 경계", disparity));
-            return 4; // 단기적 쏠림이 너무 크면 오히려 조정 리스크가 커지므로 점수 제한
-        } else if (disparity >= 100) {
-            signals.add(String.format("20일선 상회 유지 (이격도 %.1f%%) — 단기 모멘텀 양호", disparity));
-            return 10;
-        } else if (disparity >= 95) {
-            signals.add(String.format("20일선 근접 (이격도 %.1f%%) — 지지력 테스트 중", disparity));
-            return 6;
-        } else {
-            signals.add(String.format("20일선 하회 (이격도 %.1f%%) — 단기 모멘텀 둔화", disparity));
-            return 2;
+        // 20일선에서 너무 멀어진 급등은 점수와 별개로 경고만 남긴다 (점수는 3개월 흐름으로)
+        if (isValidChart(charts, 20)) {
+            double ma20 = calculateSMA(charts, 20);
+            double disparity = ma20 > 0 ? cur / ma20 * 100.0 : 100.0;
+            if (disparity > 115) {
+                signals.add(String.format("20일선 대비 과도한 급등 (이격도 %.1f%%) — 단기 과열 경계", disparity));
+            }
         }
+
+        if (ret >= 15) { signals.add(String.format("3개월 수익률 %+.1f%% — 강한 중기 상승 탄력", ret)); return 10; }
+        if (ret >= 5)  { signals.add(String.format("3개월 수익률 %+.1f%% — 중기 상승 흐름", ret)); return 8; }
+        if (ret >= -5) { signals.add(String.format("3개월 수익률 %+.1f%% — 중기 횡보", ret)); return 5; }
+        if (ret >= -15){ signals.add(String.format("3개월 수익률 %+.1f%% — 중기 하락 흐름", ret)); return 2; }
+        signals.add(String.format("3개월 수익률 %+.1f%% — 강한 중기 하락", ret));
+        return 0;
     }
 
-    // ── [3] 단기 RSI 분석 (14일 기준) ─────────────────────────────────────
+    // ── [3] RSI (14일, Wilder 방식) ───────────────────────────────────────
+    // 모멘텀 점수이므로 '강할수록 높게'로 일관되게 매긴다. 과열(70+)은 강하지만 부담이 있어 한 단계 낮추고,
+    // 과매도(30-)는 반등 가능성이 있어도 모멘텀 자체는 약하므로 낮게 준다 (예전엔 과매도가 최고점이었다).
     private int scoreRsiMomentum(List<StockChartDto> charts, List<String> signals) {
         double rsi = calculateRSI(charts, 14);
-
         if (rsi > 70) {
-            signals.add(String.format("단기 RSI %.1f — 과매수 구간 (단기 차익실현 주의)", rsi));
-            return 1;
-        } else if (rsi < 30) {
-            signals.add(String.format("단기 RSI %.1f — 과매도 구간 (기술적 반등/매수 찬스)", rsi));
-            return 5; // 역발상 매수로 높은 점수 부여
+            signals.add(String.format("단기 RSI %.1f — 과매수 구간 (강하지만 단기 과열)", rsi));
+            return 4;
         } else if (rsi >= 50) {
             signals.add(String.format("단기 RSI %.1f — 매수 우위의 견조한 흐름", rsi));
-            return 4;
-        } else {
+            return 5;
+        } else if (rsi >= 30) {
             signals.add(String.format("단기 RSI %.1f — 매도 우위의 약세 흐름", rsi));
             return 2;
+        } else {
+            signals.add(String.format("단기 RSI %.1f — 과매도 구간 (반등 여지는 있지만 모멘텀은 약함)", rsi));
+            return 1;
         }
     }
 
@@ -155,24 +160,24 @@ public class MomentumAnalyzer {
                 .orElse(0.0);
     }
 
-    // ── [유틸] RSI 계산 (14일 기준) ──────────────────────────────────────────
+    // ── [유틸] RSI (Wilder 평활) ─────────────────────────────────────────────
+    // 첫 period개 변화량의 단순 평균으로 시작해, 이후 (이전 평균 × (n-1) + 이번 값) / n 으로 이어 간다.
     private double calculateRSI(List<StockChartDto> charts, int period) {
-        double sumGain = 0;
-        double sumLoss = 0;
-
-        for (int i = charts.size() - period; i < charts.size(); i++) {
-            double prevClose = charts.get(i - 1).close().doubleValue();
-            double curClose = charts.get(i).close().doubleValue();
-            double change = curClose - prevClose;
-
-            if (change > 0) sumGain += change;
-            else sumLoss += Math.abs(change);
+        int n = charts.size();
+        if (n <= period) return 50.0;
+        double avgGain = 0, avgLoss = 0;
+        for (int i = 1; i <= period; i++) {
+            double ch = charts.get(i).close().doubleValue() - charts.get(i - 1).close().doubleValue();
+            if (ch > 0) avgGain += ch; else avgLoss -= ch;
         }
-
-        double avgGain = sumGain / period;
-        double avgLoss = sumLoss / period;
-
-        if (avgLoss == 0) return 100.0;
+        avgGain /= period;
+        avgLoss /= period;
+        for (int i = period + 1; i < n; i++) {
+            double ch = charts.get(i).close().doubleValue() - charts.get(i - 1).close().doubleValue();
+            avgGain = (avgGain * (period - 1) + Math.max(ch, 0)) / period;
+            avgLoss = (avgLoss * (period - 1) + Math.max(-ch, 0)) / period;
+        }
+        if (avgLoss == 0) return avgGain == 0 ? 50.0 : 100.0;
         double rs = avgGain / avgLoss;
         return 100.0 - (100.0 / (1.0 + rs));
     }

@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -416,8 +417,11 @@ public class DivergenceDetector implements MarketAnalyzer {
     ) {
 
         return chartUseCase
-                .getStockChartDtoList(code)
+                .getStockChartDtoList(code)   // 최신순(내림차순)으로 온다
                 .stream()
+                // computeReturn은 '마지막 원소 = 오늘'을 가정하므로 날짜 오름차순으로 뒤집는다
+                .filter(c -> c != null && c.date() != null && c.close() != null)
+                .sorted(Comparator.comparing(StockChartDto::date))
                 .map(StockChartDto::closeDoubleValue)
                 .toList();
     }

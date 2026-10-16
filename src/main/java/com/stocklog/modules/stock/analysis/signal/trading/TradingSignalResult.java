@@ -87,10 +87,13 @@ public record TradingSignalResult(
             double stopLoss,
             double primaryTarget,
             double secondaryTarget,
-            double trailingStop
+            double trailingStop,        // 보유 기준 손절선 (국면과 상관없이 ATR만 있으면 항상 > 0)
+            String trailingBasis,       // 그 근거: "지지 구간 하단 (MA20·POC)" / "최근 저점 아래" / "변동폭(ATR) 2배 아래"
+            double holdTarget,          // 보유 기준 익절 목표: 현재가 위 가장 가까운 저항 (없으면 0)
+            String holdTargetBasis      // 그 근거: "저항 구간 하단 (최근고점·R1)"
     ) {
         public static PriceTarget empty() {
-            return new PriceTarget(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            return new PriceTarget(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, "", 0.0, "");
         }
     }
 

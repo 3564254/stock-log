@@ -11,4 +11,9 @@ public interface NewsProvider {
 
     List<NewsDto> fetchMarketNews();
     boolean supports(MarketType marketType);
+
+    /** 저장할 때 붙이는 출처. 구현체마다 재정의한다 */
+    default NewsSource source() {
+        return NewsSource.UNKNOWN;
+    }
 }

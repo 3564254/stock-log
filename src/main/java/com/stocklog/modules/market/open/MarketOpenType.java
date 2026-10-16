@@ -7,4 +7,8 @@ public enum MarketOpenType {
         return !this.equals(DAY_MARKET) && !this.equals(CLOSED);
     }
 
+    public boolean isRegularMarket() {
+        return this.equals(REGULAR_MARKET);
+    }
+
 }

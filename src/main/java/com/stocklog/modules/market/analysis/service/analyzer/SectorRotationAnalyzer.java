@@ -3,6 +3,7 @@ package com.stocklog.modules.market.analysis.service.analyzer;
 import com.stocklog.modules.market.analysis.service.result.MarketAnalyzerScore;
 import com.stocklog.modules.market.analysis.service.result.MarketAnalyzer;
 import com.stocklog.modules.market.analysis.service.result.ScoreCategory;
+import com.stocklog.modules.common.type.Period;
 import com.stocklog.modules.market.chart.MarketChartData;
 import com.stocklog.modules.market.domain.type.IndexType;
 import org.springframework.stereotype.Component;
@@ -16,18 +17,19 @@ import static com.stocklog.modules.market.analysis.service.analyzer.utils.GetDou
 @Component
 public class SectorRotationAnalyzer implements MarketAnalyzer {
 
-    // 분석할 대상 섹터 목록 (DOW_JONES_UTILITY 제외)
+    // 분석할 대상 섹터 목록: S&P 500(일간 종가)과 같은 기준으로 비교할 수 있는 '일간 가격 지수'만.
+    // SECTOR_INDUSTRIALS·SECTOR_DISCRETIONARY_DURABLE(월간 생산지수), SECTOR_FINANCIALS(주간 대출 총액),
+    // SECTOR_REAL_ESTATE(월간 주택가격)는 가격 지수가 아니고 주기도 달라서
+    // 20칸 수익률이 20개월·20주 수익률이 되어 S&P 500 20일 수익률과 비교할 수 없으므로 뺐다.
     private static final List<IndexType> TARGET_SECTORS = List.of(
             IndexType.PHLX_SEMI, IndexType.NASDAQ_AI_BIGDATA, IndexType.NASDAQ_CAPEX_ACHIEVERS,
-            IndexType.SECTOR_INDUSTRIALS, IndexType.SECTOR_DISCRETIONARY_DURABLE, IndexType.SECTOR_FINANCIALS,
             IndexType.NASDAQ_CONSUMER_STAPLES, IndexType.NASDAQ_ISE_CYBERSECURITY, IndexType.NASDAQ_BIOTECH,
-            IndexType.NASDAQ_CLEAN_ENERGY, IndexType.PHLX_GOLD_SILVER, IndexType.SECTOR_REAL_ESTATE
+            IndexType.NASDAQ_CLEAN_ENERGY, IndexType.PHLX_GOLD_SILVER
     );
 
     // Risk-On 성향의 섹터 (이들의 상대강도가 높으면 긍정적)
     private static final Set<IndexType> RISK_ON_SECTORS = Set.of(
-            IndexType.PHLX_SEMI, IndexType.NASDAQ_AI_BIGDATA, IndexType.NASDAQ_CAPEX_ACHIEVERS,
-            IndexType.SECTOR_INDUSTRIALS, IndexType.SECTOR_DISCRETIONARY_DURABLE
+            IndexType.PHLX_SEMI, IndexType.NASDAQ_AI_BIGDATA, IndexType.NASDAQ_CAPEX_ACHIEVERS
     );
 
     // Risk-Off (방어적) 성향의 섹터 (이들의 상대강도가 높으면 부정적 경계 신호)
@@ -58,6 +60,7 @@ public class SectorRotationAnalyzer implements MarketAnalyzer {
         List<SectorStrength> sectorStrengths = new ArrayList<>();
 
         for (IndexType sector : TARGET_SECTORS) {
+            if (sector.getFrequency() != Period.DAY) continue;   // 안전장치: 목록에 일간이 아닌 지표가 다시 들어와도 비교하지 않는다
             List<Double> sectorCloses = getDoubles(data, sector);
             if (sectorCloses != null && sectorCloses.size() >= 21) {
                 double absReturn = computeReturn(sectorCloses, sectorCloses.size() - 1, 20);

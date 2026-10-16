@@ -3,6 +3,7 @@ package com.stocklog.infra.finnhub.news.api;
 import com.stocklog.modules.stock.application.request.StockRequest;
 import com.stocklog.modules.stock.domain.type.MarketType;
 import com.stocklog.modules.market.news.NewsProvider;
+import com.stocklog.modules.market.news.NewsSource;
 import com.stocklog.modules.market.news.dto.NewsDto;
 import com.stocklog.infra.finnhub.config.FinProperties;
 import com.stocklog.infra.finnhub.news.dto.FinStockNewsOutput;
@@ -54,6 +55,11 @@ public class FinOverseasNewsProvider implements NewsProvider {
     @Override
     public boolean supports(MarketType marketType) {
         return marketType.isOverseas();
+    }
+
+    @Override
+    public NewsSource source() {
+        return NewsSource.FINNHUB;
     }
 
     private List<NewsDto> processNewsOutputs(List<FinStockNewsOutput> outputList) {
@@ -111,7 +117,7 @@ public class FinOverseasNewsProvider implements NewsProvider {
     private NewsDto toNewsDto(FinStockNewsOutput output) {
         return NewsDto.builder()
                 .category(output.getCategory())
-                .dateTime(convertToNewYorkDate(output.getUnixDateTime()))
+                .dateTime(convertToKst(output.getUnixDateTime()))
                 .headline(output.getHeadLine())
                 .newsId(output.getNewsId() != null ? String.valueOf(output.getNewsId()) : null)
                 .image(output.getImage())
@@ -123,16 +129,19 @@ public class FinOverseasNewsProvider implements NewsProvider {
     }
 
 
-    private LocalDateTime convertToNewYorkDate(Long unixSeconds) {
+    // 뉴스 시각은 출처와 상관없이 KST로 저장한다 (KIS 뉴스와 같은 기준으로 정렬되도록)
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
+    private LocalDateTime convertToKst(Long unixSeconds) {
         if (unixSeconds == null) {
-            return LocalDateTime.now(ZoneId.of("America/New_York"));
+            return LocalDateTime.now(KST);
         }
 
         try {
-            return LocalDateTime.ofInstant(Instant.ofEpochSecond(unixSeconds), ZoneId.of("America/New_York"));
+            return LocalDateTime.ofInstant(Instant.ofEpochSecond(unixSeconds), KST);
         } catch (Exception e) {
             log.warn("시간 변환 중 오류 발생 (입력값: {}). 현재 시간으로 대체합니다.", unixSeconds);
-            return LocalDateTime.now(ZoneId.of("America/New_York"));
+            return LocalDateTime.now(KST);
         }
     }
 }

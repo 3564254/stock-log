@@ -5,6 +5,7 @@ import com.stocklog.global.error.ErrorCode;
 import com.stocklog.modules.market.news.News;
 import com.stocklog.modules.market.news.NewsProvider;
 import com.stocklog.modules.market.news.NewsRepository;
+import com.stocklog.modules.market.news.NewsSource;
 import com.stocklog.modules.stock.application.request.StockRequest;
 import com.stocklog.modules.market.news.dto.NewsDto;
 import com.stocklog.modules.market.news.dto.NewsResponse;
@@ -12,6 +13,7 @@ import com.stocklog.modules.stock.stock.dto.StockDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -31,9 +33,10 @@ public class NewsService {
     private final NewsRepository newsRepository;
 
 
+    /** 시장 페이지 뉴스 탭: Finnhub 영어 원문 (요약·이미지·링크가 있는 기사) */
     public NewsResponse getMarketNews(Pageable pageable) {
         // 1. DB에서 페이징된 News 엔티티 조회
-        Page<News> newsPage = newsRepository.findMarketNews(pageable);
+        Page<News> newsPage = newsRepository.findMarketNewsByProvider(NewsSource.FINNHUB, pageable);
 
         // 2. Page<News>를 Page<NewsDto>로 변환
         Page<NewsDto> newsDtoPage = newsPage.map(NewsDto::from);
@@ -42,6 +45,13 @@ public class NewsService {
         return NewsResponse.createMarketNews(newsDtoPage);
     }
 
+    /** 메인 "실시간 핵심 뉴스": KIS 한국어 헤드라인 최신 N건 (종목 기사 포함) */
+    public List<NewsDto> getKoreanHeadlines(int n) {
+        return newsRepository.findByProviderOrderByDateTimeDesc(NewsSource.KIS, PageRequest.of(0, n)).stream()
+                .map(NewsDto::from).toList();
+    }
+
+    /** 출처 구분 없이 최신 N건 — 시장 진단(AI)에 참고 자료로 넘긴다 */
     public List<NewsDto> getMarketNewsDESCTopN(int n) {
         return newsRepository.findNewsDESCTopN(n).stream()
                 .map(NewsDto::from).toList();
@@ -54,14 +64,14 @@ public class NewsService {
         StockRequest request = StockRequest.from(stockDto);
 
         // 1. API에서 뉴스 리스트 가져오기
-        List<NewsDto> fetchedNewsList = providers.stream()
+        NewsProvider provider = providers.stream()
                 .filter(p -> p.supports(stockDto.market()))
                 .findFirst()
-                .map(p -> p.fetchStockNews(request))
                 .orElseThrow(() -> new BusinessException(ErrorCode.MARKET_NOT_FOUND));
+        List<NewsDto> fetchedNewsList = provider.fetchStockNews(request);
 
         // 2. 새로운 뉴스 DB 저장
-        saveNewNews(fetchedNewsList, stockDto.code() + " 종목");
+        saveNewNews(fetchedNewsList, provider.source(), stockDto.code() + " 종목");
 
         Page<News> newsPage = newsRepository.findStockNews(stockDto.code(), pageable);
         Page<NewsDto> newsDtoPage = newsPage.map(NewsDto::from);
@@ -71,19 +81,24 @@ public class NewsService {
     }
 
 
-    @Scheduled(cron = "0 5 * * * *")
+    // 제공처마다 따로 받아 저장한다 — 한 곳이 실패해도 나머지는 저장되고, 출처가 섞이지 않는다
+    @Scheduled(cron = "0 */3 * * * *")
     public void fetchMarketNews() {
-        // 1. API에서 시장 뉴스 리스트 가져오기
-        List<NewsDto> fetchedNewsList = providers.stream()
-                .findFirst()
-                .map(NewsProvider::fetchMarketNews)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NEWS_NOT_FOUND));
-
-        // 2. 새로운 뉴스 DB 저장
-        saveNewNews(fetchedNewsList, "시장");
+        for (NewsProvider provider : providers) {
+            try {
+                List<NewsDto> fetched = provider.fetchMarketNews();
+                if (fetched == null || fetched.isEmpty()) {
+                    log.warn("[News] {} 시장 뉴스 응답 없음", provider.source());
+                    continue;
+                }
+                saveNewNews(fetched, provider.source(), provider.source() + " 시장");
+            } catch (Exception e) {
+                log.error("[News] {} 시장 뉴스 수집 실패: {}", provider.source(), e.getMessage(), e);
+            }
+        }
     }
 
-    private void saveNewNews(List<NewsDto> fetchedNewsList, String logContext) {
+    private void saveNewNews(List<NewsDto> fetchedNewsList, NewsSource source, String logContext) {
         if (fetchedNewsList == null || fetchedNewsList.isEmpty()) {
             return;
         }
@@ -98,7 +113,7 @@ public class NewsService {
         // 기존 DB에 없는 "새로운" 뉴스만 필터링하여 엔티티로 변환
         List<News> newEntitiesToSave = fetchedNewsList.stream()
                 .filter(dto -> !existingNewsIds.contains(dto.newsId()))
-                .map(NewsDto::toEntity)
+                .map(dto -> NewsDto.toEntity(dto, source))
                 .toList();
 
         // 새로운 뉴스만 저장

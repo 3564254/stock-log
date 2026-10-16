@@ -7,6 +7,7 @@ import com.stocklog.modules.market.analysis.service.analyzer.LiquidityAnalyzer.L
 import com.stocklog.modules.market.analysis.service.analyzer.MacroAnalyzer.MacroDetails;
 import com.stocklog.modules.market.analysis.service.analyzer.RateAnalyzer.RateDetails;
 import com.stocklog.modules.market.analysis.service.analyzer.SectorRotationAnalyzer.RotationDetails;
+import com.stocklog.modules.market.analysis.service.analyzer.ShortTermShockDetector.ShockDetails;
 import com.stocklog.modules.market.analysis.dto.EngineInput;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +20,7 @@ public class MarketRegimeEngine {
     private static final double NEUTRAL_BAND = 10;
 
     public MarketRegimeDto evaluate(EngineInput input) {
-        double weightedScore = getWeightedScore(input);
+        double coreScore = getCoreScore(input);
 
         // 1. 임계값(Threshold)을 적용한 2차원 축 판별
         String axis1Trend = determineAxis(input.trend().score(), "BULL", "BEAR");
@@ -29,15 +30,30 @@ public class MarketRegimeEngine {
         String combinedRegime = axis1Trend + " + " + axis2Risk;
         String regimeDescription = switch (combinedRegime) {
             case "BULL + RISK_ON" -> "강한 상승장";
+            case "BULL + NEUTRAL" -> "상승 추세 (위험 선호는 중립)";
             case "BULL + RISK_OFF" -> "상승 추세지만 위험 증가 (경계)";
             case "BEAR + RISK_ON" -> "하락장 속 기술적 반등 / 회복 시도";
+            case "BEAR + NEUTRAL" -> "하락 추세 (위험 선호는 중립)";
             case "BEAR + RISK_OFF" -> "강한 하락장";
-            default -> "방향성 탐색 구간 (혼조세)";
+            case "NEUTRAL + RISK_ON" -> "방향성 탐색 중 위험 선호 우위";
+            case "NEUTRAL + RISK_OFF" -> "방향성 탐색 중 위험 회피 우위";
+            default -> "방향성 탐색 구간 (혼조세)";   // NEUTRAL + NEUTRAL
         };
 
         // 3. 단기 모멘텀 급락에 따른 '상승장 내 단기 조정' 오버라이드
         if (axis1Trend.equals("BULL") && (input.momentum().score() <= -40 || input.breadth().score() <= -40)) {
             regimeDescription = "상승 추세 내 단기 조정 (모멘텀/확산도 악화)";
+        }
+
+        // 4. 단기 충격 오버라이드: 엔진은 중장기 흐름 위주라 며칠 사이의 급락에 늦게 반응한다.
+        //    5일 급락이나 VIX 급등이 잡히면 추세 판정과 별개로 문구를 바꿔 바로 드러낸다.
+        ShockDetails shock = (input.shock() != null && input.shock().rawDetails() instanceof ShockDetails s) ? s : null;
+        if (shock != null && shock.triggered()) {
+            regimeDescription = switch (axis1Trend) {
+                case "BULL" -> "상승 추세 속 단기 급락 (변동성 확대)";
+                case "BEAR" -> "하락 추세 속 급락 (변동성 확대)";
+                default -> "단기 급락 · 변동성 확대";
+            };
         }
 
         String macroRegime = extractMacroRegime(input.macro());
@@ -48,10 +64,13 @@ public class MarketRegimeEngine {
         List<String> warnings = new ArrayList<>();
         List<String> divergences = new ArrayList<>();
 
+        if (shock != null && shock.warnings() != null) warnings.addAll(shock.warnings());
         collectWarnings(input, warnings);
         collectDivergences(input.divergence(), divergences);
 
-        int confidence = (int) Math.round(Math.abs(weightedScore));
+        // 신뢰도: 지표들이 같은 방향을 가리키는 정도 + 그 방향의 뚜렷함. 괴리 경고가 있으면 감점
+        // (예전에는 |가중합|을 그대로 써서, 음수만 나오는 괴리 점수가 많을수록 신뢰도가 오르는 문제가 있었다)
+        int confidence = calcConfidence(input, coreScore);
 
         return new MarketRegimeDto(
                 regimeDescription,
@@ -93,10 +112,10 @@ public class MarketRegimeEngine {
                 new Component(in.crossAsset().score(), 0.025));
     }
 
-    private static double getWeightedScore(EngineInput input) {
+    /** 괴리(divergence)를 뺀 핵심 지표 가중합. 괴리 점수는 0 이하만 나오므로 방향 판단에 섞지 않는다 */
+    private static double getCoreScore(EngineInput input) {
         double core = components(input).stream().mapToDouble(c -> c.score() * c.weight()).sum();
-        double total = core + input.divergence().score() * 0.35;
-        return Math.max(-100.0, Math.min(100.0, total));
+        return Math.max(-100.0, Math.min(100.0, core));
     }
 
     /** 0~100. 지표들이 같은 방향을 가리킬수록, 그리고 그 방향이 뚜렷할수록 높다. */
