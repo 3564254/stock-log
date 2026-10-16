@@ -15,14 +15,27 @@ StockLog는 그 앞뒤를 한곳에 모으려고 만들었습니다. 주문은 �
 
 ## 화면
 
-### 시장 국면 진단
-![시장 국면 진단](docs/images/market.png)
-
-### 종목 분석
-![종목 분석](docs/images/analysis.png)
-
-### 포트폴리오
-![포트폴리오](docs/images/portfolio.png)
+<table>
+  <tr>
+    <td width="50%"><b>홈</b><br><img src="docs/images/home.png" alt="홈"></td>
+    <td width="50%"><b>시장 국면 진단</b><br><img src="docs/images/market.png" alt="시장 국면 진단"></td>
+  </tr>
+  <tr>
+    <td><b>종목 분석</b><br><img src="docs/images/analysis.png" alt="종목 분석"></td>
+    <td><b>포트폴리오</b><br><img src="docs/images/portfolio.png" alt="포트폴리오"></td>
+  </tr>
+  <tr>
+    <td><b>매수·매도 검증</b><br><img src="docs/images/verify.png" alt="매수·매도 검증"></td>
+    <td><b>매매 기록</b><br><img src="docs/images/tradelog.png" alt="매매 기록"></td>
+  </tr>
+  <tr>
+    <td><b>커뮤니티</b><br><img src="docs/images/community.png" alt="커뮤니티"></td>
+    <td><b>모바일</b><br>
+      <img src="docs/images/mobile-home.png" alt="모바일 홈" width="48%">
+      <img src="docs/images/mobile-portfolio.png" alt="모바일 포트폴리오" width="48%">
+    </td>
+  </tr>
+</table>
 
 ## 주요 기능
 
