@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockLog - 신호 성과</title>
+    <th:block th:replace="~{fragments/head :: assets}"></th:block>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script th:src="@{/js/signal-stats.js}" src="/js/signal-stats.js"></script>
+    <style>
+        :root { --content-max: 1080px; }
+        .sg-k { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+        .sg-title { font-size: 22px; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 6px; color: var(--text-strong); word-break: keep-all; }
+        .sg-sub { font-size: 14px; font-weight: 500; color: var(--text-sub); line-height: 1.6; word-break: keep-all; margin: 0; }
+        .sg-meta { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 14px; font-size: 13px; color: var(--text-muted); font-weight: 500; }
+        .sg-meta b { color: var(--text-strong); font-weight: 700; }
+        .sg-tabs { display: flex; gap: 6px; margin-top: 16px; }
+        .sg-tab { border: 0; background: var(--surface-soft); color: var(--text-sub); font-family: inherit; font-size: 13px; font-weight: 700; padding: 7px 14px; border-radius: 999px; cursor: pointer; }
+        .sg-tab.on { background: var(--text-strong); color: #fff; }
+        .sg-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; }
+        .sg-table { width: 100%; min-width: 820px; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+        .sg-table th { font-size: 11.5px; font-weight: 600; color: var(--text-muted); text-align: right; padding: 8px 4px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+        .sg-table th:first-child, .sg-table td:first-child { text-align: left; }
+        .sg-table td { padding: 11px 4px; border-bottom: 1px solid var(--canvas); text-align: right; color: var(--text-sub); white-space: nowrap; }
+        .sg-table td:first-child { font-weight: 700; color: var(--text-strong); white-space: normal; min-width: 120px; }
+        .sg-table tr.base td { color: var(--text-muted); }
+        .sg-small { display: block; font-size: 11.5px; color: var(--text-muted); font-weight: 500; }
+        .sg-badge { display: inline-block; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--surface-soft); color: var(--text-sub); }
+        .sg-badge.lo { background: var(--caution-bg, #fff4e5); color: var(--caution-text); }
+        .sg-badge.hi { background: var(--success-bg, #e8f7ee); color: var(--status-green); }
+        .sg-note { font-size: 12.5px; font-weight: 500; color: var(--text-muted); line-height: 1.65; word-break: keep-all; margin: 0 0 6px; }
+        .sg-empty { padding: 28px 0; text-align: center; color: var(--text-muted); font-size: 14px; font-weight: 500; line-height: 1.6; word-break: keep-all; }
+        .up { color: var(--toss-red-deep); } .dn { color: var(--toss-blue-deep); }
+    </style>
+</head>
+<body x-data="signalApp">
+<div class="layout-wrapper">
+    <aside th:replace="~{fragments/sidebar :: sidebarFragment('market')}"></aside>
+    <main class="main-content">
+        <div class="content-container">
+            <div th:replace="~{fragments/header :: headerFragment}"></div>
+
+            <section class="toss-card mb-4">
+                <div class="sg-k">신호 성과 · 전향적 기록</div>
+                <h1 class="sg-title">엔진 신호가 실제로 도움이 되는지 기록하고 있어요</h1>
+                <p class="sg-sub">매일 장 마감 뒤 분석한 종목을 신호가 난 날과 안 난 날 모두 남기고, 이후 5·10·20거래일 결과를 같은 규칙으로 추적해요. 가상 추적이고 실제 매수 기록이 아니에요.</p>
+                <div class="sg-tabs" role="tablist">
+                    <button type="button" class="sg-tab" :class="{ on: nation === 'US' }" @click="setNation('US')" role="tab" :aria-selected="nation === 'US'">미국</button>
+                    <button type="button" class="sg-tab" :class="{ on: nation === 'KR' }" @click="setNation('KR')" role="tab" :aria-selected="nation === 'KR'">한국</button>
+                </div>
+                <div class="sg-meta" x-show="st" x-cloak>
+                    <span>기록 <b x-text="st?.records?.toLocaleString('ko-KR')"></b>건 · 추적 완료 <b x-text="st?.done?.toLocaleString('ko-KR')"></b>건</span>
+                    <span x-show="st?.firstDate">기간 <b x-text="st?.firstDate + ' ~ ' + st?.lastDate"></b></span>
+                    <span>규칙 <b x-text="st?.engineVersion + ' · ' + st?.trackVersion"></b></span>
+                </div>
+            </section>
+
+            <section class="toss-card mb-4">
+                <div x-show="loading" class="sg-empty">불러오는 중…</div>
+                <div x-show="!loading && (!st || !st.records)" x-cloak class="sg-empty">아직 기록이 없어요. 장 마감 뒤 스크리닝이 돌면 쌓이기 시작하고, 20거래일이 지나야 첫 결과가 나와요.</div>
+                <div class="sg-scroll" x-show="!loading && st?.records" x-cloak>
+                    <table class="sg-table">
+                        <thead>
+                        <tr>
+                            <th>신호</th>
+                            <th>표본<span class="sg-small">이벤트 · 추적 · 주</span></th>
+                            <th>10일<span class="sg-small">평균 · 중앙</span></th>
+                            <th>20일<span class="sg-small">평균 · 중앙</span></th>
+                            <th>20일 보유 비용 후<span class="sg-small">평균 · 중앙</span></th>
+                            <th>MFE · MAE<span class="sg-small">20일</span></th>
+                            <th>손절 · 목표 도달<span class="sg-small">20일</span></th>
+                            <th>같은 종목 다른 날 대비<span class="sg-small">타점 효과 · t</span></th>
+                            <th>같은 날 전체 대비<span class="sg-small">시장분 제외 · t</span></th>
+                            <th>상태</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <template x-for="r in (st?.rows || [])" :key="r.key">
+                            <tr :class="{ base: r.key === 'NONSIGNAL' }">
+                                <td x-text="r.label"></td>
+                                <td x-text="r.events.toLocaleString('ko-KR') + ' · ' + r.tracked.toLocaleString('ko-KR') + (r.weeks ? ' · ' + r.weeks : '')"></td>
+                                <td><span :class="tone(r.mean10)" x-text="p(r.mean10)"></span> · <span x-text="p(r.median10)"></span></td>
+                                <td><span :class="tone(r.mean20)" x-text="p(r.mean20)"></span> · <span x-text="p(r.median20)"></span></td>
+                                <td><span :class="tone(r.x20Mean)" x-text="p(r.x20Mean)"></span> · <span x-text="p(r.x20Median)"></span></td>
+                                <td x-text="p(r.mfe20, 1) + ' · ' + p(r.mae20, 1)"></td>
+                                <td x-text="r.stopHitRate == null ? '-' : (r.stopHitRate * 100).toFixed(0) + '% · ' + (r.targetHitRate * 100).toFixed(0) + '%'"></td>
+                                <td><span :class="tone(r.vsSameStock)" x-text="pp(r.vsSameStock)"></span> <span class="sg-small" x-show="r.tSameStock != null" x-text="'t ' + (r.tSameStock || 0).toFixed(1)"></span></td>
+                                <td><span :class="tone(r.vsSameDay)" x-text="pp(r.vsSameDay)"></span> <span class="sg-small" x-show="r.tSameDay != null" x-text="'t ' + (r.tSameDay || 0).toFixed(1)"></span></td>
+                                <td><span class="sg-badge" :class="{ lo: r.status === '비교군보다 낮음', hi: r.status.startsWith('우위') }" x-text="r.status"></span></td>
+                            </tr>
+                        </template>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="sg-note" style="margin-top: 12px;" x-show="st?.note" x-text="st?.note"></p>
+            </section>
+
+            <section class="toss-card mb-4">
+                <div class="sg-k" style="margin-bottom: 10px;">읽는 법과 원칙</div>
+                <p class="sg-note">· 신호 이벤트는 엔진 판정이 '기술적 조건 충족'이 된 첫날만 세요. 같은 신호가 며칠 이어져도 한 번이에요.</p>
+                <p class="sg-note">· 체결은 신호 다음 거래일 시가, 20일 보유는 종가가 체결가 − 2 ATR 아래로 마감하면 다음날 시가에 정리해요. 비교군도 같은 규칙과 비용으로 계산해요.</p>
+                <p class="sg-note">· '같은 종목 다른 날 대비'가 진입 타점의 효과예요. 시장이 올라서 생긴 수익은 '같은 날 전체 대비'에서 빠져요.</p>
+                <p class="sg-note">· 상태: 이벤트 100건 · 신호가 난 주 20개 미만이면 '검증 중'. 그 뒤 같은 종목 대비 t가 2 이상이면 '우위 관찰 (확정 아님)', −2 이하면 '비교군보다 낮음'. 좋은 결과가 나와도 자동으로 '검증 완료'라고 표시하지 않아요.</p>
+                <p class="sg-note">· 규칙(엔진·추적 버전)을 바꾸면 새 버전으로 따로 쌓아요. 버전이 다른 기록은 섞지 않아요.</p>
+                <p class="sg-note" x-show="bt" x-text="bt"></p>
+            </section>
+        </div>
+    </main>
+</div>
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('signalApp', () => ({
+            nation: 'US', st: null, loading: true,
+            get bt() {
+                const S = window.__signalStats; if (!S) return '';
+                const M = S[this.nation === 'KR' ? 'kr' : 'us'], x = M?.types?.PULLBACK; if (!x) return '';
+                return `· 참고(과거 백테스트, 이 표와 별개): ${M.universe} ${S.period}, 눌림목 신호 ${x.n.toLocaleString('ko-KR')}건 · 같은 종목 아무 날 대비 ${(x.diff >= 0 ? '+' : '') + (x.diff * 100).toFixed(2)}%p (t ${x.t.toFixed(1)}). 청산 규칙이 달라 숫자를 바로 비교하지 마세요.`;
+            },
+            p(v, d = 2) { if (v == null) return '-'; const n = v * 100; return (n > 0 ? '+' : '') + n.toFixed(d) + '%'; },
+            pp(v) { if (v == null) return '-'; const n = v * 100; return (n > 0 ? '+' : '') + n.toFixed(2) + '%p'; },
+            tone(v) { return v == null ? '' : (v > 0 ? 'up' : (v < 0 ? 'dn' : '')); },
+            setNation(n) { if (this.nation === n) return; this.nation = n; this.load(); },
+            async init() { await this.load(); },
+            async load() {
+                this.loading = true;
+                try {
+                    const res = await fetch(`/api/signals/stats?nation=${this.nation}`, { headers: { 'Accept': 'application/json' } });
+                    this.st = res.ok && !res.redirected ? await res.json() : null;
+                } catch (e) { this.st = null; }
+                this.loading = false;
+            }
+        }));
+    });
+</script>
+</body>
+</html>

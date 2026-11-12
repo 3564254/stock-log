@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockLog - 미국 모멘텀</title>
+    <th:block th:replace="~{fragments/head :: assets}"></th:block>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <style>
+        :root { --content-max: 960px; }
+        .mo-k { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+        .mo-title { font-size: 22px; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 6px; color: var(--text-strong); word-break: keep-all; }
+        .mo-sub { font-size: 14px; font-weight: 500; color: var(--text-sub); line-height: 1.6; word-break: keep-all; margin: 0; }
+        .mo-meta { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 14px; font-size: 13px; color: var(--text-muted); font-weight: 500; }
+        .mo-meta b { color: var(--text-strong); font-weight: 700; }
+        .mo-list { list-style: none; margin: 0; padding: 0; }
+        .mo-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 4px; border-top: 1px solid var(--canvas); }
+        .mo-row:first-child { border-top: 0; }
+        .mo-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .mo-rank { font-size: 14px; font-weight: 800; color: var(--text-muted); font-variant-numeric: tabular-nums; text-align: center; }
+        .mo-name { font-size: 15px; font-weight: 700; color: var(--text-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .mo-name a { color: inherit; text-decoration: none; }
+        .mo-name a:hover { text-decoration: underline; text-underline-offset: 3px; }
+        .mo-sec { font-size: 12px; font-weight: 500; color: var(--text-muted); margin-top: 1px; }
+        .mo-ret { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
+        .mo-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+        .mo-chip { border: 0; background: var(--surface-soft); color: var(--text-sub); font-family: inherit; font-size: 13px; font-weight: 700; padding: 7px 12px; border-radius: 999px; cursor: pointer; }
+        .mo-chip.on { background: var(--text-strong); color: #fff; }
+        .mo-note { font-size: 12px; font-weight: 500; color: var(--text-muted); line-height: 1.6; word-break: keep-all; }
+        .mo-empty { padding: 28px 0; text-align: center; color: var(--text-muted); font-size: 14px; font-weight: 500; }
+        .mo-btn { border: 0; border-radius: 10px; padding: 8px 14px; background: var(--surface-soft); color: var(--text-strong); font-family: inherit; font-size: 13px; font-weight: 700; }
+        .text-up { color: var(--toss-red-deep); } .text-down { color: var(--toss-blue-deep); }
+    </style>
+</head>
+<body x-data="momentumApp">
+<div class="layout-wrapper">
+    <aside th:replace="~{fragments/sidebar :: sidebarFragment('market')}"></aside>
+    <main class="main-content">
+        <div class="content-container">
+            <div th:replace="~{fragments/header :: headerFragment}"></div>
+
+            <section class="toss-card mb-4">
+                <div class="mo-k">미국 모멘텀 · S&amp;P500</div>
+                <h1 class="mo-title">최근 1년 가장 강했던 상위 20%</h1>
+                <p class="mo-sub">최근 1개월을 뺀 12개월 상승률 순위예요. 상위 20%를 분기마다 같은 비중으로 사서 바꿔 들고 가는 방식이 과거 데이터에서 S&amp;P500 보유보다 나았어요.</p>
+                <div class="mo-meta">
+                    <span>기준일 <b x-text="status?.asOf || '-'"></b></span>
+                    <span>후보 <b x-text="rows.length + '개'"></b> / <span x-text="(rows[0]?.universeSize || 0) + '종목'"></span></span>
+                    <span>다음 교체 <b x-text="rows[0]?.nextRebalance || nextQ"></b></span>
+                </div>
+            </section>
+
+            <section class="toss-card mb-4">
+                <div class="mo-filter" x-show="sectors.length > 1">
+                    <button type="button" class="mo-chip" :class="{ on: !sector }" @click="sector = ''">전체</button>
+                    <template x-for="s in sectors" :key="s">
+                        <button type="button" class="mo-chip" :class="{ on: sector === s }" @click="sector = s" x-text="s"></button>
+                    </template>
+                </div>
+                <template x-if="loading"><div class="mo-empty">불러오는 중이에요</div></template>
+                <template x-if="!loading && rows.length === 0">
+                    <div class="mo-empty">
+                        <div x-text="status?.running ? '순위를 계산하고 있어요 (약 500종목, 몇 분 걸려요)' : '아직 계산된 순위가 없어요'"></div>
+                        <button type="button" class="mo-btn mt-3" x-show="!status?.running" @click="refresh()">지금 계산하기</button>
+                    </div>
+                </template>
+                <ol class="mo-list" x-show="!loading && rows.length">
+                    <template x-for="r in filtered" :key="r.code">
+                        <li class="mo-row">
+                            <div class="mo-rank" x-text="r.rankNo"></div>
+                            <div class="mo-main">
+                                <span class="stk-logo" style="--s: 32px; width: 32px; height: 32px; border-radius: 50%; overflow: hidden; flex: none;" aria-hidden="true"><template x-if="$store.logos.url(r.code)"><img style="width: 100%; height: 100%; object-fit: cover; display: block;" :src="$store.logos.url(r.code)" alt="" loading="lazy" @error="$store.logos.fail(r.code)"></template><span x-show="!$store.logos.url(r.code)" x-text="$store.logos.letter(r.code, r.code)"></span></span>
+                                <div style="min-width: 0;">
+                                <div class="mo-name"><a :href="'/stock/analysis?code=' + encodeURIComponent(r.code)" x-text="(r.name || r.code) + ' · ' + r.code"></a></div>
+                                <div class="mo-sec" x-text="r.sector + ' · 상위 ' + r.pct.toFixed(1) + '%'"></div>
+                            </div>
+                            </div>
+                            <div class="mo-ret" :class="r.ret121 >= 0 ? 'text-up' : 'text-down'" x-text="(r.ret121 >= 0 ? '+' : '') + (r.ret121 * 100).toFixed(1) + '%'"></div>
+                        </li>
+                    </template>
+                </ol>
+            </section>
+
+            <section class="toss-card mb-4">
+                <div class="mo-k mb-2">쓰는 법과 근거</div>
+                <p class="mo-note mb-2">· 분기 첫 거래일에 상위 20%를 같은 비중으로 사고, 다음 분기까지 들고 있다가 순위 밖으로 나간 종목만 바꿔요. 중간 손절은 없어요.</p>
+                <p class="mo-note mb-2">· 백테스트(S&amp;P500 2017년 구성 534종목, 2017~2026, 다음날 시가 체결, 왕복 비용 0.35%): 연 +22.3%, 최대 낙폭 38% · SPY 보유 연 +13.3%(낙폭 34%) · 같은 종목 동일비중 보유 +16.2%. 2017~2022와 2023~2026 두 구간, 기간·비율을 바꾼 9개 조합 모두에서 동일비중 보유보다 나았어요.</p>
+                <p class="mo-note mb-2">· 한계: 2024~2026 AI 장세에서 특히 많이 이겼고, 사라진 종목 일부가 데이터에서 빠져 실제보다 좋게 나왔을 수 있어요. 낙폭은 지수와 비슷하거나 조금 커요. 한국(코스피200)에서는 통하지 않았어요.</p>
+                <p class="mo-note mb-0">· 과거 결과이고 앞으로를 보장하지 않아요. 투자 판단과 책임은 본인에게 있어요.</p>
+            </section>
+        </div>
+    </main>
+</div>
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('momentumApp', () => ({
+            rows: [], status: null, loading: true, sector: '',
+            get sectors() { return [...new Set(this.rows.map(r => r.sector).filter(Boolean))].sort(); },
+            get filtered() { return this.sector ? this.rows.filter(r => r.sector === this.sector) : this.rows; },
+            get nextQ() { const t = new Date(); const m = Math.floor(t.getMonth() / 3) * 3 + 3; const d = new Date(t.getFullYear(), m, 1); return d.toISOString().slice(0, 10); },
+            async init() { await this.load(); },
+            async load() {
+                this.loading = true;
+                try {
+                    const [a, b] = await Promise.all([fetch('/api/momentum/top'), fetch('/api/momentum/status')]);
+                    this.rows = a.ok ? await a.json() : []; this.status = b.ok ? await b.json() : null;
+                } catch (e) { this.rows = []; }
+                this.loading = false;
+                if (this.status?.running) setTimeout(() => this.load(), 20000);
+            },
+            async refresh() {
+                try { await fetch('/api/momentum/refresh', { method: 'POST' }); } catch (e) {}
+                setTimeout(() => this.load(), 1500);
+            }
+        }));
+    });
+</script>
+</body>
+</html>
