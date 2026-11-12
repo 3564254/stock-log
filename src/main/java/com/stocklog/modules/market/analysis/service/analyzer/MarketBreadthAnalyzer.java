@@ -22,46 +22,20 @@ public class MarketBreadthAnalyzer implements MarketAnalyzer {
 
     private final GetStockChartUseCase chartUseCase;
 
-    /**
-     * 시장 확산도 분석에 사용되는 기간별 상대수익률 스프레드
-     *
-     * spread = 비교 대상 수익률 - 기준 지수 수익률
-     *
-     * 예:
-     * RSP - SPY
-     * IWM - SPY
-     * QQEW - QQQ
-     */
+    /** 시장 확산도 분석에 사용되는 기간별 상대수익률 스프레드 */
     public record ReturnSpreads(
             double spread20D,
             double spread60D
     ) {}
 
-    /**
-     * Breadth 분석의 세부 결과
-     */
+    /** Breadth 분석의 세부 결과 */
     public record BreadthDetails(
             ReturnSpreads sp500Spread,
             ReturnSpreads smallCapSpread,
             ReturnSpreads nasdaqSpread
     ) {}
 
-    /**
-     * 시장 Breadth 분석
-     *
-     * 분석 구조:
-     *
-     * 1. S&P 500 내부 확산
-     *    RSP vs SPY
-     *
-     * 2. 중소형주 참여도
-     *    IWM vs SPY
-     *
-     * 3. Nasdaq 100 내부 확산
-     *    QQEW vs QQQ
-     *
-     * 최종 점수 범위: -100 ~ +100
-     */
+    /** 시장 Breadth 분석 */
     public MarketAnalyzerScore analyze(Map<IndexType, MarketChartData> data) {
 
         List<Double> spyCloses = getEtfDoubles(IndexEtf.SPY.getCode());
@@ -103,25 +77,7 @@ public class MarketBreadthAnalyzer implements MarketAnalyzer {
         );
     }
 
-    /**
-     * 최종 Breadth 점수 계산
-     *
-     * 가중치
-     *
-     * S&P 500 내부 확산 : 40점
-     *   - 20D : 20
-     *   - 60D : 20
-     *
-     * Small Cap 참여도 : 30점
-     *   - 20D : 15
-     *   - 60D : 15
-     *
-     * Nasdaq 내부 확산 : 30점
-     *   - 20D : 15
-     *   - 60D : 15
-     *
-     * 총점: -100 ~ +100
-     */
+    /** 최종 Breadth 점수 계산 */
     private double calculateNormalizedScore(
             ReturnSpreads sp500Spread,
             ReturnSpreads smallCapSpread,
@@ -130,9 +86,7 @@ public class MarketBreadthAnalyzer implements MarketAnalyzer {
 
         double score = 0.0;
 
-        // =========================================================
-        // 1. S&P 500 내부 확산 : 최대 ±40
-        // =========================================================
+        // S&P 500 내부 확산 : 최대 ±40
 
         score += evaluateSpread(
                 sp500Spread.spread20D(),
@@ -144,9 +98,7 @@ public class MarketBreadthAnalyzer implements MarketAnalyzer {
                 20.0
         );
 
-        // =========================================================
-        // 2. Small Cap 참여도 : 최대 ±30
-        // =========================================================
+        // Small Cap 참여도 : 최대 ±30
 
         score += evaluateSpread(
                 smallCapSpread.spread20D(),
@@ -158,9 +110,7 @@ public class MarketBreadthAnalyzer implements MarketAnalyzer {
                 15.0
         );
 
-        // =========================================================
-        // 3. Nasdaq 내부 확산 : 최대 ±30
-        // =========================================================
+        // Nasdaq 내부 확산 : 최대 ±30
 
         score += evaluateSpread(
                 nasdaqSpread.spread20D(),
@@ -175,26 +125,7 @@ public class MarketBreadthAnalyzer implements MarketAnalyzer {
         return clamp(score, -100.0, 100.0);
     }
 
-    /**
-     * 상대수익률 스프레드를 연속형 점수로 변환
-     *
-     * 기존 방식:
-     *
-     * +2% 이상  → +Max
-     * 0~2%      → +Max/2
-     * -2~-0%    → -Max/2
-     * -2% 이하  → -Max
-     *
-     * 문제:
-     * -2.01%와 -10%가 동일한 점수가 됨.
-     *
-     * 개선:
-     * tanh를 이용해 스프레드가 커질수록 점수가
-     * 자연스럽게 포화되도록 구성.
-     *
-     * 기준:
-     * 약 ±4% 정도의 스프레드에서 강한 확산/축소로 수렴.
-     */
+    /** 상대수익률 스프레드를 연속형 점수로 변환 */
     private double evaluateSpread(
             double spread,
             double maxScore
@@ -205,17 +136,7 @@ public class MarketBreadthAnalyzer implements MarketAnalyzer {
         return normalized * maxScore;
     }
 
-    /**
-     * S&P 500 내부 확산
-     *
-     * RSP - SPY
-     *
-     * RSP가 SPY보다 강하면:
-     * → 상승 참여 종목이 넓어지는 것으로 해석
-     *
-     * RSP가 SPY보다 약하면:
-     * → 대형주 쏠림으로 해석
-     */
+    /** S&P 500 내부 확산 */
     private ReturnSpreads getSp500BreadthSpread(
             List<Double> spyCloses,
             List<Double> rspCloses
@@ -233,17 +154,7 @@ public class MarketBreadthAnalyzer implements MarketAnalyzer {
         );
     }
 
-    /**
-     * Small Cap 참여도
-     *
-     * IWM - SPY
-     *
-     * IWM이 SPY보다 강하면:
-     * → 시장 상승의 저변이 넓어지는 것으로 해석
-     *
-     * IWM이 SPY보다 약하면:
-     * → 대형주 중심 장세로 해석
-     */
+    /** Small Cap 참여도 */
     private ReturnSpreads getSmallCapSpread(
             List<Double> spyCloses,
             List<Double> iwmCloses
@@ -261,17 +172,7 @@ public class MarketBreadthAnalyzer implements MarketAnalyzer {
         );
     }
 
-    /**
-     * Nasdaq 100 내부 확산
-     *
-     * QQEW - QQQ
-     *
-     * QQEW가 QQQ보다 강하면:
-     * → Nasdaq 내부 종목 확산
-     *
-     * QQEW가 QQQ보다 약하면:
-     * → 소수 대형 기술주 중심 상승
-     */
+    /** Nasdaq 100 내부 확산 */
     private ReturnSpreads getNasdaqBreadthSpread(
             List<Double> qqqCloses,
             List<Double> qqewCloses
@@ -289,11 +190,7 @@ public class MarketBreadthAnalyzer implements MarketAnalyzer {
         );
     }
 
-    /**
-     * 두 ETF의 상대수익률 스프레드 계산
-     *
-     * spread = targetReturn - baseReturn
-     */
+    /** 두 ETF의 상대수익률 스프레드 계산 */
     private ReturnSpreads calculateReturnSpread(
             List<Double> baseCloses,
             List<Double> targetCloses
@@ -336,18 +233,12 @@ public class MarketBreadthAnalyzer implements MarketAnalyzer {
         );
     }
 
-    /**
-     * 최소 61개 데이터 필요
-     *
-     * 60일 수익률 계산을 위해 사용.
-     */
+    /** 최소 61개 데이터 필요 60일 수익률 계산을 위해 사용 */
     private boolean hasEnoughData(List<Double> closes) {
         return closes != null && closes.size() >= 61;
     }
 
-    /**
-     * 범위 제한
-     */
+    /** 범위 제한 */
     private double clamp(
             double value,
             double min,
@@ -360,9 +251,7 @@ public class MarketBreadthAnalyzer implements MarketAnalyzer {
         );
     }
 
-    /**
-     * ETF 차트 데이터 조회
-     */
+    /** ETF 차트 데이터 조회 */
     private List<Double> getEtfDoubles(String code) {
 
         return chartUseCase

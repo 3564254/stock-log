@@ -15,9 +15,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.stocklog.modules.stock.analysis.score.ScoreBreakdown;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -62,18 +67,21 @@ public class TradingRuleService {
         tradingRule.toggleActive(targetState);
     }
 
-    /**
-     * 💡 변경: 검증 시 MarketContext 객체를 직접 주입받아 실시간 데이터를 대조합니다.
-     */
-    public TradingRuleCheckResponse evaluateBuySignal(Long memberId, MarketContext ctx, TradingSignalResult signal) {
+    /** MarketContext의 실시간 값으로 규칙을 검증한다 */
+    /** 점수 조건 규칙이 있을 때만 한 번 호출한다 */
+    public TradingRuleCheckResponse evaluateBuySignal(Long memberId, MarketContext ctx, TradingSignalResult signal,
+                                                      Supplier<ScoreBreakdown> scores) {
         List<TradingRule> activeRules = tradingRuleRepository.findAllByMemberIdAndIsActiveTrue(memberId);
+
+        ScoreBreakdown score = activeRules.stream().anyMatch(r -> r.getIndicatorType().isScore())
+                ? loadScores(scores) : null;
 
         List<TradingRuleCheckResponse.RuleDetail> details = new ArrayList<>();
         boolean isAllPass = true;
 
         for (TradingRule rule : activeRules) {
-            // 단일 룰 평가 수행
-            boolean passed = evaluateSingleRule(rule, ctx);
+            Double value = currentValue(rule.getIndicatorType(), ctx, score);
+            boolean passed = evaluateSingleRule(rule, ctx, value);
 
             if (!passed) {
                 isAllPass = false;
@@ -83,7 +91,8 @@ public class TradingRuleService {
                     rule.getId(),
                     rule.getTitle(),
                     rule.getIndicatorType(),
-                    passed
+                    passed,
+                    value
             ));
         }
 
@@ -102,11 +111,7 @@ public class TradingRuleService {
         return null;
     }
 
-
-
-
-
-    // ================= 내부 검증 및 헬퍼 메서드 =================
+    // 내부 검증 및 헬퍼 메서드
 
     private void validateRuleOwnership(Long memberId, TradingRule rule) {
         if (!rule.getMemberId().equals(memberId)) {
@@ -114,31 +119,48 @@ public class TradingRuleService {
         }
     }
 
-    private boolean evaluateSingleRule(TradingRule rule, MarketContext ctx) {
+    private ScoreBreakdown loadScores(Supplier<ScoreBreakdown> scores) {
+        if (scores == null) return null;
+        try {
+            return scores.get();
+        } catch (Exception e) {
+            log.warn("[매매 규칙] 종목 점수를 구하지 못해 점수 조건은 미충족으로 처리합니다: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /** 수치형 지표의 실제 값. 상태형 지표이거나 값을 구하지 못하면 null */
+    private Double currentValue(IndicatorType type, MarketContext ctx, ScoreBreakdown score) {
+        if (!type.isNumeric()) return null;
+        if (type.isScore()) {
+            if (score == null) return null;
+            return (double) switch (type) {
+                case STOCK_SCORE -> score.total();
+                case VALUATION_SCORE -> score.valuation();
+                case MOMENTUM_SCORE -> score.momentum();
+                case TECHNICAL_SCORE -> score.technical();
+                default -> 0;
+            };
+        }
+        return extractNumericIndicator(type, ctx);
+    }
+
+    private boolean evaluateSingleRule(TradingRule rule, MarketContext ctx, Double currentValue) {
         IndicatorType type = rule.getIndicatorType();
 
-        // 1. 상태형(Boolean) 지표인 경우 -> 수치 비교 없이 Context 속성 자체로 참/거짓 즉시 반환
+        // 상태형(Boolean) 지표인 경우 -> 수치 비교 없이 Context 속성 자체로 참/거짓 즉시 반환
         if (!type.isNumeric()) {
             return evaluateBooleanIndicator(type, ctx);
         }
 
-        double currentValue = 0.0;
-
-        // 2. 수치형(Numeric) 지표인 경우 -> Operator와 TargetValue 필수 검증
-        if (rule.getOperator() == null || rule.getTargetValue() == null) {
-            return false; // 세팅 오류 방어
-        } else if (rule.getIndicatorType().equals(IndicatorType.STOCK_SCORE)) {
-            //TODO: STOCK_SCORE
-        } else {
-            currentValue = extractNumericIndicator(type, ctx);
+        // 수치형(Numeric) 지표인 경우 -> Operator와 TargetValue 필수, 값을 못 구했으면 미충족
+        if (rule.getOperator() == null || rule.getTargetValue() == null || currentValue == null) {
+            return false;
         }
-
         return rule.getOperator().evaluate(currentValue, rule.getTargetValue());
     }
 
-    /**
-     * 상태형/이벤트 지표 판별기
-     */
+    /** 상태형/이벤트 지표 판별기 */
     private boolean evaluateBooleanIndicator(IndicatorType type, MarketContext ctx) {
         return switch (type) {
             case UPTREND -> ctx.priceAction().isUptrend();             // 정배열 여부
@@ -152,12 +174,9 @@ public class TradingRuleService {
         };
     }
 
-    /**
-     * 수치형 지표 추출기
-     */
+    /** 수치형 지표 추출기 */
     private double extractNumericIndicator(IndicatorType type, MarketContext ctx) {
         return switch (type) {
-            // case STOCK_SCORE -> ctx.
             case MA5 -> ctx.movingAverages().ma5();
             case MA20 -> ctx.movingAverages().ma20();
             case MA50 -> ctx.movingAverages().ma50();

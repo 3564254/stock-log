@@ -11,13 +11,14 @@ public record TradingRuleCheckResponse(
         String verdictComment, // 종합 분석 리포트 문구
         ChartPhase chartPhase, // 타점 엔진이 판정한 차트 단계 (화면 목록 즉시 갱신용)
         Double targetPrice,    // 1차 진입가. 진입 계획이 없으면 0.0
-        String signalVerdict   // 타점 엔진 판정 (ACTIONABLE, WAIT_FOR_ZONE 등)
+        String signalVerdict   // 타점 엔진 판정
 ) {
     public record RuleDetail(
             Long ruleId,
             String ruleTitle,
             IndicatorType indicatorType,
-            boolean passed // 해당 규칙 통과 여부
+            boolean passed, // 해당 규칙 통과 여부
+            Double currentValue // 수치형 지표의 실제 값
     ) {
     }
 }

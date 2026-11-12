@@ -26,8 +26,6 @@ public class TradeFacadeService {
     private final TradingRuleService tradingRuleService;
     private final WatchlistService watchlistService;
 
-    // ================= Trade Log  =================
-
     public TradeLogResponse getMonthlyTradeLogs(Long memberId, LocalDate targetDate, SortType type) {
         return tradeLogService.getMonthlyTradeLogs(memberId, targetDate, type);
     }
@@ -35,8 +33,6 @@ public class TradeFacadeService {
     public void saveTradeLog(Long memberId, TradeLogRequest request) {
         tradeLogService.saveTradeLog(memberId, request);
     }
-
-    // ================= Trade Review  =================
 
     public List<TradeReviewResponse> getMonthlyReviews(Long memberId, LocalDate targetDate) {
         return tradeReviewService.getMonthlyReviews(memberId, targetDate);
@@ -54,8 +50,6 @@ public class TradeFacadeService {
         tradeReviewService.deleteReview(memberId, reviewId);
     }
 
-    // ================= Trade Rule  ================= //
-
     public TradingRuleResponse getActiveRules(Long memberId) {
         return tradingRuleService.getActiveRules(memberId);
     }
@@ -68,15 +62,15 @@ public class TradeFacadeService {
         tradingRuleService.deleteRule(memberId, tradingRuleId);
     }
 
-    public TradingRuleCheckResponse evaluateBuySignal(Long memberId, MarketContext marketContext, TradingSignalResult signal) {
-        return tradingRuleService.evaluateBuySignal(memberId, marketContext, signal);
+    public TradingRuleCheckResponse evaluateBuySignal(Long memberId, MarketContext marketContext, TradingSignalResult signal,
+                                                      java.util.function.Supplier<com.stocklog.modules.stock.analysis.score.ScoreBreakdown> scores) {
+        return tradingRuleService.evaluateBuySignal(memberId, marketContext, signal, scores);
     }
 
     public void saveTradingRule(Long memberId, TradingRuleSaveRequest request) {
         tradingRuleService.addTradingRule(memberId, request);
     }
 
-    // ================= Watch List  =================
     public WatchListResponse getWatchlist(Long memberId) {
         List<WatchItemDto> watchlist = watchlistService.getWatchlist(memberId);
         return WatchListResponse.builder()
@@ -100,7 +94,5 @@ public class TradeFacadeService {
     public void updateAnalyzedSignal(Long memberId, String stockCode, ChartPhase phase, double targetPrice) {
         watchlistService.updateAnalyzedSignal(memberId, stockCode, phase, targetPrice);
     }
-
-
 
 }

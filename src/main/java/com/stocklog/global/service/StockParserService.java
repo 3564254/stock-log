@@ -1,6 +1,6 @@
 package com.stocklog.global.service;
 
-import com.opencsv.CSVReader; // 단순 split보다 훨씬 안전합니다.
+import com.opencsv.CSVReader; // 따옴표 안의 쉼표까지 처리
 import com.stocklog.modules.stock.application.response.StockMasterDto;
 import com.stocklog.modules.stock.domain.type.Currency;
 import com.stocklog.modules.stock.domain.type.MarketType;

@@ -19,9 +19,9 @@ public class StockFinancial {
 
     @Id
     @Column(name = "base_date", nullable = false)
-    private LocalDate baseDate; // 기준일자 (예: 2026-04-23)
+    private LocalDate baseDate;
 
-    // --- 수익성 (JSON의 grossMarginTTM, netProfitMarginTTM 등) ---
+    // 수익성
     @Column(precision = 10, scale = 4)
     private BigDecimal grossMargin;      // 매출총이익률 (TTM)
     @Column(precision = 10, scale = 4)
@@ -33,13 +33,13 @@ public class StockFinancial {
     @Column(precision = 10, scale = 4)
     private BigDecimal roa;             // ROA (TTM)
 
-    // --- 성장성 (JSON의 revenueGrowthTTMYoy, epsGrowthTTMYoy 등) ---
+    // 성장성
     @Column(precision = 10, scale = 4)
     private BigDecimal revenueGrowth;   // 매출 성장률 (YoY)
     @Column(precision = 10, scale = 4)
     private BigDecimal epsGrowth;       // EPS 성장률 (YoY)
 
-    // --- 안정성 및 효율성 (JSON의 currentRatioQuarterly, inventoryTurnoverTTM 등) ---
+    // 안정성 및 효율성
     @Column(precision = 10, scale = 4)
     private BigDecimal debtToEquity;    // 부채비율 (Quarterly)
     @Column(precision = 10, scale = 4)
@@ -47,11 +47,15 @@ public class StockFinancial {
     @Column(precision = 10, scale = 4)
     private BigDecimal inventoryTurnover; // 재고회전율 (TTM)
 
-    // --- 배당 ---
+    // 배당
     @Column(precision = 10, scale = 4)
     private BigDecimal dividendYield;   // 배당수익률 (TTM)
     @Column(precision = 10, scale = 4)
     private BigDecimal payoutRatio;     // 배당성향 (TTM)
+
+    /** 어디서 받은 어느 기간 값인지. 예전 행은 null */
+    @Column(name = "source", length = 80)
+    private String source;
 
 
     @Builder
@@ -60,7 +64,7 @@ public class StockFinancial {
                           BigDecimal revenueGrowth, BigDecimal epsGrowth,
                           BigDecimal debtToEquity, BigDecimal currentRatio,
                           BigDecimal inventoryTurnover, BigDecimal dividendYield,
-                          BigDecimal payoutRatio) {
+                          BigDecimal payoutRatio, String source) {
         this.code = code;
         this.baseDate = baseDate;
         this.grossMargin = grossMargin;
@@ -75,5 +79,6 @@ public class StockFinancial {
         this.inventoryTurnover = inventoryTurnover;
         this.dividendYield = dividendYield;
         this.payoutRatio = payoutRatio;
+        this.source = source;
     }
 }

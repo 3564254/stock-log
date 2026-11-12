@@ -15,8 +15,8 @@ public record StockQuote(
     public static StockQuote of(StockDto stock, StockPriceDto priceDto) {
         return StockQuote.builder()
                 .stock(stock)
-                .currentPrice(priceDto.currentPrice())
-                .changeRate(priceDto.changeRate())
+                .currentPrice(priceDto != null ? priceDto.currentPrice() : null)   // 가격 조회 실패한 종목도 검색 결과에는 남긴다
+                .changeRate(priceDto != null ? priceDto.changeRate() : null)
                 .build();
     }
 }

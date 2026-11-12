@@ -34,7 +34,7 @@ public class TradingRule extends BaseTimeEntity {
     private Operator operator;
 
     @Column(name = "target_value")
-    private Double targetValue; // 기준 지표 값 (예: 30.0 또는 70.0)
+    private Double targetValue; // 기준 지표 값
 
     @Column(name = "is_active", nullable = false)
     private boolean isActive; // 규칙 활성화 여부
@@ -50,11 +50,9 @@ public class TradingRule extends BaseTimeEntity {
         this.isActive = isActive;
     }
 
-    // ================= 비즈니스 로직 (수정 업데이트용) =================
+    // 비즈니스 로직 (수정 업데이트용)
 
-    /**
-     * 매매 규칙 내용 수정 (JPA 더티 체킹)
-     */
+    /** 매매 규칙 내용 수정 (JPA 더티 체킹) */
     public void updateRule(String title, IndicatorType indicatorType, Operator operator, Double targetValue) {
         this.title = title;
         this.indicatorType = indicatorType;
@@ -63,9 +61,7 @@ public class TradingRule extends BaseTimeEntity {
     }
 
 
-    /**
-     * 매매 규칙 활성화/비활성화 토글
-     */
+    /** 매매 규칙 활성화/비활성화 토글 */
     public void toggleActive(boolean isActive) {
         this.isActive = isActive;
     }

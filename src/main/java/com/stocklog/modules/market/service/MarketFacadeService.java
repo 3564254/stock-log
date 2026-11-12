@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-
 @Service
 @RequiredArgsConstructor
 public class MarketFacadeService {
@@ -29,13 +28,11 @@ public class MarketFacadeService {
     private final MarketAnalysisService analysisService;
     private final MarketDiagnosisService diagnosisService;
     private final com.stocklog.modules.market.analysis.service.horizon.HorizonService horizonService;
+    private final com.stocklog.modules.market.analysis.service.allocation.CashAllocationService cashAllocationService;
 
-    // ============== Exchange Service ============== //
     public ExchangeRateInfo fetchExchangeRate() {
         return exchangeService.fetchExchangeRate();
     }
-
-    // ============== Index Service ============== //
 
     public IndexDashboardDto getMarketDashboard() {
         return indexService.getMarketDashboard();
@@ -45,7 +42,6 @@ public class MarketFacadeService {
         return indexService.getIndexDtoFromDb(seriesId);
     }
 
-    // ============== analysis Service ============== //
     public MarketRegimeDto getMarketAnalysisDto() {
         return analysisService.analyzeMarket();
     }
@@ -60,11 +56,10 @@ public class MarketFacadeService {
                 .diagnosisDto(marketDiagnosisDto)
                 .dataDate(totalResult.dataDate())
                 .horizons(safeHorizons(totalResult))
+                .cashGuide(safeCashGuide(totalResult))
                 .build();
 
     }
-
-
 
     // 시간축 판정이 실패해도 시장 진단 전체는 보여 준다
     private com.stocklog.modules.market.analysis.service.horizon.HorizonService.HorizonReport safeHorizons(TotalResult totalResult) {
@@ -76,7 +71,16 @@ public class MarketFacadeService {
         }
     }
 
-    // ============== News Service ============== //
+    // 현금 비중 계산이 실패해도 시장 진단 전체는 보여 준다
+    private com.stocklog.modules.market.analysis.service.allocation.CashAllocationService.CashGuide safeCashGuide(TotalResult totalResult) {
+        try {
+            return cashAllocationService.evaluate(totalResult.engineInput());
+        } catch (Exception e) {
+            org.slf4j.LoggerFactory.getLogger(MarketFacadeService.class).warn("[시장 진단] 현금 비중 계산 실패: {}", e.getMessage());
+            return null;
+        }
+    }
+
     public NewsResponse fetchStockNews(StockDto stockDto, Pageable pageable) {
         return newsService.fetchStockNews(stockDto, pageable);
     }

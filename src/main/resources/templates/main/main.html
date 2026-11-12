@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StockLog - 대시보드 홈</title>
     <th:block th:replace="~{fragments/head :: assets}"></th:block>
+    <script th:src="@{/js/lev-board.js}" src="/js/lev-board.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
 
     <style>
@@ -14,15 +15,16 @@
     }
         body { color: var(--ink-body); }
 
-        /* ── 카드 / 섹션 ── */
+        /* 카드 / 섹션 */
         .section-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; gap: 12px; }
         .section-title { font-size: 18px; font-weight: 700; color: var(--text-strong); margin: 0; display: flex; align-items: center; gap: 8px; letter-spacing: -0.02em; }
-        .section-sub { color: var(--text-muted); font-size: 13px; font-weight: 500; margin-top: 4px; }
+        .section-sub { display: none; }
+        .inline-link i { display: inline !important; font-size: inherit !important; margin: 0 0 0 2px !important; color: inherit !important; vertical-align: -1px; }
         .count-pill { font-size: 12px; font-weight: 700; color: var(--toss-blue-deep); background: var(--toss-blue-soft); border-radius: 999px; padding: 2px 8px; }
         .ghost-btn { background: var(--canvas); color: var(--ink); font-size: 13px; font-weight: 700; border-radius: 999px; padding: 8px 14px; border: none; text-decoration: none; white-space: nowrap; transition: background .15s; }
         .ghost-btn:hover { background: var(--canvas-hover); color: var(--ink); }
 
-        /* ── 상단 요약 ── */
+        /* 상단 요약 */
         .home-hero { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
         .stat-chips { display: flex; gap: 10px; flex-wrap: wrap; }
         .stat-chip { background: var(--paper); border: 0; border-radius: 16px; padding: 12px 18px; min-width: 112px; }
@@ -32,7 +34,7 @@
         .stat-chip.hot { background: var(--toss-blue-tint); }
         .stat-chip.hot .v { color: var(--toss-blue-deep); }
 
-        /* ── 로그인 전 랜딩 (lp-) : 첫 화면에만 쓰는 큰 제목은 글자 크기 단계의 예외 ── */
+        /* 로그인 전 랜딩 (lp-) : 첫 화면에만 쓰는 큰 제목은 글자 크기 단계의 예외 */
         .lp, .lp * { box-sizing: border-box; }
         .lp { background: var(--paper); border-radius: 28px; padding: 0 24px 40px; }
         .lp-hero { text-align: center; padding-block: 80px 48px; }
@@ -104,7 +106,7 @@
             .lp *, .lp { animation: none !important; transition: none !important; }
         }
 
-        /* ── 장 운영 상태 칩 ── */
+        /* 장 운영 상태 칩 */
         .home-hero > div:first-child { min-width: 0; }
         .mkt-status { display: flex; gap: 8px; margin-top: 12px; min-height: 30px; flex-wrap: wrap; }
         .mkt-chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px;
@@ -113,17 +115,17 @@
         .mkt-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--fog); flex: none; }
         .mkt-chip.on .dot { background: var(--status-green); box-shadow: 0 0 0 3px var(--status-green-soft); }
 
-        /* ── 검색 ── */
+        /* 검색 */
         .search-box { display: flex; align-items: center; background: var(--paper); padding: 14px 22px; border: 1px solid transparent; border-radius: 999px; transition: border-color .15s, box-shadow .15s; }
         .search-box.focused { border-color: var(--toss-blue); box-shadow: var(--focus-halo); }
         .search-dropdown { z-index: 1050; max-height: 400px; overflow-y: auto; border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-dropdown); }
         .search-item { cursor: pointer; border-radius: 8px; padding: 12px 14px; transition: background .12s; }
         .search-item:hover { background: var(--surface-soft); }
 
-        /* ── 아바타 ── */
+        /* 아바타 */
         .stock-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--line-soft); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; color: var(--text-sub); flex-shrink: 0; }
 
-        /* ── 관심 종목 ── */
+        /* 관심 종목 */
         .watch-item { display: flex; align-items: center; padding: 16px 18px; background: var(--surface-soft); border: 1px solid transparent; border-radius: 14px; margin-bottom: 10px; gap: 14px; transition: border-color .15s, background .15s, transform .15s; }
         .watch-item:last-child { margin-bottom: 0; }
         .watch-item:hover { border-color: transparent; background: var(--canvas); }
@@ -152,7 +154,7 @@
         .btn-verify.sell { color: var(--toss-red-deep); background: var(--toss-red-soft); }
         .btn-verify.sell:hover { background: rgba(240,68,82,0.16); }
 
-        /* ── 포트폴리오 ── */
+        /* 포트폴리오 */
         .stock-row { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--line-soft); gap: 14px; }
         .stock-row:last-child { border-bottom: none; padding-bottom: 0; }
         .stock-row:first-child { padding-top: 0; }
@@ -166,14 +168,14 @@
         .text-up { color: var(--toss-red-deep) !important; }
         .text-down { color: var(--toss-blue-deep) !important; }
 
-        /* ── 준비 중 위젯 ── */
+        /* 준비 중 위젯 */
         .widget-placeholder { background: var(--surface-soft); border: 0; border-radius: 14px; padding: 28px 20px; text-align: center; color: var(--text-muted); transition: .15s ease; }
         .widget-placeholder:hover { background: var(--line-soft); }
         .widget-icon { font-size: 1.6rem; margin-bottom: 10px; color: var(--fog); display: block; }
         /* 주도주 및 거래대금 */
         .rk-sub { font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; padding-top: 3px; }
         .rk-list { list-style: none; margin: 0; padding: 0; }
-        .rk-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; text-decoration: none; color: inherit; border-bottom: 1px solid var(--line-soft); }
+        .rk-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; min-height: 64px; text-decoration: none; color: inherit; border-bottom: 1px solid var(--line-soft); }
         .rk-list li:last-child .rk-item { border-bottom: 0; }
         a.rk-item:hover .rk-name { color: var(--toss-blue-deep); }
         .rk-no { width: 18px; flex: none; text-align: center; font-size: 14px; font-weight: 800; color: var(--toss-blue-deep); }
@@ -184,6 +186,126 @@
         .rk-price { font-size: 14px; font-weight: 700; color: var(--text-strong); }
         .rk-chg { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-top: 1px; }
         .rk-chg.up { color: var(--toss-red-deep); } .rk-chg.down { color: var(--toss-blue-deep); }
+
+        /* 진입 후보 */
+        .sc-list { list-style: none; margin: 0; padding: 0; }
+        .sc-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; min-height: 63px; /* + 행 구분선 1px = 64px */ text-decoration: none; color: inherit; border-bottom: 1px solid var(--line-soft); }
+        .sc-list li:last-child .sc-item { border-bottom: 0; }
+        a.sc-item:hover .sc-name { color: var(--toss-blue-deep); }
+        .sc-main { flex: 1; min-width: 0; }
+        .sc-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
+        .sc-name { font-size: 15px; font-weight: 700; color: var(--text-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color .15s; }
+        .sc-nation { flex: none; font-size: 11px; font-weight: 700; color: var(--text-sub); background: var(--line-soft); border-radius: 6px; padding: 1px 6px; }
+        .sc-meta { display: flex; align-items: center; flex-wrap: nowrap; overflow: hidden; white-space: nowrap; gap: 6px; margin-top: 4px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+        .sc-meta .phase-badge { padding: 1px 8px; }
+        .sc-meta > * { flex-shrink: 0; }
+        .sc-meta > .sc-trunc { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }   /* 한 줄이 넘치면 1차가부터 … 로 */
+        /* 좁은 화면: 제목 길이에 따라 줄바꿈이 달라져 탭마다 카드 높이가 달라지지 않게 제목과 탭을 항상 두 줄로 */
+        @media (max-width: 480px) {
+            .rk-head { flex-direction: column; align-items: stretch; gap: 10px; }
+            .rk-head .section-title { white-space: nowrap; }
+        }
+        /* 탭마다 카드 높이가 같도록 한 줄 높이를 64px로 맞춘다 */
+        .sc-name { line-height: 1.3; }
+        .sc-meta { line-height: 1.4; }
+        .sc-px { flex: none; text-align: right; }
+        .sc-price { font-size: 14px; font-weight: 700; color: var(--text-strong); }
+        .sc-score { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-top: 2px; }
+        .sc-chg { font-weight: 700; }
+        /* 실시간 가격이 진입 구간 안/위/아래인지 */
+        .sc-zone { flex: none; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 1px 6px; }
+        .sc-zone.z-in    { background: var(--status-green-soft); color: var(--status-green-text); }
+        .sc-zone.z-above { background: var(--line-soft); color: var(--text-sub); }
+        .sc-zone.z-below { background: var(--toss-blue-soft); color: var(--toss-blue-deep); }
+        .sc-zone.z-stop  { background: var(--toss-red-soft); color: var(--toss-red-deep); }
+        .sc-note { margin-top: 12px; font-size: 12px; font-weight: 500; color: var(--text-muted); }
+        .sc-row { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line-soft); }
+        .sc-list li:last-child .sc-row { border-bottom: 0; }
+        .sc-row .sc-item { flex: 1; min-width: 0; border-bottom: 0; }
+        .sc-new { flex: none; font-size: 10px; font-weight: 800; letter-spacing: .02em; color: #fff; background: var(--toss-red-deep); border-radius: 6px; padding: 1px 5px; }
+        .sc-rsi { background: rgba(49, 130, 246, 0.12) !important; color: #1b64da !important; }
+        .sc-mo { flex: none; font-size: 11px; font-weight: 700; color: var(--toss-red-deep); background: rgba(240, 68, 82, .1); border-radius: 6px; padding: 1px 6px; white-space: nowrap; }
+        .sc-held { flex: none; font-size: 11px; font-weight: 700; color: var(--toss-blue-deep); background: var(--toss-blue-soft); border-radius: 6px; padding: 1px 6px; }
+        .sc-headline { margin-top: 3px; font-size: 13px; font-weight: 500; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sc-save { flex: none; width: 32px; height: 32px; border: 0; border-radius: 10px; background: transparent; color: var(--text-muted); font-size: 16px; display: inline-flex; align-items: center; justify-content: center; transition: background .15s, color .15s; }
+        .sc-save:hover:not(:disabled) { background: var(--surface-soft); color: var(--toss-blue-deep); }
+        .sc-save.is-on { color: var(--toss-blue-deep); }
+        .sc-save.is-err { color: var(--toss-red-deep); }
+        .sc-save:disabled { cursor: default; }
+        .sc-save:focus-visible { outline: 2px solid var(--toss-blue); outline-offset: 1px; }
+
+        /* 더 보기 버튼 + 가운데 창 */
+        .more-btn { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; margin-top: 12px; padding: 10px; border: 0; border-radius: 12px;
+                    background: var(--surface-soft); font-size: 13px; font-weight: 700; color: var(--text-sub); transition: background .15s, color .15s; }
+        .more-btn:hover { background: var(--line-soft); color: var(--text-strong); }
+        .more-btn:focus-visible { outline: 2px solid var(--toss-blue); outline-offset: 1px; }
+        .mm-backdrop { position: fixed; inset: 0; z-index: 1060; background: rgba(0, 0, 0, .42); display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .mm-panel { width: 100%; max-width: 560px; max-height: min(82vh, 760px); display: flex; flex-direction: column; background: var(--paper); border-radius: 22px;
+                    box-shadow: 0 18px 48px rgba(0, 0, 0, .18); overflow: hidden; }
+        .mm-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 22px 24px 0; }
+        .mm-title { font-size: 19px; font-weight: 800; color: var(--text-strong); margin: 0; letter-spacing: -0.02em; }
+        .mm-sub { font-size: 13px; font-weight: 500; color: var(--text-muted); margin-top: 4px; }
+        .mm-close { flex: none; width: 36px; height: 36px; margin: -6px -8px 0 0; border: 0; border-radius: 50%; background: transparent; color: var(--text-sub); font-size: 18px;
+                    display: inline-flex; align-items: center; justify-content: center; }
+        .mm-close:hover { background: var(--surface-soft); }
+        .mm-close:focus-visible { outline: 2px solid var(--toss-blue); }
+        .mm-chips { display: flex; gap: 6px; padding: 14px 24px 4px; }
+        .mm-chip { border: 0; border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 700; background: var(--surface-soft); color: var(--text-sub); }
+        .mm-chip.on { background: var(--text-strong); color: var(--paper); }
+        .mm-chip-gap { width: 1px; margin: 4px 4px; background: var(--line, rgba(0,0,0,.12)); }
+        .sc-sector { font-size: 12px; font-weight: 700; color: var(--text-sub); }
+        .mm-chip:focus-visible { outline: 2px solid var(--toss-blue); outline-offset: 1px; }
+        .mm-body { overflow-y: auto; padding: 6px 24px 24px; overscroll-behavior: contain; }
+        .mm-foot { font-size: 12px; font-weight: 500; color: var(--text-muted); margin-top: 14px; }
+        @media (max-width: 768px) {
+            .mm-backdrop { align-items: flex-end; padding: 0; }
+            .mm-panel { max-width: none; max-height: 88vh; border-radius: 22px 22px 0 0; }
+            .mm-head { padding: 20px 20px 0; } .mm-chips { padding: 12px 20px 4px; } .mm-body { padding: 6px 20px 24px; }
+        }
+
+        /* 주도주 카드 탭 (거래대금 | 진입 후보) */
+        .rk-seg { display: inline-flex; flex: none; background: var(--surface-soft); border-radius: 10px; padding: 3px; gap: 2px; }
+        .rk-seg button { position: relative; border: 0; background: transparent; font-size: 13px; font-weight: 700; color: var(--text-muted); padding: 5px 10px; border-radius: 8px; white-space: nowrap; transition: background .15s, color .15s; }
+        .rk-seg button.on { background: var(--paper); color: var(--text-strong); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+        .rk-seg button:focus-visible { outline: 2px solid var(--toss-blue); outline-offset: 1px; }
+        .rk-seg .new-dot { position: absolute; top: 4px; right: 3px; width: 6px; height: 6px; border-radius: 50%; background: var(--toss-red-deep); }
+        .rk-basis { font-size: 12px; font-weight: 600; color: var(--text-muted); margin: -2px 0 4px; min-height: 18px; }
+
+        /* 상단 지수 띠 */
+        .idx-strip { flex: 1 1 380px; min-width: 0; position: relative; background: var(--paper); border-radius: 16px; align-self: stretch; display: flex; align-items: center; }
+        .idx-track { display: flex; align-items: stretch; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; padding: 10px 4px; width: 100%; }
+        .idx-track::-webkit-scrollbar { display: none; }
+        .idx-tile { flex: none; display: flex; align-items: center; gap: 10px; padding: 2px 14px; border-right: 1px solid var(--line-soft); text-decoration: none; color: inherit; }
+        .idx-tile:last-child { border-right: 0; }
+        a.idx-tile:hover .idx-val { color: var(--toss-blue-deep); }
+        .idx-tile:focus-visible { outline: 2px solid var(--toss-blue); outline-offset: -2px; border-radius: 10px; }
+        .idx-name { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+        .idx-row { display: flex; align-items: baseline; gap: 5px; margin-top: 2px; white-space: nowrap; }
+        .idx-val { font-size: 15px; font-weight: 800; color: var(--text-strong); letter-spacing: -0.01em; transition: color .15s; }
+        .idx-chg { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+        .idx-chg.up { color: var(--toss-red-deep); } .idx-chg.down { color: var(--toss-blue-deep); }
+        .idx-ph { font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 999px; white-space: nowrap; }
+        .idx-spark { width: 48px; height: 26px; flex: none; overflow: visible; }
+        .idx-regime { border-radius: 12px; margin: 0 6px 0 2px; padding: 6px 14px; border-right: 0; }
+        .idx-regime .idx-name { color: inherit; opacity: .8; }
+        .idx-regime .idx-val { color: inherit; font-size: 15px; }
+        .idx-regime .idx-sub { font-size: 11.5px; font-weight: 600; opacity: .85; margin-top: 1px; white-space: nowrap; }
+        .idx-regime.tone-good { background: var(--status-green-tint); color: var(--status-green-text); }
+        .idx-regime.tone-caution { background: var(--caution-tint, #fff6e5); color: var(--caution-text, #9a5b00); }
+        .idx-regime.tone-alert { background: var(--toss-red-soft); color: var(--toss-red-deep); }
+        .idx-regime.tone-neutral { background: var(--surface-soft); color: var(--text-sub); }
+        .idx-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--paper);
+                     box-shadow: 0 1px 4px rgba(0,0,0,.12); color: var(--text-sub); display: inline-flex; align-items: center; justify-content: center; font-size: 13px; z-index: 1; }
+        .idx-arrow.l { left: 4px; } .idx-arrow.r { right: 4px; }
+        .idx-arrow:focus-visible { outline: 2px solid var(--toss-blue); outline-offset: 1px; }
+        .idx-fade { position: absolute; top: 0; bottom: 0; width: 36px; pointer-events: none; border-radius: 16px; }
+        .idx-fade.l { left: 0; background: linear-gradient(90deg, var(--paper), rgba(255,255,255,0)); }
+        .idx-fade.r { right: 0; background: linear-gradient(270deg, var(--paper), rgba(255,255,255,0)); }
+        .idx-msg { padding: 0 18px; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+        .sc-h { display: flex; align-items: center; gap: 6px; margin: 22px 0 4px; font-size: 13px; font-weight: 700; color: var(--text-sub); }
+        .sc-h.is-first { margin-top: 0; }
+        .sc-h .sc-h-sub { font-weight: 500; color: var(--text-muted); }
+        .sc-empty-line { padding: 10px 0 4px; font-size: 13px; font-weight: 500; color: var(--text-muted); }
 
         /* 실시간 핵심 뉴스 (한국어 헤드라인) */
         .hl-more { font-size: 13px; font-weight: 600; color: var(--text-muted); text-decoration: none; white-space: nowrap; }
@@ -199,7 +321,7 @@
         .hl-title { font-size: 14px; font-weight: 600; line-height: 1.5; color: var(--text-strong); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: keep-all; overflow-wrap: anywhere; transition: color .15s; }
         .soon-pill { display: inline-block; margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--text-muted); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; }
 
-        /* ── 환율 ── */
+        /* 환율 */
         .fx-pair { font-size: 12px; font-weight: 700; color: var(--text-sub); background: var(--line-soft); border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
         .fx-main { display: flex; align-items: baseline; gap: 4px; }
         .fx-rate { font-size: 28px; font-weight: 800; color: var(--text-strong); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1.2; }
@@ -225,6 +347,7 @@
 
         @media (max-width: 768px) {
             .stat-chips { width: 100%; }
+            .idx-strip { flex-basis: 100%; }
             .stat-chip { flex: 1; min-width: 0; padding: 10px 14px; }
             .home-hero > div:first-child { width: 100%; }
             .lp { padding: 0 16px 28px; border-radius: 22px; }
@@ -261,7 +384,66 @@
             .stock-row .profit-badge { background: transparent; padding: 0; font-size: 15px; }
             .btn-verify { font-size: 12px; padding: 8px 10px; border-radius: 999px; flex-shrink: 0; }
         }
-    </style>
+
+        /* 모바일 홈: 핵심(진입 후보·관심·보유)을 위로, 겹치는 정보는 줄여서 한 화면에 덜 쌓이게 */
+        @media (max-width: 768px) {
+            .home-hero { gap: 10px; margin-bottom: 12px; }
+            .home-hero .page-title { font-size: 20px; }
+            .home-hero .page-sub { display: none; }              /* 제목만으로 충분 */
+            .stat-chips { display: none; }                       /* 개수는 각 카드 제목 옆에 이미 있다 */
+            .idx-track { padding: 8px 2px; }
+            .search-wrap { margin-bottom: 12px !important; }
+            .search-box { padding: 11px 16px; }
+            .search-box .bi-search { font-size: 1rem !important; margin-right: 10px !important; }
+            .search-box input { font-size: 15px !important; }
+
+            /* 두 열(7:5)을 풀어 카드 순서를 다시 잡는다: 진입 후보 → 관심 → 보유 → 뉴스 */
+            .dash-grid { display: flex; flex-direction: column; gap: 12px; margin: 0 !important; }
+            .dash-grid > [class*="col-"] { display: contents !important; }
+            .dash-grid .toss-card { min-width: 0; max-width: 100%; }
+            .card-rank  { order: 1; }
+            .card-watch { order: 2; }
+            .card-port  { order: 3; }
+            .card-news  { order: 4; }
+            .card-fx    { display: none !important; }
+            .section-sub { display: none; }
+
+            /* 진입 후보 카드: 제목 대신 탭을 꽉 차게 (탭 이름이 곧 제목) */
+            .rk-head { margin-bottom: 8px !important; }
+            .rk-head .section-title { display: none; }
+            .rk-seg { display: flex; width: 100%; }
+            .rk-seg button { flex: 1; padding: 7px 0; }
+            /* 한 줄에 이름이 보이게: 국가 표시는 가격 단위($/원)로 대신하고, 진입 방식·1차가·차트 점수는 분석 화면에서 */
+            .sc-nation, .sc-hide-m, .sc-pts, .sc-dot { display: none !important; }
+            .sc-name { min-width: 0; flex-shrink: 1; }
+            .sc-item { min-height: 58px; padding: 8px 0; }
+
+            /* 관심 종목: 회색 상자 대신 다른 목록과 같은 구분선 목록 */
+            .watch-item, .watch-item:hover, .watch-item.is-ready { background: transparent; border-radius: 0; margin: 0; padding: 12px 0;
+                          border: 0; border-bottom: 1px solid var(--line-soft); }
+            .watch-item:last-child { border-bottom: 0; padding-bottom: 0; }
+            .watch-item:first-child { padding-top: 0; }
+            .watch-item .phase-badge { padding: 2px 8px; }
+            .watch-item .target-price-badge { background: transparent; padding: 0; color: var(--text-muted); }
+            .empty-state { padding: 24px 0; }
+        }
+            .lev-wrap { margin: 10px 0 4px; }
+        .lev-ban { width: 100%; border: 0; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; background: var(--surface-soft, #f4f5f7); color: var(--ink, #191f28); text-decoration: none; font-size: 13.5px; min-width: 0; }
+        .lev-ban:hover { filter: brightness(.98); color: inherit; }
+        .lev-ban-k { flex: none; font-weight: 700; font-size: 12.5px; color: var(--slate, #6b7684); }
+        .lev-ban-t { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .lev-ban-go { flex: none; color: var(--slate, #6b7684); }
+        .lev-ban.good { background: #e8f7ef; } .lev-ban.good .lev-ban-k, .lev-ban.good .lev-ban-t { color: #0a7d4f; }
+        .lev-ban.mid { background: #fff4e5; } .lev-ban.mid .lev-ban-k { color: #b45309; }
+        .lev-pan { margin-top: 6px; padding: 10px 14px; border-radius: 12px; background: var(--surface-soft, #f4f5f7); }
+        .lev-it { padding: 6px 0; font-size: 13px; }
+        .lev-it + .lev-it { border-top: 1px solid var(--hairline, #eef0f3); }
+        .lev-it b { display: block; font-size: 13.5px; color: var(--ink, #191f28); }
+        .lev-it span { color: var(--slate, #6b7684); line-height: 1.5; }
+        .lev-it.good b { color: #0a7d4f; } .lev-it.inv b { color: #d22030; } .lev-it.dim { opacity: .55; }
+        .lev-how { margin-top: 6px; font-size: 12px; color: var(--slate, #6b7684); line-height: 1.55; }
+        @media (max-width: 576px) { .lev-ban-t { white-space: normal; } }
+</style>
 </head>
 <body x-data="unifiedDashboardApp" @verify-done.window="onVerifyDone($event.detail)">
 
@@ -273,7 +455,7 @@
 
         <div class="content-container">
 
-            <!-- 비로그인 상태: 랜딩 (한 문장 + 검증 화면 예시 + 기능 3줄) -->
+            <!-- 비로그인 상태: 랜딩 -->
             <div th:if="${loginMember == null}" class="lp">
                 <section class="lp-hero">
                     <h1 class="lp-headline">
@@ -404,7 +586,6 @@
                 <div class="home-hero">
                     <div>
                         <h2 class="page-title">시장 모니터링 홈</h2>
-                        <div class="page-sub">시장의 흐름과 내 종목 상태를 한눈에 확인하세요</div>
                         <!-- 장 운영 상태: 처음은 model 값, 장 상태가 바뀌는 시각에만 /api/marketData/calendar 재조회 -->
                         <div class="mkt-status" x-data="marketStatus" th:if="${marketOpen != null}">
                             <span class="mkt-src" hidden
@@ -419,24 +600,77 @@
                             </template>
                         </div>
                     </div>
-                    <div class="stat-chips">
-                        <div class="stat-chip">
-                            <div class="k">관심 종목</div>
-                            <div class="v"><span x-text="watchList.length">0</span><small>개</small></div>
+                    <!-- 지수 띠: 화면을 띄운 뒤 /api/main/strip 으로 불러온다 (60초 캐시) -->
+                    <div class="idx-strip" x-data="marketStrip" aria-label="시장 지수">
+                        <div class="idx-fade l" x-show="canLeft" x-cloak></div>
+                        <button type="button" class="idx-arrow l" x-show="canLeft" x-cloak @click="scrollBy(-1)" aria-label="이전 지수"><i class="bi bi-chevron-left"></i></button>
+                        <div class="idx-track" x-ref="track" @scroll.passive="updateArrows()">
+                            <template x-if="loading">
+                                <div class="d-flex" aria-hidden="true">
+                                    <template x-for="n in 4" :key="'is' + n">
+                                        <div class="idx-tile"><div><div class="skeleton mb-1" style="height: 11px; width: 52px;"></div><div class="skeleton" style="height: 15px; width: 84px;"></div></div></div>
+                                    </template>
+                                </div>
+                            </template>
+                            <template x-if="!loading && failed">
+                                <div class="idx-msg">지수를 불러오지 못했어요</div>
+                            </template>
+
+                            <!-- 시장 국면: 시장 분석 엔진 판정 -->
+                            <template x-if="!loading && data?.regime">
+                                <a class="idx-tile idx-regime" :class="regime.tone" href="/market" title="시장 분석 화면으로">
+                                    <div>
+                                        <div class="idx-name">시장 국면</div>
+                                        <div class="idx-val" x-text="regime.label"></div>
+                                        <div class="idx-sub" x-text="regime.sub"></div>
+                                    </div>
+                                </a>
+                            </template>
+
+                            <template x-for="it in items" :key="it.key">
+                                <a class="idx-tile" :href="it.link || null" :title="tileTitle(it)">
+                                    <div>
+                                        <div class="idx-name">
+                                            <span x-text="it.name"></span>
+                                            <span class="idx-ph" x-show="badge(it)" :class="badge(it)?.tone" x-text="badge(it)?.label"></span>
+                                        </div>
+                                        <div class="idx-row num">
+                                            <span class="idx-val" x-text="fmtValue(it)"></span>
+                                            <span class="idx-chg" :class="tone(it)" x-text="fmtChange(it)"></span>
+                                        </div>
+                                    </div>
+                                    <svg class="idx-spark" viewBox="0 0 48 26" preserveAspectRatio="none" x-show="(it.spark || []).length > 1" aria-hidden="true">
+                                        <polyline fill="none" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"
+                                                  :stroke="sparkColor(it)" :points="sparkPoints(it.spark)"></polyline>
+                                    </svg>
+                                </a>
+                            </template>
                         </div>
-                        <div class="stat-chip" :class="readyCount > 0 ? 'hot' : ''">
-                            <div class="k">진입 대기</div>
-                            <div class="v"><span x-text="readyCount">0</span><small>개</small></div>
-                        </div>
-                        <div class="stat-chip">
-                            <div class="k">보유 종목</div>
-                            <div class="v"><span th:text="${dashboard.portfolioResponse != null and dashboard.portfolioResponse.myStocks != null ? #lists.size(dashboard.portfolioResponse.myStocks) : 0}">0</span><small>개</small></div>
+                        <div class="idx-fade r" x-show="canRight" x-cloak></div>
+                        <button type="button" class="idx-arrow r" x-show="canRight" x-cloak @click="scrollBy(1)" aria-label="다음 지수"><i class="bi bi-chevron-right"></i></button>
+                    </div>
+                    <!-- 레버리지 단타 한 줄 알림 -->
+                    <div class="lev-wrap" x-data="levBanner" x-show="b && (sig.length || near.length)" x-cloak>
+                        <button type="button" class="lev-ban" :class="tone" @click="open = !open" :aria-expanded="open.toString()">
+                            <span class="lev-ban-k"><i class="bi bi-lightning-charge" aria-hidden="true"></i> 레버리지 단타</span>
+                            <span class="lev-ban-t" x-text="line"></span>
+                            <i class="bi lev-ban-go" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'" aria-hidden="true"></i>
+                        </button>
+                        <div class="lev-pan" x-show="open" x-cloak>
+                            <template x-for="x in sig" :key="'s' + x.code">
+                                <div class="lev-it good"><b x-text="x.name + '(' + x.code + ') · 지난 마감 강한 신호 → ' + x.lev"></b>
+                                    <span>그 종가에 샀다면: 산 가격 +2%에 지정가 매도 → 안 닿으면 지수가 오른 채 마감하는 첫날 정리 (최대 10거래일). 마감 뒤에 사는 건 시험한 방식이 아니에요.</span></div>
+                            </template>
+                            <template x-for="p in near" :key="p.kind + p.x.code">
+                                <div class="lev-it" :class="{ dim: p.blocked, inv: p.kind === 'inv' }"><b x-text="p.t"></b><span x-text="p.d + ' · ' + p.when"></span></div>
+                            </template>
+                            <div class="lev-how">쓰는 법: 마감 전에 레버리지 ETF에 LOC(장마감 지정가) 매수를 '대략 자리' 가격으로 걸면 조건이 켜질 때만 종가에 사져요. 미국은 마감 VIX도 기준 이상이어야 하니 주문 전에 확인하세요. 과거 승률 미국 79~91%, 국내 95% · 최악 -43%(2011년 8월). 자세한 건 레버리지 ETF 종목 화면에서 볼 수 있어요.</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 검색 -->
-                <div class="position-relative mb-4" @click.outside="isGlobalSearchOpen = false" @keydown.escape="isGlobalSearchOpen = false">
+                <div class="position-relative mb-4 search-wrap" @click.outside="isGlobalSearchOpen = false" @keydown.escape="isGlobalSearchOpen = false">
                     <div class="search-box" :class="isGlobalSearchOpen ? 'focused' : ''">
                         <i class="bi bi-search text-secondary fs-5 me-3" aria-hidden="true"></i>
                         <input type="search" class="border-0 bg-transparent w-100 fs-6 fw-bold text-dark" style="outline: none; min-width: 0;"
@@ -486,12 +720,12 @@
                     </div>
                 </div>
 
-                <div class="row g-4 d-flex align-items-stretch">
+                <div class="row g-4 d-flex align-items-stretch dash-grid">
 
                     <div class="col-lg-7 d-flex flex-column gap-4">
 
                         <!-- 관심 종목 -->
-                        <div class="toss-card mb-0">
+                        <div class="toss-card mb-0 card-watch">
                             <div class="section-head">
                                 <div>
                                     <h3 class="section-title">관심 종목 <span class="count-pill" x-show="watchList.length > 0" x-text="watchList.length"></span></h3>
@@ -534,7 +768,7 @@
                         </div>
 
                         <!-- 내 포트폴리오 -->
-                        <div class="toss-card mb-0 flex-grow-1">
+                        <div class="toss-card mb-0 flex-grow-1 card-port">
                             <div class="section-head">
                                 <div>
                                     <h3 class="section-title">내 포트폴리오</h3>
@@ -599,55 +833,25 @@
 
                     <div class="col-lg-5 d-flex flex-column gap-4">
 
-                        <!-- 환율 (ExchangeRateInfo: 공급자에 따라 일부 필드가 비어 있을 수 있음) -->
-                        <div class="toss-card mb-0"
-                             th:with="fx=${exchange},
-                                      fxOk=${fx != null and fx.baseRate != null and fx.baseRate.signum() > 0},
-                                      fxDir=${fx == null or fx.rateChangeType == null ? '' : #strings.toUpperCase(fx.rateChangeType)},
-                                      fxUp=${fxDir == 'UP' or fxDir == 'RISE' or fxDir == 'INCREASE'},
-                                      fxDown=${fxDir == 'DOWN' or fxDir == 'FALL' or fxDir == 'DECREASE'}">
-                            <div class="section-head" style="margin-bottom: 14px;">
-                                <h3 class="section-title">환율</h3>
-                                <span class="fx-pair"
-                                      th:text="${(fx?.baseCurrency ?: 'USD') + ' / ' + (fx?.quoteCurrency ?: 'KRW')}">USD / KRW</span>
-                            </div>
-
-                            <div th:if="${fxOk}" class="fx-body">
-                                <div class="fx-main">
-                                    <span class="fx-rate" th:text="${#numbers.formatDecimal(fx.baseRate, 1, 'COMMA', 2, 'POINT')}">0.00</span>
-                                    <span class="fx-unit">원</span>
-                                    <span th:if="${fxUp or fxDown}" class="fx-dir"
-                                          th:classappend="${fxUp ? 'text-up' : 'text-down'}"
-                                          th:attr="aria-label=${fxUp ? '상승' : '하락'}">
-                                        <i class="bi" th:classappend="${fxUp ? 'bi-caret-up-fill' : 'bi-caret-down-fill'}" aria-hidden="true"></i>
-                                    </span>
-                                </div>
-                                <div class="fx-label">1달러당 매매기준율</div>
-
-                                <div class="fx-meta" th:if="${fx.midRate != null or fx.validFrom != null}">
-                                    <span th:if="${fx.midRate != null and fx.midRate.signum() > 0}"
-                                          th:text="${'중간 환율 ' + #numbers.formatDecimal(fx.midRate, 1, 'COMMA', 2, 'POINT') + '원'}"></span>
-                                    <span th:if="${fx.validFrom != null}"
-                                          th:text="${#temporals.format(fx.validFrom, 'M월 d일 HH:mm') + ' 기준'}"></span>
+                        <!-- 주도주 및 거래대금 | 오늘의 진입 후보 (탭) -->
+                        <div class="toss-card mb-0 card-rank" x-data="marketRanking" @screening-loaded="newCount = $event.detail.newCount">
+                            <!-- 보유 종목 코드: 상승 추세 탭의 '보유 중' 표시용 -->
+                            <th:block th:if="${dashboard.portfolioResponse != null and dashboard.portfolioResponse.myStocks != null}">
+                                <span class="held-src" hidden th:each="stock : ${dashboard.portfolioResponse.myStocks}" th:attr="data-code=${stock.stockCode}"></span>
+                            </th:block>
+                            <div class="section-head rk-head" style="margin-bottom: 6px;">
+                                <h3 class="section-title" x-text="{ rank: '주도주 및 거래대금', screen: '오늘의 진입 후보', trend: '상승 추세 종목' }[tab]">주도주 및 거래대금</h3>
+                                <div class="rk-seg" role="tablist" aria-label="보기 전환">
+                                    <button type="button" role="tab" :aria-selected="tab === 'rank'" :class="tab === 'rank' ? 'on' : ''" @click="setTab('rank')">거래대금</button>
+                                    <button type="button" role="tab" :aria-selected="tab === 'screen'" :class="tab === 'screen' ? 'on' : ''" @click="setTab('screen')">
+                                        진입 후보<i class="new-dot" x-show="newCount > 0 && tab !== 'screen'" x-cloak aria-label="새 후보 있음"></i>
+                                    </button>
+                                    <button type="button" role="tab" :aria-selected="tab === 'trend'" :class="tab === 'trend' ? 'on' : ''" @click="setTab('trend')">상승 추세</button>
                                 </div>
                             </div>
 
-                            <div th:unless="${fxOk}" class="fx-empty">
-                                <i class="bi bi-currency-exchange" aria-hidden="true"></i>
-                                <div>
-                                    <div class="fx-empty-title">환율을 불러오지 못했어요</div>
-                                    <div class="fx-empty-desc">잠시 후 새로고침해 주세요</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 주도주 및 거래대금: 지금 열린 시장(국내 우선)의 거래대금 상위 — /api/main/ranking -->
-                        <div class="toss-card mb-0" x-data="marketRanking">
-                            <div class="section-head" style="margin-bottom: 8px;">
-                                <h3 class="section-title">주도주 및 거래대금</h3>
-                                <span class="rk-sub" x-show="!loading && info?.rankedAt" x-cloak x-text="basisText"></span>
-                            </div>
-
+                            <div x-show="tab === 'rank'">
+                            <div class="rk-basis" x-show="!loading && info?.rankedAt" x-cloak x-text="rkBasisText"></div>
                             <div x-show="loading" aria-hidden="true">
                                 <template x-for="n in 5" :key="'rs' + n">
                                     <div class="rk-item">
@@ -671,13 +875,14 @@
                                                 <div class="rk-amt num" x-text="'거래대금 ' + amount(r)"></div>
                                             </div>
                                             <div class="rk-px num">
-                                                <div class="rk-price" x-text="price(r)"></div>
+                                                <div class="rk-price" x-text="rkPrice(r)"></div>
                                                 <div class="rk-chg" :class="tone(r)" x-text="change(r)"></div>
                                             </div>
                                         </a>
                                     </li>
                                 </template>
                             </ol>
+                            <button type="button" class="more-btn" x-show="!loading && rows.length" x-cloak @click="openMore()">거래대금 상위 20개 보기 <i class="bi bi-chevron-right" aria-hidden="true"></i></button>
 
                             <!-- d-flex는 !important라 x-show를 바깥 래퍼에 둔다 -->
                             <div x-show="!loading && !rows.length" x-cloak>
@@ -687,10 +892,290 @@
                                     <div class="mt-1" style="font-size: 14px; color: var(--text-muted); font-weight: 500;">잠시 후 다시 확인해 주세요</div>
                                 </div>
                             </div>
+                            </div>
+
+                            <!-- 진입 후보 · 상승 추세 탭: 같은 분석 결과를 한 번만 불러와 나눠 쓴다 -->
+                            <div x-data="screening">
+                            <div x-show="tab === 'screen'" x-cloak>
+                                <div class="rk-basis" x-text="basisLine"></div>
+
+                                <div x-show="loading" aria-hidden="true">
+                                    <template x-for="n in 3" :key="'ss' + n">
+                                        <div class="sc-item">
+                                            <div class="flex-grow-1">
+                                                <div class="skeleton mb-2" style="height: 14px; width: 45%;"></div>
+                                                <div class="skeleton" style="height: 12px; width: 65%;"></div>
+                                            </div>
+                                            <div class="skeleton" style="height: 14px; width: 64px;"></div>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <div x-show="!loading && analyzed">
+                                    <ul class="sc-list" x-show="rows.length">
+                                        <template x-for="r in rows" :key="r.nation + r.code">
+                                            <li>
+                                                <div class="sc-row">
+                                                    <a class="sc-item" :href="'/stock/analysis?code=' + encodeURIComponent(r.code)">
+                                                        <div class="sc-main">
+                                                            <div class="sc-top">
+                                                                <span class="sc-name" x-text="r.name || r.code"></span>
+                                                                <span class="sc-nation" x-text="r.nation === 'KR' ? '국내' : '미국'"></span>
+                                                                <span class="sc-mo" x-show="r.momentumTop" x-text="moLabel(r)" title="미국 12-1개월 수익률 순위(S&amp;P500) 상위 20%. 이 기준으로 분기마다 교체한 백테스트는 SPY보다 높았어요. 타점과 함께 쓴 효과는 아직 검증 전이에요."></span><span class="sc-mo sc-rsi" x-show="r.rsi2Dip" x-text="(r.rsi2Fear ? 'RSI2 눌림 · 공포 구간 ' : 'RSI2 눌림 ') + Math.round(r.rsi2)" title="상승 추세(200일선 위) 안에서 2일 RSI가 10 아래. 과거 시험(대형주·지수, 2017–2026) 승률 61~76%, 거래당 +0.2~0.8%, 보통 2~5일 안에 5일선 회복. 장 마감 무렵 진입 기준이고, 사전 기준은 경계선 탈락한 참고 신호예요. 정리: 종가가 5일선 위면, 최대 10거래일. VIX 20 이상(공포 구간)일 때는 과거 승률 67~69%로 평소(62~63%)보다 높았어요(참고)."></span>
+                                                                <span class="sc-new" x-show="r.newCandidate">NEW</span>
+                                                            </div>
+                                                            <div class="sc-meta">
+                                                                <span class="phase-badge" :class="verdictTone(r.verdict)" x-text="r.verdictLabel"></span>
+                                                                <span class="sc-zone" x-show="zoneState(r)" :class="zoneState(r)?.cls" x-text="zoneState(r)?.text"></span>
+                                                                <span class="sc-hide-m" x-show="r.entryTypeTitle" x-text="r.entryTypeTitle"></span>
+                                                                <span class="num sc-trunc sc-hide-m" x-show="r.primaryEntry > 0" x-text="'1차 ' + price(r.primaryEntry, r)"></span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="sc-px num">
+                                                            <div class="sc-price" x-text="price(nowPrice(r), r)"></div>
+                                                            <div class="sc-score"><template x-if="liveOf(r)"><span><span class="sc-chg" :class="chgClass(r)" x-text="chgText(r)"></span><span class="sc-dot"> · </span></span></template><span class="sc-pts" x-text="'차트 ' + r.score + '/60'"></span></div>
+                                                        </div>
+                                                    </a>
+                                                    <button type="button" class="sc-save" :class="saveClass(r)" :disabled="inWatch(r.code) || saving === r.code"
+                                                            @click="addWatch(r)" :aria-label="(r.name || r.code) + (inWatch(r.code) ? ' 관심 종목에 있음' : ' 관심 종목에 담기')"
+                                                            :title="inWatch(r.code) ? '관심 종목에 있어요' : '관심 종목에 담기'">
+                                                        <i class="bi" :class="inWatch(r.code) ? 'bi-bookmark-check-fill' : 'bi-bookmark-plus'"></i>
+                                                    </button>
+                                                </div>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                    <div class="sc-empty-line" x-show="!rows.length">오늘은 진입 판정이 나온 종목이 없어요</div>
+
+                                    <!-- 카드 높이를 다른 탭과 맞추려고, 타점 준비 중은 진입 후보가 없는 날만 카드에 보여준다 (전체 보기 창에는 항상) -->
+                                    <template x-if="!rows.length && watching.length">
+                                        <div>
+                                            <div class="sc-h">타점 준비 중 <span class="sc-h-sub">판정 전, 지켜볼 종목</span></div>
+                                            <ul class="sc-list">
+                                                <template x-for="r in watching" :key="'w' + r.nation + r.code">
+                                                    <li>
+                                                        <div class="sc-row">
+                                                            <a class="sc-item" :href="'/stock/analysis?code=' + encodeURIComponent(r.code)">
+                                                                <div class="sc-main">
+                                                                    <div class="sc-top">
+                                                                        <span class="sc-name" x-text="r.name || r.code"></span>
+                                                                        <span class="sc-nation" x-text="r.nation === 'KR' ? '국내' : '미국'"></span>
+                                                                        <span class="sc-mo" x-show="r.momentumTop" x-text="moLabel(r)" title="미국 12-1개월 수익률 순위(S&amp;P500) 상위 20%. 이 기준으로 분기마다 교체한 백테스트는 SPY보다 높았어요. 타점과 함께 쓴 효과는 아직 검증 전이에요."></span><span class="sc-mo sc-rsi" x-show="r.rsi2Dip" x-text="(r.rsi2Fear ? 'RSI2 눌림 · 공포 구간 ' : 'RSI2 눌림 ') + Math.round(r.rsi2)" title="상승 추세(200일선 위) 안에서 2일 RSI가 10 아래. 과거 시험(대형주·지수, 2017–2026) 승률 61~76%, 거래당 +0.2~0.8%, 보통 2~5일 안에 5일선 회복. 장 마감 무렵 진입 기준이고, 사전 기준은 경계선 탈락한 참고 신호예요. 정리: 종가가 5일선 위면, 최대 10거래일. VIX 20 이상(공포 구간)일 때는 과거 승률 67~69%로 평소(62~63%)보다 높았어요(참고)."></span>
+                                                                    </div>
+                                                                    <div class="sc-meta">
+                                                                        <span class="phase-badge" :class="phaseMeta(r.chartPhase).tone" x-text="phaseMeta(r.chartPhase).label"></span>
+                                                                        <span class="num" x-text="r.marketCapRank > 0 ? '시총 ' + r.marketCapRank + '위' : '모멘텀 상위로 추가'"></span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="sc-px num">
+                                                                    <div class="sc-price" x-text="price(nowPrice(r), r)"></div>
+                                                                    <div class="sc-score"><template x-if="liveOf(r)"><span><span class="sc-chg" :class="chgClass(r)" x-text="chgText(r)"></span><span class="sc-dot"> · </span></span></template><span class="sc-pts" x-text="'차트 ' + r.score + '/60'"></span></div>
+                                                                </div>
+                                                            </a>
+                                                            <button type="button" class="sc-save" :class="saveClass(r)" :disabled="inWatch(r.code) || saving === r.code"
+                                                                    @click="addWatch(r)" :aria-label="(r.name || r.code) + (inWatch(r.code) ? ' 관심 종목에 있음' : ' 관심 종목에 담기')"
+                                                                    :title="inWatch(r.code) ? '관심 종목에 있어요' : '관심 종목에 담기'">
+                                                                <i class="bi" :class="inWatch(r.code) ? 'bi-bookmark-check-fill' : 'bi-bookmark-plus'"></i>
+                                                            </button>
+                                                        </div>
+                                                    </li>
+                                                </template>
+                                            </ul>
+                                        </div>
+                                    </template>
+
+                                    <button type="button" class="more-btn" x-show="rows.length || watching.length" @click="openMore()">진입 후보 전체 보기 <i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+                                </div>
+
+                                <div x-show="!loading && !analyzed">
+                                    <div class="widget-placeholder d-flex flex-column justify-content-center align-items-center" style="min-height: 160px;">
+                                        <i class="bi widget-icon" :class="failed ? 'bi-exclamation-circle' : 'bi-search'"></i>
+                                        <div class="fw-bold text-dark" style="font-size: 15px;" x-text="emptyTitle"></div>
+                                        <div class="mt-1" style="font-size: 14px; color: var(--text-muted); font-weight: 500;" x-text="emptyDesc"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 상승 추세 탭: 강력 보유 국면 (새로 사기보다 보유 관점) -->
+                            <div x-show="tab === 'trend'" x-cloak>
+                                <div class="rk-basis" x-text="basisLine"></div>
+
+                                <div x-show="loading" aria-hidden="true">
+                                    <template x-for="n in 3" :key="'ts' + n">
+                                        <div class="sc-item">
+                                            <div class="flex-grow-1">
+                                                <div class="skeleton mb-2" style="height: 14px; width: 45%;"></div>
+                                                <div class="skeleton" style="height: 12px; width: 75%;"></div>
+                                            </div>
+                                            <div class="skeleton" style="height: 14px; width: 64px;"></div>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <div x-show="!loading && analyzed">
+                                    <ul class="sc-list" x-show="trending.length">
+                                        <template x-for="r in trending" :key="'t' + r.nation + r.code">
+                                            <li>
+                                                <div class="sc-row">
+                                                    <a class="sc-item" :href="'/stock/analysis?code=' + encodeURIComponent(r.code)">
+                                                        <div class="sc-main">
+                                                            <div class="sc-top">
+                                                                <span class="sc-name" x-text="r.name || r.code"></span>
+                                                                <span class="sc-nation" x-text="r.nation === 'KR' ? '국내' : '미국'"></span>
+                                                                <span class="sc-mo" x-show="r.momentumTop" x-text="moLabel(r)" title="미국 12-1개월 수익률 순위(S&amp;P500) 상위 20%. 이 기준으로 분기마다 교체한 백테스트는 SPY보다 높았어요. 타점과 함께 쓴 효과는 아직 검증 전이에요."></span><span class="sc-mo sc-rsi" x-show="r.rsi2Dip" x-text="(r.rsi2Fear ? 'RSI2 눌림 · 공포 구간 ' : 'RSI2 눌림 ') + Math.round(r.rsi2)" title="상승 추세(200일선 위) 안에서 2일 RSI가 10 아래. 과거 시험(대형주·지수, 2017–2026) 승률 61~76%, 거래당 +0.2~0.8%, 보통 2~5일 안에 5일선 회복. 장 마감 무렵 진입 기준이고, 사전 기준은 경계선 탈락한 참고 신호예요. 정리: 종가가 5일선 위면, 최대 10거래일. VIX 20 이상(공포 구간)일 때는 과거 승률 67~69%로 평소(62~63%)보다 높았어요(참고)."></span>
+                                                                <span class="sc-held" x-show="isHeld(r.code)">보유 중</span>
+                                                            </div>
+                                                            <div class="sc-meta">
+                                                                <span class="num" x-show="r.trailingStop > 0" x-text="'손절선 ' + price(r.trailingStop, r)"></span>
+                                                                <span class="num" x-show="r.holdTarget > 0" x-text="'목표 ' + price(r.holdTarget, r)"></span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="sc-px num">
+                                                            <div class="sc-price" x-text="price(nowPrice(r), r)"></div>
+                                                            <div class="sc-score"><template x-if="liveOf(r)"><span><span class="sc-chg" :class="chgClass(r)" x-text="chgText(r)"></span><span class="sc-dot"> · </span></span></template><span class="sc-pts" x-text="'차트 ' + r.score + '/60'"></span></div>
+                                                        </div>
+                                                    </a>
+                                                    <button type="button" class="sc-save" :class="saveClass(r)" :disabled="inWatch(r.code) || saving === r.code"
+                                                            @click="addWatch(r)" :aria-label="(r.name || r.code) + (inWatch(r.code) ? ' 관심 종목에 있음' : ' 관심 종목에 담기')"
+                                                            :title="inWatch(r.code) ? '관심 종목에 있어요' : '관심 종목에 담기'">
+                                                        <i class="bi" :class="inWatch(r.code) ? 'bi-bookmark-check-fill' : 'bi-bookmark-plus'"></i>
+                                                    </button>
+                                                </div>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                    <div class="sc-empty-line" x-show="!trending.length">지금은 상승 추세가 뚜렷한 종목이 없어요</div>
+                                    <button type="button" class="more-btn" x-show="trending.length" @click="openMore()">상승 추세 전체 보기 <i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+                                </div>
+
+                                <div x-show="!loading && !analyzed">
+                                    <div class="widget-placeholder d-flex flex-column justify-content-center align-items-center" style="min-height: 160px;">
+                                        <i class="bi widget-icon" :class="failed ? 'bi-exclamation-circle' : 'bi-search'"></i>
+                                        <div class="fw-bold text-dark" style="font-size: 15px;" x-text="emptyTitle"></div>
+                                        <div class="mt-1" style="font-size: 14px; color: var(--text-muted); font-weight: 500;" x-text="emptyDesc"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 더 보기 창: 화면 가운데. 탭에 따라 내용이 바뀐다 -->
+                            <template x-teleport="body">
+                                <div class="mm-backdrop" x-show="moreOpen" x-cloak x-transition.opacity.duration.150ms
+                                     @click.self="closeMore()" @keydown.escape.window="moreOpen && closeMore()"
+                                     role="dialog" aria-modal="true" :aria-label="moreTitle">
+                                    <div class="mm-panel" x-show="moreOpen" x-transition.scale.95.duration.150ms>
+                                        <div class="mm-head">
+                                            <div>
+                                                <h3 class="mm-title" x-text="moreTitle"></h3>
+                                                <div class="mm-sub" x-text="tab === 'rank' ? rkBasisText : basisLine"></div>
+                                            </div>
+                                            <button type="button" class="mm-close" x-ref="mmClose" @click="closeMore()" aria-label="닫기"><i class="bi bi-x-lg"></i></button>
+                                        </div>
+
+                                        <div class="mm-chips" x-show="tab !== 'rank'" role="group" aria-label="시장 선택">
+                                            <template x-for="c in [['ALL', '전체'], ['KR', '국내'], ['US', '미국']]" :key="c[0]">
+                                                <button type="button" class="mm-chip" :class="moreNation === c[0] ? 'on' : ''" :aria-pressed="moreNation === c[0]"
+                                                        @click="moreNation = c[0]" x-text="c[1]"></button>
+                                            </template>
+                                            <span class="mm-chip-gap" aria-hidden="true"></span>
+                                            <template x-for="c in [['base', '기본순'], ['cap', '시총순'], ['sector', '섹터별']]" :key="c[0]">
+                                                <button type="button" class="mm-chip" :class="moreSort === c[0] ? 'on' : ''" :aria-pressed="moreSort === c[0]"
+                                                        @click="moreSort = c[0]" x-text="c[1]"></button>
+                                            </template>
+                                        </div>
+
+                                        <div class="mm-body">
+                                            <!-- 거래대금 -->
+                                            <template x-if="tab === 'rank'">
+                                                <div>
+                                                    <div class="sc-empty-line" x-show="fullRankLoading">불러오는 중이에요</div>
+                                                    <ol class="rk-list">
+                                                        <template x-for="r in (fullRank?.rankings || rows)" :key="'m' + r.code">
+                                                            <li>
+                                                                <a class="rk-item" :href="'/stock/analysis?code=' + encodeURIComponent(r.code)">
+                                                                    <span class="rk-no num" x-text="r.rank"></span>
+                                                                    <div class="rk-main">
+                                                                        <div class="rk-name" x-text="r.name || r.code"></div>
+                                                                        <div class="rk-amt num" x-text="'거래대금 ' + amount(r)"></div>
+                                                                    </div>
+                                                                    <div class="rk-px num">
+                                                                        <div class="rk-price" x-text="rkPrice(r)"></div>
+                                                                        <div class="rk-chg" :class="tone(r)" x-text="change(r)"></div>
+                                                                    </div>
+                                                                </a>
+                                                            </li>
+                                                        </template>
+                                                    </ol>
+                                                </div>
+                                            </template>
+
+                                            <!-- 진입 후보 · 타점 준비 중 / 상승 추세 -->
+                                            <template x-if="tab !== 'rank'">
+                                                <div>
+                                                    <div class="sc-empty-line" x-show="fullLoading">불러오는 중이에요</div>
+                                                    <template x-for="sec in moreSections" :key="sec.key">
+                                                        <div>
+                                                            <div class="sc-h" :class="sec.first ? 'is-first' : ''">
+                                                                <span x-text="sec.title"></span><span class="count-pill" x-text="sec.items.length"></span>
+                                                            </div>
+                                                            <div class="sc-empty-line" x-show="!sec.items.length" x-text="sec.empty"></div>
+                                                            <ul class="sc-list">
+                                                                <template x-for="r in sec.items" :key="sec.key + r.nation + r.code">
+                                                                    <li>
+                                                                        <div class="sc-row">
+                                                                            <a class="sc-item" :href="'/stock/analysis?code=' + encodeURIComponent(r.code)">
+                                                                                <div class="sc-main">
+                                                                                    <div class="sc-top">
+                                                                                        <span class="sc-name" x-text="r.name || r.code"></span>
+                                                                                        <span class="sc-nation" x-text="r.nation === 'KR' ? '국내' : '미국'"></span>
+                                                                                        <span class="sc-mo" x-show="r.momentumTop" x-text="moLabel(r)" title="미국 12-1개월 수익률 순위(S&amp;P500) 상위 20%. 이 기준으로 분기마다 교체한 백테스트는 SPY보다 높았어요. 타점과 함께 쓴 효과는 아직 검증 전이에요."></span><span class="sc-mo sc-rsi" x-show="r.rsi2Dip" x-text="(r.rsi2Fear ? 'RSI2 눌림 · 공포 구간 ' : 'RSI2 눌림 ') + Math.round(r.rsi2)" title="상승 추세(200일선 위) 안에서 2일 RSI가 10 아래. 과거 시험(대형주·지수, 2017–2026) 승률 61~76%, 거래당 +0.2~0.8%, 보통 2~5일 안에 5일선 회복. 장 마감 무렵 진입 기준이고, 사전 기준은 경계선 탈락한 참고 신호예요. 정리: 종가가 5일선 위면, 최대 10거래일. VIX 20 이상(공포 구간)일 때는 과거 승률 67~69%로 평소(62~63%)보다 높았어요(참고)."></span>
+                                                                                        <span class="sc-new" x-show="sec.key === 'cand' && r.newCandidate">NEW</span>
+                                                                                        <span class="sc-held" x-show="isHeld(r.code)">보유 중</span>
+                                                                                    </div>
+                                                                                    <div class="sc-headline" x-show="sec.key === 'trend' && r.headline" x-text="r.headline"></div>
+                                                                                    <div class="sc-meta">
+                                                                                        <template x-if="sec.key === 'cand'">
+                                                                                            <span class="phase-badge" :class="verdictTone(r.verdict)" x-text="r.verdictLabel"></span>
+                                                                                        </template>
+                                                                                        <template x-if="sec.key === 'watch'">
+                                                                                            <span class="phase-badge" :class="phaseMeta(r.chartPhase).tone" x-text="phaseMeta(r.chartPhase).label"></span>
+                                                                                        </template>
+                                                                                        <span class="sc-hide-m" x-show="sec.key === 'cand' && r.entryTypeTitle" x-text="r.entryTypeTitle"></span>
+                                                                                        <span class="num sc-trunc" x-show="sec.key === 'cand' && r.primaryEntry > 0" x-text="'1차 ' + price(r.primaryEntry, r)"></span>
+                                                                                        <span class="sc-zone" x-show="sec.key === 'cand' && zoneState(r)" :class="zoneState(r)?.cls" x-text="zoneState(r)?.text"></span>
+                                                                                        <span class="num" x-show="(sec.key !== 'cand' || moreSort === 'cap') && r.marketCapRank > 0" x-text="'시총 ' + r.marketCapRank + '위'"></span>
+                                                                                        <span class="sc-sector" x-show="moreSort === 'sector'" x-text="r.sector || '섹터 미상'"></span>
+                                                                                        <span class="num" x-show="sec.key === 'trend' && r.trailingStop > 0" x-text="'손절선 ' + price(r.trailingStop, r)"></span>
+                                                                                        <span class="num" x-show="sec.key === 'trend' && r.holdTarget > 0" x-text="'목표 ' + price(r.holdTarget, r)"></span>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="sc-px num">
+                                                                                    <div class="sc-price" x-text="price(nowPrice(r), r)"></div>
+                                                                                    <div class="sc-score"><template x-if="liveOf(r)"><span><span class="sc-chg" :class="chgClass(r)" x-text="chgText(r)"></span><span class="sc-dot"> · </span></span></template><span class="sc-pts" x-text="'차트 ' + r.score + '/60'"></span></div>
+                                                                                </div>
+                                                                            </a>
+                                                                            <button type="button" class="sc-save" :class="saveClass(r)" :disabled="inWatch(r.code) || saving === r.code"
+                                                                                    @click="addWatch(r)" :aria-label="(r.name || r.code) + (inWatch(r.code) ? ' 관심 종목에 있음' : ' 관심 종목에 담기')"
+                                                                                    :title="inWatch(r.code) ? '관심 종목에 있어요' : '관심 종목에 담기'">
+                                                                                <i class="bi" :class="inWatch(r.code) ? 'bi-bookmark-check-fill' : 'bi-bookmark-plus'"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    </li>
+                                                                </template>
+                                                            </ul>
+                                                        </div>
+                                                    </template>
+                                                    <div class="mm-foot" x-text="tab === 'trend' ? '추세가 강한 종목이에요. 새로 사기보다 보유 관점에서 손절선을 참고하세요.' : '차트만 본 결과예요. 매수 전에는 종목 분석과 매수 검증으로 한 번 더 확인하세요.'"></div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                            </div>
                         </div>
 
-                        <!-- 실시간 핵심 뉴스: KIS 한국어 헤드라인 (원문 링크가 없으면 누를 수 없는 목록) -->
-                        <div class="toss-card mb-0 flex-grow-1 d-flex flex-column" x-data="headlineNews">
+                        <!-- 실시간 핵심 뉴스: KIS 한국어 헤드라인 -->
+                        <div class="toss-card mb-0 flex-grow-1 d-flex flex-column card-news" x-data="headlineNews">
                             <div class="section-head" style="margin-bottom: 10px;">
                                 <h3 class="section-title">실시간 핵심 뉴스</h3>
                                 <a th:href="@{/market(mainTab='news')}" class="hl-more">해외 원문</a>
@@ -745,9 +1230,41 @@
     document.addEventListener('alpine:init', () => {
         const initialWatchList = /*[[${dashboard?.watchListResponse}]]*/ [];
 
-        // ── 주도주 및 거래대금 (/api/main/ranking) ──
+        // 주도주 및 거래대금
         Alpine.data('marketRanking', () => ({
             info: null, loading: true,
+            // 탭: 마지막으로 본 탭을 기억한다
+            tab: (() => { try { const t = localStorage.getItem('home.rankTab'); return ['screen', 'trend'].includes(t) ? t : 'rank'; } catch (e) { return 'rank'; } })(),
+            newCount: 0,
+            // 더 보기 창
+            moreOpen: false, moreNation: 'ALL', moreSort: 'base',
+            fullRank: null, fullRankLoading: false,
+            get moreTitle() { return { rank: '거래대금 상위 20', screen: '진입 후보 전체', trend: '상승 추세 전체' }[this.tab]; },
+            openMore() {
+                this.moreOpen = true;
+                this.moreNation = 'ALL';
+                document.documentElement.style.overflow = 'hidden';   // 뒤 화면 스크롤 잠금
+                this.$nextTick(() => document.querySelector('.mm-close')?.focus());
+                if (this.tab === 'rank') this.loadFullRank();
+            },
+            closeMore() {
+                this.moreOpen = false;
+                document.documentElement.style.overflow = '';
+            },
+            async loadFullRank() {
+                if (this.fullRankLoading) return;
+                this.fullRankLoading = true;
+                try {
+                    const res = await fetch('/api/main/ranking?size=20', { headers: { 'Accept': 'application/json' } });
+                    if (res.ok) this.fullRank = await res.json();
+                } catch (e) { /* 실패하면 카드에 있는 5개라도 보여 준다 */ } finally {
+                    this.fullRankLoading = false;
+                }
+            },
+            setTab(t) {
+                this.tab = t;
+                try { localStorage.setItem('home.rankTab', t); } catch (e) { /* 기억 못 해도 동작에는 지장 없음 */ }
+            },
             get rows() { return this.info?.rankings || []; },
             get isKr() { return this.info?.nation === 'KR'; },
             async init() {
@@ -763,7 +1280,7 @@
                 }
             },
             timer: null,
-            // 장중(실시간 순위)일 때만 1분마다 조용히 갱신 — 탭이 안 보이면 건너뛴다
+            // 장중(실시간 순위)일 때만 1분마다 조용히 갱신
             startAutoRefresh() {
                 clearInterval(this.timer);
                 if (!this.info?.realtime) return;
@@ -780,7 +1297,7 @@
             },
             destroy() { clearInterval(this.timer); },
             // 장중: "국내 · 실시간 16:32" / 마감 후: "국내 · 15:30 기준" (오늘이 아니면 날짜도)
-            get basisText() {
+            get rkBasisText() {
                 const s = this.info?.rankedAt;
                 if (!s) return '';
                 const d = new Date(/[zZ]|[+-]\d\d:\d\d$/.test(s) ? s : s + '+09:00');
@@ -792,7 +1309,7 @@
                 return (this.isKr ? '국내' : '미국') + ' · ' + (this.info.realtime ? '실시간 ' + when : when + ' 기준');
             },
             krw(r) { return r.currency ? r.currency === 'KRW' : this.isKr; },
-            price(r) {
+            rkPrice(r) {
                 const v = Number(r.lastPrice);
                 if (!isFinite(v)) return '-';
                 return this.krw(r) ? new Intl.NumberFormat('ko-KR').format(Math.round(v)) + '원'
@@ -820,7 +1337,273 @@
             tone(r) { const v = Number(r.changeRate); return v > 0 ? 'up' : v < 0 ? 'down' : ''; },
         }));
 
-        // ── 실시간 핵심 뉴스 (KIS 한국어 헤드라인) ──
+        // 진입 후보: 장 마감 뒤 분석해 둔 결과라 한 번만 불러온다
+        Alpine.data('screening', () => ({
+            data: null, loading: true, failed: false,
+            saving: null, saveFailed: null,
+            // 지금 가격으로 계획이 깨진 종목은 뒤로 보낸다
+            liveRank(r) {
+                const q = this.liveOf(r); if (!q) return 0;
+                const cur = Number(q.currentPrice), hi = r.zoneHigh > 0 ? r.zoneHigh : r.primaryEntry;
+                if (r.stopLoss > 0 && cur < r.stopLoss) return 2;
+                if (hi > 0 && cur > hi) return 1;
+                return 0;
+            },
+            liveSort(list) { return list.map((r, i) => [r, i]).sort((a, b) => this.liveRank(a[0]) - this.liveRank(b[0]) || a[1] - b[1]).map(x => x[0]); },
+            get rows() { return this.liveSort(this.data?.candidates || []).slice(0, 5); },
+            get watching() { return (this.data?.watching || []).slice(0, 5); },
+            get trending() { return (this.data?.trending || []).slice(0, 5); },
+            heldCodes: [],
+            isHeld(code) { return this.heldCodes.includes(code); },
+            // 미국 모멘텀 상위 20% 배지 문구
+            moLabel(r) { return r.momentumPct != null ? '모멘텀 상위 ' + Math.max(1, Math.ceil(r.momentumPct)) + '%' : '모멘텀 상위 20%'; },
+
+            // 더 보기 창용 전체 목록
+            full: null, fullLoading: false,
+            async loadFull() {
+                if (this.full || this.fullLoading) return;
+                this.fullLoading = true;
+                try {
+                    const res = await fetch('/api/main/screening?size=100', { headers: { 'Accept': 'application/json' } });
+                    if (res.ok) {
+                        this.full = await res.json();
+                        this.loadLive([this.full.candidates || [], this.full.watching || [], this.full.trending || []]);
+                    }
+                } catch (e) { /* 실패하면 카드에 있는 목록이라도 */ } finally {
+                    this.fullLoading = false;
+                }
+            },
+            byNation(list) { return this.moreNation === 'ALL' ? list : list.filter(r => r.nation === this.moreNation); },
+            // 전체 보기 정렬
+            sortMore(list, live) {
+                const cap = r => Number(r.marketCap) || 0;
+                let out = list.slice();
+                if (this.moreSort === 'cap') out.sort((a, b) => cap(b) - cap(a));
+                else if (this.moreSort === 'sector') {
+                    const cnt = {};
+                    out.forEach(r => { const k = r.sector || '~'; cnt[k] = (cnt[k] || 0) + 1; });
+                    const sk = r => r.sector || '~';
+                    out.sort((a, b) => (sk(a) === '~') - (sk(b) === '~') || cnt[sk(b)] - cnt[sk(a)] || sk(a).localeCompare(sk(b)) || cap(b) - cap(a));
+                }
+                return live ? this.liveSort(out) : out;
+            },
+            get moreSections() {
+                const d = this.full || this.data || {};
+                if (this.tab === 'trend') {
+                    return [{ key: 'trend', title: '상승 추세', first: true, empty: '조건에 맞는 종목이 없어요', items: this.sortMore(this.byNation(d.trending || []), false) }];
+                }
+                return [
+                    { key: 'cand', title: '진입 후보', first: true, empty: '진입 판정이 나온 종목이 없어요', items: this.sortMore(this.byNation(d.candidates || []), true) },
+                    { key: 'watch', title: '타점 준비 중', first: false, empty: '지켜볼 종목이 없어요', items: this.sortMore(this.byNation(d.watching || []), false) },
+                ];
+            },
+            get analyzed() { return !this.failed && (this.data?.analyzedCount || 0) > 0; },
+            async init() {
+                this.heldCodes = [...document.querySelectorAll('.held-src')].map(el => el.dataset.code).filter(Boolean);
+                this.$watch('moreOpen', open => { if (open && this.tab !== 'rank') this.loadFull(); });
+                try {
+                    const res = await fetch('/api/main/screening?size=10', { headers: { 'Accept': 'application/json' } });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    this.data = await res.json();
+                    this.loadLive([this.data?.candidates || [], this.watching, this.trending]);
+                    const newCount = this.rows.filter(r => r.newCandidate).length;
+                    this.$dispatch('screening-loaded', { newCount });
+                } catch (e) {
+                    this.failed = true;
+                } finally {
+                    this.loading = false;
+                }
+            },
+            get emptyTitle() { return this.failed ? '진입 후보를 불러오지 못했어요' : '첫 분석을 준비하고 있어요'; },
+            get emptyDesc() { return this.failed ? '잠시 후 새로고침해 주세요' : '시가총액 상위 종목을 분석하는 데 몇 분 걸려요'; },
+            // "10월 22일 분석"
+            get basisText() {
+                const ts = [this.data?.krAnalyzedAt, this.data?.usAnalyzedAt].filter(Boolean)
+                    .map(s => new Date(/[zZ]|[+-]\d\d:\d\d$/.test(s) ? s : s + '+09:00'))
+                    .filter(d => !isNaN(d));
+                if (!ts.length) return '';
+                const d = new Date(Math.max(...ts));
+                return new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: 'long', day: 'numeric' }).format(d) + ' 분석';
+            },
+            // 판정은 분석 시점 값, 가격은 실시간이라는 걸 함께 밝힌다
+            get basisLine() {
+                if (!this.basisText) return '';
+                return '판정은 ' + this.basisText + ' 기준 · 가격은 ' + (this.liveReady ? '실시간 · 지금 가격으로 계획이 깨진 종목은 뒤로' : '분석 시점');
+            },
+
+            // 실시간 시세: 판정은 그대로 두고 가격과 진입 구간 대비 위치만 지금 기준으로
+            live: {},          // { 종목코드: StockPriceDto }
+            get liveReady() { return Object.keys(this.live).length > 0; },
+            async loadLive(lists) {
+                const codes = [...new Set(lists.flat().map(r => r.code))]
+                    .filter(c => c && !(c in this.live)).slice(0, 40);
+                if (!codes.length) return;
+                try {
+                    const res = await fetch('/api/stock/prices?codes=' + encodeURIComponent(codes.join(',')), { headers: { 'Accept': 'application/json' } });
+                    if (!res.ok || res.redirected) return;
+                    const data = await res.json();
+                    if (data && typeof data === 'object') this.live = { ...this.live, ...data };
+                } catch (e) { /* 실패하면 분석 시점 가격을 그대로 보여준다 */ }
+            },
+            liveOf(r) { const q = this.live[r.code]; return q && Number(q.currentPrice) > 0 ? q : null; },
+            nowPrice(r) { const q = this.liveOf(r); return q ? q.currentPrice : r.currentPrice; },
+            chgText(r) { const n = Number(this.liveOf(r)?.changeRate); return Number.isFinite(n) ? (n > 0 ? '+' : '') + n.toFixed(2) + '%' : ''; },
+            chgClass(r) { const n = Number(this.liveOf(r)?.changeRate); return n > 0 ? 'text-up' : (n < 0 ? 'text-down' : ''); },
+            /* 실시간 가격이 저장된 진입 구간의 어디에 있는지 → { text, cls }. 분석 페이지의 "구간보다 0.2% 위"와 같은 기준 */
+            zoneState(r) {
+                const q = this.liveOf(r);
+                if (!q || !r.verdict) return null;
+                const hi = r.zoneHigh > 0 ? r.zoneHigh : r.primaryEntry;
+                const lo = r.zoneLow > 0 ? r.zoneLow : hi;
+                if (!(hi > 0)) return null;
+                const cur = Number(q.currentPrice);
+                if (r.stopLoss > 0 && cur < r.stopLoss) return { text: '손절선 아래 · 계획 무효', cls: 'z-stop' };
+                if (cur > hi) return { text: '구간보다 ' + Math.max((cur - hi) / hi * 100, 0.1).toFixed(1) + '% 위' + (r.verdict === 'ACTIONABLE' ? ' · 쫓지 않기' : ''), cls: 'z-above' };
+                if (cur < lo) return { text: '구간보다 ' + Math.max((lo - cur) / lo * 100, 0.1).toFixed(1) + '% 아래', cls: 'z-below' };
+                return { text: '구간 안', cls: 'z-in' };
+            },
+
+            verdictTone(v) {
+                return v === 'ACTIONABLE' ? 'tone-good' : v === 'WAIT_TRIGGER' ? 'tone-info' : 'tone-neutral';
+            },
+            price(val, r) {
+                const v = Number(val);
+                if (!isFinite(v) || v <= 0) return '-';
+                return r.nation === 'KR' ? new Intl.NumberFormat('ko-KR').format(Math.round(v)) + '원'
+                                         : '$' + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
+            },
+
+            // 관심 종목에 담기
+            inWatch(code) { return (this.watchList || []).some(w => w.stockCode === code); },
+            saveClass(r) { return this.inWatch(r.code) ? 'is-on' : (this.saveFailed === r.code ? 'is-err' : ''); },
+            async addWatch(r) {
+                if (this.inWatch(r.code) || this.saving) return;
+                this.saving = r.code; this.saveFailed = null;
+                try {
+                    const res = await fetch('/api/portfolio/watchlist', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({ stockCode: r.code })
+                    });
+                    if (!(res.ok || res.status === 409) || res.redirected) throw new Error('HTTP ' + res.status);
+                    // 홈의 관심 종목 목록에도 바로 넣는다
+                    this.watchList = [...this.watchList, {
+                        stockCode: r.code, stockName: r.name, chartPhase: r.chartPhase,
+                        targetPrice: r.primaryEntry > 0 ? r.primaryEntry : null
+                    }];
+                    this.loadQuotes?.();
+                } catch (e) {
+                    this.saveFailed = r.code;
+                    setTimeout(() => { if (this.saveFailed === r.code) this.saveFailed = null; }, 2500);
+                } finally {
+                    this.saving = null;
+                }
+            },
+        }));
+
+        // 상단 지수 띠 ── 홈: 레버리지 단타 한 줄
+        Alpine.data('levBanner', () => ({
+            b: null, open: false,
+            // 홈에는 정말 가까울 때만: 다음 마감에 1.5% 안쪽으로 빠지면 RSI 조건이 켜지고, VIX도 기준의 90% 이상 (국내는 VIX 충족)
+            get near() {
+                const b = this.b; if (!b) return [];
+                return window.LevBoard.prep(b, 1.5).filter(p => p.kind === 'bull' && !p.blocked
+                    && (p.x.kr || (b.vix != null && b.vixNeedTonight != null && b.vix >= b.vixNeedTonight * 0.9)));
+            },
+            async init() { this.b = await window.LevBoard.load(); },
+            get sig() { return window.LevBoard.signals(this.b); },
+            get prep() { return this.near; },
+            get tone() { return this.sig.length ? 'good' : (this.prep.length ? 'mid' : ''); },
+            get line() {
+                const L = window.LevBoard, b = this.b; if (!b) return '';
+                if (this.sig.length) return '지난 마감에 강한 매수 신호 · ' + this.sig.map(x => x.name).join(', ') + ' (과거 승률 79~95%)';
+                if (this.prep.length) return '다음 마감에 신호가 가까워요 · ' + this.prep.slice(0, 3).map(p => p.x.code + ' ' + L.pct(p.x.bullTriggerPct) + ' 이하').join(' · ') + (b.vixNeedTonight != null ? ' (미국은 마감 VIX ' + b.vixNeedTonight.toFixed(1) + ' 이상)' : '');
+                return '가까운 신호 없음' + (b.vix != null ? ' · VIX ' + b.vix.toFixed(1) : '') + ' · 기다리는 것도 규칙이에요';
+            }
+        }));
+        Alpine.data('marketStrip', () => ({
+            data: null, loading: true, failed: false,
+            canLeft: false, canRight: false,
+            get items() { return this.data?.items || []; },
+            async init() {
+                try {
+                    const res = await fetch('/api/main/strip', { headers: { 'Accept': 'application/json' } });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    this.data = await res.json();
+                } catch (e) {
+                    this.failed = true;
+                } finally {
+                    this.loading = false;
+                    this.$nextTick(() => this.updateArrows());
+                }
+                window.addEventListener('resize', () => this.updateArrows(), { passive: true });
+            },
+            updateArrows() {
+                const t = this.$refs.track;
+                if (!t) return;
+                this.canLeft = t.scrollLeft > 4;
+                this.canRight = t.scrollLeft + t.clientWidth < t.scrollWidth - 4;
+            },
+            scrollBy(dir) {
+                const t = this.$refs.track;
+                if (t) t.scrollBy({ left: dir * Math.max(160, t.clientWidth * 0.7), behavior: 'smooth' });
+            },
+            // 시장 방향은 가격 등락이 아니라 상태라서 빨강/파랑 대신 상태 톤
+            get regime() {
+                const g = this.data?.regime;
+                if (!g) return { label: '', sub: '', tone: 'tone-neutral' };
+                let label = '방향 탐색', tone = 'tone-neutral';
+                if (g.regime === 'BULL') { label = g.trendLevel === 'STRONG_POSITIVE' ? '강한 상승 추세' : '상승 추세'; tone = 'tone-good'; }
+                else if (g.regime === 'BEAR') {
+                    if (g.trendLevel === 'STRONG_NEGATIVE') { label = '강한 하락 추세'; tone = 'tone-alert'; }
+                    else { label = '하락 추세'; tone = 'tone-caution'; }
+                }
+                const risk = g.risk === 'RISK_ON' ? '위험 선호' : g.risk === 'RISK_OFF' ? '안전 선호' : '중립';
+                return { label, tone, sub: risk + ' · 신뢰도 ' + (g.confidence ?? '-') };
+            },
+            // ETF 국면 배지: 진입 판정이 나왔으면 판정, 아니면 국면
+            badge(it) {
+                if (['ACTIONABLE', 'WAIT_TRIGGER', 'WAIT_FOR_ZONE'].includes(it.verdict)) {
+                    return { label: it.verdictLabel, tone: it.verdict === 'ACTIONABLE' ? 'tone-good' : it.verdict === 'WAIT_TRIGGER' ? 'tone-info' : 'tone-neutral' };
+                }
+                if (!it.phase) return null;
+                const m = this.phaseMeta(it.phase);
+                return { label: m.label, tone: m.tone };
+            },
+            fmtValue(it) {
+                const v = Number(it.value);
+                if (it.value == null || !isFinite(v) || v <= 0) return '-';
+                const f = (n, d) => new Intl.NumberFormat('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }).format(n);
+                if (it.unit === 'KRW') return new Intl.NumberFormat('ko-KR').format(Math.round(v)) + '원';
+                if (it.unit === 'USD') return '$' + f(v, 2);
+                if (it.unit === 'FX') return f(v, 2) + '원';
+                return f(v, 2);
+            },
+            fmtChange(it) {
+                const r = Number(it.changeRate);
+                if (it.changeRate != null && isFinite(r)) return (r > 0 ? '+' : '') + r.toFixed(2) + '%';
+                return it.direction === 'UP' ? '▲' : it.direction === 'DOWN' ? '▼' : '';
+            },
+            tone(it) { return it.direction === 'UP' ? 'up' : it.direction === 'DOWN' ? 'down' : ''; },
+            tileTitle(it) {
+                if (!it.asOf) return it.sub ? it.name + ' (' + it.sub + ' 시세)' : it.name;
+                const d = new Date(it.asOf + 'T00:00:00+09:00');
+                return it.name + ' · ' + new Intl.DateTimeFormat('ko-KR', { month: 'long', day: 'numeric' }).format(d) + ' 종가';
+            },
+            sparkPoints(arr) {
+                const v = (arr || []).map(Number).filter(isFinite);
+                if (v.length < 2) return '';
+                const min = Math.min(...v), max = Math.max(...v), span = max - min || 1;
+                return v.map((x, i) => (i / (v.length - 1) * 48).toFixed(1) + ',' + (24 - (x - min) / span * 22).toFixed(1)).join(' ');
+            },
+            sparkColor(it) {
+                const v = (it.spark || []).map(Number);
+                if (v.length < 2) return 'var(--text-muted)';
+                return v[v.length - 1] >= v[0] ? 'var(--toss-red-deep)' : 'var(--toss-blue-deep)';
+            },
+        }));
+
+        // 실시간 핵심 뉴스 (KIS 한국어 헤드라인)
         Alpine.data('headlineNews', () => ({
             items: [], loading: true, failed: false,
             async init() {
@@ -849,7 +1632,7 @@
             },
         }));
 
-        // ── 장 운영 상태 칩 ──
+        // 장 운영 상태 칩
         Alpine.data('marketStatus', () => ({
             items: [],
             timer: null,
@@ -889,7 +1672,7 @@
                 return s ? `장 마감 · ${this.dayPrefix(s)}${this.hm(s)} 개장` : '장 정보 없음';
             },
 
-            // 가장 먼저 상태가 바뀌는 시각(열림→마감 시각, 닫힘→개장 시각)에 한 번만 재조회
+            // 가장 먼저 상태가 바뀌는 시각에 한 번만 재조회
             schedule(fallbackMs = 60 * 60 * 1000) {
                 clearTimeout(this.timer);
                 const now = Date.now();
@@ -938,7 +1721,7 @@
 
             watchList: initialWatchList || [],
 
-            // ── 관심 종목 현재가 (/api/stock/prices, 화면을 띄운 뒤 한 번에) ──
+            // 관심 종목 현재가
             quotes: {},        // { 종목코드: StockPriceDto }
             async loadQuotes() {
               const codes = this.watchList.map(w => w.stockCode).filter(c => c && !(c in this.quotes));
@@ -951,14 +1734,14 @@
               } catch (e) { /* 현재가는 보조 정보라 실패해도 목록은 그대로 */ }
             },
             quoteOf(code) { const q = this.quotes[code]; return q && Number(q.currentPrice) > 0 ? q : null; },
-            // 현재가에서 1차 진입가까지 몇 % (음수 = 더 내려와야 함, 양수 = 이미 진입가 아래)
+            // 현재가에서 1차 진입가까지 몇 %
             entryGap(item) {
               const q = this.quoteOf(item.stockCode), t = Number(item.targetPrice);
               if (!q || !(t > 0)) return null;
               const cur = Number(q.currentPrice);
               return (t - cur) / cur * 100;
             },
-            /** { text, tone }: 진입가까지 -1.8% / 진입가 도달 / 진입가보다 4.2% 아래 */
+            /* { text, tone }: 진입가까지 -1.8% / 진입가 도달 / 진입가보다 4.2% 아래 */
             entryState(item) {
               const g = this.entryGap(item);
               if (g === null) return null;

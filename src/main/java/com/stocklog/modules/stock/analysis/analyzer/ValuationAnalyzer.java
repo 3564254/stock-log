@@ -29,19 +29,19 @@ public class ValuationAnalyzer {
     public ValuationScore analyze(StockValuationDto valuation, StockFinancialDto financial, StockInfoDto info, StockPriceDto price) {
         List<String> signals = new ArrayList<>();
 
-        // 1. 자산 타입 확인 (ETF, ETN 등 펀드형 자산인 경우)
+        // 자산 타입 확인
         if (isFundAsset(info.assetType())) {
             return analyzeEtf(financial, info, price, signals);
         }
 
-        // 2. 일반 주식 분석 (Fundamental 20점 + Valuation 20점 = 40점 만점)
+        // 일반 주식 분석
         int fundamentalScore = scoreFundamentals(financial, signals);
         int valuationScore = scoreValuation(valuation, financial, info, signals);
 
         return ValuationScore.of(fundamentalScore + valuationScore, signals);
     }
 
-    // ── [1] 펀더멘탈 (기초 재무 체력) 평가 : 최대 20점 ──────────────────────
+    // 펀더멘탈 (기초 재무 체력) 평가 : 최대 20점
     private int scoreFundamentals(StockFinancialDto f, List<String> signals) {
         if (f == null) {
             signals.add("재무 데이터 부재 — 펀더멘탈 분석 불가");
@@ -94,7 +94,7 @@ public class ValuationAnalyzer {
         return scaleScore(earnedScore, possibleScore, MAX_FUNDAMENTAL_SCORE, "펀더멘탈", signals);
     }
 
-    // ── [2] 밸류에이션 (가격 적정성) 평가 : 최대 20점 ──────────────────────
+    // 밸류에이션 (가격 적정성) 평가 : 최대 20점
     private int scoreValuation(StockValuationDto v, StockFinancialDto f, StockInfoDto info, List<String> signals) {
         if (v == null) {
             signals.add("밸류에이션 데이터 부재 — 가치 분석 불가");
@@ -109,7 +109,7 @@ public class ValuationAnalyzer {
         Double peg = toDouble(v.peg());
         Double roe = toDouble(f != null ? f.roe() : null);
 
-        // ROE-PBR 적정성 (10점). 단계를 촘촘히 나눠 '조금 비싸면 0점'이 되지 않게 한다.
+        // ROE-PBR 적정성 (10점). 단계를 촘촘히 나눠 '조금 비싸면 0점'이 되지 않게 한다
         if (pbr != null && pbr > 0 && roe != null) {
             possibleScore += 10;
             double requiredReturn = (Nation.KR.equals(info.nation())) ? 12.0 : 10.0;
@@ -133,7 +133,6 @@ public class ValuationAnalyzer {
                 signals.add("PBR 과다 — 현재 수익성 대비 주가 부담 구간");
             }
         } else if (pbr != null && pbr > 0) {
-            // ROE가 없으면 섹터별 PBR 기준표 [극저평가, 저평가, 적정, 고평가 상한]로 대신 본다 (예전엔 기준표가 있어도 안 썼다)
             possibleScore += 10;
             double[] b = valuationBand.getPbrBand(info.sector(), info.nation());
             if (pbr < b[0])      { earnedScore += 10; signals.add(String.format("PBR %.2f — 섹터 기준 극저평가", pbr)); }
@@ -144,7 +143,6 @@ public class ValuationAnalyzer {
         }
 
         // PER 섹터 밴드 평가 (7점): 기준표 [저평가 상한, 적정 상한, 고평가 상한]을 모두 쓴다
-        // (예전엔 저평가 상한만 쓰고 나머지를 '저평가 × 2'로 대신해서, 성장 섹터가 늘 0점에 가까웠다)
         if (per != null && per > 0) {
             possibleScore += 7;
             double[] b = valuationBand.getPerBand(info.sector(), info.nation());
@@ -178,14 +176,14 @@ public class ValuationAnalyzer {
         return scaleScore(earnedScore, possibleScore, MAX_VALUATION_SCORE, "밸류에이션", signals);
     }
 
-    // ── [3] ETF/ETN 전용 평가 : 최대 40점 ────────────────────────────────
+    // ETF/ETN 전용 평가 : 최대 40점
     private ValuationScore analyzeEtf(StockFinancialDto f, StockInfoDto info, StockPriceDto price, List<String> signals) {
         int earnedScore = 0;
         final int fixedPossibleScore = 40;
 
         signals.add(String.format("📊 [%s] 자산군 전용 분석 모델 적용", info.assetType().name()));
 
-        // 1. 유동성 및 규모 (최대 20점 -> 더 엄격하게)
+        // 유동성 및 규모
         if (price != null && price.marketCap() != null) {
             double mCap = price.marketCap().doubleValue();
             if (mCap >= 10000) { earnedScore += 20; signals.add("초대형 ETF (순자산 1조원 이상)"); }
@@ -196,7 +194,7 @@ public class ValuationAnalyzer {
             }
         }
 
-        // 2. 분배금 수익률 (최대 20점 -> 구간 세분화 및 기본점수 제거)
+        // 분배금 수익률
         if (f != null && f.dividendYield() != null) {
             double divYield = f.dividendYield().doubleValue();
             if (divYield >= 7.0) { earnedScore += 20; signals.add("초고배당 인컴 ETF (7%+)"); }
@@ -213,7 +211,7 @@ public class ValuationAnalyzer {
         return ValuationScore.of(finalScore, signals);
     }
 
-    // ── [유틸] 점수 비례 환산 로직 ──────────────────────────────────────────
+    // [유틸] 점수 비례 환산 로직
     private int scaleScore(int earned, int possible, int maxTotal, String category, List<String> signals) {
         if (possible == 0) return 0;
         double ratio = (double) earned / possible;

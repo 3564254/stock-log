@@ -24,9 +24,7 @@ public class DivergenceDetector implements MarketAnalyzer {
 
     private final GetStockChartUseCase chartUseCase;
 
-    /**
-     * 다이버전스 상세 결과
-     */
+    /** 다이버전스 상세 결과 */
     public record DivergenceDetails(
             boolean hasRiskDivergence,
             boolean hasCreditDivergence,
@@ -35,23 +33,7 @@ public class DivergenceDetector implements MarketAnalyzer {
             List<String> warnings
     ) {}
 
-    /**
-     * 시장 다이버전스 분석
-     *
-     * 주요 감지 항목
-     *
-     * 1. Risk Divergence
-     *    S&P 500 상승 + VIX 상승
-     *
-     * 2. Credit Divergence
-     *    S&P 500 상승 + HY Spread 확대
-     *
-     * 3. Leadership Divergence
-     *    Nasdaq 상승 + SOX 상대약세
-     *
-     * 4. Breadth Divergence
-     *    S&P 500 고점 부근 + RSP가 SPY 대비 상대약세
-     */
+    /** 시장 다이버전스 분석 */
     @Override
     public MarketAnalyzerScore analyze(
             Map<IndexType, MarketChartData> data
@@ -61,9 +43,7 @@ public class DivergenceDetector implements MarketAnalyzer {
 
         double penaltyScore = 0.0;
 
-        // =========================================================
-        // 1. 시장 데이터 조회
-        // =========================================================
+        // 시장 데이터 조회
 
         List<Double> sp500Closes =
                 getDoubles(data, IndexType.SP500);
@@ -84,9 +64,7 @@ public class DivergenceDetector implements MarketAnalyzer {
         List<Double> rspCloses =
                 getEtfDoubles("RSP");
 
-        // =========================================================
-        // 2. 20일 수익률 계산
-        // =========================================================
+        // 20일 수익률 계산
 
         double sp500Return =
                 calculateReturn(sp500Closes);
@@ -106,11 +84,7 @@ public class DivergenceDetector implements MarketAnalyzer {
         double rspReturn =
                 calculateReturn(rspCloses);
 
-        // =========================================================
-        // 3. Risk Divergence
-        //
-        // S&P 상승 + VIX 의미 있는 상승
-        // =========================================================
+        // Risk Divergence S&P 상승 + VIX 의미 있는 상승
 
         boolean hasRiskDiv =
                 sp500Return > 1.0
@@ -128,11 +102,7 @@ public class DivergenceDetector implements MarketAnalyzer {
             penaltyScore += calculateRiskPenalty(vixReturn);
         }
 
-        // =========================================================
-        // 4. Credit Divergence
-        //
-        // S&P 상승 + HY Spread 확대
-        // =========================================================
+        // Credit Divergence S&P 상승 + HY Spread 확대
 
         boolean hasCreditDiv =
                 sp500Return > 1.0
@@ -152,11 +122,7 @@ public class DivergenceDetector implements MarketAnalyzer {
             );
         }
 
-        // =========================================================
-        // 5. Leadership Divergence
-        //
-        // Nasdaq 상승 + SOX 상대약세
-        // =========================================================
+        // Leadership Divergence Nasdaq 상승 + SOX 상대약세
 
         double leadershipSpread =
                 soxReturn - nasdaqReturn;
@@ -179,12 +145,7 @@ public class DivergenceDetector implements MarketAnalyzer {
             );
         }
 
-        // =========================================================
-        // 6. Breadth Divergence
-        //
-        // S&P 500이 52주 고점 부근인데
-        // RSP가 SPY 대비 상대적으로 약한 경우
-        // =========================================================
+        // Breadth Divergence
 
         boolean hasBreadthDiv = false;
 
@@ -204,18 +165,7 @@ public class DivergenceDetector implements MarketAnalyzer {
             boolean isNearHigh =
                     currentSp500 >= high52w * 0.98;
 
-            /**
-             * 핵심:
-             *
-             * 기존:
-             * RSP 자체 수익률 < 0
-             *
-             * 개선:
-             * RSP 수익률 - SPY 수익률 < -3%
-             *
-             * 시장이 상승하더라도 RSP가 SPY보다
-             * 크게 뒤처지면 Breadth Divergence로 판단.
-             */
+            /** RSP가 SPY보다 3%p 넘게 뒤처지면 Breadth Divergence */
             double breadthSpread =
                     rspReturn - sp500Return;
 
@@ -240,9 +190,7 @@ public class DivergenceDetector implements MarketAnalyzer {
             }
         }
 
-        // =========================================================
-        // 7. 최종 점수
-        // =========================================================
+        // 최종 점수
 
         double finalScore =
                 Math.max(
@@ -272,15 +220,9 @@ public class DivergenceDetector implements MarketAnalyzer {
         );
     }
 
-    // =============================================================
     // Penalty Functions
-    // =============================================================
 
-    /**
-     * Risk Divergence 패널티
-     *
-     * VIX 상승률이 클수록 패널티 증가.
-     */
+    /** Risk Divergence 패널티 VIX 상승률이 클수록 패널티 증가 */
     private double calculateRiskPenalty(
             double vixReturn
     ) {
@@ -296,11 +238,7 @@ public class DivergenceDetector implements MarketAnalyzer {
         return -15.0;
     }
 
-    /**
-     * Credit Divergence 패널티
-     *
-     * HY Spread 확대가 클수록 패널티 증가.
-     */
+    /** Credit Divergence 패널티 HY Spread 확대가 클수록 패널티 증가 */
     private double calculateCreditPenalty(
             double hySpreadReturn
     ) {
@@ -316,9 +254,7 @@ public class DivergenceDetector implements MarketAnalyzer {
         return -20.0;
     }
 
-    /**
-     * Leadership Divergence 패널티
-     */
+    /** Leadership Divergence 패널티 */
     private double calculateLeadershipPenalty(
             double leadershipSpread
     ) {
@@ -334,12 +270,7 @@ public class DivergenceDetector implements MarketAnalyzer {
         return -10.0;
     }
 
-    /**
-     * Breadth Divergence 패널티
-     *
-     * RSP - SPY의 상대수익률 괴리가 클수록
-     * 패널티 증가.
-     */
+    /** Breadth Divergence 패널티 */
     private double calculateBreadthPenalty(
             double breadthSpread
     ) {
@@ -359,13 +290,9 @@ public class DivergenceDetector implements MarketAnalyzer {
         return 0.0;
     }
 
-    // =============================================================
     // Utility
-    // =============================================================
 
-    /**
-     * 20일 수익률 계산
-     */
+    /** 20일 수익률 계산 */
     private double calculateReturn(
             List<Double> closes
     ) {
@@ -381,11 +308,7 @@ public class DivergenceDetector implements MarketAnalyzer {
         );
     }
 
-    /**
-     * IndexType 데이터 조회
-     *
-     * 데이터가 없는 경우 null 반환.
-     */
+    /** IndexType 데이터 조회 데이터가 없는 경우 null 반환 */
     private List<Double> getDoubles(
             Map<IndexType, MarketChartData> data,
             IndexType indexType
@@ -409,9 +332,7 @@ public class DivergenceDetector implements MarketAnalyzer {
                 .toList();
     }
 
-    /**
-     * ETF 데이터 조회
-     */
+    /** ETF 데이터 조회 */
     private List<Double> getEtfDoubles(
             String code
     ) {
@@ -426,9 +347,7 @@ public class DivergenceDetector implements MarketAnalyzer {
                 .toList();
     }
 
-    /**
-     * 수익률 계산에 필요한 최소 데이터
-     */
+    /** 수익률 계산에 필요한 최소 데이터 */
     private boolean hasEnoughReturnData(
             List<Double> closes
     ) {
@@ -437,9 +356,7 @@ public class DivergenceDetector implements MarketAnalyzer {
                 && closes.size() >= 21;
     }
 
-    /**
-     * 60일 Breadth 계산에 필요한 최소 데이터
-     */
+    /** 60일 Breadth 계산에 필요한 최소 데이터 */
     private boolean hasEnoughData(
             List<Double> closes
     ) {
@@ -448,9 +365,7 @@ public class DivergenceDetector implements MarketAnalyzer {
                 && closes.size() >= 61;
     }
 
-    /**
-     * 마지막 값
-     */
+    /** 마지막 값 */
     private double last(
             List<Double> values
     ) {

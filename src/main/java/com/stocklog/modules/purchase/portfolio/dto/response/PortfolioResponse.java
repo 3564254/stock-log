@@ -19,11 +19,8 @@ public record PortfolioResponse(
         return of(holdings, null);
     }
 
-    /**
-     * @param usdKrwRate 달러 종목을 원화로 바꿀 환율. null이거나 0 이하면 달러 종목은 비중 계산에서 빠진다
-     */
     public static PortfolioResponse of(List<HoldingResponse> holdings, BigDecimal usdKrwRate) {
-        // 현재가를 못 가져온 종목(returnRate == null)은 평균에서 뺀다
+        // 현재가를 못 가져온 종목은 평균에서 뺀다
         List<BigDecimal> rates = holdings.stream().map(HoldingResponse::returnRate).filter(Objects::nonNull).toList();
         BigDecimal avgRate = rates.isEmpty() ? BigDecimal.ZERO :
                 rates.stream()

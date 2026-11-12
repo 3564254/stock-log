@@ -8,7 +8,7 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "market_index_history",
-        // ✨ 복합 유니크 인덱스 설정 (동일 symbol, 동일 date 중복 방지)
+        // 복합 유니크 인덱스 설정
         uniqueConstraints = {
                 @UniqueConstraint(name = "uk_symbol_date", columnNames = {"symbol", "date"})
         },

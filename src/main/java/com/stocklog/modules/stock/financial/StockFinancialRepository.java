@@ -9,4 +9,7 @@ import java.util.Optional;
 public interface StockFinancialRepository extends JpaRepository<StockFinancial, StockDateId> {
 
     Optional<StockFinancial> findFirstByCodeOrderByBaseDateDesc(String code);
+
+    /** 정상 행 중 가장 최근 */
+    Optional<StockFinancial> findFirstByCodeAndBaseDateAfterOrderByBaseDateDesc(String code, java.time.LocalDate after);
 }

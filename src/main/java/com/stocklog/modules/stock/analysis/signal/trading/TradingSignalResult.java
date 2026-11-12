@@ -19,7 +19,7 @@ public record TradingSignalResult(
         LocalDateTime timestamp
 ) {
 
-    // --- 하위 중첩 레코드 정의 ---
+    // 하위 중첩 레코드 정의
 
     public record SignalStrength(
             List<String> buySignals,
@@ -42,7 +42,7 @@ public record TradingSignalResult(
         }
     }
 
-    /** 진입 계획 요약. type이 NONE이면 나머지 값은 0이다. riskReward 0.0은 "산출 불가". */
+    /** 진입 계획 요약. type이 NONE이면 나머지 값은 0이다 */
     public record EntryPlan(
             EntryType type,
             double zoneLow,
@@ -56,10 +56,7 @@ public record TradingSignalResult(
         }
     }
 
-    /**
-     * 화면에 보여줄 상황 설명. 진입 계획이 없어도 항상 채워진다.
-     * tone: bull / bear / warn / neutral (대응 안내 제목의 색상 구분용)
-     */
+    /** 화면에 보여줄 상황 설명. 진입 계획이 없어도 항상 채워진다 */
     public record Narrative(
             String headline,
             String summary,
@@ -87,7 +84,7 @@ public record TradingSignalResult(
             double stopLoss,
             double primaryTarget,
             double secondaryTarget,
-            double trailingStop,        // 보유 기준 손절선 (국면과 상관없이 ATR만 있으면 항상 > 0)
+            double trailingStop,        // 보유 기준 손절선
             String trailingBasis,       // 그 근거: "지지 구간 하단 (MA20·POC)" / "최근 저점 아래" / "변동폭(ATR) 2배 아래"
             double holdTarget,          // 보유 기준 익절 목표: 현재가 위 가장 가까운 저항 (없으면 0)
             String holdTargetBasis      // 그 근거: "저항 구간 하단 (최근고점·R1)"
@@ -100,10 +97,11 @@ public record TradingSignalResult(
     public record RiskManagement(
             double riskPerShare,
             double tradeRiskPercent,
-            double recommendedWeight
+            double recommendedWeight,   // 기본 성향(위험 1% · 상한 20%) 기준. 분석은 회원 공용·캐시라 성향은 화면에서 반영한다
+            double sizeFactor           // 비중 축소 배수: 구조적 목표 없음 ×0.5, 무릎 진입 ×0.5
     ) {
         public static RiskManagement zero() {
-            return new RiskManagement(0.0, 0.0, 0.0);
+            return new RiskManagement(0.0, 0.0, 0.0, 1.0);
         }
     }
 
@@ -128,6 +126,5 @@ public record TradingSignalResult(
     public static TradingSignalResult createFallback() {
         return createFallback("UNKNOWN", "DATA_UNAVAILABLE");
     }
-
 
 }

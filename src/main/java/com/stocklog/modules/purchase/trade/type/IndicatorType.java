@@ -7,10 +7,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum IndicatorType {
 
-    // ==========================================
-    // 1. 수치형 지표 (Numeric) : 연산자(>, <) 및 기준값 필수
-    // ==========================================
-    STOCK_SCORE("점수",true),
+    // 수치형 지표 (Numeric) : 연산자(>, <) 및 기준값 필수
+    STOCK_SCORE("종합 점수 (0~100)", true),          // 밸류 + 모멘텀 + 기술
+    VALUATION_SCORE("밸류 점수 (0~40)", true),       // 재무 체력 20 + 가격 적정성 20
+    MOMENTUM_SCORE("모멘텀 점수 (0~30)", true),      // 52주 위치 · 3개월 수익률 · RSI · 거래량
+    TECHNICAL_SCORE("기술 점수 (0~30)", true),       // 이동평균 배열 · MA20×MA60 크로스 · 변동성
     MA5("5일 이동평균선 (단기)", true),
     MA20("20일 이동평균선 (스윙)", true),
     MA50("50일 이동평균선 (중기)", true),
@@ -22,9 +23,7 @@ public enum IndicatorType {
     BAND_WIDTH("볼린저 대역폭 (%)", true),
     VOLUME("현재 거래량", true),
 
-    // ==========================================
-    // 2. 상태/이벤트 지표 (Boolean) : 기준값 불필요 (선택 자체가 조건)
-    // ==========================================
+    // 상태/이벤트 지표 (Boolean) : 기준값 불필요 (선택 자체가 조건)
     UPTREND("정배열 상태 (단기>스윙>중기)", false),
     MACRO_UPTREND("장기 상승 추세 (현재가 > 50일선)", false),
     BOLLINGER_SQUEEZE("볼린저 밴드 극도 응축 (폭발 임박)", false),
@@ -36,4 +35,9 @@ public enum IndicatorType {
     private final String description;
 
     private final boolean isNumeric;
+
+    /** 차트(MarketContext)가 아니라 종목 점수 계산이 필요한 지표 */
+    public boolean isScore() {
+        return this == STOCK_SCORE || this == VALUATION_SCORE || this == MOMENTUM_SCORE || this == TECHNICAL_SCORE;
+    }
 }

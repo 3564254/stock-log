@@ -2,7 +2,7 @@ package com.stocklog.modules.post.dto.response;
 
 import java.util.List;
 
-/** 글 상세. mine = 로그인한 사람이 쓴 글(수정·삭제 버튼 노출용, 실제 권한 검사는 서버에서 다시 한다) */
+/** 글 상세. mine = 로그인한 사람이 쓴 글 */
 public record PostDetailResponse(
         Long id,
         String title,

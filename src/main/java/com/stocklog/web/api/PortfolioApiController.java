@@ -1,5 +1,6 @@
 package com.stocklog.web.api;
 
+import com.stocklog.modules.ai.AiException;
 import com.stocklog.modules.ai.AiProvider;
 import com.stocklog.modules.common.finance.context.MarketContext;
 import com.stocklog.modules.common.finance.model.ExchangeSession;
@@ -11,12 +12,17 @@ import com.stocklog.modules.purchase.portfolio.dto.request.AddPortfolioStockRequ
 import com.stocklog.modules.purchase.portfolio.dto.request.HoldingUpdateRequest;
 import com.stocklog.modules.purchase.portfolio.dto.response.PortfolioAnalysisResponse;
 import com.stocklog.modules.purchase.portfolio.dto.response.PortfolioResponse;
+import com.stocklog.modules.purchase.portfolio.review.PortfolioAiReviewService;
+import com.stocklog.modules.purchase.portfolio.review.ReviewFacts;
 import com.stocklog.modules.purchase.portfolio.service.PortfolioFacadeService;
+import com.stocklog.modules.purchase.portfolio.setting.InvestmentSettingService;
+import com.stocklog.modules.purchase.portfolio.setting.RiskProfile;
 import com.stocklog.modules.purchase.trade.dto.request.TradingRuleSaveRequest;
 import com.stocklog.modules.purchase.trade.dto.request.WatchItemRequest;
 import com.stocklog.modules.purchase.trade.dto.response.TradingRuleCheckResponse;
 import com.stocklog.modules.purchase.trade.service.TradeFacadeService;
 import com.stocklog.modules.stock.analysis.HoldingStopService;
+import com.stocklog.modules.stock.analysis.PortfolioCheckService;
 import com.stocklog.modules.stock.analysis.StockAnalysisService;
 import com.stocklog.modules.stock.analysis.signal.trading.TradingSignalResult;
 import com.stocklog.modules.stock.application.usecase.GetStockSignalUseCase;
@@ -27,6 +33,7 @@ import com.stocklog.global.error.BusinessException;
 import com.stocklog.global.error.ErrorCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -42,12 +49,16 @@ public class PortfolioApiController {
     private final GetStockSignalUseCase stockSignalUseCase;
 
     private final StockAnalysisService analysisService;
+    private final com.stocklog.modules.stock.application.usecase.StockSnapshotUseCase snapshotUseCase;
     private final HoldingStopService holdingStopService;
+    private final PortfolioCheckService portfolioCheckService;
     private final PortfolioFacadeService portfolioService;
+    private final InvestmentSettingService settingService;
     private final TradeFacadeService tradeService;
     private final AiProvider provider;
+    private final PortfolioAiReviewService reviewService;
 
-    // 💡 1. 포트폴리오 종목 관리 (GET, POST 통일)
+    // 포트폴리오 종목 관리 (GET, POST 통일)
     @PostMapping("/holdings")
     public void addStock(@LoginUser MemberResponse loginMember, @RequestBody @Valid AddPortfolioStockRequest request) {
         portfolioService.updateHolding(loginMember.getId(), HoldingUpdateRequest.stockToHoldings(request));
@@ -59,11 +70,13 @@ public class PortfolioApiController {
     }
 
     @PostMapping("/holdings/delete")
-    public void deleteStock(@LoginUser MemberResponse loginMember, @RequestParam String code) {
-        portfolioService.deleteHolding(loginMember.getId(), code);
+    public void deleteStock(@LoginUser MemberResponse loginMember, @RequestParam String code,
+                            @RequestParam(required = false) java.math.BigDecimal soldPrice) {
+        // soldPrice가 있으면 '팔았어요': 남은 수량 전부를 그 가격에 판 걸로 보고 실현 손익을 매매 기록에 남긴 뒤 지운다
+        portfolioService.deleteHolding(loginMember.getId(), code, soldPrice != null && soldPrice.signum() > 0 ? soldPrice : null);
     }
 
-    // 💡 2. 관심 종목 및 규칙 관리
+    // 관심 종목 및 규칙 관리
     @PostMapping("/watchlist")
     public void addWatchList(@LoginUser MemberResponse loginMember, @RequestBody WatchItemRequest request) {
         tradeService.addWatchItem(loginMember.getId(), request.stockCode());
@@ -94,7 +107,7 @@ public class PortfolioApiController {
         tradeService.toggleRule(loginMember.getId(), ruleId, targetState);
     }
 
-    // 💡 3. AI 관련 API
+    // AI 관련 API
     @GetMapping("/ai-comment")
     public String getAiComment(@LoginUser MemberResponse loginMember, @RequestParam String code) {
         PortfolioResponse myPortfolio = portfolioService.getMyPortfolio(loginMember.getId());
@@ -102,11 +115,90 @@ public class PortfolioApiController {
         return provider.getPortfolioAnalysis(PortfolioAnalysisResult.of(myPortfolio.myStocks(), analysis));
     }
 
-    /**
-     * 보유 종목별 '보유 기준 손절선' (차트 국면과 상관없이 지지 구간·최근 저점·변동폭으로 정함).
-     * 화면을 먼저 띄운 뒤 따로 불러오고, 서버에서 종목당 30분간 재사용한다.
-     * 예: /api/portfolio/holding-stops?codes=005930,AAPL
-     */
+    /** 종목 분석 화면의 '내 보유 대응'용: 이 종목을 갖고 있으면 평단·수량·비중·매수 때 손절가·매수 후 최고가를 돌려준다 */
+    @GetMapping("/my-holding")
+    public Map<String, Object> getMyHolding(@LoginUser MemberResponse loginMember, @RequestParam String code) {
+        Map<String, Object> out = new java.util.HashMap<>();
+        out.put("holding", null);
+        if (loginMember == null || code == null || code.isBlank()) return out;
+        PortfolioResponse p = portfolioService.getMyPortfolio(loginMember.getId());
+        if (p == null || p.myStocks() == null) return out;
+        InvestmentSettingService.InvestmentStatus st = settingService.status(loginMember.getId(), p);
+        out.put("setting", st);
+        p.myStocks().stream()
+                .filter(h -> code.trim().equalsIgnoreCase(h.stockCode()))
+                .findFirst()
+                .ifPresent(h -> {
+                    out.put("holding", h);
+                    // 계좌 비중: 운용 자금을 넣었으면 (이 종목 원화 평가액) / 계좌(운용 자금 + 손익)
+                    if (st.accountKnown() && h.weight() != null && p.totalMarketValueKrw() != null && st.totalAssetsKrw() != null
+                            && st.totalAssetsKrw().signum() > 0) {
+                        java.math.BigDecimal krw = p.totalMarketValueKrw().multiply(h.weight()).divide(java.math.BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+                        out.put("accountWeight", krw.multiply(java.math.BigDecimal.valueOf(100)).divide(st.totalAssetsKrw(), 2, java.math.RoundingMode.HALF_UP));
+                    }
+                });
+        out.put("holdingCount", p.myStocks().size());
+        out.put("weightedCount", p.weightedCount());
+        return out;
+    }
+
+    /** 포트폴리오 점검: 보유 종목끼리의 상관·실질 종목 수·변동성·베타. 비중은 원화 평가액 비중 */
+    /** 마지막 AI 주간 점검 (이번 주 것이 아니어도). 없으면 204 */
+    @GetMapping("/ai-review")
+    public ResponseEntity<?> getAiReview(@LoginUser MemberResponse loginMember) {
+        if (loginMember == null) throw new BusinessException(ErrorCode.UNAUTHORIZED_ACCESS);
+        return reviewService.latest(loginMember.getId()).<ResponseEntity<?>>map(ResponseEntity::ok).orElse(ResponseEntity.noContent().build());
+    }
+
+    /** AI 주간 점검 받기 */
+    @PostMapping("/ai-review")
+    public ResponseEntity<?> createAiReview(@LoginUser MemberResponse loginMember, @RequestBody ReviewFacts facts) {
+        if (loginMember == null) throw new BusinessException(ErrorCode.UNAUTHORIZED_ACCESS);
+        if (facts == null || facts.holdings() == null || facts.holdings().isEmpty()) {
+            return ResponseEntity.unprocessableEntity().body(Map.of("code", "EMPTY", "message", "보유 종목이 있어야 점검할 수 있어요."));
+        }
+        try {
+            return ResponseEntity.ok(reviewService.generate(loginMember.getId(), facts));
+        } catch (AiException e) {
+            return ResponseEntity.status(e.isQuota() ? 429 : 502).body(Map.of("code", e.code(), "message", e.userMessage()));
+        }
+    }
+
+    @GetMapping("/check")
+    public PortfolioCheckService.Check getPortfolioCheck(@LoginUser MemberResponse loginMember) {
+        if (loginMember == null) throw new BusinessException(ErrorCode.UNAUTHORIZED_ACCESS);
+        PortfolioResponse p = portfolioService.getMyPortfolio(loginMember.getId());
+        Map<String, Double> w = new java.util.LinkedHashMap<>();
+        if (p != null && p.myStocks() != null) {
+            boolean anyWeight = p.myStocks().stream().anyMatch(h -> h.weight() != null);
+            p.myStocks().forEach(h -> w.put(h.stockCode(), anyWeight ? (h.weight() != null ? h.weight().doubleValue() : 0.0) : 1.0));
+        }
+        return portfolioCheckService.check(w);
+    }
+
+    /** 투자 설정(성향·현금)과 계좌 상태 */
+    @GetMapping("/settings")
+    public InvestmentSettingService.InvestmentStatus getSettings(@LoginUser MemberResponse loginMember) {
+        if (loginMember == null) throw new BusinessException(ErrorCode.UNAUTHORIZED_ACCESS);
+        return settingService.status(loginMember.getId(), portfolioService.getMyPortfolio(loginMember.getId()));
+    }
+
+    /** 투자 설정 변경 요청 */
+    @PostMapping("/settings")
+    public InvestmentSettingService.InvestmentStatus saveSettings(@LoginUser MemberResponse loginMember, @RequestBody Map<String, Object> body) {
+        if (loginMember == null) throw new BusinessException(ErrorCode.UNAUTHORIZED_ACCESS);
+        Object cash = body.get("capitalKrw");
+        java.math.BigDecimal cashKrw = null;
+        if (cash != null && !String.valueOf(cash).isBlank()) {
+            try { cashKrw = new java.math.BigDecimal(String.valueOf(cash).replace(",", "").trim()); }
+            catch (NumberFormatException e) { throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE); }
+        }
+        settingService.save(loginMember.getId(), RiskProfile.parse(String.valueOf(body.get("profile"))), cashKrw,
+                Boolean.TRUE.equals(body.get("resetPeak")));
+        return settingService.status(loginMember.getId(), portfolioService.getMyPortfolio(loginMember.getId()));
+    }
+
+    /** 보유 종목별 '보유 기준 손절선' */
     @GetMapping("/holding-stops")
     public Map<String, HoldingStopService.HoldingStopDto> getHoldingStops(@LoginUser MemberResponse loginMember,
                                                                          @RequestParam(defaultValue = "") String codes) {
@@ -129,7 +221,9 @@ public class PortfolioApiController {
         ChartPhase chartPhase = signal.analysis().phase();
 
         tradeService.updateAnalyzedSignal(loginMember.getId(), stockCode, chartPhase, signal.priceTarget().primaryEntry());
-        return tradeService.evaluateBuySignal(loginMember.getId(), marketContext, signal);
+        // 점수 조건(종합·밸류·모멘텀·기술) 규칙이 있을 때만 종목 스냅샷을 불러와 점수를 계산한다
+        return tradeService.evaluateBuySignal(loginMember.getId(), marketContext, signal,
+                () -> analysisService.getScoreBreakdown(snapshotUseCase.getStockSnapshot(stockCode)));
     }
 
     @PostMapping("/verify/sell")

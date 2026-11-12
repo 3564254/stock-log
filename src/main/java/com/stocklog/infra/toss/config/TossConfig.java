@@ -31,7 +31,7 @@ public class TossConfig {
                 .build();
 
         HttpClient httpClient = HttpClient.create(provider)
-                // 토스는 응답(특히 에러 본문)을 gzip으로 보낸다 — 켜 두면 Netty가 풀어서 넘겨준다
+                // 토스는 응답(특히 에러 본문)을 gzip으로 보낸다
                 .compress(true)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
                 .responseTimeout(Duration.ofSeconds(10))

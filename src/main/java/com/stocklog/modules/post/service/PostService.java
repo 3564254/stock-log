@@ -24,12 +24,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * 커뮤니티 게시글: 작성·수정·삭제, 피드(전체/종목별), 상세, 좋아요.
- *
- * 피드 한 페이지 = 쿼리 3번으로 고정 (글 수와 무관)
- *   1) 글 + 작성자 (join fetch)   2) 그 글들의 태그 + 종목 (IN)   3) 내가 좋아요 누른 글 id (IN)
- */
+/** 커뮤니티 게시글: 작성·수정·삭제, 피드(전체/종목별), 상세, 좋아요 */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -45,7 +40,7 @@ public class PostService {
     private final MemberRepository memberRepository;
     private final StockRepository stockRepository;
 
-    // ───────────────────────── 작성 · 수정 · 삭제 ─────────────────────────
+    // 작성 · 수정 · 삭제
 
     @Transactional
     public Long create(Long memberId, PostWriteRequest request) {
@@ -53,7 +48,7 @@ public class PostService {
         String content = requireText(request.content(), Post.CONTENT_MAX, "내용");
         List<Stock> stocks = resolveStocks(request.stockCodes());
 
-        // 작성자는 프록시만 — 회원 SELECT 없이 member_id 만 채운다
+        // 작성자는 프록시만
         Member writer = memberRepository.getReferenceById(memberId);
         Post post = postRepository.save(new Post(writer, title, content));
         saveTags(post, stocks);
@@ -79,12 +74,8 @@ public class PostService {
         getOwnedActivePost(postId, memberId).delete();
     }
 
-    // ───────────────────────── 조회 ─────────────────────────
+    // 조회
 
-    /**
-     * @param stockCode null 이면 전체 피드, 있으면 그 종목이 태그된 글만
-     * @param cursor    이전 응답의 nextCursor. 첫 페이지는 null
-     */
     public CursorResponse<PostSummaryResponse> getFeed(Long memberId, String stockCode, Long cursor, Integer size) {
         int pageSize = clampSize(size);
         long from = (cursor == null || cursor <= 0) ? Long.MAX_VALUE : cursor;
@@ -156,7 +147,7 @@ public class PostService {
         return stockRepository.findById(code).map(StockTagResponse::from);
     }
 
-    /** 글쓰기 모달의 종목 검색 (시세 조회 없이 이름·코드만) */
+    /** 글쓰기 모달의 종목 검색 */
     public List<StockTagResponse> searchStocks(String keyword) {
         if (keyword == null || keyword.isBlank()) return List.of();
         return stockRepository.findByKeyword(keyword.trim(), PageRequest.of(0, 8))
@@ -164,15 +155,9 @@ public class PostService {
                 .getContent();
     }
 
-    // ───────────────────────── 좋아요 ─────────────────────────
+    // 좋아요
 
-    /**
-     * 좋아요 토글.
-     * 1) 먼저 DELETE 를 해 보고 지운 행이 있으면 "취소"
-     * 2) 없으면 INSERT 해서 "좋아요" — 같은 사람이 동시에 두 번 눌러 둘 다 INSERT 로 오면
-     *    uk_post_member 때문에 하나는 DataIntegrityViolationException 으로 실패한다(→ API 에서 409).
-     * 카운트는 UPDATE ... SET like_count = like_count ± 1 로 DB 에서 바로 바꾼다.
-     */
+    /** 좋아요 토글 */
     @Transactional
     public LikeResponse toggleLike(Long postId, Long memberId) {
         Post post = getActivePost(postId);
@@ -189,9 +174,9 @@ public class PostService {
         return new LikeResponse(liked, postRepository.findLikeCount(postId));
     }
 
-    // ───────────────────────── 내부 ─────────────────────────
+    // 내부
 
-    /** 삭제되지 않은 글을 가져온다 (CommentService 도 사용) */
+    /** 삭제되지 않은 글을 가져온다 */
     public Post getActivePost(Long postId) {
         return postRepository.findById(postId)
                 .filter(Post::isActive)
@@ -201,7 +186,7 @@ public class PostService {
     private Post getOwnedActivePost(Long postId, Long memberId) {
         Post post = getActivePost(postId);
         if (!post.isWrittenBy(memberId)) {
-            // 남의 글 id 를 넣어 수정·삭제를 시도하는 경우(IDOR) — 화면에 버튼이 없어도 API 는 직접 호출될 수 있다
+            // 남의 글 id 를 넣어 수정·삭제를 시도하는 경우(IDOR)
             throw new BusinessException(ErrorCode.FORBIDDEN_ACCESS);
         }
         return post;
@@ -276,7 +261,7 @@ public class PostService {
     }
 
     static String format(LocalDateTime time) {
-        return time == null ? null : time.withNano(0).toString(); // 2026-10-15T20:53:00 → 화면에서 "3분 전" 으로
+        return time == null ? null : time.withNano(0).toString();
     }
 
     private static boolean isEdited(LocalDateTime created, LocalDateTime modified) {

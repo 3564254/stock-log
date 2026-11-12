@@ -17,22 +17,19 @@ import static com.stocklog.modules.market.analysis.service.analyzer.utils.GetDou
 @Component
 public class SectorRotationAnalyzer implements MarketAnalyzer {
 
-    // 분석할 대상 섹터 목록: S&P 500(일간 종가)과 같은 기준으로 비교할 수 있는 '일간 가격 지수'만.
-    // SECTOR_INDUSTRIALS·SECTOR_DISCRETIONARY_DURABLE(월간 생산지수), SECTOR_FINANCIALS(주간 대출 총액),
-    // SECTOR_REAL_ESTATE(월간 주택가격)는 가격 지수가 아니고 주기도 달라서
-    // 20칸 수익률이 20개월·20주 수익률이 되어 S&P 500 20일 수익률과 비교할 수 없으므로 뺐다.
+    // 분석할 대상 섹터 목록: S&P 500(일간 종가)과 같은 기준으로 비교할 수 있는 '일간 가격 지수'만
     private static final List<IndexType> TARGET_SECTORS = List.of(
             IndexType.PHLX_SEMI, IndexType.NASDAQ_AI_BIGDATA, IndexType.NASDAQ_CAPEX_ACHIEVERS,
             IndexType.NASDAQ_CONSUMER_STAPLES, IndexType.NASDAQ_ISE_CYBERSECURITY, IndexType.NASDAQ_BIOTECH,
             IndexType.NASDAQ_CLEAN_ENERGY, IndexType.PHLX_GOLD_SILVER
     );
 
-    // Risk-On 성향의 섹터 (이들의 상대강도가 높으면 긍정적)
+    // Risk-On 성향의 섹터
     private static final Set<IndexType> RISK_ON_SECTORS = Set.of(
             IndexType.PHLX_SEMI, IndexType.NASDAQ_AI_BIGDATA, IndexType.NASDAQ_CAPEX_ACHIEVERS
     );
 
-    // Risk-Off (방어적) 성향의 섹터 (이들의 상대강도가 높으면 부정적 경계 신호)
+    // Risk-Off (방어적) 성향의 섹터
     private static final Set<IndexType> DEFENSIVE_SECTORS = Set.of(
             IndexType.NASDAQ_CONSUMER_STAPLES, IndexType.PHLX_GOLD_SILVER
     );
@@ -40,7 +37,7 @@ public class SectorRotationAnalyzer implements MarketAnalyzer {
     // 개별 섹터의 강도 데이터
     public record SectorStrength(IndexType sector, double absoluteReturn, double relativeStrength) {}
 
-    // 최종 세부 결과를 담는 레코드 (문서 12항의 결과 예시 반영)
+    // 최종 세부 결과를 담는 레코드
     public record RotationDetails(
             List<String> leadership,
             List<String> weakness,
@@ -49,14 +46,14 @@ public class SectorRotationAnalyzer implements MarketAnalyzer {
 
     @Override
     public MarketAnalyzerScore analyze(Map<IndexType,MarketChartData> data) {
-        // 1. 벤치마크 (S&P 500) 수익률 계산 (20일 기준)
+        // 벤치마크 (S&P 500) 수익률 계산 (20일 기준)
         List<Double> sp500Closes = getDoubles(data, IndexType.SP500);
         if (sp500Closes == null || sp500Closes.size() < 21) {
             return new MarketAnalyzerScore("SectorRotation", 0, ScoreCategory.NEUTRAL, null);
         }
         double sp500Return = computeReturn(sp500Closes, sp500Closes.size() - 1, 20);
 
-        // 2. 각 섹터의 절대 수익률 및 상대강도(Relative Strength) 계산
+        // 각 섹터의 절대 수익률 및 상대강도 계산
         List<SectorStrength> sectorStrengths = new ArrayList<>();
 
         for (IndexType sector : TARGET_SECTORS) {
@@ -73,7 +70,7 @@ public class SectorRotationAnalyzer implements MarketAnalyzer {
         // 상대강도 내림차순 정렬
         sectorStrengths.sort(Comparator.comparingDouble(SectorStrength::relativeStrength).reversed());
 
-        // 3. Leadership (Top 3) 및 Weakness (Bottom 2) 추출
+        // Leadership (Top 3) 및 Weakness (Bottom 2) 추출
         List<String> leadership = sectorStrengths.stream()
                 .limit(3)
                 .map(s -> groom(s.sector().getDisplayName()))
@@ -84,7 +81,7 @@ public class SectorRotationAnalyzer implements MarketAnalyzer {
                 .map(s -> groom(s.sector().getDisplayName()))
                 .collect(Collectors.toList());
 
-        // 4. 섹터 로테이션 전체 점수 산출 (-100 ~ +100)
+        // 섹터 로테이션 전체 점수 산출 (-100 ~ +100)
         double score = calculateRotationScore(sectorStrengths);
         ScoreCategory category = MarketAnalyzerScore.categorize(score);
 
@@ -93,9 +90,7 @@ public class SectorRotationAnalyzer implements MarketAnalyzer {
         return new MarketAnalyzerScore("SectorRotation", score, category, details);
     }
 
-    /**
-     * 주도 섹터의 성향(Risk-On vs Defensive)을 바탕으로 시장의 국면 점수를 산출합니다.
-     */
+    /** 주도 섹터 성향으로 시장 국면 점수를 계산한다 */
     private double calculateRotationScore(List<SectorStrength> strengths) {
         double score = 0;
 

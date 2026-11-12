@@ -29,7 +29,6 @@ public final class TargetIndicators {
         }
         if (phase == ChartPhase.INSUFFICIENT_DATA) {
             // 이 phase에 도달했다는 것은 상위 PhaseIndicators.isValid()가 이미 실패했다는 뜻이므로
-            // pivot/이평선 등 다른 필드도 신뢰할 수 없다고 보고 계산 자체를 생략한다.
             return TargetResult.createFallback();
         }
 
@@ -50,7 +49,7 @@ public final class TargetIndicators {
 
         switch (phase) {
 
-            // ================= 상승 국면 (신규 진입 가능) =================
+            // 상승 국면 (신규 진입 가능)
 
             // 본격 상승 추세: 얕은 눌림에서 공격적으로 추격 매수
             case STRONG_HOLD -> {
@@ -105,7 +104,7 @@ public final class TargetIndicators {
                 secondaryTarget = primaryTarget + (atr * 0.6);
             }
 
-            // ================= 바닥/반등 국면 (소액 정찰 진입) =================
+            // 바닥/반등 국면 (소액 정찰 진입)
 
             // 하락 멈춤 및 다중 바닥: RR 1.3 이상 확보되는 선에서만 정찰 진입
             case RECOVERY_WATCH -> {
@@ -150,7 +149,7 @@ public final class TargetIndicators {
                 secondaryTarget = primaryTarget;
             }
 
-            // ================= 고점/분산 국면 (신규 진입 비권장) =================
+            // 고점/분산 국면 (신규 진입 비권장)
 
             // 경고: 아직 추세는 살아있으나 과열, 방어선을 좁혀 관찰
             case WARNING_ZONE -> {
@@ -182,7 +181,7 @@ public final class TargetIndicators {
                 secondaryTarget = primaryTarget;
             }
 
-            // ================= 이탈/위험 국면 (진입 없음, 참고 레벨만) =================
+            // 이탈/위험 국면 (진입 없음, 참고 레벨만)
 
             // 하락 추세 확인(S2 상단 유지 중): 다음 지지(S2) 이탈 여부만 감시
             case DOWNTREND_CONFIRMED -> {
@@ -239,12 +238,12 @@ public final class TargetIndicators {
             }
         }
 
-        // 가격 순서 역전 방지 (진입가 <= 현재가, 2차 진입 < 1차 진입, 손절 < 2차 진입)
+        // 가격 순서 역전 방지
         primaryEntry = Math.min(primaryEntry, cur);
         secondaryEntry = Math.min(secondaryEntry, primaryEntry - (atr * 0.1));
         stopLoss = Math.min(stopLoss, secondaryEntry - (atr * 0.1));
 
-        // 최소 손절폭 보장 (호가 노이즈로 인한 whipsaw 방어)
+        // 최소 손절폭 보장
         double minStopDistance = Math.max(cur * 0.015, atr * 0.8);
         if ((primaryEntry - stopLoss) < minStopDistance) {
             stopLoss = primaryEntry - minStopDistance;
@@ -298,11 +297,7 @@ public final class TargetIndicators {
         return recWeight;
     }
 
-    /**
-     * ATR을 우선 사용하고, momentum()이 null이거나 ATR이 비정상이면
-     * 항상 계산되는 볼린저 표준편차(stdDev20)로 근사한다.
-     * 그마저 비정상이면 현재가의 2%를 최후 fallback으로 쓴다.
-     */
+    /** ATR을 우선 사용하고, momentum()이 null이거나 ATR이 비정상이면 */
     private static double resolveAtr(MarketContext ctx, double cur) {
         if (ctx.momentum() != null) {
             double atr = ctx.momentum().atr();
@@ -324,7 +319,7 @@ public final class TargetIndicators {
         return fallback;
     }
 
-    /** 현재가보다 0.5 ATR 이상 위에 있는 저항 후보를 오름차순으로 반환한다. */
+    /** 현재가보다 0.5 ATR 이상 위에 있는 저항 후보를 오름차순으로 반환한다 */
     private static List<Double> resistanceLevels(MarketContext ctx, double cur, double atr) {
         Pivot pivot = ctx.pivots().dailyPivot();
 
@@ -339,7 +334,7 @@ public final class TargetIndicators {
                 .toList();
     }
 
-    /** 현재가 아래에 있는 지지 후보를 현재가에서 가까운 순(내림차순)으로 반환한다. */
+    /** 현재가 아래에 있는 지지 후보를 현재가에서 가까운 순(내림차순)으로 반환한다 */
     private static List<Double> supportLevels(MarketContext ctx, double cur) {
         Pivot pivot = ctx.pivots().dailyPivot();
         MovingAverages ma = ctx.movingAverages();

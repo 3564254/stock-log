@@ -29,6 +29,7 @@ public class MarketApiController {
 
     private final MarketFacadeService marketFacadeService;
     private final MarketOpenService marketOpenService;
+    private final com.stocklog.modules.market.weekly.MarketWeeklyService weeklyService;
 
     @GetMapping("/exchange")
     public ExchangeRateInfo getExchangeRate() {
@@ -40,7 +41,7 @@ public class MarketApiController {
         return marketFacadeService.getIndexDto(seriesId);
     }
 
-    /** 시장 페이지 뉴스 탭 — 페이지를 넘겨도 화면 전체(시장 진단)를 다시 그리지 않도록 뉴스만 준다 */
+    /** 시장 페이지 뉴스 탭 */
     @GetMapping("/news")
     public NewsResponse getMarketNews(
             @PageableDefault(size = 10, sort = "dateTime", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -49,13 +50,19 @@ public class MarketApiController {
         return marketFacadeService.fetchMarketNews(PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "dateTime")));
     }
 
-    /** 메인 "실시간 핵심 뉴스" — 한국어 헤드라인 */
+    /** 메인 "실시간 핵심 뉴스" */
     @GetMapping("/news/headlines")
     public List<NewsDto> getKoreanHeadlines(@RequestParam(defaultValue = "6") int size) {
         return marketFacadeService.fetchKoreanHeadlines(Math.min(Math.max(size, 1), 20));
     }
 
-    /** 국내·미국 장 운영 상태 (메인 상단 칩이 상태가 바뀌는 시각에 다시 부른다) */
+    /** 시장 화면 '이번 주 대응 · 어디를 볼지' 재료. 30분 캐시 */
+    @GetMapping("/weekly")
+    public com.stocklog.modules.market.weekly.MarketWeeklyService.Weekly getWeekly() {
+        return weeklyService.weekly();
+    }
+
+    /** 국내·미국 장 운영 상태 */
     @GetMapping("/calendar")
     public MarketOpenResponse getMarketOpenResponse() {
         return marketOpenService.getMarketOpenResponse();

@@ -17,7 +17,7 @@ public record VolumeAnalysis(
         boolean projectionReliable,  // false면 장 초반이라 거래량 판단을 보류한 상태 (플래그는 모두 false)
         boolean isIntraday           // true면 projectedVolume은 장중 예상치
 ) {
-    /** 기존 9개 필드 생성자 호환용 (새 필드는 "장 마감 후 확정 값" 기본값). */
+    /** 기존 9개 필드 생성자 호환용 */
     public VolumeAnalysis(double currentVolume, double projectedVolume, double volumeMa5, double volumeMa20,
                           boolean isVolBullish, boolean isVolBearish, boolean isVolumeDryingUp,
                           double vwap20, double pocPrice) {

@@ -33,10 +33,7 @@ public class MarketRankingService {
     private final Map<Nation, Cached> cache = new ConcurrentHashMap<>();
     private record Cached(Instant at, MarketRankingInfo info) {}
 
-    /**
-     * 거래대금 순위 상위 size개.
-     * 국내 정규장 중이면 국내, 그 외에는 미국 실시간 순위
-     */
+    /** 거래대금 순위 상위 size개. 국내 정규장 중이면 국내, 그 외에는 미국 실시간 순위 */
     public MarketRankingInfo getMarketRankingInfo(int size) {
         Nation nation = pickNation();
         MarketRankingInfo info = getCached(nation);
@@ -66,7 +63,7 @@ public class MarketRankingService {
         return c != null ? c.info() : MarketRankingInfo.builder().nation(nation).rankings(List.of()).build();
     }
 
-    /** 국내 정규장 중이면 국내, 그 외에는 미국 (미국 실시간이 비어 있으면 Provider가 1일 순위로 대체) */
+    /** 국내 정규장 중이면 국내, 그 외에는 미국 */
     private Nation pickNation() {
         return isRegularOpen(Nation.KR) ? Nation.KR : Nation.US;
     }

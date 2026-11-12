@@ -51,7 +51,7 @@ public class CreditAnalyzer implements MarketAnalyzer {
         // Credit Divergence 판별
         boolean hasDivergence = detectCreditDivergence(sp500Closes, vixCloses, hySpreadCloses);
 
-        // 국면 판별 (HEALTHY, NEUTRAL, STRESS)
+        // 국면 판별
         String regime = determineCreditRegime(totalScore, hasDivergence);
 
         ScoreCategory category = MarketAnalyzerScore.categorize(totalScore);
@@ -62,7 +62,7 @@ public class CreditAnalyzer implements MarketAnalyzer {
         return new MarketAnalyzerScore("CreditHealth", totalScore, category, details);
     }
 
-    // [팩터 1] High Yield Spread (최대 ±35점) - 낮을수록, 축소될수록 긍정적
+    // 팩터 1 High Yield Spread (최대 ±35점) - 낮을수록, 축소될수록 긍정적
     private double analyzeHySpread(List<Double> closes) {
         if (closes == null || closes.size() < 21) return 0.0;
         double score = 0;
@@ -85,7 +85,7 @@ public class CreditAnalyzer implements MarketAnalyzer {
         return score;
     }
 
-    // [팩터 2] Financial Stress Index (최대 ±30점) - 낮을수록 긍정적
+    // 팩터 2 Financial Stress Index (최대 ±30점) - 낮을수록 긍정적
     private double analyzeFinancialStress(List<Double> closes) {
         if (closes == null || closes.size() < 21) return 0.0;
         double score = 0;
@@ -107,9 +107,7 @@ public class CreditAnalyzer implements MarketAnalyzer {
     /** 기업 대출은 주간 데이터라 13주(약 한 분기) 단위로 비교한다 */
     private static final int LOAN_WEEKS = 13;
 
-    // [팩터 3] 기업 대출 증가세 (최대 ±20점) - 은행 신용 공급이 늘면 긍정적
-    // 예전에는 TOTCI(대출 총액)를 '금융주'처럼 보고 S&P 500 20일 수익률과 비교했는데,
-    // 가격이 아니고 주기도 달라(20칸 = 20주) 비교가 성립하지 않아 대출 자체의 증가세로 바꿨다.
+    // 팩터 3 기업 대출 증가세 (최대 ±20점) - 은행 신용 공급이 늘면 긍정적
     private double analyzeBusinessLoans(List<Double> loans) {
         if (loans == null || loans.size() < LOAN_WEEKS * 2 + 1) return 0.0;
         double score = 0;
@@ -128,7 +126,7 @@ public class CreditAnalyzer implements MarketAnalyzer {
         return score;
     }
 
-    // [팩터 4] 소비자 리볼빙 대출 (최대 ±15점) - 완만한 성장 긍정적, 급격한 위축 부정적
+    // 팩터 4 소비자 리볼빙 대출 (최대 ±15점) - 완만한 성장 긍정적, 급격한 위축 부정적
     private double analyzeConsumerLoans(List<Double> closes) {
         if (closes == null || closes.size() < 21) return 0.0;
         double score = 0;

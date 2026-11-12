@@ -3,10 +3,7 @@ package com.stocklog.modules.purchase.trade.service;
 import com.stocklog.modules.stock.analysis.signal.trading.TradingSignalResult;
 import org.springframework.web.util.HtmlUtils;
 
-/**
- * 타점 엔진 결과(Narrative)를 검증 모달의 "종합 분석 리포트" HTML로 바꾼다.
- * 내용은 전부 escape하고, 화면(portfolio.html)이 허용 태그/스타일만 남기도록 한 번 더 정리한다.
- */
+/** 타점 엔진 결과(Narrative)를 검증 모달의 "종합 분석 리포트" HTML로 바꾼다 */
 final class TradeReportFormatter {
 
     private TradeReportFormatter() {}
@@ -48,7 +45,7 @@ final class TradeReportFormatter {
         return sb.toString();
     }
 
-    /** analysis.html과 같은 규칙: bull=빨강(상승), bear=파랑, warn=주황. */
+    /** analysis.html과 같은 규칙: bull=빨강(상승), bear=파랑, warn=주황 */
     private static String toneColor(String tone) {
         if (tone == null) return "#191f28";
         return switch (tone) {

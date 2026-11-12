@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TechnicalAnalyzer {
 
-    // 💡 dailyCharts, weeklyCharts는 과거 -> 최신(Asc) 정렬 상태라고 가정
+    // dailyCharts, weeklyCharts는 과거 -> 최신(Asc) 정렬 상태라고 가정
     public TechnicalScore analyze(List<StockChartDto> dailyCharts, List<StockChartDto> weeklyCharts) {
         if (dailyCharts == null || dailyCharts.size() < 20) {
             return TechnicalScore.of(0, List.of("일봉 차트 데이터 부족"));
@@ -32,7 +32,7 @@ public class TechnicalAnalyzer {
         return TechnicalScore.of(score, signals);
     }
 
-    // ── [1] 추세 분석: 일봉 MA 배열 및 주봉(중장기) 지지 상태 ──────────────────
+    // 추세 분석: 일봉 MA 배열 및 주봉(중장기) 지지 상태
     private int scoreTrend(List<Double> daily, List<Double> weekly, List<String> signals) {
         double cur = daily.get(daily.size() - 1);
         double ma5 = sma(daily, 5, 0);
@@ -85,10 +85,7 @@ public class TechnicalAnalyzer {
         return 3;
     }
 
-    // ── [2] 크로스 판정: 중기 이평(MA20 × MA60) ───────────────────────────────
-    // 예전에는 MA5 × MA20을 봤는데, [1] 추세의 MA5/MA20 배열, 모멘텀의 20일선 이격도와 사실상 같은 신호라
-    // 20일선 하나에 점수가 몰렸다(하루 이틀 20일선 아래로 빠지면 최대 30점 가까이 동시에 빠짐).
-    // 크로스는 한 단계 긴 MA20 × MA60으로 보아 '중기 추세 전환'을 담당하게 한다.
+    // 크로스 판정: 중기 이평(MA20 × MA60)
     private static final int CROSS_FAST = 20;
     private static final int CROSS_SLOW = 60;
 
@@ -126,10 +123,7 @@ public class TechnicalAnalyzer {
         return 2;
     }
 
-    // ── [3] 변동성: '그 종목의 평소' 대비 볼린저 밴드 폭 ───────────────────────
-    // 예전에는 20일 종가의 변동계수(CV) 절대값으로 매겨서, 평소 CV가 5% 미만인 대형 우량주는
-    // 늘 '볼린저 스퀴즈' 4점, 출렁이는 중소형주가 만점(8점)을 받는 역전이 있었다.
-    // 이제는 최근 밴드 폭이 그 종목의 지난 최대 120일 분포에서 어디쯤인지(백분위)로 본다.
+    // 변동성: '그 종목의 평소' 대비 볼린저 밴드 폭
     private static final int BAND_PERIOD = 20;
     private static final int BAND_LOOKBACK = 120;
     private static final int BAND_MIN_SAMPLES = 40;
@@ -169,7 +163,7 @@ public class TechnicalAnalyzer {
         return 2;
     }
 
-    /** offset일 전 기준 볼린저 밴드 폭 = 4σ / MA (%). */
+    /** offset일 전 기준 볼린저 밴드 폭 = 4σ / MA (%) */
     private double bandWidth(List<Double> p, int offset) {
         double mean = sma(p, BAND_PERIOD, offset);
         if (mean <= 0) return 0;
@@ -193,7 +187,7 @@ public class TechnicalAnalyzer {
         return Math.sqrt(v);
     }
 
-    // ── [유틸] 과거 시점(offset) 기준 이동평균선 산출 ──────────────────────────
+    // [유틸] 과거 시점(offset) 기준 이동평균선 산출
     private double sma(List<Double> p, int period, int offset) {
         if (p.size() < period + offset) return 0.0;
 
@@ -207,7 +201,7 @@ public class TechnicalAnalyzer {
         return sum / period;
     }
 
-    // ── [유틸] 가장 최근 크로스(MA20 × MA60) 경과 일수 ─────────────────────────
+    // [유틸] 가장 최근 크로스(MA20 × MA60) 경과 일수
     private int countDaysSinceCross(List<Double> p, boolean goldenCross) {
         int maxOffset = p.size() - CROSS_SLOW - 1;
         int maxLookback = Math.min(60, maxOffset);
@@ -222,7 +216,7 @@ public class TechnicalAnalyzer {
         return 99;
     }
 
-    // ── [유틸] DTO에서 종가 추출 ─────────────────────────────────────────────
+    // [유틸] DTO에서 종가 추출
     private List<Double> extractPrices(List<StockChartDto> charts) {
         return charts.stream()
                 .map(c -> c.close().doubleValue())

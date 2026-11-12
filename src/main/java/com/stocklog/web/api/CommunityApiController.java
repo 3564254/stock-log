@@ -15,10 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-/**
- * 커뮤니티 API. /api/** 는 LoginCheckInterceptor 가 로그인을 확인하므로 loginMember 는 null 이 아니다.
- * 오류 응답은 CommunityApiExceptionHandler 가 JSON {code, message} 로 바꿔 준다.
- */
+/** 커뮤니티 API (로그인 필수) */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/community")
@@ -27,7 +24,7 @@ public class CommunityApiController {
     private final PostService postService;
     private final CommentService commentService;
 
-    // ── 게시글 ──
+    // 게시글
 
     @GetMapping("/posts")
     public CursorResponse<PostSummaryResponse> feed(@LoginUser MemberResponse loginMember,
@@ -68,7 +65,7 @@ public class CommunityApiController {
         return postService.toggleLike(postId, loginMember.getId());
     }
 
-    // ── 댓글 ──
+    // 댓글
 
     @GetMapping("/posts/{postId}/comments")
     public CursorResponse<CommentResponse> comments(@LoginUser MemberResponse loginMember,
@@ -91,7 +88,7 @@ public class CommunityApiController {
         return ResponseEntity.noContent().build();
     }
 
-    // ── 글쓰기 모달의 종목 검색 ──
+    // 글쓰기 모달의 종목 검색
 
     @GetMapping("/stocks")
     public List<StockTagResponse> searchStocks(@RequestParam(required = false) String keyword) {

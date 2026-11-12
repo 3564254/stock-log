@@ -16,15 +16,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-/**
- * 시간축별 시장 판정 (단기 1~2주 · 중기 1~3개월 · 장기 6~12개월).
- *
- * 하나의 점수에 단기 흐름과 중장기 바탕이 섞이면 "시장은 급락했는데 분석은 좋다" 같은 어긋남이 생긴다.
- * 기존 분석기 점수를 시간축별로 다시 묶어 따로 판정한다.
- *
- * 판정 안정화(히스테리시스): 경계값 근처에서 라벨이 매일 뒤집히지 않도록
- * 강세/약세 진입은 ±25, 이탈은 ±10을 넘어야 한다. 이전 상태는 지난 진단 기록의 엔진 입력(JSON)을 다시 읽어 계산한다.
- */
+/** 시간축별 시장 판정 */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -63,12 +55,12 @@ public class HorizonService {
 
     public record HorizonReport(String summary, List<HorizonView> horizons) {}
 
-    // ── 시간축별 구성: 분석기 이름(EngineInput 필드명)과 가중치 ──
+    // 시간축별 구성: 분석기 이름과 가중치
     private record Part(String key, double weight) {}
 
     private static final Map<Horizon, List<Part>> PARTS = Map.of(
             Horizon.SHORT, List.of(new Part("momentum", 0.45), new Part("risk", 0.30), new Part("crossAsset", 0.25),
-                                   new Part("shock", 0.80)),          // 단기 충격(0 / -30 / -50 / -80)은 그대로 크게 반영
+                                   new Part("shock", 0.80)),          // 단기 충격은 그대로 크게 반영
             Horizon.MID,   List.of(new Part("trend", 0.40), new Part("breadth", 0.20), new Part("sector", 0.15),
                                    new Part("rates", 0.15), new Part("defensive", 0.10),
                                    new Part("divergence", 0.30)),     // 괴리 경고는 0 이하만 나오는 감점 항목
@@ -127,7 +119,7 @@ public class HorizonService {
         return new HorizonReport(summary(views), views);
     }
 
-    // ── 점수 계산 ──
+    // 점수 계산
 
     static double score(Horizon h, Map<String, Double> s) {
         double sum = 0;
@@ -175,7 +167,7 @@ public class HorizonService {
         return m;
     }
 
-    // ── 화면 설명 ──
+    // 화면 설명
 
     /** 그 시간축 점수를 가장 크게 움직인 요인 3개 */
     private List<Driver> drivers(Horizon h, Map<String, Double> s, EngineInput input) {

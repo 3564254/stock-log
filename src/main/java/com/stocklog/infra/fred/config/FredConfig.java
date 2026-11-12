@@ -21,7 +21,6 @@ public class FredConfig {
     public WebClient fredWebClient(FinProperties properties) {
         return WebClient.builder()
                 .baseUrl("https://api.stlouisfed.org")
-                // https://api.stlouisfed.org/fred/series/observations?series_id=GNPCA&api_key=abcdefghijklmnopqrstuvwxyz123456&file_type=json
                 .build();
     }
 }

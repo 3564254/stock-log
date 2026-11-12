@@ -1,17 +1,4 @@
-/*
-  페이지 공용 접근성 디렉티브 (Alpine). Alpine 스크립트보다 먼저, defer 없이 불러온다.
-
-  x-dialog="열림 상태 식"
-    모달 시트에 붙인다. 마크업에는 role="dialog" aria-modal="true" aria-labelledby tabindex="-1"을 함께 둔다.
-    - 열릴 때: 직전 포커스를 기억하고 [data-autofocus](보이는 경우) 또는 시트 자체로 포커스를 옮긴다
-    - 열려 있는 동안: Tab / Shift+Tab이 시트 밖으로 나가지 않고, 배경 스크롤을 잠근다
-    - 닫힐 때: 기억해 둔 요소로 포커스를 돌려준다
-    Esc 닫기는 시트의 @keydown.escape 로 각 페이지가 자기 닫기 함수를 부른다.
-
-  x-arrow-nav
-    검색 결과 목록 컨테이너에 붙이면 안의 [data-nav-item] 사이를 ↑/↓로 이동한다.
-    첫 항목에서 ↑를 누르면 [data-nav-input](같은 검색 영역의 입력창)으로 돌아간다.
-*/
+/* 페이지 공용 접근성 디렉티브 (Alpine). Alpine 스크립트보다 먼저, defer 없이 불러온다 */
 document.addEventListener('alpine:init', () => {
     const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), '
         + 'select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -86,8 +73,7 @@ document.addEventListener('alpine:init', () => {
     });
 });
 
-/* 검색 입력창에서 ↓: 결과 목록의 첫 항목으로 포커스를 옮긴다.
-   사용: <input data-nav-input @keydown.down="focusFirstNavItem($event, $refs.results)"> */
+/* 검색 입력창에서 ↓: 결과 목록의 첫 항목으로 포커스를 옮긴다 */
 window.focusFirstNavItem = function (event, container) {
     const first = container && [...container.querySelectorAll('[data-nav-item]')]
         .find(i => i.getClientRects().length > 0 && !i.disabled);

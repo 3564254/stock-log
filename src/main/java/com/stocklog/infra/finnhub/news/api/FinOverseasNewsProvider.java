@@ -113,7 +113,7 @@ public class FinOverseasNewsProvider implements NewsProvider {
 
 
 
-    // ✨ 단건 FinStockNewsOutput을 StockNewsDto로 매핑하는 내부 헬퍼 메서드
+    // 단건 FinStockNewsOutput을 StockNewsDto로 매핑하는 내부 헬퍼 메서드
     private NewsDto toNewsDto(FinStockNewsOutput output) {
         return NewsDto.builder()
                 .category(output.getCategory())
@@ -129,7 +129,7 @@ public class FinOverseasNewsProvider implements NewsProvider {
     }
 
 
-    // 뉴스 시각은 출처와 상관없이 KST로 저장한다 (KIS 뉴스와 같은 기준으로 정렬되도록)
+    // 뉴스 시각은 출처와 상관없이 KST로 저장한다
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private LocalDateTime convertToKst(Long unixSeconds) {

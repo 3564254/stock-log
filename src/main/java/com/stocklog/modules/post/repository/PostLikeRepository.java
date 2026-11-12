@@ -18,9 +18,7 @@ public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
     @Query("select l.post.id from PostLike l where l.member.id = :memberId and l.post.id in :postIds")
     List<Long> findLikedPostIds(@Param("memberId") Long memberId, @Param("postIds") Collection<Long> postIds);
 
-    /**
-     * 좋아요 취소. 조회 후 delete 하지 않고 한 문장으로 지워서, 지운 행 수(0 또는 1)로 "눌려 있었는지"를 판단한다.
-     */
+    /** 좋아요 취소. 지운 행 수(0 또는 1)를 돌려준다 */
     @Modifying(flushAutomatically = true)
     @Query("delete from PostLike l where l.post.id = :postId and l.member.id = :memberId")
     int deleteByPostIdAndMemberId(@Param("postId") Long postId, @Param("memberId") Long memberId);

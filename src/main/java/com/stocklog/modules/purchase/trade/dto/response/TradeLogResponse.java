@@ -46,7 +46,7 @@ public record TradeLogResponse(
                     .add(item);
         }
 
-        // 성공률 계산: (수익 난 거래 수 / 전체 거래 수) * 100
+        // 성공률 계산: * 100
         BigDecimal successRate = BigDecimal.valueOf(successCount)
                 .divide(BigDecimal.valueOf(logs.size()), 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100));

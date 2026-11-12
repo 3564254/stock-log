@@ -14,14 +14,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * 토스 OAuth2 Client Credentials 토큰 관리.
- * - 만료 2분 전에 미리 재발급한다.
- * - 여러 요청이 동시에 만료를 만나도 발급은 한 번만 일어난다.
- * - 401을 받으면 호출하는 쪽에서 invalidate() 후 한 번 재시도한다.
- * - 발급이 실패하면 1분 동안은 다시 요청하지 않고 바로 실패시킨다.
- *   (메인 화면·순위 위젯이 요청마다 토큰 발급을 다시 두드리면 발급 횟수 제한에 더 걸리기 쉽다)
- */
+/** 토스 OAuth2 Client Credentials 토큰 관리 */
 @Component
 @Slf4j
 public class TossTokenManager {
@@ -90,7 +83,7 @@ public class TossTokenManager {
                         .with("client_id", properties.getApiKey())
                         .with("client_secret", properties.getSecretKey()))
                 .retrieve()
-                // 실패하면 응답 본문(사유)을 메시지에 담는다. 403 은 키·허용 IP·발급 횟수 제한 등 원인이 여러 가지라 본문을 봐야 안다
+                // 실패하면 응답 본문(사유)을 메시지에 담는다
                 .onStatus(HttpStatusCode::isError, res -> res.bodyToMono(String.class)
                         .defaultIfEmpty("")
                         .map(body -> new IllegalStateException(

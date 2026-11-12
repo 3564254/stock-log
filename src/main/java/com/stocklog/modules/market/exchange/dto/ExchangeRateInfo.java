@@ -7,10 +7,7 @@ import lombok.Builder;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * 1 baseCurrency = baseRate quoteCurrency  (예: USD / KRW = 1,385.20)
- * 공급자에 따라 baseRate 외의 필드는 비어 있을 수 있다.
- */
+/** 1 baseCurrency = baseRate quoteCurrency */
 @Builder
 public record ExchangeRateInfo(
         String baseCurrency,     // 예: "USD"

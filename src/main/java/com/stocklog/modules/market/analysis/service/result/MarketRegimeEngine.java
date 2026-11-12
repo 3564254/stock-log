@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class MarketRegimeEngine {
@@ -22,11 +23,11 @@ public class MarketRegimeEngine {
     public MarketRegimeDto evaluate(EngineInput input) {
         double coreScore = getCoreScore(input);
 
-        // 1. 임계값(Threshold)을 적용한 2차원 축 판별
+        // 임계값(Threshold)을 적용한 2차원 축 판별
         String axis1Trend = determineAxis(input.trend().score(), "BULL", "BEAR");
         String axis2Risk = determineAxis(input.risk().score(), "RISK_ON", "RISK_OFF");
 
-        // 2. 기본 국면 문구 매핑
+        // 기본 국면 문구 매핑
         String combinedRegime = axis1Trend + " + " + axis2Risk;
         String regimeDescription = switch (combinedRegime) {
             case "BULL + RISK_ON" -> "강한 상승장";
@@ -40,13 +41,12 @@ public class MarketRegimeEngine {
             default -> "방향성 탐색 구간 (혼조세)";   // NEUTRAL + NEUTRAL
         };
 
-        // 3. 단기 모멘텀 급락에 따른 '상승장 내 단기 조정' 오버라이드
+        // 단기 모멘텀 급락에 따른 '상승장 내 단기 조정' 오버라이드
         if (axis1Trend.equals("BULL") && (input.momentum().score() <= -40 || input.breadth().score() <= -40)) {
             regimeDescription = "상승 추세 내 단기 조정 (모멘텀/확산도 악화)";
         }
 
-        // 4. 단기 충격 오버라이드: 엔진은 중장기 흐름 위주라 며칠 사이의 급락에 늦게 반응한다.
-        //    5일 급락이나 VIX 급등이 잡히면 추세 판정과 별개로 문구를 바꿔 바로 드러낸다.
+        // 단기 충격 오버라이드: 엔진은 중장기 흐름 위주라 며칠 사이의 급락에 늦게 반응한다
         ShockDetails shock = (input.shock() != null && input.shock().rawDetails() instanceof ShockDetails s) ? s : null;
         if (shock != null && shock.triggered()) {
             regimeDescription = switch (axis1Trend) {
@@ -68,8 +68,7 @@ public class MarketRegimeEngine {
         collectWarnings(input, warnings);
         collectDivergences(input.divergence(), divergences);
 
-        // 신뢰도: 지표들이 같은 방향을 가리키는 정도 + 그 방향의 뚜렷함. 괴리 경고가 있으면 감점
-        // (예전에는 |가중합|을 그대로 써서, 음수만 나오는 괴리 점수가 많을수록 신뢰도가 오르는 문제가 있었다)
+        // 신뢰도: 지표들이 같은 방향을 가리키는 정도 + 그 방향의 뚜렷함
         int confidence = calcConfidence(input, coreScore);
 
         return new MarketRegimeDto(
@@ -94,46 +93,54 @@ public class MarketRegimeEngine {
         return "NEUTRAL";
     }
 
-    private record Component(double score, double weight) {}
+    private record Component(String key, double weight) {}
 
-    // 가중치를 한 곳에서만 정의한다 (점수 합산과 신뢰도 계산이 같은 목록을 쓴다)
-    private static List<Component> components(EngineInput in) {
-        return List.of(
-                new Component(in.trend().score(),      0.15),
-                new Component(in.momentum().score(),   0.10),
-                new Component(in.breadth().score(),    0.10),
-                new Component(in.risk().score(),       0.15),
-                new Component(in.rates().score(),      0.10),
-                new Component(in.liquidity().score(),  0.10),
-                new Component(in.macro().score(),      0.10),
-                new Component(in.credit().score(),     0.10),
-                new Component(in.sector().score(),     0.05),
-                new Component(in.defensive().score(),  0.025),
-                new Component(in.crossAsset().score(), 0.025));
-    }
+    // 가중치를 한 곳에서만 정의한다
+    private static final List<Component> COMPONENTS = List.of(
+            new Component("trend",      0.15),
+            new Component("momentum",   0.10),
+            new Component("breadth",    0.10),
+            new Component("risk",       0.15),
+            new Component("rates",      0.10),
+            new Component("liquidity",  0.10),
+            new Component("macro",      0.10),
+            new Component("credit",     0.10),
+            new Component("sector",     0.05),
+            new Component("defensive",  0.025),
+            new Component("crossAsset", 0.025));
 
     /** 괴리(divergence)를 뺀 핵심 지표 가중합. 괴리 점수는 0 이하만 나오므로 방향 판단에 섞지 않는다 */
     private static double getCoreScore(EngineInput input) {
-        double core = components(input).stream().mapToDouble(c -> c.score() * c.weight()).sum();
+        return coreScore(EngineScores.of(input));
+    }
+
+    private static int calcConfidence(EngineInput input, double weightedScore) {
+        return confidence(EngineScores.of(input), weightedScore);
+    }
+
+    /** 핵심 지표 가중합 (-100~100). 분석기 이름 → 점수 맵을 받는다 */
+    public static double coreScore(Map<String, Double> s) {
+        double core = COMPONENTS.stream().mapToDouble(c -> s.getOrDefault(c.key(), 0.0) * c.weight()).sum();
         return Math.max(-100.0, Math.min(100.0, core));
     }
 
-    /** 0~100. 지표들이 같은 방향을 가리킬수록, 그리고 그 방향이 뚜렷할수록 높다. */
-    private static int calcConfidence(EngineInput input, double weightedScore) {
+    /** 0~100. 지표들이 같은 방향을 가리킬수록, 그리고 그 방향이 뚜렷할수록 높다 */
+    public static int confidence(Map<String, Double> s, double weightedScore) {
         double dir = Math.signum(weightedScore);
         if (dir == 0) return 0;
 
         double total = 0, aligned = 0, opposed = 0;
-        for (Component c : components(input)) {
+        for (Component c : COMPONENTS) {
+            double v = s.getOrDefault(c.key(), 0.0);
             total += c.weight();
-            if (Math.abs(c.score()) < NEUTRAL_BAND) continue;      // 중립은 합의도 반대도 아님
-            if (Math.signum(c.score()) == dir) aligned += c.weight(); else opposed += c.weight();
+            if (Math.abs(v) < NEUTRAL_BAND) continue;      // 중립은 합의도 반대도 아님
+            if (Math.signum(v) == dir) aligned += c.weight(); else opposed += c.weight();
         }
         double agreement = Math.max(0, (aligned - opposed) / total);        // 0~1
         double magnitude = Math.min(1.0, Math.abs(weightedScore) / 40.0);   // 0~1
 
         double conf = 100 * (0.6 * agreement + 0.4 * magnitude);
-        if (input.divergence().score() < -20) conf *= 0.85;                 // 괴리 경고가 있으면 감점
+        if (s.getOrDefault("divergence", 0.0) < -20) conf *= 0.85;          // 괴리 경고가 있으면 감점
         return (int) Math.round(Math.max(0, Math.min(100, conf)));
     }
 

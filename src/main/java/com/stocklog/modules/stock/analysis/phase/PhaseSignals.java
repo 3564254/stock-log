@@ -38,7 +38,7 @@ public class PhaseSignals {
                     ? "🌱 [회복 초기] 저점 상승(HL)과 MACD 골든크로스 동시 확인. 큰 추세는 아직 비상승이라 전환 확정은 아님"
                     : "🌱 [회복 초기] 저점 상승(HL)과 MACD 히스토그램 개선. 추세 전환 확정 전 관찰 구간");
 
-            // 하락 한복판이므로 매수 신호로 내지 않는다. addWatchSignal이 없으면 추가하거나 addSellSignal로 대체
+            // 하락 한복판이므로 매수 신호로 내지 않는다
             case CAPITULATION -> builder.addWatchSignal(
                     "📉 [투매 구간] 3차 지지선(S3) 이탈 + 매도 거래량 우세. 기술적 반등은 가능하나 바닥 확정은 아님");
 
@@ -46,7 +46,7 @@ public class PhaseSignals {
                     "⚠️ [돌파 실패] 저항선 돌파 후 다시 밀려 내려옴. 불트랩 가능성");
 
             case WARNING_ZONE -> builder.addSellSignal(
-                    "⚠️ [과열 경고] " + String.join(" · ", PhaseIndicators.warningReasons(ctx)));
+                    (PhaseIndicators.hasOverheat(ctx) ? "⚠️ [과열 경고] " : "⚠️ [약세 경고] ") + String.join(" · ", PhaseIndicators.warningReasons(ctx)));
 
             case CLIMAX -> builder.addSellSignal(String.format(
                     "🔥 [과열 극단] RSI %.0f, 볼린저 %%B 과열에 소진 신호 동반. 신규 추격은 위험, 보유분은 이탈 기준 점검", rsi));

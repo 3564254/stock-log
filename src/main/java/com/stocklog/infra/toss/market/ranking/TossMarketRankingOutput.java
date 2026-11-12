@@ -5,9 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-/**
- * 토스 랭킹 응답 result — rankings는 순위 목록(배열)
- */
+/** 토스 랭킹 응답 result */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record TossMarketRankingOutput(
         OffsetDateTime rankedAt,

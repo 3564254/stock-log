@@ -1,6 +1,5 @@
 package com.stocklog.modules.common.finance.indicator.phase;
 
-
 import com.stocklog.modules.common.finance.context.MarketContext;
 import com.stocklog.modules.common.type.ChartPhase;
 import com.stocklog.modules.stock.analysis.signal.trading.EntryType;
@@ -31,14 +30,12 @@ public final class PhaseIndicators {
                 .orElse(ChartPhase.WATCH);
     }
 
-    // ------------------------------------------------------------------
     // EntryType 분류 (타점 판별)
-    // ------------------------------------------------------------------
     public static EntryType classifyEntryType(MarketContext context) {
         return classifyEntryType(context, determinePhase(context));
     }
 
-    /** 이미 계산한 Phase를 재사용하는 오버로드 (중복 계산 방지). */
+    /** 이미 계산한 Phase를 재사용하는 오버로드 (중복 계산 방지) */
     public static EntryType classifyEntryType(MarketContext ctx, ChartPhase phase) {
         if (phase == ChartPhase.INSUFFICIENT_DATA) {
             return EntryType.INSUFFICIENT_DATA;
@@ -56,9 +53,17 @@ public final class PhaseIndicators {
         return EntryType.NONE;
     }
 
-    // ------------------------------------------------------------------
-    // 0. 입력 검증: 두 경로(determinePhase / classifyEntryType)에서 쓰는 모든 수치
-    // ------------------------------------------------------------------
+    /** 진단용: 국면 관문을 무시하고 진입 방식 조건만 봤을 때의 유형 */
+    public static EntryType classifyEntryTypeIgnoringPhase(MarketContext ctx) {
+        if (!isValid(ctx)) return EntryType.INSUFFICIENT_DATA;
+        boolean macroUp = ctx.priceAction().isMacroUptrend();
+        if (macroUp && isBreakOut(ctx)) return EntryType.BREAKOUT;
+        if (isReclaim(ctx))             return EntryType.RECLAIM;
+        if (macroUp && isPullback(ctx)) return EntryType.PULLBACK;
+        return EntryType.NONE;
+    }
+
+    // 입력 검증: 두 경로에서 쓰는 모든 수치
     private static boolean isValid(MarketContext ctx) {
         if (ctx == null
                 || ctx.priceAction() == null
@@ -98,9 +103,7 @@ public final class PhaseIndicators {
         return true;
     }
 
-    // ------------------------------------------------------------------
-    // 1. 극단적 상황 및 리스크 관리 (최우선)
-    // ------------------------------------------------------------------
+    // 극단적 상황 및 리스크 관리 (최우선)
     private static Optional<ChartPhase> checkExtremes(MarketContext ctx) {
         var pa = ctx.priceAction();
         var vol = ctx.volume();
@@ -131,13 +134,16 @@ public final class PhaseIndicators {
         return Optional.empty();
     }
 
-    // ------------------------------------------------------------------
-    // 2. 고점 징후 및 차익 실현
-    // ------------------------------------------------------------------
+    // 고점 징후 및 차익 실현
     private static Optional<ChartPhase> checkTopSignals(MarketContext ctx) {
         var pa = ctx.priceAction();
         var ma = ctx.movingAverages();
         double price = ctx.currentPrice();
+
+        // '고점 징후'는 오른 뒤에만 의미가 있다
+        if (!pa.isMacroUptrend() && !hasOverheat(ctx)) {
+            return Optional.empty();
+        }
 
         boolean strongTrend = ctx.momentum().isStrongTrend() && pa.isUptrend();
 
@@ -150,15 +156,7 @@ public final class PhaseIndicators {
         return Optional.empty();
     }
 
-    /**
-     * 경고 점수 (0~5). 각 항목 1점.
-     * 1) 20일선 이격도 과다 (강한 추세 종목은 더 넉넉한 기준)
-     * 2) RSI 과열권 진입
-     * 3) 거래량 약세, 또는 이격도 과다 상태에서의 거래량 고갈
-     *    (이격도가 정상인 거래량 감소는 건전한 눌림이므로 경고로 보지 않는다)
-     * 4) 고점 하락(LH) 발생
-     * 5) MACD 데드크로스 (강한 추세 종목은 제외)
-     */
+    /** 경고 점수 (0~5). 각 항목 1점 */
     public static List<String> warningReasons(MarketContext ctx) {
         var pa = ctx.priceAction();
         var ma = ctx.movingAverages();
@@ -186,13 +184,20 @@ public final class PhaseIndicators {
         return r;
     }
 
+    /** 과열 신호가 하나라도 있는지 */
+    public static boolean hasOverheat(MarketContext ctx) {
+        var pa = ctx.priceAction();
+        var mom = ctx.momentum();
+        boolean strongTrend = mom.isStrongTrend() && pa.isUptrend();
+        double distLimit = strongTrend ? STRONG_TREND_DIST_MA20 : WARNING_DIST_MA20;
+        return ctx.movingAverages().distFromMa20() > distLimit || mom.rsi() >= WARNING_RSI;
+    }
+
     private static int warningScore(MarketContext ctx) {
         return warningReasons(ctx).size();
     }
 
-    // ------------------------------------------------------------------
-    // 3. 본격 상승 추세
-    // ------------------------------------------------------------------
+    // 본격 상승 추세
     private static Optional<ChartPhase> checkUptrend(MarketContext ctx) {
         if (ctx.momentum().isStrongTrend() && ctx.priceAction().isUptrend()) {
             return Optional.of(ChartPhase.STRONG_HOLD);
@@ -200,9 +205,7 @@ public final class PhaseIndicators {
         return Optional.empty();
     }
 
-    // ------------------------------------------------------------------
-    // 4. 조정 및 눌림목 재진입 (RE_ENTRY가 COOLDOWN보다 우선)
-    // ------------------------------------------------------------------
+    // 조정 및 눌림목 재진입
     private static Optional<ChartPhase> checkPullback(MarketContext ctx) {
         var pa = ctx.priceAction();
         var vol = ctx.volume();
@@ -221,10 +224,7 @@ public final class PhaseIndicators {
         return Optional.empty();
     }
 
-    // ------------------------------------------------------------------
-    // 5. 상승 준비 및 진입 타점 (매크로 상승 구간 전용)
-    //    하락 구간의 스퀴즈/횡보는 checkBearish가 처리하도록 넘긴다.
-    // ------------------------------------------------------------------
+    // 상승 준비 및 진입 타점 (매크로 상승 구간 전용)
     private static Optional<ChartPhase> checkSetup(MarketContext ctx) {
         var pa = ctx.priceAction();
         if (!pa.isMacroUptrend()) {
@@ -252,9 +252,7 @@ public final class PhaseIndicators {
         return Optional.empty();
     }
 
-    // ------------------------------------------------------------------
-    // 6. 하락장 및 바닥 다지기 (매크로 비상승 구간만)
-    // ------------------------------------------------------------------
+    // 하락장 및 바닥 다지기 (매크로 비상승 구간만)
     private static Optional<ChartPhase> checkBearish(MarketContext ctx) {
         var pa = ctx.priceAction();
         var macd = ctx.macd();
@@ -263,7 +261,6 @@ public final class PhaseIndicators {
             return Optional.empty();
         }
         // 히스토그램 상승은 거의 매 봉 true라 노이즈가 크므로, 음수 구간에서 올라올 때만 인정
-        // (histogram() 접근자 이름은 MacdResult에 맞게 조정)
         boolean momentumTurning = macd.isGoldenCross()
                 || (macd.isHistogramRising() && macd.histogram() < 0);
         if (momentumTurning && pa.isHL()) {
@@ -275,9 +272,7 @@ public final class PhaseIndicators {
         return Optional.of(ChartPhase.DANGER_ZONE);
     }
 
-    // ------------------------------------------------------------------
-    // EntryType 세부 판정 (isValid 통과 후 호출되므로 null 체크 불필요)
-    // ------------------------------------------------------------------
+    // EntryType 세부 판정
     private static boolean isBreakOut(MarketContext ctx) {
         var bb = ctx.bollingerBand();
         var pivot = ctx.pivots().dailyPivot();

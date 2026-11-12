@@ -9,7 +9,7 @@ import java.util.Set;
 @Component
 public class ValuationBand {
 
-    // ── PER 밴드: [저평가 상한, 적정 상한, 고평가 상한] ──────────────────────
+    // PER 밴드: [저평가 상한, 적정 상한, 고평가 상한]
 
     private static final Map<Nation, double[]> DEFAULT_PER_BANDS = Map.of(
             Nation.KR, new double[]{8.0, 14.0, 22.0},
@@ -65,7 +65,7 @@ public class ValuationBand {
             Map.entry("기타 (미분류)", Map.of(Nation.KR, new double[]{8.0, 14.0, 22.0}, Nation.US, new double[]{12.0, 22.0, 35.0}))
     );
 
-    // ── PBR 밴드: [극저평가 상한, 저평가 상한, 적정 상한, 고평가 상한] ────────
+    // PBR 밴드: [극저평가 상한, 저평가 상한, 적정 상한, 고평가 상한]
 
     private static final Map<Nation, double[]> DEFAULT_PBR_BANDS = Map.of(
             Nation.KR, new double[]{0.5, 1.0, 2.0, 5.0},
@@ -94,7 +94,6 @@ public class ValuationBand {
             "순수 지수형 ETF"
     );
 
-    // ── public API ────────────────────────────────────────────────────────────
 
     public double[] getPerBand(String sector, Nation nation) {
         if (sector != null) {

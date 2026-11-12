@@ -6,11 +6,7 @@
     <title>StockLog - 커뮤니티</title>
     <th:block th:replace="~{fragments/head :: assets}"></th:block>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <!--
-      커뮤니티 피드. 글 목록은 /api/community/posts 에서 커서로 이어 받는다(더 보기 때 페이지를 다시 그리지 않음).
-      ?stock=005930 이면 그 종목이 태그된 글만 보여 준다.
-      글·제목은 모두 x-text 로 넣는다(사용자 입력을 HTML 로 해석하지 않게 — XSS 방지).
-    -->
+    <!-- 커뮤니티 피드. 글 목록은 /api/community/posts 에서 커서로 이어 받는다 -->
     <style>
         :root { --content-max: 760px; --sheet-max: 560px; }
 
@@ -267,7 +263,7 @@
                 }
             },
 
-            // ── 글쓰기 ──
+            // 글쓰기
             openWrite() {
                 this.formError = '';
                 if (this.filter && this.tags.length === 0) this.tags = [{ ...this.filter }];
@@ -315,7 +311,7 @@
         }));
     });
 
-    /** fetch + JSON. 실패하면 서버가 보낸 message 로 Error 를 던진다. 세션이 끊겨 로그인 화면으로 돌려지면 그쪽으로 이동 */
+    /* fetch + JSON. 실패하면 서버가 보낸 message 로 Error 를 던진다 */
     async function api(url, { method = 'GET', body } = {}) {
         const res = await fetch(url, {
             method,

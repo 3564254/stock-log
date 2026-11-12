@@ -11,14 +11,14 @@ import java.time.LocalDate;
 public record MarketDiagnosisHistoryDto(
         LocalDate date,
 
-        // ── [1] 핵심 시계열 지표 ──
+        // 핵심 시계열 지표
         double compositeScore,
         MarketRegimeType regime,
         int regimeStreakDays,
         RiskAppetiteType risk,
         int confidence,
 
-        // ── [2] 세부 분석기별 시계열 점수 (다중 라인 차트 렌더링 및 통계용) ──
+        // 세부 분석기별 시계열 점수
         double trendScore,
         double momentumScore,
         double breadthScore,
@@ -30,7 +30,7 @@ public record MarketDiagnosisHistoryDto(
         double defensiveScore,
         double crossAssetScore,
 
-        // ── [3] 거시 국면 및 경고 플래그 ──
+        // 거시 국면 및 경고 플래그
         MacroRegimeType macroRegime,
         String macroNarrative,
         boolean hasBreadthDivergence
@@ -39,14 +39,14 @@ public record MarketDiagnosisHistoryDto(
         return MarketDiagnosisHistoryDto.builder()
                 .date(history.getDate())
 
-                // ── [1] 핵심 시계열 지표 ──
+                // 핵심 시계열 지표
                 .compositeScore(history.getCompositeScore())
                 .regime(history.getRegime())
                 .regimeStreakDays(history.getRegimeStreakDays())
                 .risk(history.getRisk())
                 .confidence(history.getConfidence())
 
-                // ── [2] 세부 분석기별 시계열 점수 ──
+                // 세부 분석기별 시계열 점수
                 .trendScore(history.getTrendScore())
                 .momentumScore(history.getMomentumScore())
                 .breadthScore(history.getBreadthScore())
@@ -58,7 +58,7 @@ public record MarketDiagnosisHistoryDto(
                 .defensiveScore(history.getDefensiveScore())
                 .crossAssetScore(history.getCrossAssetScore())
 
-                // ── [3] 거시 국면 및 경고 플래그 ──
+                // 거시 국면 및 경고 플래그
                 .macroRegime(history.getMacroRegime())
                 .macroNarrative(history.getMacroNarrative())
                 .hasBreadthDivergence(history.isHasBreadthDivergence())

@@ -5,9 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.ToString;
 
-/**
- * 해외뉴스종합(제목) outblock1 한 건 — 필드명은 KIS 명세 그대로
- */
+/** 해외뉴스종합(제목) outblock1 한 건 */
 @Getter
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)

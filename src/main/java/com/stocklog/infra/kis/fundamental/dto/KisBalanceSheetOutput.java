@@ -35,7 +35,7 @@ public class KisBalanceSheetOutput {
     @JsonProperty("flow_lblt")
     private String currentLiabilities; // 유동부채
 
-    // --- 분석을 위해 추가하면 좋은 필드들 ---
+    // 분석을 위해 추가하면 좋은 필드들
 
     @JsonProperty("cpfn")
     private String capitalStock; // 자본금

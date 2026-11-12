@@ -45,6 +45,17 @@ public class StockChart {
     private BigDecimal volume; // 거래량
 
 
+    /** 액면분할 · 병합 등으로 제공처의 수정주가 기준이 바뀌었을 때 예전에 저장한 봉을 새 기준으로 맞춘다 */
+    public void rescale(BigDecimal factor) {
+        if (factor == null || factor.signum() <= 0) return;
+        java.math.MathContext mc = java.math.MathContext.DECIMAL64;
+        if (openPrice != null) openPrice = openPrice.multiply(factor, mc).setScale(2, java.math.RoundingMode.HALF_UP);
+        if (highPrice != null) highPrice = highPrice.multiply(factor, mc).setScale(2, java.math.RoundingMode.HALF_UP);
+        if (lowPrice != null) lowPrice = lowPrice.multiply(factor, mc).setScale(2, java.math.RoundingMode.HALF_UP);
+        if (closePrice != null) closePrice = closePrice.multiply(factor, mc).setScale(2, java.math.RoundingMode.HALF_UP);
+        if (volume != null) volume = volume.divide(factor, mc).setScale(0, java.math.RoundingMode.HALF_UP);
+    }
+
     @Builder
     public StockChart(String code, LocalDate tradeDate, BigDecimal openPrice, BigDecimal highPrice,
                       BigDecimal lowPrice, BigDecimal closePrice, BigDecimal volume, Period period) {

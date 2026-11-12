@@ -20,7 +20,7 @@ public class KisDomesticInfoOutput {
     // 상태 및 위험 정보
     @JsonProperty("tr_stop_yn") private String isTradeStop;  // 거래정지여부 (Y/N)
     @JsonProperty("admn_item_yn") private String isAdminItem; // 관리종목여부 (Y/N)
-    @JsonProperty("lstg_abol_dt") private String delistingDate; // 상장폐지일자 (값이 있으면 폐지 예정 혹은 완료)
+    @JsonProperty("lstg_abol_dt") private String delistingDate; // 상장폐지일자
 
     // ETF 관련 (해외 주식 DTO와 대응)
     @JsonProperty("etf_dvsn_cd") private String etfDivisionCode; // ETF구분코드 (0이면 해당없음)

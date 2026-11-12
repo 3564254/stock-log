@@ -28,11 +28,11 @@ public class PortfolioSnapshot extends BaseTimeEntity {
     @Column(precision = 18, scale = 4)
     private BigDecimal totalPurchaseAmount;
 
-    // 총 평가 금액 (현재가 기준 가치, 주식 자산만)
+    // 총 평가 금액
     @Column(precision = 18, scale = 4)
     private BigDecimal totalEvaluationAmount;
 
-    // ✨ 거시적 자산 배분을 위한 핵심 추가 필드: 현금(예수금) 잔고
+    // 거시적 자산 배분을 위한 핵심 추가 필드: 현금(예수금) 잔고
     @Column(precision = 18, scale = 4)
     private BigDecimal cashBalance;
 
@@ -54,7 +54,13 @@ public class PortfolioSnapshot extends BaseTimeEntity {
         this.totalReturnRate = totalReturnRate;
     }
 
-    // ✨ 총 자산 계산 (주식 평가액 + 예수금)
+    /** 같은 날 다시 기록할 때: 평가액·현금만 갱신 */
+    public void refresh(BigDecimal totalEvaluationAmount, BigDecimal cashBalance) {
+        this.totalEvaluationAmount = totalEvaluationAmount;
+        this.cashBalance = cashBalance != null ? cashBalance : BigDecimal.ZERO;
+    }
+
+    // 총 자산 계산 (주식 평가액 + 예수금)
     public BigDecimal calculateTotalAssets() {
         return this.totalEvaluationAmount.add(this.cashBalance);
     }

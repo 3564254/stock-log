@@ -21,7 +21,7 @@ import java.util.Arrays;
 @Component
 public class LoggingAspect {
 
-    private static final long SLOW_THRESHOLD_MS = 1500L; // 1.5초 이상 지연 시 경고
+    private static final long SLOW_THRESHOLD_MS = 1500L; // 5초 이상 지연 시 경고
 
     @Before(value = "execution(* com.stocklog.modules..*Provider.fetch*(..)) && args(request, period,..)", argNames = "joinPoint,request,period")
     public void logBeforeFetchChart(JoinPoint joinPoint, ChartRequest request, Period period) {
@@ -60,7 +60,7 @@ public class LoggingAspect {
             if (executionTime >= SLOW_THRESHOLD_MS) {
                 log.warn("[{}][{}] 지연 경고: {}.{}() - 소요: {}ms", dataName, code, className, methodName, executionTime);
             } else {
-                log.info("[{}][{}] 성공: {}.{}() - 소요: {}ms", dataName, code, className, methodName, executionTime);
+                    log.info("[{}][{}] 성공: {}.{}() - 소요: {}ms", dataName, code, className, methodName, executionTime);
             }
             return result;
         } catch (Throwable throwable) {

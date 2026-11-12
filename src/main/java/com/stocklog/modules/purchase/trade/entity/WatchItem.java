@@ -35,7 +35,7 @@ public class WatchItem extends BaseTimeEntity {
     @Column(name = "market_phase")
     private ChartPhase chartPhase;
 
-    // 💡 딱 하나만 남긴 관찰 목표가
+    // 딱 하나만 남긴 관찰 목표가
     @Column(name = "target_price")
     private Double targetPrice;
 

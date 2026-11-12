@@ -21,10 +21,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
-/**
- * KIS 해외뉴스종합(제목) — GET /uapi/overseas-price/v1/quotations/news-title, TR HHPSTH60100C1
- * 실전 도메인 전용 (모의투자 미지원)
- */
+/** KIS 해외뉴스종합(제목) */
 @Component
 @Slf4j
 @RequiredArgsConstructor

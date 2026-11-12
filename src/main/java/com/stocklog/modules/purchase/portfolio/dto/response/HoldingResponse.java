@@ -16,10 +16,12 @@ public record HoldingResponse(
         BigDecimal averagePrice,
         BigDecimal currentPrice,
         BigDecimal highestPriceSinceBuy,
+        BigDecimal entryStop,   // 매수 시점 진입 계획의 손절가 (없으면 null)
+        String holdStyle,       // 보유 방식: null 기본 · "MOMENTUM" 모멘텀 기준 전략(손절선 없음)
         BigDecimal returnRate,  // 수익률(%)
-        BigDecimal quantity,    // 보유 수량 (선택 입력, 없으면 null)
+        BigDecimal quantity,    // 보유 수량
         boolean domestic,       // true: 원화 종목, false: 달러 종목
-        BigDecimal marketValue, // 평가금액 = 수량 × 현재가 (종목 통화 기준, 수량 없으면 null)
+        BigDecimal marketValue, // 평가금액 = 수량 × 현재가
         BigDecimal weight       // 원화 환산 평가금액 기준 비중(%). 계산할 수 없으면 null
 ) {
     public static HoldingResponse of(Holding holding, BigDecimal currentPrice) {
@@ -31,6 +33,8 @@ public record HoldingResponse(
                 .averagePrice(holding.getAveragePrice())
                 .currentPrice(currentPrice)
                 .highestPriceSinceBuy(holding.getHighestPriceSinceBuy())
+                .entryStop(holding.getEntryStop())
+                .holdStyle(holding.getHoldStyle())
                 .returnRate(holding.calculateReturnRate(currentPrice))
                 .quantity(holding.getQuantity())
                 .domestic(isDomestic(holding.getStock()))
@@ -43,7 +47,7 @@ public record HoldingResponse(
         return toBuilder().weight(weight).build();
     }
 
-    // 국가 정보가 비어 있으면 숫자 코드(국내 종목 코드 형식)로 판단한다. 화면의 isKrCode와 같은 기준
+    // 국가 정보가 비어 있으면 숫자 코드(국내 종목 코드 형식)로 판단한다
     private static boolean isDomestic(StockInfo stock) {
         if (stock.getNation() != null && stock.getNation() != Nation.UNKNOWN) {
             return stock.getNation().isDomestic();

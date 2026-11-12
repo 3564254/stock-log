@@ -15,7 +15,7 @@ public class TossAccessTokenResponse {
     @JsonProperty("token_type")
     private String tokenType;
 
-    /** 초 단위 (현재 86400 = 24시간) */
+    /** 초 단위 */
     @JsonProperty("expires_in")
     private Long expiresIn;
 }

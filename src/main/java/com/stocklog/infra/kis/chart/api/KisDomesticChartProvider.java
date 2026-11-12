@@ -62,12 +62,12 @@ public class KisDomesticChartProvider implements StockChartProvider {
 
         KisResponseV2<KisDomesticChartOutput1, KisDomesticChartOutput2> response = webClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice")
-                        .queryParam("FID_COND_MRKT_DIV_CODE", "J")  // ← 파라미터명도 수정
+                        .queryParam("FID_COND_MRKT_DIV_CODE", "J")
                         .queryParam("FID_INPUT_ISCD", request.code())
                         .queryParam("FID_INPUT_DATE_1", date.startDate)
                         .queryParam("FID_INPUT_DATE_2", date.endDate)
                         .queryParam("FID_PERIOD_DIV_CODE", convertPeriod(period))
-                        .queryParam("FID_ORG_ADJ_PRC", "1")
+                        .queryParam("FID_ORG_ADJ_PRC", "0") // 0: 수정주가, 1: 원주가 (KIS 공식 예제 기준). 원주가는 액면분할·무상증자 날 폭락처럼 보인다
                         .build())
                 .headers(h -> {
                     h.add("content-type", "application/json; charset=utf-8");
@@ -125,7 +125,8 @@ public class KisDomesticChartProvider implements StockChartProvider {
             DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
             this.endDate = LocalDate.now().format(fmt);
             this.startDate = switch (period) {
-                case DAY -> LocalDate.now().minusDays(100).format(fmt);
+                // 달력 140일 ≈ 거래일 96~100개. API는 한 번에 최대 100건이라 그 안에서 꽉 채운다
+                case DAY -> LocalDate.now().minusDays(140).format(fmt);
                 case WEEK -> LocalDate.now().minusWeeks(100).format(fmt);
                 case MONTH -> LocalDate.now().minusMonths(100).format(fmt);
                 default -> LocalDate.now().minusWeeks(1).format(fmt);
@@ -137,6 +138,5 @@ public class KisDomesticChartProvider implements StockChartProvider {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         return LocalDate.parse(date, formatter);
     }
-
 
 }

@@ -70,7 +70,7 @@ public class RiskAnalyzer implements MarketAnalyzer {
         else if (cur > 25 && cur < 30) score -= 5;
         else if (cur >= 30) score -= 10;
 
-        // 5D Change (하락 시 공포 완화 -> Risk-On)
+        // 5D Change
         if (cur < vix5D) score += 10;
         else score -= 10;
 
@@ -94,7 +94,7 @@ public class RiskAnalyzer implements MarketAnalyzer {
         if (cur < 4.0) score += 10;
         else if (cur >= 5.0) score -= 10;
 
-        // 5D Change (스프레드 축소 시 신용 위험 감소 -> Risk-On)
+        // 5D Change
         if (cur < hy5D) score += 10;
         else score -= 10;
 

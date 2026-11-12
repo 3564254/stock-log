@@ -12,27 +12,26 @@ import java.util.List;
 @Component
 public class MomentumAnalyzer {
 
-    // 💡 dailyCharts는 과거 -> 최신 (Asc) 정렬 상태로 주입
+    // dailyCharts는 과거 -> 최신 (Asc) 정렬 상태로 주입
     public MomentumScore analyze(List<StockChartDto> dailyCharts, StockPriceDto priceDto) {
         List<String> signals = new ArrayList<>();
         int score = 0;
 
-        // 1. 52주 포지션 평가 (최대 10점)
+        // 52주 포지션 평가 (최대 10점)
         double w52Position = calculateW52Position(priceDto);
         score += scoreW52Position(priceDto, w52Position, signals);
 
-        // 2. 중기 가격 모멘텀 (3개월 수익률, 최대 10점)
-        //    예전에는 20일선 이격도를 봤는데, 기술적 분석의 MA5/MA20 배열과 같은 신호라 20일선에 점수가 몰렸다.
+        // 중기 가격 모멘텀
         if (isValidChart(dailyCharts, RETURN_DAYS + 1)) {
             score += scoreMediumTermReturn(dailyCharts, signals);
         }
 
-        // 3. 단기 RSI 상대강도지수 분석 (최대 5점)
+        // 단기 RSI 상대강도지수 분석 (최대 5점)
         if (isValidChart(dailyCharts, 15)) {
             score += scoreRsiMomentum(dailyCharts, signals);
         }
 
-        // 4. 단기 거래량 급증 패턴 분석 (최대 5점)
+        // 단기 거래량 급증 패턴 분석 (최대 5점)
         if (isValidChart(dailyCharts, 20)) {
             score += scoreVolumeBreakout(dailyCharts, w52Position, signals);
         }
@@ -40,7 +39,7 @@ public class MomentumAnalyzer {
         return MomentumScore.of(score, signals);
     }
 
-    // ── [1] 52주 포지션 계산 및 평가 ─────────────────────────────
+    // 52주 포지션 계산 및 평가
     private double calculateW52Position(StockPriceDto p) {
         if (isInvalid(p.w52High()) || isInvalid(p.w52Low())) return -1;
         double high = p.w52High().doubleValue();
@@ -68,7 +67,7 @@ public class MomentumAnalyzer {
         return 0;
     }
 
-    // ── [2] 중기 가격 모멘텀 (약 3개월 = 60거래일 수익률) ─────────────────────
+    // 중기 가격 모멘텀 (약 3개월 = 60거래일 수익률)
     private static final int RETURN_DAYS = 60;
 
     private int scoreMediumTermReturn(List<StockChartDto> charts, List<String> signals) {
@@ -94,9 +93,7 @@ public class MomentumAnalyzer {
         return 0;
     }
 
-    // ── [3] RSI (14일, Wilder 방식) ───────────────────────────────────────
-    // 모멘텀 점수이므로 '강할수록 높게'로 일관되게 매긴다. 과열(70+)은 강하지만 부담이 있어 한 단계 낮추고,
-    // 과매도(30-)는 반등 가능성이 있어도 모멘텀 자체는 약하므로 낮게 준다 (예전엔 과매도가 최고점이었다).
+    // RSI (14일, Wilder 방식)
     private int scoreRsiMomentum(List<StockChartDto> charts, List<String> signals) {
         double rsi = calculateRSI(charts, 14);
         if (rsi > 70) {
@@ -114,7 +111,7 @@ public class MomentumAnalyzer {
         }
     }
 
-    // ── [4] 단기 거래량 급증 판별 ───────────────────────────────────────
+    // 단기 거래량 급증 판별
     private int scoreVolumeBreakout(List<StockChartDto> dailyCharts, double w52Position, List<String> signals) {
         int recentDays = 5;
         double avgVolume = dailyCharts.stream()
@@ -141,17 +138,17 @@ public class MomentumAnalyzer {
         return 2;
     }
 
-    // ── [유틸] 차트 데이터 유효성 검증 ────────────────────────────────────
+    // [유틸] 차트 데이터 유효성 검증
     private boolean isValidChart(List<StockChartDto> charts, int requiredSize) {
         return charts != null && charts.size() >= requiredSize;
     }
 
-    // ── [유틸] 최신 종가 반환 ──────────────────────────────────────────
+    // [유틸] 최신 종가 반환
     private double getLatestClose(List<StockChartDto> charts) {
         return charts.get(charts.size() - 1).close().doubleValue();
     }
 
-    // ── [유틸] 이동평균선(SMA) 계산 ──────────────────────────────────────────
+    // [유틸] 이동평균선(SMA) 계산
     private double calculateSMA(List<StockChartDto> charts, int period) {
         List<StockChartDto> subList = charts.subList(charts.size() - period, charts.size());
         return subList.stream()
@@ -160,8 +157,7 @@ public class MomentumAnalyzer {
                 .orElse(0.0);
     }
 
-    // ── [유틸] RSI (Wilder 평활) ─────────────────────────────────────────────
-    // 첫 period개 변화량의 단순 평균으로 시작해, 이후 (이전 평균 × (n-1) + 이번 값) / n 으로 이어 간다.
+    // [유틸] RSI (Wilder 평활)
     private double calculateRSI(List<StockChartDto> charts, int period) {
         int n = charts.size();
         if (n <= period) return 50.0;

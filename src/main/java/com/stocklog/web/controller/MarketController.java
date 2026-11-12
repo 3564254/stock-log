@@ -26,7 +26,6 @@ public class MarketController {
             Model model
     ) {
         // 지표·진단은 서로 다른 외부 API에 기대므로, 한 곳이 실패해도 나머지는 보여 준다
-        // 뉴스 탭은 /api/marketData/news 로 따로 불러온다 (페이지 이동 때 진단을 다시 하지 않도록)
         IndexDashboardDto indexDashboard = loadSection("지표 대시보드", marketFacadeService::getMarketDashboard);
         MarketRegimeResponse marketAnalysisResult = loadSection("시장 진단", () -> marketFacadeService.getMarketAnalysisResponse(15));
 

@@ -9,13 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.Objects;
 
-/**
- * 커뮤니티 게시글.
- * - 작성자(Member)만 단방향으로 참조한다. 댓글·좋아요·태그는 각 Repository 에서 조회한다.
- * - like/comment/view 카운트는 목록에서 COUNT(*) 를 피하려고 둔 비정규화 컬럼이다.
- *   값은 엔티티 setter 가 아니라 PostRepository 의 UPDATE ... SET x = x + 1 로만 바꾼다(동시 요청에도 안 어긋나게).
- * - 삭제는 status = DELETED (soft delete). 댓글이 달린 글을 지워도 댓글 FK 가 깨지지 않는다.
- */
+/** 커뮤니티 게시글. - 작성자(Member)만 단방향으로 참조한다 */
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

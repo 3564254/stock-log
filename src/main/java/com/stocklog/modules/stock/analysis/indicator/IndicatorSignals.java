@@ -10,22 +10,15 @@ import static com.stocklog.modules.common.finance.indicator.trend.MomentumIndica
 import static com.stocklog.modules.stock.analysis.signal.SignalWeight.W_POC;
 import static com.stocklog.modules.stock.analysis.signal.SignalWeight.W_VWAP;
 
-/** 지표 이벤트 신호 (MACD/볼린저, RSI/다이버전스, 이평·피봇·POC·VWAP). 상태 없는 static 유틸이다. */
+/** 지표 이벤트 신호. 상태 없는 static 유틸이다 */
 public final class IndicatorSignals {
 
     private IndicatorSignals() {}
 
-    // ------------------------------------------------------------------
-    // 지표 이벤트 신호 (구 SignalRule 3종을 이관: Momentum / RSI / TrendAndMa)
-    // 판정(Verdict)에는 관여하지 않고, 근거 문구와 buy/sell 강도만 builder에 쌓는다.
-    // 이관 시 신호 조건과 가중치는 원본 그대로이며, 방어 코드만 추가했다:
-    //  - volume null일 때 NPE 나던 VWAP 구간
-    //  - POC 값이 비정상(NaN/0)일 때 0 나눗셈
-    //  - 다이버전스: 봉이 15개 미만이라 RSI(14)를 계산할 수 없을 때
-    // ------------------------------------------------------------------
+    // 지표 이벤트 신호
     private static final int W_RSI_EXTREME = SignalWeight.RSI_EXTREME.getWeight();
 
-    /** 지표 이벤트 신호 전체를 builder에 쌓는다. */
+    /** 지표 이벤트 신호 전체를 builder에 쌓는다 */
     public static void apply(MarketContext ctx, SignalStrengthBuilder b) {
         momentumSignals(ctx, b);
         rsiSignals(ctx, b);
@@ -57,8 +50,7 @@ public final class IndicatorSignals {
                 b.addBuyWeight(bbW);
             }
         } else if (ctx.currentPrice() > ctx.bollingerBand().upper()) {
-            // 상단 돌파의 "거래량 동반"은 상승 거래량(isVolBullish)이어야 한다.
-            // (원본은 isVolBearish로 되어 있어 돌파가 매도 쪽으로 해석되던 것을 수정)
+            // 상단 돌파의 "거래량 동반"은 상승 거래량(isVolBullish)이어야 한다
             boolean volBullish = ctx.volume() != null && ctx.volume().isVolBullish();
             if (volBullish) {
                 if (ctx.bollingerBand().isSqueeze()) {

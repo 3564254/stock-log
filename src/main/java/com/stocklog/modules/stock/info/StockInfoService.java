@@ -47,7 +47,7 @@ public class StockInfoService {
 
         // 기존 2중 루프를 제거하고, '저장 안 되어 있으면 저장'하는 fetchInfo 메서드를 재사용
         return stockInfos.getContent().stream()
-                .map(info -> fetchInfoDto(info.getCode())) // 엔티티 식별자 메서드명(getCode, getId 등)에 맞춰 사용
+                .map(info -> fetchInfoDto(info.getCode())) // 엔티티 식별자 메서드명에 맞춰 사용
                 .collect(Collectors.toList());
     }
 

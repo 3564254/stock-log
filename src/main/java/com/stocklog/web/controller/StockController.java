@@ -1,5 +1,4 @@
-// StockApiController.java 의 기존 분석 API 엔드포인트는 그대로 두고
-// 페이지 컨트롤러를 별도로 추가
+// StockApiController.java 의 기존 분석 API 엔드포인트는 그대로 두고 페이지 컨트롤러를 별도로 추가
 
 package com.stocklog.web.controller;
 
@@ -7,6 +6,7 @@ import com.stocklog.modules.member.dto.response.MemberResponse;
 import com.stocklog.modules.stock.analysis.StockAnalysisService;
 import com.stocklog.modules.stock.analysis.result.StockAnalysisResult;
 import com.stocklog.modules.stock.analysis.signal.SignalDescription;
+import com.stocklog.modules.stock.analysis.signal.SignalGroup;
 import com.stocklog.modules.stock.application.response.StockSnapshot;
 import com.stocklog.global.annotation.LoginUser;
 import com.stocklog.modules.stock.application.usecase.StockSnapshotUseCase;
@@ -89,6 +89,17 @@ public class StockController {
         model.addAttribute("stockSnapShot", stockSnapshot);
         model.addAttribute("signals", allSignals);
         model.addAttribute("signalDescMap", signalDescMap);
+        // 전체 시그널 탭: 영역별로, 문장을 제목·결론·설명·톤으로 나눠 좋음 → 주의 → 참고 순
+        boolean etf = analysisResult.isEtf();
+        model.addAttribute("signalGroups", List.of(
+                SignalGroup.of(etf ? "규모 · 배당" : "재무 · 가치",
+                        etf ? "AUM 규모와 분배율로 상품의 안정성과 인컴 매력을 봐요." : "ROE · 마진율 · PER · PBR로 내재 가치를 봐요.",
+                        analysisResult.getValuation().getScore(), 40, analysisResult.getValuation().getSignals()),
+                SignalGroup.of("모멘텀", "52주 위치 · RSI 극단값 · 거래량으로 단기 수급 에너지를 봐요.",
+                        analysisResult.getMomentum().getScore(), 30, analysisResult.getMomentum().getSignals()),
+                SignalGroup.of("기술적 지표",
+                        etf ? "이동평균선과 변동성으로 추세를 봐요." : "이동평균 배열 · 골든/데드 크로스 · 볼린저 응축 같은 차트 구조를 봐요.",
+                        analysisResult.getTechnical().getScore(), 30, analysisResult.getTechnical().getSignals())));
         model.addAttribute("gradeColor", gradeColor(analysisResult.getGrade()));
         model.addAttribute("insightMessage", insightMessage(analysisResult.getGrade()));
         return "stock/analysis";

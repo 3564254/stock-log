@@ -31,6 +31,34 @@
         @media (max-width: 768px) {
             .modal-content { padding: 16px !important; }
         }
+    /* 투자 설정 */
+
+    .inv-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    .inv-title { font-size: 15px; font-weight: 700; color: var(--text-strong); }
+    .inv-sub { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+    .inv-row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-top: 14px; align-items: start; }
+    .inv-row > div { min-width: 0; }
+    .inv-line { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .inv-summary { flex: 1; min-width: 0; font-size: 14px; font-weight: 500; color: var(--text-sub); }
+    .inv-summary b { font-weight: 800; color: var(--text-strong); font-variant-numeric: tabular-nums; }
+    .inv-brake { color: var(--caution-text); font-weight: 700; }
+    .inv-seg { display: flex; background: var(--line-soft); border-radius: 12px; padding: 3px; gap: 2px; }
+    .inv-seg button { flex: 1; border: 0; background: transparent; border-radius: 10px; padding: 8px 0; font-family: inherit; font-size: 14px; font-weight: 700; color: var(--text-muted); cursor: pointer; }
+    .inv-seg button.on { background: var(--paper); color: var(--text-strong); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+    .inv-seg button:focus-visible { outline: 2px solid var(--toss-blue); outline-offset: 1px; }
+    .inv-k { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+    .inv-desc { font-size: 12px; font-weight: 500; color: var(--text-muted); margin-top: 8px; line-height: 1.5; word-break: keep-all; }
+    .inv-cash { display: flex; gap: 6px; }
+    .inv-cash input { flex: 1; min-width: 0; border: 1px solid var(--line-soft); border-radius: 10px; padding: 8px 12px; font-family: inherit; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .inv-cash button { border: 0; border-radius: 10px; padding: 0 14px; background: var(--text-strong); color: #fff; font-family: inherit; font-size: 13px; font-weight: 700; }
+    .inv-cash button:disabled { opacity: .5; }
+    .inv-acct .v { font-size: 17px; font-weight: 800; color: var(--text-strong); font-variant-numeric: tabular-nums; }
+    .inv-acct .dd { font-size: 13px; font-weight: 700; margin-top: 2px; }
+    .inv-acct .dd.brake { color: var(--caution-text); }
+    .inv-link { background: none; border: 0; padding: 0; font-family: inherit; font-size: 12px; font-weight: 700; color: var(--text-sub); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+    @media (max-width: 768px) { .inv-row { grid-template-columns: 1fr; } }
+
+        #invest .inv-row { grid-template-columns: 1fr; gap: 20px; }
     </style>
 </head>
 <body x-data="infoApp">
@@ -66,6 +94,50 @@
                     <span class="fw-bold text-dark" style="font-size: 16px;">비밀번호 변경</span>
                     <i class="bi bi-chevron-right text-secondary" aria-hidden="true"></i>
                 </button>
+            </section>
+
+            <!-- 투자 설정: 성향(크기·보험 규칙) + 운용 자금. 포트폴리오에는 요약 한 줄만 보여 준다 -->
+            <section class="toss-card" id="invest" aria-labelledby="inv-title">
+                <h2 class="fw-bold text-dark mb-1" id="inv-title" style="font-size: 18px;">투자 설정</h2>
+                <p class="inv-desc" style="margin: 0 0 4px;">성향은 진입 판정을 바꾸지 않고, 얼마나 살지와 보험 규칙(계획 없이 산 종목의 손절폭 포함)을 바꿔요.</p>
+        <div class="inv-row">
+          <div>
+            <div class="inv-k">투자 성향</div>
+            <div class="inv-seg" role="radiogroup" aria-label="투자 성향">
+              <template x-for="o in INVEST_PROFILES" :key="o.key">
+                <button type="button" role="radio" :aria-checked="(investForm.profile === o.key).toString()" :class="{ on: investForm.profile === o.key }"
+                        @click="investForm.profile = o.key; saveInvest(false)" :disabled="investBusy" x-text="o.label"></button>
+              </template>
+            </div>
+            <div class="inv-desc" x-text="INVEST_PROFILES.find(o => o.key === investForm.profile)?.desc"></div>
+          </div>
+          <div>
+            <div class="inv-k">운용 자금 (원)</div>
+            <form class="inv-cash" @submit.prevent="saveInvest(false)">
+              <input type="text" inputmode="numeric" placeholder="예: 10,000,000" aria-label="운용 자금 (원)"
+                     :value="investForm.capital" @input="investForm.capital = $event.target.value.replace(/[^0-9]/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',')">
+              <button type="submit" :disabled="investBusy">저장</button>
+            </form>
+            <div class="inv-desc" x-text="invest?.accountKnown ? `이 앱으로 굴리는 돈이에요. 입금·출금할 때만 바꿔 주세요. ${invest.capitalSince} 이후 매매 기록의 실현 손익과 보유 평가손익을 더해 계좌를 계산해요.` : '이 앱으로 굴리는 돈(현금 포함)을 한 번 넣어 주세요. 입금·출금할 때만 바꾸면 돼요. 비중·계좌 손실·권장 크기가 이 기준으로 정확해져요.'"></div>
+          </div>
+          <div class="inv-acct">
+            <div class="inv-k">계좌</div>
+            <template x-if="invest?.accountKnown">
+              <div>
+                <div class="v" x-text="formatKrw(invest.totalAssetsKrw)"></div>
+                <div class="inv-desc" style="margin-top: 2px;" x-text="`실현 ${formatSignedKrw(invest.realizedKrw)} · 평가 ${formatSignedKrw(invest.unrealizedKrw)} · 투자 중 ${formatKrw(invest.holdingsKrw)}`"></div>
+                <div class="dd" :class="{ brake: invest.brakeOn }"
+                     x-text="invest.brakeOn ? `고점 대비 ${Number(invest.ddPct).toFixed(1)}% · 신규 위험 절반` : `고점 대비 ${Number(invest.ddPct).toFixed(1)}% · 브레이크 −${Math.round(invest.params.brakeDd * 100)}%`"></div>
+                <div class="inv-desc">계좌 = 운용 자금 + 손익. 고점은 화면을 연 날 기준이에요 · <button type="button" class="inv-link" @click="saveInvest(true)" :disabled="investBusy">고점 다시 잡기</button></div>
+              </div>
+            </template>
+            <template x-if="!invest?.accountKnown">
+              <div class="inv-desc" style="margin-top: 0;">운용 자금을 넣으면 계좌 금액과 고점 대비 낙폭을 보여 줘요. 낙폭이 성향별 기준을 넘으면 신규 매수를 절반으로 안내해요.</div>
+            </template>
+            <div class="inv-desc" x-show="invest?.unpricedCount > 0" x-text="`수량을 넣지 않은 보유 ${invest?.unpricedCount}개는 평가손익·비중 계산에서 빠져 있어요`"></div>
+          </div>
+        </div>
+        <p class="inv-desc" x-show="investMsg" x-text="investMsg" role="status"></p>
             </section>
 
             <div class="text-center mt-5">
@@ -137,9 +209,9 @@
 
 <!-- 서버 검증에 실패해 다시 그려진 경우, 입력하던 모달을 다시 열고 오류 칸으로 포커스 -->
 <script th:inline="javascript">
-    /*<![CDATA[*/
+    /* <![CDATA[ */
     const _reopenModal = /*[[${openUsernameModal != null ? 'usernameModal' : (openPasswordModal != null ? 'passwordModal' : null)}]]*/ null;
-    /*]]>*/
+    /* ]]> */
     window.addEventListener('DOMContentLoaded', () => {
         if (!_reopenModal || !window.bootstrap) return;
         const el = document.getElementById(_reopenModal);
@@ -150,7 +222,55 @@
 <script>
     document.addEventListener('alpine:init', () => {
         Alpine.data('infoApp', () => ({
-            sidebarOpen: true
+            sidebarOpen: true,
+            // 투자 설정
+      INVEST_PROFILES: [
+        { key: 'STABLE', label: '안정', desc: '종목당 계좌 위험 0.5% · 최대 비중 15% · 5종목 · 시장 약세엔 신규 보류 · 계좌 −10%면 신규 절반' },
+        { key: 'BASE', label: '기본', desc: '종목당 계좌 위험 1% · 최대 비중 20% · 8종목 · 시장 약세엔 신규 절반 · 계좌 −15%면 신규 절반' },
+        { key: 'AGGRESSIVE', label: '공격', desc: '종목당 계좌 위험 1.5% · 최대 비중 25% · 8~10종목 · 계좌 −20%면 신규 절반 · 계획 없이 산 종목 손절 −15%(−10%보다 평균 수익은 높았지만 큰 손실 꼬리도 커진 선택). 위험을 이보다 키우면 과거 데이터상 수익은 안 늘고 낙폭만 커졌어요' }
+      ],
+      invOpen: false,     // 투자 설정 펼침 (평소엔 한 줄 요약)
+      pcOpen: false,      // 포트폴리오 점검 전체 항목 펼침 (평소엔 경고 + 총 위험만)
+      pcCheck: null,      // /api/portfolio/check (상관·실질 종목 수·베타·변동성)
+      invest: null,
+      investForm: { profile: 'BASE', capital: '' },
+      investBusy: false,
+      investMsg: '',
+      formatSignedKrw(v) { const n = Number(v) || 0; return (n > 0 ? '+' : (n < 0 ? '-' : '')) + new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 0 }).format(Math.abs(n)) + '원'; },
+      formatKrw(v) { const n = Number(v); return isFinite(n) && n > 0 ? new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 0 }).format(n) + '원' : '-'; },
+      applyInvest(st) {
+        if (!st) return;
+        this.invest = st;
+        window.__investSetting = st;   // 매도 검증 모달(/js/hold-judge.js)도 같은 성향을 쓴다
+        this.investForm = { profile: st.profile || 'BASE',
+          capital: st.capitalKrw != null ? new Intl.NumberFormat('ko-KR').format(Number(st.capitalKrw)) : '' };
+      },
+      async loadInvest() {
+        try {
+          const res = await fetch('/api/portfolio/settings', { headers: { 'Accept': 'application/json' } });
+          if (res.ok && !res.redirected) this.applyInvest(await res.json());
+        } catch (e) { /* 설정 없이도 화면은 기본 성향으로 */ }
+      },
+      async saveInvest(resetPeak) {
+        if (this.investBusy) return;
+        this.investBusy = true; this.investMsg = '';
+        try {
+          const res = await fetch('/api/portfolio/settings', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ profile: this.investForm.profile, capitalKrw: this.investForm.capital.replace(/,/g, '') || null, resetPeak: !!resetPeak })
+          });
+          if (!res.ok || res.redirected) throw new Error('HTTP ' + res.status);
+          this.applyInvest(await res.json());
+          this.investMsg = resetPeak ? '지금 총자산을 새 고점으로 잡았어요.' : '저장했어요.';
+        } catch (e) {
+          this.investMsg = '저장하지 못했어요. 잠시 후 다시 시도해 주세요.';
+        } finally { this.investBusy = false; }
+      },
+
+            init() {
+                this.loadInvest();
+                if (location.hash === '#invest') this.$nextTick(() => document.getElementById('invest')?.scrollIntoView({ block: 'start' }));
+            }
         }));
     });
 </script>

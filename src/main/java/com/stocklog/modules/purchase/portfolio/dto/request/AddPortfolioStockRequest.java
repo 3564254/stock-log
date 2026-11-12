@@ -18,5 +18,8 @@ public record AddPortfolioStockRequest(
 
         // 선택 입력: 비워 두면 null
         @Positive(message = "보유 수량은 0보다 커야 합니다.")
-        BigDecimal quantity
+        BigDecimal quantity,
+
+        // 선택: "MOMENTUM"이면 모멘텀 기준 전략으로 보유
+        String holdStyle
 ) {}

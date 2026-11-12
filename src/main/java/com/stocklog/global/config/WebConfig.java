@@ -17,9 +17,9 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/**")
                 .excludePathPatterns(
                         "/",                        // 메인 페이지
-                        "/auth/**",                 // 로그인, 회원가입 관련 경로 (현재 templates/auth 구조 반영)
+                        "/auth/**",                 // 로그인, 회원가입 관련 경로
                         "/login", "/signup",        // 직접적인 URL 매핑이 따로 있다면 추가
-                        "/css/**", "/js/**",        // 정적 리소스 (JS 폴더가 생길 것에 대비)
+                        "/css/**", "/js/**",        // 정적 리소스
                         "/images/**", "/logo/**",   // 정적 리소스 (이미지)
                         "/*.ico",                   // 파비콘
                         "/error", "/error/**"       // 에러 페이지 및 스프링 부트 기본 에러 핸들링 경로

@@ -13,9 +13,7 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class MomentumIndicators {
 
-    /**
-     * 변동성 계산을 위한 True Range (도메인 지표)
-     */
+    /** 변동성 계산을 위한 True Range (도메인 지표) */
     public static double trueRange(double high, double low, double prevClose) {
         double hl = high - low;
         double hc = Math.abs(high - prevClose);
@@ -26,14 +24,14 @@ public final class MomentumIndicators {
     public static double calcAtr(List<Double> highs, List<Double> lows, List<Double> closes, int period, int lastIdx) {
         if (lastIdx < period) return 0;
 
-        // 1) 첫 ATR = 처음 period개 TR의 단순평균 (TR은 i=1부터 계산 가능)
+        // 첫 ATR = 처음 period개 TR의 단순평균
         double atr = 0;
         for (int i = 1; i <= period; i++) {
             atr += trueRange(highs.get(i), lows.get(i), closes.get(i - 1));
         }
         atr /= period;
 
-        // 2) 이후 Wilder 평활: ATR = (prevATR * (period-1) + TR) / period
+        // 이후 Wilder 평활: ATR = (prevATR * (period-1) + TR) / period
         for (int i = period + 1; i <= lastIdx; i++) {
             double tr = trueRange(highs.get(i), lows.get(i), closes.get(i - 1));
             atr = (atr * (period - 1) + tr) / period;
@@ -142,9 +140,7 @@ public final class MomentumIndicators {
         return adx;
     }
 
-    /**
-     * 수익률(Return) 계산 - 모멘텀 지표로 활용
-     */
+    /** 수익률(Return) 계산 - 모멘텀 지표로 활용 */
     public static double computeReturn(List<Double> prices, int endIdx, int lookback) {
         int startIdx = endIdx - lookback;
         if (startIdx < 0) return 0.0;
@@ -156,9 +152,7 @@ public final class MomentumIndicators {
         return ((endPrice - startPrice) / startPrice) * 100.0;
     }
 
-    /**
-     * Rate of Change (ROC) 모멘텀 오실레이터
-     */
+    /** Rate of Change (ROC) 모멘텀 오실레이터 */
     public static double rateOfChange(List<Double> prices, int periods) {
         if (prices.size() <= periods) return 0.0;
         double current = prices.get(prices.size() - 1);

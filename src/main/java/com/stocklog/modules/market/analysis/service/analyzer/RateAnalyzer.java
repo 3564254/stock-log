@@ -28,27 +28,27 @@ public class RateAnalyzer implements MarketAnalyzer {
 
     @Override
     public MarketAnalyzerScore analyze(Map<IndexType,MarketChartData> data) {
-        // 1. 금리 및 주식시장 데이터 추출
+        // 금리 및 주식시장 데이터 추출
         List<Double> treasury10Y = getDoubles(data, IndexType.US_TREASURY_10Y);
         List<Double> treasury2Y = getDoubles(data, IndexType.US_TREASURY_2Y);
         List<Double> yieldCurve = getDoubles(data, IndexType.T10Y2Y);
         List<Double> fedFunds = getDoubles(data, IndexType.US_FED_FUNDS_RATE);
         List<Double> nasdaq = getDoubles(data, IndexType.NASDAQ_100);
 
-        // 2. 금리와 나스닥의 관계를 통한 Rate Shock(금리 발작) 감지
+        // 금리와 나스닥의 관계를 통한 Rate Shock(금리 발작) 감지
         boolean isRateShock = detectRateShock(treasury10Y, nasdaq);
 
-        // 3. 팩터별 점수 계산
+        // 팩터별 점수 계산
         double score10Y = analyze10Y(treasury10Y, nasdaq, isRateShock);
         double score2Y = analyze2Y(treasury2Y);
         double scoreYieldCurve = analyzeYieldCurve(yieldCurve);
         double scoreFedFunds = analyzeFedFunds(fedFunds);
 
-        // 4. 총합 점수 산출 (-100 ~ +100 정규화)
+        // 총합 점수 산출
         double totalScore = score10Y + score2Y + scoreYieldCurve + scoreFedFunds;
         totalScore = Math.max(-100.0, Math.min(100.0, totalScore));
 
-        // 5. 금리 환경(Regime) 판별
+        // 금리 환경(Regime) 판별
         String regime = determineRateRegime(totalScore, isRateShock);
         ScoreCategory category = MarketAnalyzerScore.categorize(totalScore);
 
@@ -59,10 +59,7 @@ public class RateAnalyzer implements MarketAnalyzer {
         return new MarketAnalyzerScore("InterestRates", totalScore, category, details);
     }
 
-    /**
-     * [팩터 1] 10년물 국채 금리 (최대 ±35점)
-     * 금리 수준 + 변화 방향 + 주식시장 연동성 통합 분석
-     */
+    /** 팩터 1 10년물 국채 금리 (최대 ±35점) */
     private double analyze10Y(List<Double> t10y, List<Double> nasdaq, boolean isRateShock) {
         if (t10y == null || t10y.size() < 21) return 0.0;
         double score = 0;
@@ -72,7 +69,7 @@ public class RateAnalyzer implements MarketAnalyzer {
         double prev5 = t10y.get(lastIdx - 5);
         double prev20 = t10y.get(lastIdx - 20);
 
-        // 절대 레벨 (4.5% 이상이면 증시에 부담)
+        // 절대 레벨
         if (cur > 4.5) score -= 10;
         else if (cur < 4.0) score += 10;
 
@@ -97,10 +94,7 @@ public class RateAnalyzer implements MarketAnalyzer {
         return score;
     }
 
-    /**
-     * [팩터 2] 2년물 국채 금리 (최대 ±25점)
-     * 단기 유동성 및 연준 정책 기대감 반영
-     */
+    /** 팩터 2 2년물 국채 금리 (최대 ±25점) 단기 유동성 및 연준 정책 기대감 반영 */
     private double analyze2Y(List<Double> t2y) {
         if (t2y == null || t2y.size() < 21) return 0.0;
         double score = 0;
@@ -110,7 +104,7 @@ public class RateAnalyzer implements MarketAnalyzer {
         double prev5 = t2y.get(lastIdx - 5);
         double prev20 = t2y.get(lastIdx - 20);
 
-        // 절대 레벨 (5% 이상 단기 자금 경색 우려)
+        // 절대 레벨
         if (cur > 5.0) score -= 10;
         else if (cur < 4.5) score += 10;
 
@@ -124,10 +118,7 @@ public class RateAnalyzer implements MarketAnalyzer {
         return score;
     }
 
-    /**
-     * [팩터 3] 장단기 금리차 10Y-2Y (최대 ±25점)
-     * 수익률 곡선 역전 여부 판별
-     */
+    /** 팩터 3 장단기 금리차 10Y-2Y (최대 ±25점) 수익률 곡선 역전 여부 판별 */
     private double analyzeYieldCurve(List<Double> t10y2y) {
         if (t10y2y == null || t10y2y.size() < 21) return 0.0;
         double score = 0;
@@ -147,10 +138,7 @@ public class RateAnalyzer implements MarketAnalyzer {
         return score;
     }
 
-    /**
-     * [팩터 4] 기준금리 (최대 ±15점)
-     * 연준 정책 방향
-     */
+    /** 팩터 4 기준금리 (최대 ±15점) 연준 정책 방향 */
     private double analyzeFedFunds(List<Double> fedFunds) {
         if (fedFunds == null || fedFunds.size() < 2) return 0.0;
         int lastIdx = fedFunds.size() - 1;
@@ -163,9 +151,7 @@ public class RateAnalyzer implements MarketAnalyzer {
         return 0.0;                   // 동결
     }
 
-    /**
-     * 10년물 급등 + 나스닥 급락 발생 시 Rate Shock로 판단
-     */
+    /** 10년물 급등 + 나스닥 급락 발생 시 Rate Shock로 판단 */
     private boolean detectRateShock(List<Double> t10y, List<Double> nasdaq) {
         if (t10y == null || nasdaq == null || t10y.size() < 6 || nasdaq.size() < 6) return false;
         int lastIdx = t10y.size() - 1;

@@ -21,7 +21,7 @@ public class AlphaValuationOutput {
     @JsonProperty("Exchange")
     private String exchange;
 
-    // Valuation 주요 지표 (ValuationResponse 매핑용)
+    // Valuation 주요 지표
     @JsonProperty("PEGRatio")
     private String pegRatio;          // peg 매핑용
 

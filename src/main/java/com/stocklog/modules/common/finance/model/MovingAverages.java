@@ -45,22 +45,21 @@ public record MovingAverages(
     private static MovingAverages getMovingAverages(List<Double> closes, int lastIdx, double currentPrice) {
         if (MarketContext.invalidate(closes)) return createFallback();
 
-        // 1. 당일 이동평균선 (SMA)
+        // 당일 이동평균선 (SMA)
         double ma5 = MathUtils.sma(closes, lastIdx, 5);
         double ma20 = MathUtils.sma(closes, lastIdx, 20);
         double ma50 = MathUtils.sma(closes, lastIdx, 50);
 
-        // 2. 전일 이동평균선 (데이터가 최소 1일치 전 인덱스가 있을 때)
+        // 전일 이동평균선
         int prevIdx = lastIdx - 1;
         double ma5Yesterday = prevIdx >= 0 ? MathUtils.sma(closes, prevIdx, 5) : 0;
         double ma20Yesterday = prevIdx >= 0 ? MathUtils.sma(closes, prevIdx, 20) : 0;
 
-        // 3. 상승 추세 여부 (당일 MA > 전일 MA)
+        // 상승 추세 여부 (당일 MA > 전일 MA)
         boolean isMa5Rising = ma5Yesterday > 0 && ma5 > ma5Yesterday;
         boolean isMa20Rising = ma20Yesterday > 0 && ma20 > ma20Yesterday;
 
-        // 4. 이격도 (Disparity / Distance Percentage)
-        // 공식: ((현재가 - MA) / MA) * 100
+        // 이격도 공식: ((현재가 - MA) / MA) * 100
         double distFromMa5 = calcDistance(currentPrice, ma5);
         double distFromMa20 = calcDistance(currentPrice, ma20);
         double distFromMa50 = calcDistance(currentPrice, ma50);

@@ -23,21 +23,21 @@ public final class TrendIndicators {
         int lastIdx = priceSeries.lastIdx();
         double currentPrice = priceSeries.currentPrice();
 
-        // 1. 당일 이동평균선 (SMA)
+        // 당일 이동평균선 (SMA)
         double ma5 = MathUtils.sma(closes, lastIdx, 5);
         double ma20 = MathUtils.sma(closes, lastIdx, 20);
         double ma50 = MathUtils.sma(closes, lastIdx, 50);
 
-        // 2. 전일 이동평균선
+        // 전일 이동평균선
         int prevIdx = lastIdx - 1;
         double ma5Yesterday = prevIdx >= 0 ? MathUtils.sma(closes, prevIdx, 5) : 0;
         double ma20Yesterday = prevIdx >= 0 ? MathUtils.sma(closes, prevIdx, 20) : 0;
 
-        // 3. 상승 추세 여부
+        // 상승 추세 여부
         boolean isMa5Rising = ma5Yesterday > 0 && ma5 > ma5Yesterday;
         boolean isMa20Rising = ma20Yesterday > 0 && ma20 > ma20Yesterday;
 
-        // 4. 이격도
+        // 이격도
         double distFromMa5 = calcDistance(currentPrice, ma5);
         double distFromMa20 = calcDistance(currentPrice, ma20);
         double distFromMa50 = calcDistance(currentPrice, ma50);

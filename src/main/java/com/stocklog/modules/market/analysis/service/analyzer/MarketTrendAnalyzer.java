@@ -72,28 +72,24 @@ public class MarketTrendAnalyzer implements MarketAnalyzer {
     private double calculateNormalizedScore(double price, MovingAverage ma, Slope slope, Returns returns, Drawdown dd) {
         double score = 0;
 
-        // [팩터 1] 이동평균 배열 (총 30점)
-        // (현재 주가가 단기 이평선 위에 있는지가 이미 포함되어 있으므로 배점 유지)
+        // 팩터 1 이동평균 배열 (총 30점)
         if (price > ma.ma20() && ma.ma20() > ma.ma50() && ma.ma50() > ma.ma200()) score += 30;
         else if (price > ma.ma50() && ma.ma50() > ma.ma200()) score += 15;
         else if (price < ma.ma20() && ma.ma20() < ma.ma50() && ma.ma50() < ma.ma200()) score -= 30;
         else if (price < ma.ma50() && ma.ma50() < ma.ma200()) score -= 15;
 
-        // [팩터 2] 이동평균선 기울기 (총 40점)
-        // 변경: 200일선의 기울기 비중을 대폭 낮추고, 20일선(단기 추세) 비중을 높임
+        // 팩터 2 이동평균선 기울기 (총 40점)
         score += (slope.ma200Slope() > 0) ? 5 : -5;   // 20 -> 5
         score += (slope.ma50Slope() > 0)  ? 15 : -15; // 10 -> 15
         score += (slope.ma20Slope() > 0)  ? 20 : -20; // 10 -> 20
 
-        // [팩터 3] 기간별 수익률 (총 15점)
-        // 변경: 장기(200일)보다 단기(20일, 60일) 수익률에 가중치 부여
+        // 팩터 3 기간별 수익률 (총 15점)
         score += (returns.return200() > 0) ? 2 : -2; // 5 -> 2
         score += (returns.return120() > 0) ? 3 : -3; // 4 -> 3
         score += (returns.return60() > 0)  ? 4 : -4; // 3 -> 4
         score += (returns.return20() > 0)  ? 6 : -6; // 3 -> 6
 
-        // [팩터 4] 위험도 및 돌파 가능성 (총 15점)
-        // (52주 신고가 근접도는 훌륭한 최근 강세 지표이므로 그대로 유지)
+        // 팩터 4 위험도 및 돌파 가능성 (총 15점)
         if (dd.high52wProximity() >= 95.0) score += 15;
         else if (dd.high52wProximity() >= 90.0) score += 7;
 

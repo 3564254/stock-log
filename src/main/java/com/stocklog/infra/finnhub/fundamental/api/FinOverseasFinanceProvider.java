@@ -68,31 +68,31 @@ public class FinOverseasFinanceProvider implements StockFinanceProvider {
 
 
     private StockFinancialsResponse getFinancialsResponse(FinStockFinancialsOutput output) {
-        // 1. Metric 레코드 빌더를 통한 데이터 매핑
+        // Metric 레코드 빌더를 통한 데이터 매핑
         StockFinancialDto stockFinancialDto = StockFinancialDto.builder()
                 .baseDate(LocalDate.now())
-                // --- 수익성 ---
+                // 수익성
                 .grossMargin(output.getMetric().getGrossMarginTTM())
                 .operatingMargin(output.getMetric().getOperatingMarginTTM())
                 .netMargin(output.getMetric().getNetProfitMarginTTM())
                 .roe(output.getMetric().getRoeTTM())
                 .roa(output.getMetric().getRoaTTM())
 
-                // --- 성장성 ---
+                // 성장성
                 .revenueGrowth(output.getMetric().getRevenueGrowthTTMYoy())
                 .epsGrowth(output.getMetric().getEpsGrowthTTMYoy())
 
-                // --- 배당 ---
+                // 배당
                 .dividendYield(output.getMetric().getDividendYieldTTM())
                 .payoutRatio(output.getMetric().getPayoutRatioTTM())
 
-                // --- 안정성 및 효율성 ---
+                // 안정성 및 효율성
                 .currentRatio(output.getMetric().getCurrentRatioQuarterly())
                 .debtToEquity(output.getMetric().getDebtToEquityQuarterly())
                 .inventoryTurnover(output.getMetric().getInventoryTurnoverTTM())
                 .build();
 
-        // 2. 최종 Response 객체 생성 및 반환
+        // 최종 Response 객체 생성 및 반환
         return StockFinancialsResponse.builder()
                 .symbol(output.getSymbol())
                 .stockFinancialDto(stockFinancialDto)

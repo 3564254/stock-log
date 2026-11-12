@@ -6,19 +6,17 @@ import java.util.List;
 
 import static com.stocklog.modules.common.finance.indicator.phase.PhaseConst.*;
 
-/** 가격 레벨(이평, VWAP, POC, 피봇 등)을 ATR 기준으로 묶어 가격 구간(PriceZone)으로 만든다. */
+/** 가격 레벨을 ATR 기준으로 묶어 가격 구간(PriceZone)으로 만든다 */
 public final class ZoneBuilder {
 
     private ZoneBuilder() {}
 
-    /** atr은 0보다 큰 유한값이어야 한다(호출하는 쪽에서 검사). */
+    /** atr은 0보다 큰 유한값이어야 한다(호출하는 쪽에서 검사) */
     public static List<PriceZone> build(SignalInputs in) {
         return cluster(levels(in), in.atr());
     }
 
-    // ------------------------------------------------------------------
     // 가격 레벨 -> 구간(Zone)
-    // ------------------------------------------------------------------
     private record Level(String source, double price, double weight) {}
 
     private static List<Level> levels(SignalInputs in) {
@@ -44,13 +42,10 @@ public final class ZoneBuilder {
         }
     }
 
-    /**
-     * 구간 최대 폭(ATR 배수). 인접 레벨끼리 이어 붙이는 방식이라 레벨이 촘촘하면 구간이 끝없이 늘어날 수 있다.
-     * 구간이 넓어지면 손절(구간 하단 - 버퍼)이 멀어져 손익비가 나빠지므로 이 폭을 넘으면 새 구간으로 끊는다.
-     */
+    /** 구간 최대 폭(ATR 배수). 인접 레벨끼리 이어 붙이는 방식이라 레벨이 촘촘하면 구간이 끝없이 늘어날 수 있다 */
     private static final double MAX_ZONE_WIDTH_ATR = 2.0;
 
-    /** ATR 이내로 붙어 있는 레벨을 하나의 구간으로 묶는다. (연쇄 클러스터링: 인접 레벨 기준, 최대 폭 제한) */
+    /** ATR 이내로 붙어 있는 레벨을 하나의 구간으로 묶는다 */
     private static List<PriceZone> cluster(List<Level> levels, double atr) {
         List<Level> sorted = levels.stream()
                 .sorted(Comparator.comparingDouble(Level::price)).toList();

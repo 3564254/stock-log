@@ -8,11 +8,11 @@ import java.util.Arrays;
 @Getter
 @RequiredArgsConstructor
 public enum MarketType {
-    // [국내]
+    // 국내
     KOSPI("02", "J"),
     KOSDAQ("03", "Q"),
 
-    // [해외]
+    // 해외
     NASD("512", "NAS"), // NASDAQ
     NYSE("513", "NYS"), // New York
     AMEX("529", "AMS"), // AMEX (KIS 기준 AMS)

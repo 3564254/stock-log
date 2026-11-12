@@ -24,9 +24,7 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * 토스 거래대금 순위 — GET /api/v1/rankings
- */
+/** 토스 거래대금 순위 */
 @Component
 @Slf4j
 public class TossMarketRankingProvider implements MarketRankingProvider {
@@ -48,10 +46,7 @@ public class TossMarketRankingProvider implements MarketRankingProvider {
         this.tossTokenManager = tossTokenManager;
     }
 
-    /**
-     * 국가별 거래대금 순위. 실패하면 빈 결과(rankedAt = null)를 돌려준다
-     * — 화면 한 구역 때문에 페이지 전체가 깨지지 않도록
-     */
+    /** 국가별 거래대금 순위. 실패하면 빈 결과를 돌려준다 */
     @Override
     public MarketRankingInfo fetchMarketRankings(Nation nation) {
         // 실시간 순위가 없으면(장 마감·집계 전) 1일 순위로 대체. changeRate·basePrice는 둘 다 전일 대비
@@ -131,7 +126,7 @@ public class TossMarketRankingProvider implements MarketRankingProvider {
                 .currency(r.currency() != null ? Currency.fromString(r.currency()) : null)
                 .lastPrice(lastPrice)
                 .basePrice(toDecimal(r.price().basePrice()))
-                .changeRate(toDecimal(r.price().changeRate()))
+                .changeRate(toPercent(toDecimal(r.price().changeRate())))
                 .tradingVolume(toDecimal(r.tradingVolume()))
                 .tradingAmount(toDecimal(r.tradingAmount()))
                 .build();
@@ -141,6 +136,11 @@ public class TossMarketRankingProvider implements MarketRankingProvider {
     private static String normalizeCode(String symbol) {
         String s = symbol.trim();
         return s.matches("A\\d{6}") ? s.substring(1) : s;
+    }
+
+    /** 토스 등락률은 비율이다 → 화면에서 쓰는 % 값으로 바꾼다 */
+    private static BigDecimal toPercent(BigDecimal ratio) {
+        return ratio == null ? null : ratio.movePointRight(2);
     }
 
     private static BigDecimal toDecimal(String s) {

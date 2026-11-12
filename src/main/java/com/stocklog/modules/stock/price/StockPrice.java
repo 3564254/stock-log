@@ -19,12 +19,12 @@ public class StockPrice {
     private String code;
 
 
-    // --- 📊 핵심 가격 정보 ---
+    // 핵심 가격 정보
     @Column(precision = 15, scale = 2)
-    private BigDecimal currentPrice;   // 현재가 (기존 basePrice에서 직관적인 이름으로 변경)
+    private BigDecimal currentPrice;   // 현재가
 
     @Column(precision = 15, scale = 2)
-    private BigDecimal previousClose;  // 전일종가 (이게 있어야 오늘 수익률/대비 계산이 가능합니다!)
+    private BigDecimal previousClose;  // 전일종가
 
     @Column(precision = 15, scale = 2)
     private BigDecimal openPrice;      // 당일 시가
@@ -35,7 +35,7 @@ public class StockPrice {
     @Column(precision = 15, scale = 2)
     private BigDecimal lowPrice;       // 당일 저가
 
-    // --- 📈 거래 및 시총 정보 ---
+    // 거래 및 시총 정보
     @Column(precision = 20, scale = 0) // 거래량은 소수점이 없으므로 scale 0
     private BigDecimal volume;         // 누적 거래량
 
@@ -65,6 +65,6 @@ public class StockPrice {
         this.lowPrice = lowPrice;
         this.volume = volume;
         this.marketCap = marketCap;
-        // 💡 주의: 전일종가(previousClose)는 장중에는 안 변하므로 업데이트 파라미터에서 뺐습니다.
+        // 전일 종가는 장중에 바뀌지 않아 갱신하지 않는다
     }
 }

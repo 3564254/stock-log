@@ -117,7 +117,7 @@
       .toss-card .d-flex.justify-content-between.mb-2 { flex-wrap: wrap; gap: 4px 12px; }
       .toss-card .d-flex.justify-content-between.mb-2 > span:last-child { word-break: keep-all; }
 
-      /* 숨김 규칙은 모바일에서만 적용 (넓은 화면에서는 전부 보인다) */
+      /* 숨김 규칙은 모바일에서만 적용 */
       .m-hide { display: none !important; }
       .desktop-actions { display: none !important; }
 
@@ -179,6 +179,20 @@
       .modal-sheet { max-width: none; border-radius: 20px 20px 0 0; padding: 20px !important; max-height: 92vh; max-height: 92dvh; overflow-y: auto; padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important; }
       .toss-input { font-size: 16px; }
     }
+
+    /* 모바일 정리: 안내 배너는 제목과 겹쳐 숨기고, 요약은 상자 없이 숫자만 */
+    @media (max-width: 768px) {
+      .toss-banner { display: none !important; }
+      .tl-title { font-size: 20px !important; margin-bottom: 12px !important; }
+      .summary-grid { margin-top: 14px; gap: 0 !important; border-top: 1px solid var(--line-soft); padding-top: 14px; }
+      .summary-item, .summary-item:first-child { background: transparent; border: 0; border-radius: 0; padding: 0 !important; }
+      .summary-item:first-child { margin-bottom: 12px; }
+      .summary-item:first-child .summary-value { font-size: 1.6rem; }
+      .summary-item:nth-child(3) { padding-left: 14px !important; border-left: 1px solid var(--line-soft); }
+      .summary-label { font-size: 12px; }
+      .month-title { font-size: 1.1rem; }
+      .nav-btn { width: 40px; height: 40px; }
+    }
   </style>
 </head>
 
@@ -191,17 +205,7 @@
 
     <div class="content-container">
 
-      <div class="toss-banner d-flex align-items-center gap-3 mb-4 fu">
-        <div class="d-inline-flex align-items-center justify-content-center bg-white border" style="width: 40px; height: 40px; border-radius: 10px; border-color: var(--hairline) !important;">
-          <i class="bi bi-graph-up-arrow text-dark fs-5"></i>
-        </div>
-        <div>
-          <div class="fw-bold text-dark" style="font-size: 16px;">매매 기록 및 복기 노트</div>
-          <div style="color: var(--label-text); font-size: 13px; font-weight: 500; margin-top: 2px;">수익과 손실을 기록하고 매매 당시의 생각을 되짚어보는 공간</div>
-        </div>
-      </div>
-
-      <h2 class="fw-bold mb-4 fu d1" style="font-size: 20px; color: var(--ink);">매매 기록 대시보드</h2>
+      <h2 class="page-title mb-4 fu d1 tl-title">매매 기록</h2>
 
       <div class="toss-card fu d1">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
@@ -477,7 +481,7 @@
         <span class="visually-hidden">검색 중</span>
       </div>
       <div style="max-height: 38vh; overflow-y: auto;" x-ref="tradeResults" x-arrow-nav>
-        <!-- /api/stock/search 응답: { stock: { code, name }, currentPrice, changeRate } (예전엔 item.info를 읽어서 결과가 비어 보였다) -->
+
         <template x-for="item in searchResults" :key="item.stock?.code">
           <button type="button" data-nav-item @click="selectStock(item)" class="search-item d-flex justify-content-between align-items-center">
             <div style="min-width: 0;">
@@ -540,10 +544,10 @@
 </div>
 
 <script th:inline="javascript">
-  /*<![CDATA[*/
+  /* <![CDATA[ */
   const _initData = /*[[${tradelog}]]*/ null;
   const _initYM   = /*[[${tradelog?.currentYearMonth ?: '2026-03'}]]*/ '2026-03';
-  /*]]>*/
+  /* ]]> */
 
   document.addEventListener('alpine:init', () => {
     Alpine.data('tradeLogApp', () => ({
@@ -809,7 +813,7 @@
         this.selectedStock = { name: item.stock?.name, code: item.stock?.code, price: item.currentPrice, rate: item.changeRate };
         this.step = 2;
       },
-      // 다른 화면에서 종목만 넘어온 경우 현재가를 따로 불러온다 (/api/stock/{code} → StockPriceDto)
+      // 다른 화면에서 종목만 넘어온 경우 현재가를 따로 불러온다
       async loadQuote(code) {
         try {
           const res = await fetch(`/api/stock/${encodeURIComponent(code)}`, { headers: { 'Accept': 'application/json' } });

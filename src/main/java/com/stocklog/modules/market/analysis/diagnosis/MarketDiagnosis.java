@@ -27,7 +27,7 @@ public class MarketDiagnosis {
     @Column(nullable = false, unique = true)
     private LocalDate date;
 
-    // ── [1] 수치화된 메인 스코어 및 추세 ──
+    // 수치화된 메인 스코어 및 추세
     @Column(nullable = false)
     private double compositeScore;
 
@@ -44,7 +44,7 @@ public class MarketDiagnosis {
     @Column(nullable = false)
     private int regimeStreakDays;
 
-    // ── [2] 핵심 국면 판단 (Enum 적용) ──
+    // 핵심 국면 판단 (Enum 적용)
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private MarketRegimeType regime;
@@ -59,18 +59,22 @@ public class MarketDiagnosis {
     @Column(nullable = false)
     private int confidence;
 
-    // ── [3] 서브 그룹 점수 (상세 분석용) ──
+    // 서브 그룹 점수 (상세 분석용)
     private double marketPriceScore;
     private double macroLiquidityScore;
 
     @Column(nullable = false)
-    private double sectorScore; // [추가] 섹터 로테이션 스코어
+    private double sectorScore; // 추가 섹터 로테이션 스코어
 
     private double crossAssetScore;
 
-    // ── [4] AI 종합 코멘터리 ──
+    // AI 종합 코멘터리
     @Column(columnDefinition = "TEXT", nullable = false)
     private String comment;
+
+    /** AI 코멘트를 마지막으로 받은(또는 실패한) 시각. 실패 재시도는 이 시각 + 30분 뒤부터. 예전 행은 null */
+    @Column(name = "comment_at")
+    private java.time.LocalDateTime commentAt;
 
     @Builder
     public MarketDiagnosis(LocalDate date, double compositeScore, double scoreChange1D, double scoreChange5D,
@@ -89,13 +93,14 @@ public class MarketDiagnosis {
         this.confidence = confidence;
         this.marketPriceScore = marketPriceScore;
         this.macroLiquidityScore = macroLiquidityScore;
-        this.sectorScore = sectorScore; // [추가] 생성자 매핑
+        this.sectorScore = sectorScore; // 추가 생성자 매핑
         this.crossAssetScore = crossAssetScore;
         this.comment = comment;
     }
 
     public void updateComment(String newComment) {
         this.comment = newComment;
+        this.commentAt = java.time.LocalDateTime.now();
     }
 
     public void updateconfidence(String newConfidence) {

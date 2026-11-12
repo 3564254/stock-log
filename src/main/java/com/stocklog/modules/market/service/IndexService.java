@@ -33,22 +33,20 @@ public class IndexService {
     private final MarketIndexRepository marketIndexRepository;
     private final MarketIndexHistoryRepository marketIndexHistoryRepository;
 
-    // TODO 해결: 같은 클래스 내의 @Transactional 메서드 호출 시 프록시를 타지 않는 문제를
-    // 자기 자신을 Lazy하게 주입받아 프록시 객체를 통해 호출함으로써 해결합니다.
+    // 자기 호출 시 @Transactional 프록시를 타도록 자신을 주입
     @Autowired
     @Lazy
     private IndexService self;
 
-    // ── 1. 대시보드 조회 (사용자 요청 처리 - 매우 빠름) ──
+    // 대시보드 조회
     @Transactional(readOnly = true)
     public IndexDashboardDto getMarketDashboard() {
-        // 사용자가 화면을 열 때는 외부 API를 절대 쏘지 않고, DB에 캐싱된 스냅샷만 즉시 읽어옵니다.
-        // 지표가 30개로 늘어나도 사용자 응답 속도는 10~50ms 이내로 보장됩니다.
+        // 사용자가 화면을 열 때는 외부 API를 절대 쏘지 않고, DB에 캐싱된 스냅샷만 즉시 읽어옵니다
         return getMarketDashboardDto();
     }
 
 
-    // ── 3. 내부 DB 조회 유틸리티 ──
+    // 내부 DB 조회 유틸리티
     public IndexDto getIndexDtoFromDb(String seriesId) {
         MarketIndex marketIndex = marketIndexRepository.findById(seriesId).orElse(null);
         List<MarketIndexHistory> histories = marketIndexHistoryRepository.findBySymbolOrderByDateAsc(seriesId);
@@ -63,7 +61,7 @@ public class IndexService {
                 .build();
     }
 
-    // ── 4. DB 저장 로직 (트랜잭션 고립) ──
+    // DB 저장 로직 (트랜잭션 고립)
 
     @Transactional
     public void saveIndexHistory(IndexDto indexDto) {
@@ -109,20 +107,14 @@ public class IndexService {
         marketIndex.update(todayValue, changeValue, changeRate);
         marketIndexRepository.save(marketIndex);
     }
-    // ── 2. 백그라운드 데이터 동기화 스케줄러 (느려도 사용자에게 영향 없음) ──
-    // TODO 해결: 외부 API 호출(Thread.sleep 포함)과 DB 저장을 완전히 분리했습니다.
-    // 매시간 정각 또는 지정된 시간에 서버가 스스로 API를 호출하여 DB를 최신화합니다.
-    // 매시 7분에 실행. FRED는 전날 종가를 다음 날 중 아무 때나 올리므로, 하루 한 번이 아니라 매시간 확인한다.
-    // (예전 '오늘 이미 받았으면 건너뛰기'는 저장 날짜를 한국 날짜로, 비교를 미국 날짜로 해서
-    //  한국 오후~다음 날 오후 사이에 새로 올라온 종가를 하루 늦게 받는 문제가 있었다.
-    //  저장은 마지막 저장일 이후 데이터만 넣으므로 매시간 돌려도 중복이 생기지 않는다.)
+    // 백그라운드 데이터 동기화 스케줄러
     @Scheduled(cron = "0 7 * * * *")
     public void syncAllMarketIndices() {
         log.info("[Index Sync] 전체 시장 지수 백그라운드 동기화 시작");
 
         for (IndexType type : IndexType.values()) {
             try {
-                // API Rate Limit 방어를 위한 대기 (트랜잭션 밖에서 실행되므로 DB 커넥션을 물고 있지 않음)
+                // API Rate Limit 방어를 위한 대기
                 Thread.sleep(300);
 
                 IndexDto apiResponse = provider.fetchIndexResponse(type);
@@ -140,60 +132,59 @@ public class IndexService {
     }
     private IndexDashboardDto getMarketDashboardDto() {
         return IndexDashboardDto.builder()
-                // 0. 글로벌 환율 / 달러
+                // 글로벌 환율 / 달러
                 .usdJpy(getIndexDtoFromDb(IndexType.USD_JPY.getSeriesId()))
                 .dollarIndex(getIndexDtoFromDb(IndexType.DOLLAR_INDEX.getSeriesId()))
 
-                // 1. 미국 전체 시장 대표 지수
+                // 미국 전체 시장 대표 지수
                 .sp500(getIndexDtoFromDb(IndexType.SP500.getSeriesId()))
                 .nasdaq100(getIndexDtoFromDb(IndexType.NASDAQ_100.getSeriesId()))
                 .dowJones(getIndexDtoFromDb(IndexType.DOW_JONES.getSeriesId()))
 
-                // 2. 시장 변동성 및 신용 리스크
+                // 시장 변동성 및 신용 리스크
                 .vix(getIndexDtoFromDb(IndexType.VIX.getSeriesId()))
                 .highYieldSpread(getIndexDtoFromDb(IndexType.HIGH_YIELD_SPREAD.getSeriesId()))
                 .financialStressIndex(getIndexDtoFromDb(IndexType.FINANCIAL_STRESS.getSeriesId()))
 
-                // 3. 채권/금리
+                // 채권/금리
                 .us10y(getIndexDtoFromDb(IndexType.US_TREASURY_10Y.getSeriesId()))
                 .us2y(getIndexDtoFromDb(IndexType.US_TREASURY_2Y.getSeriesId()))
                 .yieldCurve10y2y(getIndexDtoFromDb(IndexType.T10Y2Y.getSeriesId()))
                 .fedFundsRate(getIndexDtoFromDb(IndexType.US_FED_FUNDS_RATE.getSeriesId()))
 
-                // 4. 원자재 / 대체자산
+                // 원자재 / 대체자산
                 .wti(getIndexDtoFromDb(IndexType.WTI_CRUDE_OIL.getSeriesId()))
                 .bitcoin(getIndexDtoFromDb(IndexType.BITCOIN.getSeriesId()))
 
-                // 5. 거시 물가
+                // 거시 물가
                 .cpi(getIndexDtoFromDb(IndexType.US_CPI.getSeriesId()))
                 .corePce(getIndexDtoFromDb(IndexType.US_CORE_PCE.getSeriesId()))
 
-                // 6. 고용
+                // 고용
                 .unemploymentRate(getIndexDtoFromDb(IndexType.US_UNEMPLOYMENT_RATE.getSeriesId()))
                 .nonfarmPayrolls(getIndexDtoFromDb(IndexType.US_NONFARM_PAYROLLS.getSeriesId()))
                 .initialClaims(getIndexDtoFromDb(IndexType.US_INITIAL_CLAIMS.getSeriesId()))
 
-                // 7. 경기 및 소비
+                // 경기 및 소비
                 .gdp(getIndexDtoFromDb(IndexType.US_GDP.getSeriesId()))
                 .retailSales(getIndexDtoFromDb(IndexType.US_RETAIL_SALES.getSeriesId()))
                 .consumerSentiment(getIndexDtoFromDb(IndexType.US_CONSUMER_SENTIMENT.getSeriesId()))
                 .consumerRevolvingLoans(getIndexDtoFromDb(IndexType.US_CONSUMER_REVOLVING_LOANS.getSeriesId()))
 
-                // 8. 유동성
+                // 유동성
                 .fedTotalAssets(getIndexDtoFromDb(IndexType.FED_TOTAL_ASSETS.getSeriesId()))
                 .reverseRepo(getIndexDtoFromDb(IndexType.REVERSE_REPO.getSeriesId()))
                 .m2(getIndexDtoFromDb(IndexType.US_M2.getSeriesId()))
 
-                // 9. 반도체/AI 핵심
+                // 반도체/AI 핵심
                 .phlxSemi(getIndexDtoFromDb(IndexType.PHLX_SEMI.getSeriesId()))
                 .nasdaqAiBigdata(getIndexDtoFromDb(IndexType.NASDAQ_AI_BIGDATA.getSeriesId()))
                 .nasdaqCapexAchievers(getIndexDtoFromDb(IndexType.NASDAQ_CAPEX_ACHIEVERS.getSeriesId()))
                 .indSemi(getIndexDtoFromDb(IndexType.IND_SEMI.getSeriesId()))
 
-                // 10. 기타 섹터
+                // 기타 섹터
                 .nasdaqIseCybersecurity(getIndexDtoFromDb(IndexType.NASDAQ_ISE_CYBERSECURITY.getSeriesId()))
                 .nasdaqBiotech(getIndexDtoFromDb(IndexType.NASDAQ_BIOTECH.getSeriesId()))
-                //.dowJonesUtility(getIndexDtoFromDb(IndexType.DOW_JONES_UTILITY.getSeriesId()))
                 .nasdaqConsumerStaples(getIndexDtoFromDb(IndexType.NASDAQ_CONSUMER_STAPLES.getSeriesId()))
                 .nasdaqCleanEnergy(getIndexDtoFromDb(IndexType.NASDAQ_CLEAN_ENERGY.getSeriesId()))
                 .phlxGoldSilver(getIndexDtoFromDb(IndexType.PHLX_GOLD_SILVER.getSeriesId()))

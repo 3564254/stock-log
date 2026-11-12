@@ -5,10 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-/**
- * 장 운영 상태. 외부 API(토스)가 실패해도 호출한 화면이 깨지지 않도록
- * "정보 없음"(CLOSED, 시각 없음)으로 돌려준다. 화면 칩은 이 경우 '장 정보 없음'으로 보인다.
- */
+/** 장 운영 상태. 외부 API(토스)가 실패해도 호출한 화면이 깨지지 않도록 */
 @Slf4j
 @Service
 @RequiredArgsConstructor

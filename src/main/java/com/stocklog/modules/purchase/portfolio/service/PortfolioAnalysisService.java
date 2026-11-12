@@ -28,15 +28,15 @@ class PortfolioAnalysisService {
                     .build();
         }
 
-        // 1. 핵심 전략 지표 계산
+        // 핵심 전략 지표 계산
         BigDecimal winRate = calculateWinRate(portfolio);
         BigDecimal sectorDiversityScore = calculateSectorDiversityScore(portfolio); // HHI 대체
         BigDecimal totalScore = calculateTotalScore(portfolio, sectorDiversityScore, winRate);
 
-        // 2. 전략 등급 및 인사이트 도출
+        // 전략 등급 및 인사이트 도출
         PortfolioGrade gradeInfo = PortfolioGrade.of(totalScore);
 
-        // 3. 차트용 데이터 추출 (종목 개수 기반 섹터 분산도)
+        // 차트용 데이터 추출
         Map<String, Long> sectorCounts = portfolio.myStocks().stream()
                 .collect(Collectors.groupingBy(HoldingResponse::sector, Collectors.counting()));
 
@@ -46,7 +46,7 @@ class PortfolioAnalysisService {
                 .toList();
 
         return PortfolioAnalysisResponse.builder()
-                .hhi(BigDecimal.ZERO) // DTO 호환성을 위해 유지하되 0으로 고정 (또는 DTO에서 제거 권장)
+                .hhi(BigDecimal.ZERO) // DTO 호환성을 위해 유지하되 0으로 고정
                 .winRate(winRate)
                 .totalScore(totalScore)
                 .grade(gradeInfo.getGradeName())
@@ -57,7 +57,6 @@ class PortfolioAnalysisService {
                 .build();
     }
 
-    // 종목 수 대비 승률 (수익 중인 종목 비율)
     private BigDecimal calculateWinRate(PortfolioResponse portfolio) {
         long totalStocks = portfolio.myStocks().size();
         if (totalStocks == 0) return BigDecimal.ZERO;
@@ -91,13 +90,12 @@ class PortfolioAnalysisService {
     // 전략 중심의 종합 점수 산출
     BigDecimal calculateTotalScore(PortfolioResponse portfolio, BigDecimal sectorDiversityScore, BigDecimal winRate) {
 
-        // [2] 단순 평균 수익률 점수 (Max 40)
+        // 단순 평균 수익률 점수 (Max 40)
         BigDecimal avgReturnRate = portfolio.averageReturnRate();
         BigDecimal returnScore = (avgReturnRate.compareTo(new BigDecimal("10")) >= 0) ? BigDecimal.valueOf(40) :
                 (avgReturnRate.compareTo(new BigDecimal("3")) >= 0) ? BigDecimal.valueOf(30) :
                 (avgReturnRate.compareTo(new BigDecimal("0")) >= 0) ? BigDecimal.valueOf(20) : BigDecimal.valueOf(10);
 
-        // [3] 승률 점수 (Max 30)
         BigDecimal winRateScore = (winRate.compareTo(new BigDecimal("70")) >= 0) ? BigDecimal.valueOf(30) :
                 (winRate.compareTo(new BigDecimal("50")) >= 0) ? BigDecimal.valueOf(20) :
                 (winRate.compareTo(new BigDecimal("30")) >= 0) ? BigDecimal.valueOf(10) : BigDecimal.valueOf(5);

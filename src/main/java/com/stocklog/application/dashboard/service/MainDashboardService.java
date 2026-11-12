@@ -13,12 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/**
- * MainDashboardUseCase의 구현체 자리.
- *
- * TODO(구현): MainController가 직접 조합하는 포트폴리오, 분석, 섹터, 관심 종목 데이터를
- * 하나의 화면 모델로 만들고 Controller는 해당 결과만 Model에 전달하게 한다.
- */
+/** MainDashboardUseCase의 구현체 자리 */
 @Service
 @RequiredArgsConstructor
 public class MainDashboardService implements MainDashboardUseCase {

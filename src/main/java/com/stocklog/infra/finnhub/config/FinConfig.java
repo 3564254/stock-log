@@ -17,8 +17,7 @@ public class FinConfig {
     @Qualifier("finnhubWebClient")
     public WebClient finnhubWebClient(FinProperties properties) {
         return WebClient.builder()
-                .baseUrl("https://finnhub.io/api/v1") // 이 부분이 확실히 핀허브를 향해야 합니다.
-                .defaultHeader("X-Finnhub-Token", properties.getApiKey())
+                .baseUrl("https://finnhub.io/api/v1")                .defaultHeader("X-Finnhub-Token", properties.getApiKey())
                 .build();
     }
 }

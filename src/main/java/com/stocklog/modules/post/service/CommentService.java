@@ -19,10 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * 댓글·대댓글.
- * 한 페이지 = 쿼리 2번: 1) 댓글 N개 + 작성자  2) 그 댓글들의 대댓글 전부 + 작성자 (parent_id IN)
- */
+/** 댓글·대댓글 */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

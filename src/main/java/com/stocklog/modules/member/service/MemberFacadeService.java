@@ -25,7 +25,6 @@ public class MemberFacadeService {
     private final AuthService authService;
 
 
-    // ============== Member Service ============== //
     public void save(Member member) {
         memberService.save(member);
     }
@@ -66,7 +65,6 @@ public class MemberFacadeService {
         return memberService.findByLoginId(loginId);
     }
 
-    // ============== Friendship Service ============== //
     public void sendRequest(Long fromId, Long toId) {
         Member from = memberService.findById(fromId);
         Member to = memberService.findById(toId);
@@ -107,7 +105,6 @@ public class MemberFacadeService {
     }
 
 
-    // ============== Auth Service ============== //
     public void signUp(SignupRequest request) {
         if (isLoginIdDuplicate(request.getLoginId())) {
             throw new BusinessException(ErrorCode.DUPLICATE_LOGIN_ID);

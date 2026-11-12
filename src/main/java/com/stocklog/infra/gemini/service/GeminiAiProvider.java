@@ -3,6 +3,7 @@ package com.stocklog.infra.gemini.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stocklog.infra.gemini.dto.GeminiRequest;
+import com.stocklog.modules.ai.AiException;
 import com.stocklog.modules.ai.AiProvider;
 import com.stocklog.modules.market.analysis.dto.EngineInput;
 import com.stocklog.modules.market.analysis.diagnosis.MarketDiagnosisHistoryDto;
@@ -29,9 +30,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class GeminiAiProvider implements AiProvider {
-    // TODO(패턴): AiProvider를 구현한 이 클래스는 외부 SDK/HTTP를 숨기는 Adapter로서 적절하다.
-    // 다만 모든 예외를 일반 문자열로 바꾸면 호출자가 실패와 정상 분석을 구분할 수 없다.
-    // 도메인 예외 또는 Result 타입으로 변환하고, timeout·재시도·fallback 정책은 이 Adapter 경계에 모아 보자.
 
     @Value("${gemini.api.base-url}")
     private String baseUrl;
@@ -113,9 +111,7 @@ public class GeminiAiProvider implements AiProvider {
         return callGemini(prompt, flashModel);
     }
 
-    // ------------------------------------------------------------------
     // 종목 분석 프롬프트용 포맷 헬퍼
-    // ------------------------------------------------------------------
     private static String joinOrNone(Collection<String> items) {
         return (items == null || items.isEmpty()) ? "없음" : String.join(", ", items);
     }
@@ -124,7 +120,7 @@ public class GeminiAiProvider implements AiProvider {
         return code != null && code.matches("\\d+");
     }
 
-    /** 0 이하 또는 비정상 값은 "N/A". 국내 종목은 원, 해외 종목은 달러로 표기한다. */
+    /** 0 이하 또는 비정상 값은 "N/A". 국내 종목은 원, 해외 종목은 달러로 표기한다 */
     private static String price(String code, double v) {
         if (!Double.isFinite(v) || v <= 0) return "N/A";
         return isKrCode(code) ? String.format("%,.0f원", v) : String.format("$%,.2f", v);
@@ -135,7 +131,7 @@ public class GeminiAiProvider implements AiProvider {
         return phase.getTitle() + " (" + phase.getDescription() + ")";
     }
 
-    /** 정식 타점이 있으면 진입 구간·손절·목표·손익비를, 참고 가격대뿐이면 그 사실을 함께 밝힌다. */
+    /** 정식 타점이 있으면 진입 구간·손절·목표·손익비를, 참고 가격대뿐이면 그 사실을 함께 밝힌다 */
     private static String describePlan(String code, TradingSignalResult s) {
         var plan = s.entryPlan();
         var target = s.priceTarget();
@@ -155,7 +151,7 @@ public class GeminiAiProvider implements AiProvider {
         }
         sb.append(" / 손익비 ").append(plan.riskReward() > 0 ? String.format("%.1f", plan.riskReward()) : "산출 불가");
         if (formal) {
-            sb.append(" / 반등 확인 ").append(plan.triggerConfirmed() ? "완료" : "전");
+            sb.append(" / 당일 양봉 ").append(plan.triggerConfirmed() ? "예" : "아니오").append(" (양봉은 반등 확정 신호 아님)");
         }
         return sb.toString();
     }
@@ -166,20 +162,21 @@ public class GeminiAiProvider implements AiProvider {
         String weight = risk.recommendedWeight() > 0
                 ? String.format("%.1f%%", risk.recommendedWeight())
                 : "진입 실행 가능 판정 시에만 산출";
-        return String.format("손절까지 거리 %.1f%%, 권장 비중 %s", risk.tradeRiskPercent(), weight);
+        return String.format("손절까지 거리 %.1f%%, 권장 비중 %s (기본 성향: 계좌 위험 1%%, 종목 상한 20%% 기준)", risk.tradeRiskPercent(), weight);
     }
 
-    /** TradingSignalAnalyzer.Verdict 이름을 AI가 그대로 인용해도 되는 설명으로 바꾼다. */
+    /** TradingSignalAnalyzer.Verdict 이름을 AI가 그대로 인용해도 되는 설명으로 바꾼다 */
     private static String verdictLabel(String verdict) {
         if (verdict == null) return "데이터 부족";
         if (verdict.startsWith("FALLBACK")) return "데이터 부족";
         return switch (verdict) {
-            case "ACTIONABLE"    -> "진입 실행 가능 (구간 안, 반등 확인, 손익비 통과)";
+            case "ACTIONABLE"    -> "기술적 조건 충족 (구간 안, 당일 양봉, 손익비 통과 · 반등 확정 아님, 수익 우위 미검증)";
             case "WAIT_FOR_ZONE" -> "눌림 구간 대기 (현재가가 진입 구간 위)";
-            case "WAIT_TRIGGER"  -> "구간 안이나 반등 확인 전";
+            case "WAIT_TRIGGER"  -> "구간 안이나 당일 양봉 전";
             case "CHASE_RISK"    -> "추격 위험 (돌파·탈환 구간 이탈)";
             case "RR_TOO_LOW"    -> "손익비 부족";
             case "NO_SETUP"      -> "진입 계획 없음";
+            case "BOUNDARY_WATCH" -> "경계 확인 중 (오늘 진입 구간 경계를 오르내림, 조금 더 지켜볼 자리)";
             default              -> verdict;
         };
     }
@@ -227,12 +224,58 @@ public class GeminiAiProvider implements AiProvider {
         return callGemini(prompt,flashModel);
     }
 
-    private static final String AI_ERROR_MESSAGE = "AI 분석 중 오류 발생";
+    private static final String AI_ERROR_MESSAGE = AiProvider.ERROR_MESSAGE;
+
+    /** 종목 뉴스 요약: 사실 요약 + 좋게 볼 점 / 조심할 점. 매수·매도 권유와 기사에 없는 숫자는 금지 */
+    @Override
+    public String getNewsSummary(String code, List<NewsDto> news) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < news.size(); i++) {
+            NewsDto n = news.get(i);
+            String summary = n.summary() == null || n.summary().equals(n.headline()) ? "" : n.summary();
+            if (summary.length() > 400) summary = summary.substring(0, 400) + "…";
+            sb.append('[').append(i + 1).append("] ")
+              .append(n.dateTime() != null ? n.dateTime().toLocalDate() + " " : "")
+              .append(n.headline() == null ? "" : n.headline());
+            if (!summary.isBlank()) sb.append("\n    ").append(summary);
+            sb.append('\n');
+        }
+        String prompt = String.format("""
+                아래는 미국 주식 %s 관련 최근 영어 뉴스 제목과 요약이야. 한국어로 짧게 정리해.
+
+                [뉴스]
+                %s
+                [형식] 아래 세 제목을 그대로 쓰고, 각 줄은 '· '로 시작하는 한 문장, 문장 끝에 근거 기사 번호를 [1] 또는 [2,3]처럼 붙여
+                핵심 소식
+                · (기사들의 중심 내용 2~3줄. 같은 사건은 한 줄로 합치기)
+                좋게 볼 수 있는 점
+                · (1~2줄. 없으면 '· 뚜렷하지 않아요' 한 줄)
+                조심할 점
+                · (1~2줄. 없으면 '· 뚜렷하지 않아요' 한 줄)
+
+                [규칙]
+                - 기사에 있는 사실만. 기사에 없는 숫자·가격·전망을 만들지 말 것
+                - 이 종목을 사라·팔라·보유하라는 말 금지. 주가가 오를지 내릴지 예측 금지
+                - 광고성·관련 없는 기사는 무시
+                - 마크다운 기호(**, #) 금지, 인사말·서론 금지
+                - 쉬운 한국어 존댓말(~예요, ~했어요). 회사 이름과 제품명은 영어 그대로 써도 됨
+                """, code, sb);
+        return callGeminiStrict(prompt, flashModel, false);
+    }
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    /** 실패하면 오류 문구를 돌려준다 */
     private String callGemini(String prompt, String modelPath) {
-        // API 키는 URL 쿼리가 아니라 헤더로 보낸다. 쿼리에 두면 RestTemplate 예외 메시지(요청 URL 포함)가
-        // 로그에 그대로 찍혀 키가 노출된다.
+        try {
+            return callGeminiStrict(prompt, modelPath, false);
+        } catch (AiException e) {
+            return AI_ERROR_MESSAGE;
+        }
+    }
+
+    /** 실패를 종류별 AiException으로 던진다 */
+    private String callGeminiStrict(String prompt, String modelPath, boolean json) {
+        // API 키는 URL 쿼리가 아니라 헤더로 보낸다
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("x-goog-api-key", apiKey);
@@ -242,36 +285,205 @@ public class GeminiAiProvider implements AiProvider {
                         List.of(new GeminiRequest.Part(prompt))
                 ))
         );
+        if (json) requestDto.setGenerationConfig(java.util.Map.of("responseMimeType", "application/json"));
 
+        String responseJson;
         try {
             HttpEntity<GeminiRequest> entity = new HttpEntity<>(requestDto, headers);
-            String responseJson = restTemplate.postForObject(baseUrl + modelPath, entity, String.class);
-            if (responseJson == null) {
-                log.warn("[AI 분석] 빈 응답");
-                return AI_ERROR_MESSAGE;
+            responseJson = restTemplate.postForObject(baseUrl + modelPath, entity, String.class);
+        } catch (org.springframework.web.client.HttpStatusCodeException e) {
+            String body = e.getResponseBodyAsString();
+            if (e.getStatusCode().value() == 429 || body.contains("RESOURCE_EXHAUSTED")) {
+                boolean daily = body.contains("PerDay") || body.contains("per day") || body.contains("billing") || body.contains("check your plan");
+                log.warn("[AI] 사용량 소진 ({}): {}", daily ? "하루/결제 한도" : "분당 한도", abbreviate(body));
+                throw new AiException(daily ? AiException.Kind.QUOTA_DAILY : AiException.Kind.RATE_LIMIT, "quota");
             }
-
+            log.error("[AI 분석 에러] HTTP {}: {}", e.getStatusCode().value(), abbreviate(body));
+            throw new AiException(AiException.Kind.ERROR, "http " + e.getStatusCode().value());
+        } catch (Exception e) {
+            log.error("[AI 분석 에러] {}: {}", e.getClass().getSimpleName(), e.getMessage());
+            throw new AiException(AiException.Kind.ERROR, e.getClass().getSimpleName());
+        }
+        if (responseJson == null) {
+            log.warn("[AI 분석] 빈 응답");
+            throw new AiException(AiException.Kind.ERROR, "empty");
+        }
+        try {
             JsonNode root = MAPPER.readTree(responseJson);
             JsonNode candidate = root.path("candidates").path(0);
             JsonNode text = candidate.path("content").path("parts").path(0).path("text");
-
-            // 안전 필터 차단·토큰 초과 등으로 본문이 없을 수 있다 (이전에는 NPE로 뭉뚱그려졌음)
+            JsonNode usage = root.path("usageMetadata");
+            if (!usage.isMissingNode()) {
+                log.info("[AI] 토큰 사용 입력 {} · 출력 {} · 합계 {}", usage.path("promptTokenCount").asInt(),
+                        usage.path("candidatesTokenCount").asInt(), usage.path("totalTokenCount").asInt());
+            }
+            // 안전 필터 차단·토큰 초과 등으로 본문이 없을 수 있다
             if (text.isMissingNode() || text.asText().isBlank()) {
                 log.warn("[AI 분석] 응답에 본문 없음 finishReason={} blockReason={}",
                         candidate.path("finishReason").asText("-"),
                         root.path("promptFeedback").path("blockReason").asText("-"));
-                return AI_ERROR_MESSAGE;
+                throw new AiException(AiException.Kind.BLOCKED, "no text");
             }
             return text.asText();
+        } catch (AiException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("[AI 분석 에러] {}: {}", e.getClass().getSimpleName(), e.getMessage());
-            return AI_ERROR_MESSAGE;
+            log.error("[AI 분석 에러] 응답 해석 실패: {}", e.getMessage());
+            throw new AiException(AiException.Kind.ERROR, "parse");
         }
     }
 
+    private static String abbreviate(String s) {
+        if (s == null) return "";
+        String one = s.replaceAll("\\s+", " ");
+        return one.length() > 300 ? one.substring(0, 300) + "…" : one;
+    }
+
+    /** 종목 AI 리포트: 앱 데이터 + 맥락을 묶어 */
     @Override
-    public String getMarketAnalysis(EngineInput input, List<NewsDto> newsList, MarketDiagnosisHistoryDto historyDto) {
-        // 1. 퀀트 로우 데이터 JSON 변환
+    public String getStockReport(StockAnalysisResult analysis, String context) {
+        String code = analysis.getCode();
+        TradingSignalResult signal = analysis.getTradingSignalResult();
+        boolean hasSignal = signal != null && signal.analysis() != null
+                && signal.analysis().phase() != ChartPhase.INSUFFICIENT_DATA;
+        TradingSignalResult.SignalStrength strength = (hasSignal && signal.strength() != null)
+                ? signal.strength() : TradingSignalResult.SignalStrength.empty();
+
+        String prompt = String.format("""
+                너는 개인 투자자를 돕는 차분한 주식 코치야. 아래 앱 데이터만 보고 '%s' 종목 리포트를 JSON으로 써.
+                통화: %s
+
+                [앱 데이터]
+                종합 점수 %d/100 (%s등급) · 가치 %d/40 (%s) · 수급 %d/30 (%s) · 차트 %d/30 (%s)
+                차트 국면: %s
+                타점: %s
+                위험 크기: %s
+                신호: 매수 쪽 %d%%(%s) · 매도 쪽 %d%%(%s) · 지켜볼 것(%s)
+                엔진 판정: %s
+
+                [추가 맥락]
+                %s
+
+                [알아 둘 사실]
+                - 이 앱의 과거 시험에서 차트 타점(눌림·돌파 등)은 아무 날에 산 것보다 나은 점이 확인되지 않았어. 근거가 있던 건 미국 12-1개월 모멘텀 상위 20%%를 분기마다 바꾸는 규칙뿐이야
+                - 그래서 차트 판정은 '산다면 어떻게, 틀리면 어디서 정리'를 정하는 용도로만 써
+
+                [출력: JSON 하나만]
+                {
+                  "headline": "지금 이 종목을 한 문장으로 (35자 이내)",
+                  "tags": ["상태 키워드 2~3개, 각 8자 이내 (예: 눌림 대기, 모멘텀 상위, 실적 D-5)"],
+                  "situation": ["지금 상황 2~3문장. 점수 사이의 엇갈림, 차트 국면, 모멘텀·시장을 엮어서"],
+                  "up": {"when": "오르는 쪽 조건 (데이터의 가격 사용)", "then": "그때 할 일"},
+                  "down": {"when": "내리는 쪽 조건 (손절가 등)", "then": "그때 할 일"},
+                  "actions": ["지금 할 일 2~3개, 순서대로, 각 한 문장"],
+                  "risks": ["조심할 점 1~2개"]
+                }
+
+                [규칙]
+                - tags · situation · actions · risks는 문장이 하나여도 반드시 배열 ["…"]로 쓰기
+                - 엔진 판정과 어긋나는 말 금지 (대기·추격 위험·손익비 부족·계획 없음인데 지금 사라고 하기 금지)
+                - 사라·팔라고 권하지 말고 '산다면', '가지고 있다면'처럼 조건으로 말하기. 오른다고 장담 금지
+                - 데이터에 없는 가격·숫자 만들기 금지. N/A나 없음인 가격은 조건으로만 말하기
+                - 가격은 위 통화 형식으로만 쓰기. 신호 문구 속 통화 없는 숫자(PP: 408 등)도 같은 통화야
+                - 실적 발표가 7일 안이면 risks에 갭 위험을 넣기
+                - 점수 숫자를 늘어놓지 말기 (가격은 써도 됨)
+                - 쉬운 한국어 존댓말(~예요, ~해요), 각 문장 60자 이내, 마크다운 기호 금지
+                """,
+                code,
+                isKrCode(code) ? "원화. 가격은 '12,300원'처럼 쓰기" : "미국 달러. 가격은 반드시 '$408.50'처럼 $를 앞에 붙이고, '원'은 절대 쓰지 않기",
+                analysis.getScore(), analysis.getGrade(),
+                analysis.getValuation().getScore(), joinOrNone(analysis.getValuation().getSignals()),
+                analysis.getMomentum().getScore(), joinOrNone(analysis.getMomentum().getSignals()),
+                analysis.getTechnical().getScore(), joinOrNone(analysis.getTechnical().getSignals()),
+                hasSignal ? describePhase(signal) : "차트 데이터 부족으로 판정 불가",
+                hasSignal ? describePlan(code, signal) : "산출 불가",
+                hasSignal ? describeRisk(signal) : "산출 불가",
+                strength.buyStrength(), joinOrNone(strength.buySignals()),
+                strength.sellStrength(), joinOrNone(strength.sellSignals()),
+                joinOrNone(strength.watchSignals()),
+                hasSignal ? verdictLabel(signal.verdict()) : "데이터 부족",
+                context == null || context.isBlank() ? "없음" : context
+        );
+        return callGeminiStrict(prompt, flashModel, true);
+    }
+
+    @Override
+    public String getNewsSectorImpact(String news, String sectors) {
+        String prompt = String.format("""
+                너는 뉴스가 어떤 업종에 영향을 줄지 짚어 주는 애널리스트야. 아래 오늘 뉴스 제목만 보고 JSON으로 써.
+
+                [오늘 뉴스 제목]
+                %s
+
+                [쓸 수 있는 섹터 key — 이 목록 밖의 key 금지]
+                %s
+
+                [출력: JSON 하나만]
+                {
+                  "items": [
+                    {"title": "뉴스 내용을 한국어 한 문장으로 (40자 이내)",
+                     "sectors": [{"key": "위 목록의 key", "dir": 1 또는 -1, "why": "왜 그 방향인지 한 문장 (40자 이내)"}]}
+                  ]
+                }
+
+                [규칙]
+                - 업종에 뚜렷한 영향이 있을 만한 뉴스만 최대 6개. 개별 기업 소식·영향이 애매한 뉴스는 빼기
+                - 뉴스 하나에 섹터 1~4개. dir 1 = 그 섹터에 좋은 소식, -1 = 나쁜 소식
+                - 같은 주제 뉴스가 여러 개면 하나로 합치기
+                - 사라·팔라·지금 타라 같은 매매 권유 금지. 오른다·내린다 장담 금지 (영향 방향만)
+                - 뉴스에 없는 사실·숫자 만들기 금지
+                - 쉬운 한국어 존댓말, 마크다운 기호 금지
+                """, news, sectors);
+        return callGeminiStrict(prompt, flashModel, true);
+    }
+
+    @Override
+    public String getPortfolioReview(String facts, String context, String previous) {
+        String prompt = String.format("""
+                너는 개인 투자자의 포트폴리오를 매주 같이 점검하는 차분한 코치야. 아래 앱 데이터만 보고 이번 주 점검을 JSON으로 써.
+
+                [이번 주 앱 데이터 — 판정은 앱 규칙이 이미 냈어]
+                %s
+
+                [추가 맥락]
+                %s
+
+                [지난 점검 때 데이터]
+                %s
+
+                [알아 둘 사실]
+                - 이 앱에서 시험으로 근거가 확인된 건 미국 12-1개월 모멘텀 상위 20%%를 분기마다 바꾸는 규칙뿐이야
+                - 물타기·불타기·분할매수는 시험에서 한 번에 사서 들고 가는 것보다 나아지지 않았어
+                - 기준선(손절선·수익 보호선)을 깨면 정리하는 게 앱의 원칙이야. 기준선을 내리지 않아
+
+                [출력: JSON 하나만]
+                {
+                  "headline": "이번 주 포트폴리오를 한 문장으로 (35자 이내)",
+                  "tags": ["상태 키워드 2~3개, 각 8자 이내 (예: 정리 1개, 비중 초과, 실적 주간)"],
+                  "changes": ["지난 점검 대비 바뀐 점 1~3개. 지난 데이터가 없으면 빈 배열"],
+                  "todo": ["이번 주 할 일 1~4개, 순서대로. 앱 '지금 할 일'과 판정에서만 가져오기"],
+                  "watch": [{"name": "종목 이름", "why": "왜 지켜볼지 한 문장"}],
+                  "schedule": ["다음 2주 일정 0~3개 (실적 발표 · 분기 교체일). 맥락에 있는 날짜만"]
+                }
+
+                [규칙]
+                - 모든 칸은 문장이 하나여도 반드시 배열로 쓰기. watch는 최대 3개, 매도·주의 판정 종목 먼저
+                - 앱 판정과 어긋나는 말 금지. 유지 종목을 팔라고, 매도 판정 종목을 더 들고 가라고 하지 말기
+                - 새로 사라·더 사라(물타기·불타기 포함) 권하지 말기. 오른다·내린다 장담 금지
+                - 데이터에 없는 숫자·날짜·금액 만들기 금지. 금액은 쓰지 말고 비율(%%)만
+                - 할 일이 없으면 todo에 '기준선만 지키기' 하나만
+                - 쉬운 한국어 존댓말(~예요, ~해요), 각 문장 60자 이내, 마크다운 기호 금지
+                """,
+                facts,
+                context == null || context.isBlank() ? "없음" : context,
+                previous == null || previous.isBlank() ? "없음 (첫 점검)" : previous
+        );
+        return callGeminiStrict(prompt, flashModel, true);
+    }
+
+    @Override
+    public String getMarketAnalysis(EngineInput input, List<NewsDto> newsList, MarketDiagnosisHistoryDto historyDto, String rules) {
+        // 퀀트 로우 데이터 JSON 변환
         String rawDataJson = "{}";
         try {
             if (input != null) {
@@ -281,7 +493,7 @@ public class GeminiAiProvider implements AiProvider {
             rawDataJson = "데이터 직렬화 실패";
         }
 
-        // 2. 실시간 핵심 뉴스 데이터 추출 (최신 최대 15개 헤드라인 선별)
+        // 실시간 핵심 뉴스 데이터 추출
         String newsData = "최신 뉴스 데이터 없음";
         if (newsList != null && !newsList.isEmpty()) {
             newsData = newsList.stream()
@@ -294,7 +506,7 @@ public class GeminiAiProvider implements AiProvider {
                     .collect(Collectors.joining("\n"));
         }
 
-        // 3. 직전 진단 기록 (변화 추적용) — DTO 를 통째로 직렬화하지 않고 요약 텍스트로 변환
+        // 직전 진단 기록 (변화 추적용)
         String prevDiagnosisText = buildPrevDiagnosisText(historyDto);
 
         String prompt = String.format("""
@@ -311,6 +523,9 @@ public class GeminiAiProvider implements AiProvider {
 %s
 
 [3. 직전 진단 기록 (연속성 및 변화 파악용)]
+%s
+
+[4. 앱 규칙과 이번 주 사실 ('오늘 어떻게 볼지'와 '대응'은 이 안에서만)]
 %s
 
 [🚨 절대 엄수 지시사항]
@@ -476,6 +691,13 @@ public class GeminiAiProvider implements AiProvider {
 
 반드시 퀀트 데이터와 뉴스의 교차검증 결과를 근거로 판단할 것
 
+예외: "stance"와 "actions" 칸은 [4. 앱 규칙과 이번 주 사실]에 있는 규칙을 오늘 상황에 맞게 옮겨 말하는 칸임
+- stance: 오늘 시장을 어떻게 바라보면 좋을지 한두 문장. 퀀트·뉴스 결론과 [4]의 시장 40주선 상태를 함께 엮을 것
+- actions: [4]의 규칙에서 나온 행동만 2~3개 (새로 살 때 크기 · 보유 종목은 기준선대로 · 모멘텀 교체일 · 이번 주 발표 전후 주의)
+- 개별 종목·섹터·자산을 사라/팔라, 비중을 늘려라/줄여라는 지시는 여전히 금지. [4]에 없는 규칙을 만들지 말 것
+- 시장 상태만 보고 보유 종목을 미리 팔라고 하지 말 것 (앱의 시험 결과: 시장 규칙으로 보유를 파는 건 지수 보유를 이기지 못했음)
+- 오른다·내린다 예측 금지. 발표 일정은 [4]에 있는 것만
+
 
 8. 직전 진단 활용 원칙
 
@@ -510,109 +732,55 @@ public class GeminiAiProvider implements AiProvider {
 직전 진단의 날짜와 현재 시점 사이에 간격이 있을 수 있으므로
 "어제", "전일" 같은 표현을 쓰지 말고 "직전 진단"이라고 표현할 것
 
-직전 대비 변화는 별도의 소제목을 만들지 말고
-🌐 매크로 및 시장 국면 진단 또는 🎯 퀀트-뉴스 융합 시장 해석 안에서 한 문장으로 자연스럽게 포함할 것
+직전 대비 변화는 "change" 칸에 한 문장으로만 쓸 것
 
 
-9. 문체 및 포맷
+9. 문체
 
-통신사 증시 브리핑처럼 담백하고 사실 중심인 보도 문체로 작성할 것
-
-- 모든 문장은 "~습니다", "~했습니다", "~하고 있습니다", "~할 예정입니다" 같은 합니다체 평서문으로 끝낼 것
-- 명사형 종결("~함", "~임", "~필요", "~확인")은 사용하지 말 것
-- 문장 끝에는 마침표를 찍을 것
-- 문장의 주어를 구체적으로 쓸 것
-  "시장은", "지표들은" 대신 "시장 추세 점수는", "반도체 섹터는", "신용 지표는"처럼 쓸 것
+- 쉬운 한국어 존댓말 해요체로 쓸 것 ("~예요", "~했어요", "~있어요", "~보여요")
+- 합니다체("~습니다")와 명사형 종결("~함", "~임", "~필요")은 쓰지 말 것
+- 문장의 주어를 구체적으로 쓸 것 ("시장은" 대신 "시장 추세 점수는", "반도체 섹터는", "신용 지표는")
 - 사실을 먼저 쓰고 해석은 그 뒤에 붙일 것
-- 대비와 전환은 "~한 반면", "~한 가운데", "한편,", "~에 앞서" 같은 연결어로 자연스럽게 이을 것
-- 한 문장에는 절을 최대 두 개까지만 연결할 것
-- 과장되거나 수사적인 표현을 쓰지 말 것
-  예: "본질적인", "폭풍전야", "강력한 경고", "주목할 만한", "도사리고 있는"
-- 번역투를 피할 것
-  예: "이러한 발전은", "~에 의해 영향을 받았습니다", "~하는 것으로 보여집니다"
-  대신: "이번 흐름은", "~의 영향을 받았습니다", "~로 보입니다"
-- 독자를 직접 부르거나 감정이 담긴 표현을 쓰지 말 것
-- 인사말과 불필요한 서론은 작성하지 말 것
-- 마크다운 볼드체 기호 사용 금지
-- 정확히 아래 4개의 소제목만 사용할 것
-- 각 소제목은 2~3문장으로 작성할 것
-- 각 문장은 하나의 핵심 주장만 담을 것
-- 이모지는 소제목에만 사용할 것
+- 한 문장에는 핵심 주장 하나만, 60자 안팎으로 쓸 것
+- 과장되거나 수사적인 표현을 쓰지 말 것 (예: "본질적인", "폭풍전야", "강력한 경고", "주목할 만한", "도사리고 있는")
+- 번역투를 피할 것 (예: "이러한 발전은", "~에 의해 영향을 받았습니다", "~하는 것으로 보여집니다")
+- 마크다운 기호와 이모지는 쓰지 말 것
+- 직접적인 매수·매도 지시나 특정 자산의 비중 조절 지시는 하지 말 것
 
 문체 예시 (내용은 참고하지 말고 말투만 참고할 것)
-"시장 추세 점수는 85점으로 상승 추세를 이어갔습니다. 다만 상승 종목 비율은 직전 진단보다 줄어, 상승이 일부 대형 기술주에 집중되고 있습니다. 뉴스에서는 금리 인하 기대가 부각되고 있으며, 신용 지표도 안정적인 흐름을 보이고 있습니다."
+"시장 추세 점수는 85점으로 상승 추세를 이어가고 있어요."
+"다만 상승 종목 비율은 직전 진단보다 줄어, 상승이 일부 대형 기술주에 몰려 있어요."
 
 
-10. 반드시 다음 구조로 작성할 것
+10. 출력: JSON 하나만 (설명·코드 울타리 없이)
 
-🌐 매크로 및 시장 국면 진단
+{
+  "headline": "지금 시장을 한 문장으로 (35자 이내)",
+  "tags": ["시장 상태 키워드 2~3개, 각 8자 이내 (예: 상승 추세, 시장 폭 축소, 금리 부담)"],
+  "stance": "오늘 시장을 어떻게 바라볼지 한두 문장 (90자 이내). 예: 추세는 살아 있지만 상승이 일부 업종에 몰려 있어요. 새로 살 때는 평소 크기를 지키고, 보유는 기준선대로 보면 되는 날이에요",
+  "actions": ["오늘의 대응 2~3개, 각 한 문장. [4]의 규칙에서만 (예: 미국 종목은 평소 크기로, 한국 종목은 절반 크기로 새로 사요 / 보유 종목은 시장 분위기보다 각자 기준선을 봐요 / 목요일 CPI 발표 전후로 갭이 날 수 있어요)"],
+  "change": "직전 진단과 비교한 변화 한 문장. 직전 기록이 없으면 빈 문자열",
+  "regime": ["매크로 및 시장 국면 진단 2~3문장. 추세·모멘텀·금리·유동성·매크로를 종합하고, 가장 결정적인 지표 하나만 숫자로. 뉴스의 거시 이슈가 데이터와 맞는지 교차검증"],
+  "drivers": ["주도 섹터와 뉴스 테마 2~3문장. 섹터 데이터가 보여주는 상대강도와 뉴스가 제기하는 촉매를 구분. 확인되지 않은 자금 흐름을 만들어내지 말 것"],
+  "risks": ["위험 신호 2~3문장. 실제로 확인되는 위험과 가능성 단계의 위험을 구분하고, 가장 중요한 위험 지표 하나만 숫자로. 단일 지표로 버블·붕괴를 확정하지 말 것"],
+  "watch": ["앞으로 지켜볼 것 2~3개, 각 한 문장. 시장 강도와 내부 취약성을 함께 보고, 뉴스에 예정된 이벤트가 있으면 포함"]
+}
 
-추세, 모멘텀, 금리, 유동성, 매크로 데이터를 종합하여 현재 시장의 국면을 진단할 것
-
-가장 결정적인 퀀트 지표 하나를 숫자로 제시하고
-나머지 지표는 방향성 중심으로 설명할 것
-
-뉴스에서 언급된 거시경제 이슈가 있다면
-퀀트 데이터와 실제로 부합하는지 교차검증할 것
-
-직전 진단과 비교한 국면의 연속 또는 전환 여부를 한 문장으로 포함할 것
-
-
-🔥 펀더멘털 및 내러티브 흐름
-
-주도 섹터와 최근 뉴스의 공통 테마를 연결할 것
-
-섹터 데이터가 실제로 보여주는 상대강도와 뉴스에서 제기되는 촉매를 구분할 것
-
-확인되지 않은 스마트 머니 또는 기관 자금 흐름을 임의로 만들어내지 말 것
-
-
-⚠️ 시스템 리스크 및 꼬리 위험
-
-시장 확산도, 신용, 유동성, 변동성, 지정학적 뉴스 등을 종합할 것
-
-현재 실제로 확인되는 위험과 아직 가능성 수준에 머무는 위험을 구분할 것
-
-시장 폭 축소와 같은 경고 신호가 있다면 설명하되
-단일 지표만으로 버블이나 시장 붕괴를 확정하지 말 것
-
-가장 중요한 위험 지표 하나를 숫자로 제시할 것
-
-
-🎯 퀀트-뉴스 융합 시장 해석
-
-퀀트와 뉴스의 교차검증 결과를 종합하여
-현재 시장을 하나의 일관된 국면으로 설명할 것
-
-시장 강도와 내부 취약성을 동시에 표현할 것
-
-향후 판단에서 중요하게 관찰해야 할 변화가 무엇인지 제시할 것
-
-뉴스에 예정된 이벤트가 있다면 마지막 문장에서 관찰 포인트와 함께 언급할 것
-
-직전 진단 대비 개선 또는 악화된 신호가 있다면 관찰 포인트와 연결할 것
-
-직접적인 매수·매도 지시나 특정 자산의 구체적인 비중 조절 지시는 하지 말 것
-
-
-11. 최종 출력 형식
-
-반드시 위의 4개 소제목만 출력할 것
-
-각 소제목 아래 2~3문장 작성할 것
-
-전체적으로 8~12문장 사이로 작성할 것
-
-마지막에는 반드시 아래 문구를 그대로 출력할 것
-
-※ 본 분석은 퀀트 데이터 및 언론 보도 기반의 참고용이며, 투자 권유 아님
+- tags · actions · regime · drivers · risks · watch는 문장이 하나여도 반드시 배열로 쓸 것
+- 숫자는 전체를 통틀어 5~6개까지만 쓸 것
 """,
                 rawDataJson,
                 newsData,
-                prevDiagnosisText
+                prevDiagnosisText,
+                rules == null || rules.isBlank() ? "없음 (stance와 actions는 퀀트 결론만으로 짧게, 보유 종목은 기준선대로라고만)" : rules
         );
 
-        return callGemini(prompt, flashModel);
+        try {
+            return callGeminiStrict(prompt, flashModel, true).strip();
+        } catch (AiException e) {
+            // 사용량 소진은 화면에서 따로 안내한다
+            return e.isQuota() ? AiProvider.QUOTA_MESSAGE : AI_ERROR_MESSAGE;
+        }
     }
 
     private static String buildPrevDiagnosisText(MarketDiagnosisHistoryDto h) {

@@ -18,7 +18,7 @@ public class TradeReview {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ✨ 회원 식별자 추가 (누구의 자유 복기 메모인지 구분하기 위함)
+    // 회원 식별자 추가
     @Column(name = "member_id", nullable = false)
     private Long memberId;
 
@@ -47,7 +47,7 @@ public class TradeReview {
     @Builder
     public TradeReview(Long id, Long memberId, Long tradeLogId, String stockCode, String title, String content, TradeEmotion emotion, Integer score, LocalDateTime createdAt) {
         this.id = id;
-        this.memberId = memberId; // ✨ 빌더 및 생성자에 추가
+        this.memberId = memberId; // 빌더 및 생성자에 추가
         this.tradeLogId = tradeLogId;
         this.stockCode = stockCode;
         this.title = title;

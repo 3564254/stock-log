@@ -1,6 +1,7 @@
 package com.stocklog.modules.stock.analysis.signal.trading;
 
 import com.stocklog.modules.common.finance.context.MarketContext;
+import com.stocklog.modules.common.finance.indicator.phase.PhaseIndicators;
 import com.stocklog.modules.common.type.ChartPhase;
 import com.stocklog.modules.stock.analysis.signal.trading.TradingSignalResult.Narrative;
 import lombok.AccessLevel;
@@ -9,12 +10,7 @@ import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * 국면(Phase)별 상황 설명과 대응 안내 문구를 만든다.
- * - 진입 계획이 없어도(NO_SETUP) "지금 시장이 어떤 상태이고 무엇을 지켜봐야 하는지"를 항상 설명한다.
- * - HTML을 만들지 않고 순수 텍스트 구조(Narrative)만 반환한다. 렌더링은 템플릿 몫이다.
- * - 지시형("절대 금지", "즉시 매도")보다 상태 서술형으로 쓴다.
- */
+/** 국면(Phase)별 상황 설명과 대응 안내 문구를 만든다 */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class TradingNarrative {
 
@@ -29,9 +25,7 @@ public final class TradingNarrative {
                 action.title(), action.body(), action.tone());
     }
 
-    // ------------------------------------------------------------------
-    // 1. 한 줄 요약 (제목)
-    // ------------------------------------------------------------------
+    // 한 줄 요약 (제목)
     private static String headline(ChartPhase phase, MarketContext ctx) {
         double rsi = ctx.momentum().rsi();
         double adx = ctx.momentum().adx();
@@ -74,22 +68,28 @@ public final class TradingNarrative {
                 if (ctx.bollingerBand().percentB() > 0.8) yield "볼린저 상단 부근에서 시세를 이어가는 상승 구간";
                 yield "상승 추세가 유지되는 보유 구간";
             }
-            case COOLDOWN -> "상승 이후 열기를 식히며 20일선과의 이격을 줄이는 조정 구간";
+            case COOLDOWN -> price < ma.ma20()
+                    ? "상승 이후 조정으로 20일선 아래까지 내려온 구간"
+                    : "상승 이후 열기를 식히며 20일선과의 이격을 줄이는 조정 구간";
             case RE_ENTRY -> "20일선 부근에서 지지를 확인하고 다시 오르려는 재진입 후보 구간";
-            case WARNING_ZONE -> rsi > 80
-                    ? "RSI 80을 넘긴 단기 과열 구간"
-                    : "과열 신호가 겹쳐 차익 실현 매물이 나오기 쉬운 구간";
+            case WARNING_ZONE -> {
+                if (rsi > 80) yield "RSI 80을 넘긴 단기 과열 구간";
+                yield PhaseIndicators.hasOverheat(ctx)
+                        ? "과열 신호가 겹쳐 차익 실현 매물이 나오기 쉬운 구간"
+                        : "매도 거래량과 고점 하락 등 약세 신호가 겹친 구간";
+            }
             case CLIMAX -> "과열이 극단에 이른 정점 부근 구간";
-            case SCALE_OUT -> ctx.volume().isVolBearish()
-                    ? "고점 부근에서 매도 거래량이 늘며 탄력이 둔화된 구간"
-                    : "과열 부담과 모멘텀 둔화로 수익 관리가 필요한 구간";
+            case SCALE_OUT -> {
+                if (ctx.volume().isVolBearish()) yield "고점 부근에서 매도 거래량이 늘며 탄력이 둔화된 구간";
+                yield PhaseIndicators.hasOverheat(ctx)
+                        ? "과열 부담과 모멘텀 둔화로 수익 관리가 필요한 구간"
+                        : "고점을 낮추며 5일선 아래로 밀린 탄력 둔화 구간";
+            }
             default -> "차트 구조를 분석하고 있습니다";
         };
     }
 
-    // ------------------------------------------------------------------
-    // 2. 상황 설명 (본문 + 세부 항목)
-    // ------------------------------------------------------------------
+    // 상황 설명 (본문 + 세부 항목)
     private static String summarize(ChartPhase phase, MarketContext ctx, boolean us,
                                     List<Narrative.Detail> d) {
         var vol = ctx.volume();
@@ -143,11 +143,19 @@ public final class TradingNarrative {
                 return "가격 충격과 매도 거래량이 겹친 투매 구간입니다. 바닥이 확인된 것은 아닙니다.";
             }
             case COOLDOWN -> {
-                add(d, "🧱", "핵심 지지", String.format("20일선(%s)이 지켜지는지가 핵심입니다.", fmt(ma.ma20(), us)));
+                // 20일선이 현재가보다 위면 지지가 아니라 다시 넘어야 할 자리다
+                boolean below20 = price < ma.ma20();
+                if (below20) {
+                    add(d, "🧱", "20일선 회복", String.format("20일선(%s)을 종가로 다시 넘는지가 관건입니다.", fmt(ma.ma20(), us)));
+                } else {
+                    add(d, "🧱", "핵심 지지", String.format("20일선(%s)이 지켜지는지가 핵심입니다.", fmt(ma.ma20(), us)));
+                }
                 if (vol.isVolumeDryingUp()) {
                     add(d, "🔇", "거래량 감소", "조정 중 거래량이 줄어 매도 압력이 약해지고 있을 가능성이 있습니다.");
                 }
-                return "상승 추세 속에서 20일선 부근까지 내려와 숨을 고르는 조정 구간입니다.";
+                return below20
+                        ? "상승 추세 속 조정으로 20일선 아래로 내려온 구간입니다."
+                        : "상승 추세 속에서 20일선 부근까지 내려와 숨을 고르는 조정 구간입니다.";
             }
             case WARNING_ZONE -> {
                 if (ctx.bollingerBand().percentB() > 1.0) {
@@ -159,7 +167,9 @@ public final class TradingNarrative {
                 if (ma.distFromMa20() > 0) {
                     add(d, "📏", "20일선 이격", String.format("20일선 대비 %+.1f%% 벌어져 있습니다.", ma.distFromMa20()));
                 }
-                return "과열 신호가 여러 개 겹쳐 차익 실현 매물이 나오기 쉬운 구간입니다.";
+                return PhaseIndicators.hasOverheat(ctx)
+                        ? "과열 신호가 여러 개 겹쳐 차익 실현 매물이 나오기 쉬운 구간입니다."
+                        : "과열은 아니지만 약세 신호가 여러 개 겹쳐 상승 흐름이 흔들리는 구간입니다.";
             }
             case CLIMAX -> {
                 add(d, "🌡️", String.format("RSI %.1f", rsi), "과열이 극단 수준이고 소진 신호(약세 거래량 또는 고점 하락)가 함께 나타났습니다.");
@@ -218,7 +228,8 @@ public final class TradingNarrative {
                     add(d, "🔇", "거래량 감소", "조정 중 거래량이 말라 매도 압력이 약해진 상태일 수 있습니다.");
                 } else if (vol.isVolBearish()) {
                     add(d, "⚠️", "매도 거래량", String.format(
-                            "음봉에 거래량이 실렸습니다. 20일선(%s) 지지 여부를 끝까지 확인해야 합니다.", fmt(ma.ma20(), us)));
+                            price < ma.ma20() ? "음봉에 거래량이 실렸습니다. 20일선(%s)을 종가로 다시 넘는지 확인해야 합니다."
+                                              : "음봉에 거래량이 실렸습니다. 20일선(%s) 지지 여부를 끝까지 확인해야 합니다.", fmt(ma.ma20(), us)));
                 }
                 if (ctx.bollingerBand().isSqueeze()) {
                     add(d, "🌪️", "밴드 수축", "변동성이 줄어든 뒤에는 커지는 경향이 있으나, 방향은 돌파·이탈이 나와야 알 수 있습니다.");
@@ -255,9 +266,7 @@ public final class TradingNarrative {
         }
     }
 
-    // ------------------------------------------------------------------
-    // 3. 대응 안내 (진입 계획이 있으면 계획 기준, 없으면 국면 기준)
-    // ------------------------------------------------------------------
+    // 대응 안내
     private static Action action(ChartPhase phase, MarketContext ctx, Verdict verdict, EntrySetup plan, boolean us) {
         if (plan != null && verdict != null && verdict != Verdict.NO_SETUP) {
             String zone = fmt(plan.entry().low(), us) + " ~ " + fmt(plan.entry().high(), us);
@@ -266,9 +275,18 @@ public final class TradingNarrative {
             String type = plan.type().getTitle();
             switch (verdict) {
                 case ACTIONABLE:
-                    return new Action("🎯 진입 조건 충족 (" + type + ")",
+                    if (plan.type() == EntryType.KNEE) {
+                        return new Action("🦵 무릎 기술적 조건 충족 (소액)",
+                                "하락 뒤 바닥을 높이며 5일선(" + zone + ")을 되찾은 반전 초입입니다. 추세 전환이 확정된 것은 아니라서 일반 진입의 절반 이하 비중이 적당합니다. 바닥 아래 "
+                                        + stop + "를 깨면 시나리오 무효입니다." + rr
+                                        + " 계획대로 샀다면 손절은 진입 손절가에서 시작해 매수 후 최고 종가 − 3 ATR로 따라 올리고, 종가로 판단하세요.",
+                                "bull");
+                    }
+                    return new Action("🎯 기술적 조건 충족 (" + type + ")",
                             "진입 구간(" + zone + ") 안에서 반등이 확인되고 손익비 조건도 통과했습니다. 구조적 손절 " + stop
-                                    + " 아래로 내려가면 이 시나리오는 무효로 봅니다." + rr + " 진입한다면 한 번에 몰기보다 나눠 접근하는 편이 변동성에 유리합니다.",
+                                    + " 아래로 내려가면 이 시나리오는 무효로 봅니다." + rr + " 진입한다면 한 번에 몰기보다 나눠 접근하는 편이 변동성에 유리합니다."
+                                    + " 계획대로 샀다면 손절은 진입 손절가에서 시작해 매수 후 최고 종가 − 3 ATR로 따라 올리고, 종가로 판단하세요."
+                                    + " 이 판정은 기술적 조건이고, 백테스트에서 수익 우위가 검증된 매수 신호는 아니에요.",
                             "bull");
                 case WAIT_FOR_ZONE:
                     return new Action("🟠 구간 대기 (" + type + ")",
@@ -276,12 +294,24 @@ public final class TradingNarrative {
                             "warn");
                 case WAIT_TRIGGER:
                     return new Action("🟡 확인 대기 (" + type + ")",
-                            "진입 구간(" + zone + ") 안이지만 아직 반등 확인(양봉)이 없습니다. 지지를 확인한 뒤에 판단해도 늦지 않습니다. 손절 기준 " + stop + ".",
+                            "진입 구간(" + zone + ") 안이지만 오늘은 아직 양봉이 아닙니다. 양봉이 나와도 반등이 확정되는 것은 아니니, 손절 기준부터 정해 두세요. 손절 기준 " + stop + ".",
                             "neutral");
                 case CHASE_RISK:
                     return new Action("⚠️ 추격 주의 (" + type + ")",
                             "이미 진입 구간(" + zone + ")을 벗어나 올라와 있습니다. 지금 들어가면 손절 거리가 길어집니다. 되돌림이 구간 부근까지 오는지 기다리는 편이 유리합니다.",
                             "warn");
+                case BOUNDARY_WATCH: {
+                    double price = ctx.currentPrice();
+                    boolean nearLow = Math.abs(price - plan.entry().low()) <= Math.abs(price - plan.entry().high());
+                    String edge = nearLow ? "하단(" + fmt(plan.entry().low(), us) + ")" : "상단(" + fmt(plan.entry().high(), us) + ")";
+                    String wait = nearLow
+                            ? "하단 위에서 지지가 확인되고 반등 캔들이 나오는지"
+                            : "구간 안으로 내려와 지지를 확인하는지, 아니면 위로 멀어지는지";
+                    return new Action("👀 경계 확인 중 (" + type + ")",
+                            "오늘 가격이 진입 구간 " + edge + " 근처를 오르내리고 있습니다. 경계에서는 판정이 쉽게 바뀌니, "
+                                    + wait + " 조금 더 지켜본 뒤 판단하는 편이 안전합니다. 손절 기준 " + stop + ".",
+                            "neutral");
+                }
                 case RR_TOO_LOW:
                     return new Action("⚖️ 손익비 부족 (" + type + ")",
                             (plan.hasStructuralTarget()
@@ -301,8 +331,12 @@ public final class TradingNarrative {
                             "하방 압력이 우세한 구간이라 신규 진입의 근거가 부족합니다. 물타기보다는 20일선(" + fmt(ma20, us)
                                     + ") 회복과 거래량 감소 후 반전 양봉이 나오는지 확인한 뒤 판단하세요. 보유 중이라면 손절 기준을 다시 점검할 시점입니다.",
                             "bear");
-            case WARNING_ZONE, CLIMAX ->
-                    new Action("🔥 신규 추격 지양",
+            case WARNING_ZONE, CLIMAX -> phase == ChartPhase.WARNING_ZONE && !PhaseIndicators.hasOverheat(ctx)
+                    ? new Action("⚠️ 신규 진입 보류",
+                            "약세 신호가 겹쳐 신규 진입의 근거가 약합니다. 보유 중이라면 20일선(" + fmt(ma20, us)
+                                    + ") 또는 직전 지지를 이탈 기준으로 정해 두는 것을 권합니다.",
+                            "warn")
+                    : new Action("🔥 신규 추격 지양",
                             "과열 구간이라 신규 진입의 손익비가 불리합니다. 보유 중이라면 이익 구간을 지킬 이탈 기준(5일선 또는 직전 지지)을 정해 두는 것을 권합니다.",
                             "warn");
             case SCALE_OUT ->
@@ -335,9 +369,7 @@ public final class TradingNarrative {
         };
     }
 
-    // ------------------------------------------------------------------
     // 유틸
-    // ------------------------------------------------------------------
     private static void add(List<Narrative.Detail> list, String icon, String label, String text) {
         list.add(new Narrative.Detail(icon, label, text));
     }
@@ -348,7 +380,7 @@ public final class TradingNarrative {
         return (Double.isFinite(ma5) && ma5 > 0 && Double.isFinite(proj)) ? proj / ma5 : 0.0;
     }
 
-    /** 최근 종가에 소수점이 있거나 가격이 작으면 달러(미국 주식)로 본다. */
+    /** 최근 종가에 소수점이 있거나 가격이 작으면 달러(미국 주식)로 본다 */
     private static boolean isUsMarket(MarketContext ctx) {
         List<Double> closes = ctx.priceSeries().closes();
         if (closes != null && !closes.isEmpty()) {

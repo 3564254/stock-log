@@ -6,11 +6,7 @@
     <title>StockLog - 커뮤니티</title>
     <th:block th:replace="~{fragments/head :: assets}"></th:block>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <!--
-      글 상세. 글은 /api/community/posts/{id}, 댓글은 /api/community/posts/{id}/comments 에서 받는다.
-      좋아요·댓글·수정은 페이지를 다시 그리지 않고 그 부분만 바꾼다.
-      본문·댓글은 x-text 로만 넣는다(XSS 방지). 줄바꿈은 white-space: pre-wrap 으로 살린다.
-    -->
+    <!-- 글 상세. 글은 /api/community/posts/{id}, 댓글은 /api/community/posts/{id}/comments 에서 받는다 -->
     <style>
         :root { --content-max: 760px; }
 
@@ -243,7 +239,7 @@
                 }
             },
 
-            // ── 좋아요 ──
+            // 좋아요
             async toggleLike() {
                 if (this.liking) return;   // 연타 방지 (서버는 유니크 제약으로 한 번 더 막는다)
                 this.liking = true; this.postError = '';
@@ -258,7 +254,7 @@
                 }
             },
 
-            // ── 수정 · 삭제 ──
+            // 수정 · 삭제
             startEdit() {
                 this.edit = { title: this.post.title, content: this.post.content };
                 this.editError = ''; this.editing = true;
@@ -291,7 +287,7 @@
                 }
             },
 
-            // ── 댓글 ──
+            // 댓글
             async loadComments(more = false) {
                 this.cLoading = true;
                 try {

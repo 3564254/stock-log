@@ -11,27 +11,28 @@ import java.time.LocalDate;
 public record MarketDiagnosisDto(
         LocalDate date,
 
-        // ── [1] 수치화된 메인 스코어 및 추세 ──
+        // 수치화된 메인 스코어 및 추세
         double compositeScore,
         double scoreChange1D,
         double scoreChange5D,
         TrendDirection trendDirection,
         int regimeStreakDays,
 
-        // ── [2] 핵심 국면 판단 ──
+        // 핵심 국면 판단
         MarketRegimeType regime,
         RiskAppetiteType risk,
         String regimeDescription,
         int confidence,
 
-        // ── [3] 서브 그룹 점수 ──
+        // 서브 그룹 점수
         double sectorScore,
         double marketPriceScore,
         double macroLiquidityScore,
         double crossAssetScore,
 
-        // ── [4] AI 종합 코멘터리 ──
-        String comment
+        // AI 종합 코멘터리
+        String comment,
+        java.time.LocalDateTime commentAt   // 코멘트를 받은(실패한) 시각. 화면이 '다음 갱신'을 계산한다
 ) {
     public static MarketDiagnosisDto from(MarketDiagnosis marketDiagnosis) {
         return MarketDiagnosisDto.builder()
@@ -54,6 +55,7 @@ public record MarketDiagnosisDto(
                 .crossAssetScore(marketDiagnosis.getCrossAssetScore())
 
                 .comment(marketDiagnosis.getComment())
+                .commentAt(marketDiagnosis.getCommentAt())
                 .build();
     }
 }

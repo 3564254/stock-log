@@ -35,14 +35,14 @@ public class WatchlistService { // default 접근 제어자 유지 (Facade에서
         watchItemRepository.save(WatchItem.builder().stock(stockInfoProxy).member(memberProxy).build());
     }
 
-    // 💡 목록 조회: DB 값만 꺼내서 바로 DTO로 변환 (O(1) 초고속)
+    // 목록 조회: DB 값만 꺼내서 바로 DTO로 변환 (O(1) 초고속)
     public List<WatchItemDto> getWatchlist(Long memberId) {
         return watchItemRepository.findAllByMemberId(memberId).stream()
                 .map(WatchItemDto::of)
                 .toList();
     }
 
-    // 💡 단건 조회: 기존의 무거운 getWatchItemDto() 대신 바로 WatchItemDto::of 사용
+    // 단건 조회: 기존의 무거운 getWatchItemDto() 대신 바로 WatchItemDto::of 사용
     public WatchItemDto getWatchlistItem(Long memberId, String stockCode) {
         return watchItemRepository.findByMemberIdAndStockCode(memberId, stockCode)
                 .map(WatchItemDto::of)
@@ -54,11 +54,10 @@ public class WatchlistService { // default 접근 제어자 유지 (Facade에서
         watchItemRepository.deleteByMemberIdAndStockCode(memberId, stockCode);
     }
 
+    /** 관심 종목에 있을 때만 마지막 분석 결과를 저장한다 */
     @Transactional
     public void updateAnalyzedSignal(Long memberId, String stockCode, ChartPhase phase, Double targetPrice) {
-        WatchItem watchItem = watchItemRepository.findByMemberIdAndStockCode(memberId, stockCode)
-                .orElseThrow(() -> new BusinessException(ErrorCode.WATCH_ITEM_NOT_FOUND));
-
-        watchItem.updateAnalyzedSignal(phase, targetPrice);
+        watchItemRepository.findByMemberIdAndStockCode(memberId, stockCode)
+                .ifPresent(watchItem -> watchItem.updateAnalyzedSignal(phase, targetPrice));
     }
 }

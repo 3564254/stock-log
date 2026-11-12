@@ -20,7 +20,7 @@ public class Stock {
 
     @Id
     @Column(name = "stock_code", length = 20)
-    private String code; // 종목 코드 (예: 005930, AAPL)
+    private String code; // 종목 코드
 
     @Column(name = "standard_code", length = 50)
     private String standardCode; // 표준 코드 (ISIN 등)

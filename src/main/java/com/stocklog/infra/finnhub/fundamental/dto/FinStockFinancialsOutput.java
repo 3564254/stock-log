@@ -19,7 +19,7 @@ public class FinStockFinancialsOutput {
     @NoArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Metric {
-        // --- 수익성 ---
+        // 수익성
         @JsonProperty("grossMarginTTM")
         private BigDecimal grossMarginTTM;
 
@@ -35,21 +35,21 @@ public class FinStockFinancialsOutput {
         @JsonProperty("roaTTM")
         private BigDecimal roaTTM;
 
-        // --- 성장성 ---
+        // 성장성
         @JsonProperty("revenueGrowthTTMYoy")
         private BigDecimal revenueGrowthTTMYoy;
 
         @JsonProperty("epsGrowthTTMYoy")
         private BigDecimal epsGrowthTTMYoy;
 
-        // --- 배당 ---
+        // 배당
         @JsonProperty("currentDividendYieldTTM")
         private BigDecimal dividendYieldTTM;
 
         @JsonProperty("payoutRatioTTM")
         private BigDecimal payoutRatioTTM;
 
-        // --- 안정성 및 효율성 ---
+        // 안정성 및 효율성
         @JsonProperty("currentRatioQuarterly")
         private BigDecimal currentRatioQuarterly;
 
@@ -59,7 +59,7 @@ public class FinStockFinancialsOutput {
         @JsonProperty("inventoryTurnoverTTM")
         private BigDecimal inventoryTurnoverTTM;
 
-        // --- 기타 (필요시 추가) ---
+        // 기타 (필요시 추가)
         @JsonProperty("52WeekHigh")
         private BigDecimal high52Week;
 

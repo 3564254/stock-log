@@ -70,10 +70,7 @@ public record MarketContext(
         return of(dailyCharts, weeklyCharts, chartDataType, null);
     }
 
-    /**
-     * @param session 장중 거래량 보정에 쓰는 거래소 세션. null이면 보정 없이 원본 거래량으로 판정한다.
-     *                종목 코드가 있으면 {@code ExchangeSession.fromCode(code)}로 만든다.
-     */
+    /** 종목 코드가 있으면 {@code ExchangeSession.fromCode(code)}로 만든다 */
     public static MarketContext of(
             List<? extends CandleChartDto> dailyCharts,
             List<? extends CandleChartDto> weeklyCharts,

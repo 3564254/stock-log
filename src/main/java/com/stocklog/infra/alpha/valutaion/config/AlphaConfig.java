@@ -18,8 +18,7 @@ public class AlphaConfig {
     @Qualifier("alphaWebClient")
     public WebClient alphaWebClient(AlphaProperties properties) {
         return WebClient.builder()
-                .baseUrl("https://www.alphavantage.co") // 이 부분이 확실히 핀허브를 향해야 합니다.
-                .defaultHeader("apiKey", properties.getApiKey())
+                .baseUrl("https://www.alphavantage.co")                .defaultHeader("apiKey", properties.getApiKey())
                 .build();
     }
 }

@@ -9,7 +9,9 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "stock_news")
+// 기사 ID는 제공처마다 따로 매기므로 (제공처, 기사 ID)가 함께 고유하다
+@Table(name = "stock_news",
+        uniqueConstraints = @UniqueConstraint(name = "uk_stock_news_provider_news_id", columnNames = {"provider", "news_id"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class News {
@@ -18,7 +20,7 @@ public class News {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "news_id", unique = true, nullable = false)
+    @Column(name = "news_id", nullable = false)
     private String newsId;
 
     @Column(name = "category")

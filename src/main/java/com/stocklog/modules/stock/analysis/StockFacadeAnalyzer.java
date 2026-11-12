@@ -1,5 +1,7 @@
 package com.stocklog.modules.stock.analysis;
 
+import com.stocklog.modules.stock.analysis.score.ScoreBreakdown;
+
 import com.stocklog.modules.common.finance.context.MarketContext;
 import com.stocklog.modules.common.finance.indicator.phase.PhaseIndicators;
 import com.stocklog.modules.common.finance.model.ExchangeSession;
@@ -25,15 +27,12 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Slf4j
 public class StockFacadeAnalyzer {
-    // TODO(패턴): 여러 분석기를 조합해 StockAnalysisResult를 만드는 getAnalysisResult는 Facade 책임에 잘 맞는다.
-    // 단순 위임 메서드가 늘면 내부 분석기 API를 다시 노출하는 두 번째 관문이 되므로,
-    // Facade에는 '조합된 use-case'만 두고 단순 분석은 각 Analyzer를 직접 호출하는 경계를 유지한다.
     private final MomentumAnalyzer momentumAnalyzer;
     private final TechnicalAnalyzer technicalAnalyzer;
     private final ValuationAnalyzer valuationAnalyzer;
     private final TradingSignalAnalyzer tradingSignalAnalyzer;
 
-    /** 타점 엔진. 호출하는 쪽이 만든 MarketContext를 그대로 쓰므로 일봉/주봉 조립은 한 곳에서만 한다. */
+    /** 타점 엔진. 호출하는 쪽이 만든 MarketContext를 그대로 쓰므로 일봉/주봉 조립은 한 곳에서만 한다 */
     public TradingSignalResult analyzeTradingSignal(String symbol, MarketContext context) {
         return tradingSignalAnalyzer.analyze(symbol, context);
     }
@@ -42,20 +41,28 @@ public class StockFacadeAnalyzer {
         return PhaseIndicators.determinePhase(context);
     }
 
+    /** 종목 점수만. 매매 규칙의 점수 조건 검증용 */
+    public ScoreBreakdown getScoreBreakdown(StockSnapshot snapshot) {
+        return ScoreBreakdown.of(
+                valuationAnalyzer.analyze(snapshot.valuation(), snapshot.financial(), snapshot.info(), snapshot.price()),
+                momentumAnalyzer.analyze(snapshot.dailyCharts(), snapshot.price()),
+                technicalAnalyzer.analyze(snapshot.dailyCharts(), snapshot.weeklyCharts()));
+    }
+
     public StockAnalysisResult getAnalysisResult(StockSnapshot snapshot) {
         String code = snapshot.info().code();
 
-        // 1. 각 도메인별 분석
+        // 각 도메인별 분석
         MomentumScore momentumScore = momentumAnalyzer.analyze(snapshot.dailyCharts(), snapshot.price());
         TechnicalScore technicalScore = technicalAnalyzer.analyze(snapshot.dailyCharts(), snapshot.weeklyCharts());
         ValuationScore valuationScore = valuationAnalyzer.analyze(snapshot.valuation(), snapshot.financial(), snapshot.info(), snapshot.price());
 
-        // 2. 타점 엔진 (차트가 부족하면 MarketContext가 fallback으로 만들어져 INSUFFICIENT_DATA 결과가 나온다)
+        // 타점 엔진
         MarketContext context = MarketContext.of(snapshot.dailyCharts(), snapshot.weeklyCharts(),
                 ChartDataType.STOCK, ExchangeSession.fromCode(code));
         TradingSignalResult tradingSignal = tradingSignalAnalyzer.analyze(code, context);
 
-        // 3. 종합 점수
+        // 종합 점수
         int totalScore = getScore(momentumScore, technicalScore, valuationScore);
 
         return StockAnalysisResult.builder()

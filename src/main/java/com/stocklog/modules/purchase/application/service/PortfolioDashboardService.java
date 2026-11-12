@@ -10,9 +10,7 @@ import com.stocklog.modules.purchase.trade.service.TradeFacadeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-/**
- * PortfolioDashboardUseCase의 구현체 자리.
- */
+/** PortfolioDashboardUseCase의 구현체 자리 */
 @Service
 @RequiredArgsConstructor
 public class PortfolioDashboardService implements PortfolioDashboardUseCase {

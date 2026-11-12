@@ -9,13 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.Objects;
 
-/**
- * 댓글. parent 가 null 이면 댓글, 있으면 대댓글(1단계만 허용 — CommentService 에서 검증).
- * 대댓글 목록은 children 컬렉션 대신 parent_id IN (...) 한 번으로 가져온다.
- *
- * 인덱스 idx_comment_post_parent_id(post_id, parent_id, comment_id)
- *   → "이 글의 댓글(parent IS NULL)을 id 순으로 N개" 를 정렬 없이 인덱스 범위로 읽는다.
- */
+/** 댓글. parent 가 null 이면 댓글, 있으면 대댓글 */
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

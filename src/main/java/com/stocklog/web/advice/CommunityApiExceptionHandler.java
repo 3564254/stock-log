@@ -15,11 +15,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import java.util.Map;
 
-/**
- * 커뮤니티 API 전용 오류 응답.
- * GlobalExceptionHandler 는 오류 "화면"(error/404 등)을 돌려주는데, fetch 로 부르는 API 에 HTML 이 200 으로 가면
- * 화면에서 실패를 알 수 없다. 그래서 이 컨트롤러에 한해 상태 코드 + JSON 으로 돌려준다.
- */
+/** 커뮤니티 API 전용 오류 응답 */
 @Slf4j
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice(assignableTypes = CommunityApiController.class)
@@ -32,7 +28,7 @@ public class CommunityApiExceptionHandler {
                 .body(Map.of("code", e.getErrorCode().getCode(), "message", e.getMessage()));
     }
 
-    /** 좋아요를 동시에 두 번 눌러 uk_post_member 에 걸린 경우 등 — 이미 처리된 요청 */
+    /** 좋아요를 동시에 두 번 눌러 uk_post_member 에 걸린 경우 등 */
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, String>> conflict(DataIntegrityViolationException e) {
         log.info("[Community] 중복 요청 무시: {}", e.getMostSpecificCause().getMessage());

@@ -27,8 +27,8 @@ public class KisProfitRatioOutput {
     private String returnOnEquity;      // 자기자본 순이익률 (ROE)
 
     @JsonProperty("sale_ntin_rate")
-    private String netProfitMargin;     // 매출액 순이익률 (Net Profit Margin)
+    private String netProfitMargin;     // 매출액 순이익률
 
     @JsonProperty("sale_totl_rate")
-    private String grossProfitMargin;    // 매출액 총이익률 (Gross Profit Margin)
+    private String grossProfitMargin;    // 매출액 총이익률
 }

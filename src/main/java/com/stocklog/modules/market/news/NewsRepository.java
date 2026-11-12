@@ -10,8 +10,9 @@ import java.util.List;
 
 public interface NewsRepository extends JpaRepository<News, Long> {
 
-    @Query("SELECT s.newsId FROM News s WHERE s.newsId IN :newsIds")
-    List<String> findExistingNewsIds(@Param("newsIds") List<String> newsIds);
+    /** 같은 제공처 안에서 이미 저장된 기사 ID */
+    @Query("SELECT s.newsId FROM News s WHERE s.provider = :provider AND s.newsId IN :newsIds")
+    List<String> findExistingNewsIds(@Param("provider") NewsSource provider, @Param("newsIds") List<String> newsIds);
 
     @Query("SELECT s FROM News s WHERE s.related IS NULL OR s.related = ''")
     Page<News> findMarketNews(Pageable pageable);
@@ -20,8 +21,18 @@ public interface NewsRepository extends JpaRepository<News, Long> {
     @Query("SELECT s FROM News s WHERE s.provider = :provider AND (s.related IS NULL OR s.related = '')")
     Page<News> findMarketNewsByProvider(@Param("provider") NewsSource provider, Pageable pageable);
 
-    /** 출처별 최신 N건 (종목 기사 포함) — PageRequest.of(0, n)으로 개수 제한 */
+    /** 출처별 최신 N건 (종목 기사 포함) */
     List<News> findByProviderOrderByDateTimeDesc(NewsSource provider, Pageable pageable);
+
+    /** 종목 뉴스 */
+    List<News> findByRelatedAndProviderAndDateTimeAfterOrderByDateTimeDesc(
+            String related, NewsSource provider, java.time.LocalDateTime after, Pageable pageable);
+
+    List<News> findByProviderAndNewsIdIn(NewsSource provider, List<String> newsIds);
+
+    /** 종목 뉴스 (출처별) */
+    @Query("SELECT s FROM News s WHERE s.related = :code AND s.provider = :provider")
+    Page<News> findStockNewsByProvider(@Param("code") String code, @Param("provider") NewsSource provider, Pageable pageable);
 
     @Query("SELECT s FROM News s WHERE s.related = :code")
     Page<News> findStockNews(@Param("code") String code, Pageable pageable);

@@ -19,12 +19,12 @@ public final class GetDoublesUtils {
     private GetDoublesUtils() {
     }
 
-    // 1. 기본 요구 개수(20) 적용 오버로딩
+    // 기본 요구 개수(20) 적용 오버로딩
     public static List<Double> getDoubles(Map<IndexType, MarketChartData> data, IndexType indexType) {
         return getDoubles(data, indexType, getRuquiredSize(indexType));
     }
 
-    // 2. Map에서 데이터를 꺼내 위임
+    // Map에서 데이터를 꺼내 위임
     public static List<Double> getDoubles(Map<IndexType, MarketChartData> data, IndexType indexType, int required) {
         if (data == null || !data.containsKey(indexType)) {
             log.warn("[{}] 해당 인덱스의 차트 데이터가 존재하지 않습니다.", indexType != null ? indexType.getSeriesId() : "UNKNOWN");
@@ -33,7 +33,7 @@ public final class GetDoublesUtils {
         return getDoubles(data.get(indexType), indexType, required);
     }
 
-    // 3. MarketChartData에서 DTO 리스트 추출 후 위임
+    // MarketChartData에서 DTO 리스트 추출 후 위임
     public static List<Double> getDoubles(MarketChartData data, IndexType indexType, int required) {
         if (data == null || data.chartDataList() == null) {
             log.warn("[{}] 차트 데이터 목록이 null입니다.", indexType.getSeriesId());
@@ -50,7 +50,7 @@ public final class GetDoublesUtils {
         return getDoubles(indexChartDtos, indexType,  getRuquiredSize(indexType));
     }
 
-    // 4. 최종 변환 및 검증이 집중되는 단일 메서드
+    // 최종 변환 및 검증이 집중되는 단일 메서드
     public static List<Double> getDoubles(List<IndexChartDto> indexChartDtos, IndexType indexType, int required) {
         if (indexChartDtos == null || indexChartDtos.isEmpty()) {
             log.warn("[{}] 차트 정보가 비어있습니다.", indexType.getSeriesId());

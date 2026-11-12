@@ -18,7 +18,6 @@ public class PortfolioFacadeService {
     private final PortfolioService portfolioService;
     private final PortfolioAnalysisService portfolioAnalysisService;
 
-    // ================= Portfolio Service  ================= //
 
     public PortfolioResponse getMyPortfolio(Long memberId) {
         return portfolioService.getMyPortfolio(memberId);
@@ -30,11 +29,10 @@ public class PortfolioFacadeService {
     }
 
     @Transactional
-    public void deleteHolding(Long memberId, String stockCode) {
-        portfolioService.deleteHolding(memberId, stockCode);
+    public void deleteHolding(Long memberId, String stockCode, java.math.BigDecimal soldPrice) {
+        portfolioService.deleteHolding(memberId, stockCode, soldPrice);
     }
 
-    // ================= Portfolio Analysis ================= //
     public PortfolioAnalysisResponse analyzePortfolio(Long memberId) {
         PortfolioResponse portfolio = getMyPortfolio(memberId);
         return portfolioAnalysisService.analyzePortfolio(portfolio);

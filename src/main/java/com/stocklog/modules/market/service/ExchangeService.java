@@ -26,20 +26,18 @@ public class ExchangeService {
     private final List<ExchangeRateProvider> providers;   // @Order 순서 (Toss → 기존 API)
     private final ExchangeRateRepository exchangeRateRepository;
 
-    // TODO: 외부 API 호출이 트랜잭션 안에 있다. 호출 빈도가 낮아(최대 10분에 1번) 당장은 두지만,
-    //       나중에 조회(트랜잭션 밖)와 저장(짧은 트랜잭션)을 분리한다.
-    // 포트폴리오 조회(readOnly 트랜잭션) 안에서도 불리므로, 갱신 저장이 막히지 않게 별도 트랜잭션으로 연다
+    // TODO: 외부 API 호출이 트랜잭션 안에 있다
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ExchangeRateInfo fetchExchangeRate() {
         LocalDateTime now = LocalDateTime.now(KST);
         Optional<ExchangeRate> saved = exchangeRateRepository.findMainRate();
 
-        // 1) 아직 유효하면 DB 값 사용
+        // 아직 유효하면 DB 값 사용
         if (saved.isPresent() && saved.get().isFresh(now)) {
             return ExchangeRateInfo.from(saved.get());
         }
 
-        // 2) 없거나 만료됐으면 공급자 순서대로 조회해서 같은 행에 덮어쓴다
+        // 없거나 만료됐으면 공급자 순서대로 조회해서 같은 행에 덮어쓴다
         ExchangeRateInfo fresh = fetchFromProviders();
         if (fresh != null) {
             saved.ifPresentOrElse(
@@ -49,7 +47,7 @@ public class ExchangeService {
             return fresh;
         }
 
-        // 3) 모두 실패: 고정값보다는 지난 실제 환율이 낫다
+        // 모두 실패: 고정값보다는 지난 실제 환율이 낫다
         return saved.filter(ExchangeRate::hasValidRate)
                 .map(e -> {
                     log.warn("[Exchange] 공급자 전부 실패 → 지난 환율 사용 ({} 기준)", e.getFetchedAt());

@@ -21,7 +21,7 @@ public class StockValuation extends BaseTimeEntity {
     private String code;
 
     @Column(name = "base_date", nullable = false)
-    private LocalDate baseDate; // 기준일자 (예: 2026-04-23)
+    private LocalDate baseDate;
 
     @Column(precision = 10, scale = 2)
     private BigDecimal per;

@@ -12,7 +12,6 @@ import com.stocklog.infra.kis.fundamental.dto.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
@@ -21,9 +20,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static com.stocklog.modules.common.finance.util.FinancialUtils.isAvailable;
-import static com.stocklog.modules.common.finance.util.FinancialUtils.safeParse;
 
-@Component
+/** 사용 안 함 (빈 등록 해제): KIS가 국내주식 재무분석 API 7종을 2026-11-11 16:00에 종료한다 */
 @RequiredArgsConstructor
 @Slf4j
 public class KisDomesticFinanceProvider implements StockFinanceProvider {
@@ -41,12 +39,11 @@ public class KisDomesticFinanceProvider implements StockFinanceProvider {
     private final static String[] STABILITY_RATIO = {"/uapi/domestic-stock/v1/finance/stability-ratio", "FHKST66430600"};
     private final static String[] GROWTH_RATIO = {"/uapi/domestic-stock/v1/finance/growth-ratio", "FHKST66430800"};
 
-
     @Override
     public StockFinancialsResponse fetchFinancial(String symbol) {
 
         try {
-            // 1. API 호출 로그는 callApi 내부에서 수행되므로 결과 확인에 집중
+            // API 호출 로그는 callApi 내부에서 수행되므로 결과 확인에 집중
             List<KisIncomeStatementOutput> incomeList = callApiV1(INCOME_STATEMENT, symbol, new ParameterizedTypeReference<KisResponseV1<List<KisIncomeStatementOutput>>>() {});
             List<KisProfitRatioOutput> profitList = callApiV1(PROFIT_RATIO, symbol, new ParameterizedTypeReference<KisResponseV1<List<KisProfitRatioOutput>>>() {});
             List<KisFinancialRatioOutput> financialList = callApiV1(FINANCIAL_RATIO, symbol, new ParameterizedTypeReference<KisResponseV1<List<KisFinancialRatioOutput>>>() {});
@@ -64,31 +61,32 @@ public class KisDomesticFinanceProvider implements StockFinanceProvider {
             KisOtherMajorRatioOutput otherMajor = (otherMajorList != null && !otherMajorList.isEmpty()) ? otherMajorList.get(0) : null;
             KisStabilityRatioOutput stability = (stabilityList != null && !stabilityList.isEmpty()) ? stabilityList.get(0) : null;
 
-            // 3. 계산 과정 로그
-            BigDecimal operatingIncome = (income != null) ? safeParse(income.getOperatingIncome()) : BigDecimal.ZERO;
-            BigDecimal revenue = (income != null) ? safeParse(income.getRevenue()): BigDecimal.ZERO;
+            // 계산 과정 로그 결측은 0이 아니라 null로 둔다
+            BigDecimal operatingIncome = (income != null) ? parseOrNull(income.getOperatingIncome()) : null;
+            BigDecimal revenue = (income != null) ? parseOrNull(income.getRevenue()) : null;
 
-            BigDecimal operatingMargin = BigDecimal.ZERO;
-            if (isAvailable(operatingIncome) && isAvailable(revenue) && revenue.compareTo(BigDecimal.ZERO) != 0) {
+            BigDecimal operatingMargin = null;
+            if (operatingIncome != null && isAvailable(revenue)) {
                 operatingMargin = (operatingIncome.divide(revenue, 4, RoundingMode.HALF_UP))
                         .multiply(new BigDecimal(100))
                         .setScale(2, RoundingMode.HALF_UP);
             }
 
-
             StockFinancialDto financialDto = StockFinancialDto.builder()
                     .baseDate(LocalDate.now())
-                    .grossMargin((profit != null) ? safeParse(profit.getGrossProfitMargin()) : BigDecimal.ZERO)
+                    .grossMargin((profit != null) ? parseOrNull(profit.getGrossProfitMargin()) : null)
                     .operatingMargin(operatingMargin)
-                    .roe((profit != null) ? safeParse(profit.getReturnOnEquity()) : BigDecimal.ZERO)
-                    .roa((profit != null) ? safeParse(profit.getReturnOnTotalCapital()) : BigDecimal.ZERO)
-                    .revenueGrowth((financial != null) ? safeParse(financial.getRevenueGrowthRate()) : BigDecimal.ZERO)
-                    .epsGrowth((financial != null) ? safeParse(financial.getNetIncomeGrowthRate()) : BigDecimal.ZERO)
-                    .dividendYield(BigDecimal.ZERO)
-                    .payoutRatio((otherMajor != null) ? safeParse(otherMajor.getPayoutRatio()) : BigDecimal.ZERO)
-                    .currentRatio((stability != null) ? safeParse(stability.getCurrentRatio()) : BigDecimal.ZERO)
-                    .debtToEquity((financial != null) ? safeParse(financial.getDebtRatio()) : BigDecimal.ZERO)
-                    .inventoryTurnover(BigDecimal.ZERO)
+                    .netMargin((profit != null) ? parseOrNull(profit.getNetProfitMargin()) : null)
+                    .roe((profit != null) ? parseOrNull(profit.getReturnOnEquity()) : null)
+                    .roa((profit != null) ? parseOrNull(profit.getReturnOnTotalCapital()) : null)
+                    .revenueGrowth((financial != null) ? parseOrNull(financial.getRevenueGrowthRate()) : null)
+                    .epsGrowth((financial != null) ? parseOrNull(financial.getNetIncomeGrowthRate()) : null)
+                    .dividendYield(null)
+                    .payoutRatio((otherMajor != null) ? parseOrNull(otherMajor.getPayoutRatio()) : null)
+                    // 유동비율·부채비율: KIS는 % 단위라 배수로 바꾼다
+                    .currentRatio(percentToRatio((stability != null) ? parseOrNull(stability.getCurrentRatio()) : null))
+                    .debtToEquity(percentToRatio((financial != null) ? parseOrNull(financial.getDebtRatio()) : null))
+                    .inventoryTurnover(null)    // 이 Provider가 호출하는 재무 API에는 재고자산회전율이 없다
                     .build();
 
             return StockFinancialsResponse.builder()
@@ -102,11 +100,25 @@ public class KisDomesticFinanceProvider implements StockFinanceProvider {
         }
     }
 
+    /** 값이 없거나(빈 문자열·"null") 숫자가 아니면 null. 실제 "0"은 0으로 둔다 */
+    private static BigDecimal parseOrNull(String val) {
+        if (val == null || val.isBlank() || "null".equalsIgnoreCase(val.trim())) return null;
+        try {
+            return new BigDecimal(val.trim().replace(",", ""));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** % → 배수. null은 그대로 */
+    private static BigDecimal percentToRatio(BigDecimal percent) {
+        return percent == null ? null : percent.divide(new BigDecimal(100), 4, RoundingMode.HALF_UP);
+    }
+
     @Override
     public StockEarningResponse fetchEarnings(String symbol) {
         return null;
     }
-
 
     @Override
     public boolean supports(MarketType marketType) {

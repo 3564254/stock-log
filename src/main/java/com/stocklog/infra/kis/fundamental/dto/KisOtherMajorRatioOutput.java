@@ -27,7 +27,7 @@ public class KisOtherMajorRatioOutput {
     private String eva;         // EVA (경제적 부가가치)
 
     @JsonProperty("ebitda")
-    private String ebitda;      // EBITDA (법인세·이자·감가상각비 차감 전 영업이익)
+    private String ebitda;      // EBITDA
 
     @JsonProperty("ev_ebitda")
     private String evEbitda;    // EV/EBITDA (기업가치 / EBITDA)

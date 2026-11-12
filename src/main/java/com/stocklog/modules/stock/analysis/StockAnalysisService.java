@@ -20,6 +20,10 @@ public class StockAnalysisService {
         return facadeAnalyzer.getAnalysisResult(snapshot);
     }
 
+    public com.stocklog.modules.stock.analysis.score.ScoreBreakdown getScoreBreakdown(StockSnapshot snapshot) {
+        return facadeAnalyzer.getScoreBreakdown(snapshot);
+    }
+
     public TradingSignalResult getTradingSignal(String symbol, MarketContext marketContext) {
         return facadeAnalyzer.analyzeTradingSignal(symbol, marketContext);
     }

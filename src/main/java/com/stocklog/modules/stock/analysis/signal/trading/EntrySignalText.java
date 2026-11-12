@@ -10,7 +10,7 @@ import java.util.List;
 
 import static com.stocklog.modules.common.finance.indicator.phase.PhaseConst.*;
 
-/** 진입 판정의 문구 + 매수 가중치. 매수 가중치는 ACTIONABLE일 때만 부여한다. */
+/** 진입 판정의 문구 + 매수 가중치. 매수 가중치는 ACTIONABLE일 때만 부여한다 */
 public final class EntrySignalText {
 
     private EntrySignalText() {}
@@ -33,16 +33,18 @@ public final class EntrySignalText {
             case WAIT_FOR_ZONE -> b.addWatchSignal(
                     String.format("⏳ [%s 대기] 현재가가 구간 위. %s / %s", label, zone, risk));
             case WAIT_TRIGGER -> b.addWatchSignal(
-                    String.format("⏳ [%s 확인 대기] 구간 안이나 반등 확인(양봉) 전. %s", label, zone));
+                    String.format("⏳ [%s 확인 대기] 구간 안이나 오늘 양봉 전(양봉도 반등 확정은 아님). %s", label, zone));
             case CHASE_RISK -> b.addWatchSignal(
                     String.format("⚠️ [추격 주의] %s 구간을 이미 벗어남. %s", label, zone));
             case RR_TOO_LOW -> b.addWatchSignal(
                     String.format("⚖️ [손익비 부족] %s. %s / %s", label, risk, tgt));
+            case BOUNDARY_WATCH -> b.addWatchSignal(
+                    String.format("👀 [경계 확인 중] 오늘 %s 구간 경계를 오르내리는 중. 판정이 쉽게 바뀌는 자리라 조금 더 지켜봄. %s", label, zone));
             case NO_SETUP -> { }
         }
     }
 
-    /** 진입 계획이 없거나 대기 중일 때: 가까운 지지/저항 구간과 과열 여부를 관찰 신호로 남긴다. */
+    /** 진입 계획이 없거나 대기 중일 때: 가까운 지지/저항 구간과 과열 여부를 관찰 신호로 남긴다 */
     public static void explain(SignalInputs in, List<PriceZone> zones, MarketContext ctx, SignalStrengthBuilder b) {
         double price = in.price();
 
@@ -74,6 +76,7 @@ public final class EntrySignalText {
             case PULLBACK -> BASE_PULLBACK;
             case BREAKOUT -> BASE_BREAKOUT;
             case RECLAIM  -> BASE_RECLAIM;
+            case KNEE     -> BASE_KNEE;
             case NONE, INSUFFICIENT_DATA -> 0.0;
         };
         // 구조적 목표가 없으면 RR을 검증할 수 없으므로 절반만 반영

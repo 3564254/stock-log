@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 
 @Entity
 @Getter
@@ -22,8 +23,7 @@ public class Holding extends BaseTimeEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // TODO(JPA): 평균 매입가는 여러 요청이 동시에 수정할 수 있는 값이다.
-    // 낙관적 락(@Version)을 도입하고 OptimisticLockException 발생 시의 재시도/사용자 안내 정책을 설계해 보자.
+    // TODO: 평균 매입가 동시 수정 대비 (낙관적 락)
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
@@ -34,23 +34,56 @@ public class Holding extends BaseTimeEntity {
     private StockInfo stock;
 
     @Column(precision = 18, scale = 4)
-    private BigDecimal averagePrice; // 평균 매수 단가 (수익률·전략 검증의 기준선)
+    private BigDecimal averagePrice; // 평균 매수 단가
 
-    // 보유 수량 (선택 입력). 소수점 거래를 고려해 소수 6자리까지.
-    // null이면 평가금액·비중 계산에서 빠지고 수익률만 보여 준다.
+    // 보유 수량 (선택 입력). 소수점 거래를 고려해 소수 6자리까지
     @Column(precision = 18, scale = 6)
     private BigDecimal quantity;
 
     @Column(precision = 18, scale = 4)
     private BigDecimal highestPriceSinceBuy; // 트레이링 스톱(고점 대비 하락) 전략용 추적 필드
 
+    // 매수(또는 평단 변경) 시점에 타점 엔진이 낸 진입 계획의 구조적 손절가. 계획이 없을 때 산 종목은 null
+    @Column(name = "entry_stop", precision = 18, scale = 4)
+    private BigDecimal entryStop;
+
+    // 지금 평단으로 보유를 시작한 날. 매수 후 최고가를 이날 이후 종가로 계산한다
+    @Column(name = "basis_date")
+    private LocalDate basisDate;
+
+    // 보유 방식. null = 기본
+    @Column(name = "hold_style", length = 20)
+    private String holdStyle;
+
     @Builder
-    public Holding(Member member, StockInfo stock, BigDecimal averagePrice, BigDecimal quantity, BigDecimal highestPriceSinceBuy) {
+    public Holding(Member member, StockInfo stock, BigDecimal averagePrice, BigDecimal quantity, BigDecimal highestPriceSinceBuy,
+                   BigDecimal entryStop) {
         this.member = member;
         this.stock = stock;
         this.averagePrice = averagePrice;
         this.quantity = quantity;
         this.highestPriceSinceBuy = highestPriceSinceBuy;
+        this.entryStop = entryStop;
+        this.basisDate = LocalDate.now();
+    }
+
+    /** 지금 평단의 보유 시작일 */
+    public LocalDate basisDateOrCreated() {
+        if (basisDate != null) return basisDate;
+        return getCreatedDate() != null ? getCreatedDate().toLocalDate() : null;
+    }
+
+    /** 평단이 바뀌면(추가 매수 등) 새 포지션으로 보고 최고가와 매수 시점 손절가를 다시 잡는다 */
+    public void resetForNewBasis(BigDecimal newAveragePrice, BigDecimal newEntryStop) {
+        this.averagePrice = newAveragePrice;
+        this.highestPriceSinceBuy = newAveragePrice;
+        this.entryStop = newEntryStop;
+        this.basisDate = LocalDate.now();
+    }
+
+    /** 보유 방식 바꾸기. "MOMENTUM"이 아니면 기본(null) */
+    public void updateHoldStyle(String style) {
+        this.holdStyle = "MOMENTUM".equalsIgnoreCase(style == null ? "" : style.trim()) ? "MOMENTUM" : null;
     }
 
     // 물타기(추가 매수) 등 발생 시 평단가만 갱신

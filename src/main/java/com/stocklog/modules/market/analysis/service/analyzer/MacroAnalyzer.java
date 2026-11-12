@@ -25,16 +25,16 @@ public class MacroAnalyzer implements MarketAnalyzer {
 
     @Override
     public MarketAnalyzerScore analyze(Map<IndexType,MarketChartData> data) {
-        // 1. 물가 (Inflation)
+        // 물가 (Inflation)
         List<Double> cpiCloses = getDoubles(data, IndexType.US_CPI);
         List<Double> pceCloses = getDoubles(data, IndexType.US_CORE_PCE);
 
-        // 2. 고용 (Employment)
+        // 고용 (Employment)
         List<Double> unempCloses = getDoubles(data, IndexType.US_UNEMPLOYMENT_RATE);
         List<Double> nfpCloses = getDoubles(data, IndexType.US_NONFARM_PAYROLLS);
         List<Double> claimsCloses = getDoubles(data, IndexType.US_INITIAL_CLAIMS);
 
-        // 3. 경기/소비 (Economy & Consumption)
+        // 경기/소비
         List<Double> gdpCloses = getDoubles(data, IndexType.US_GDP);
         List<Double> retailCloses = getDoubles(data, IndexType.US_RETAIL_SALES);
         List<Double> sentimentCloses = getDoubles(data, IndexType.US_CONSUMER_SENTIMENT);
@@ -58,10 +58,7 @@ public class MacroAnalyzer implements MarketAnalyzer {
         return new MarketAnalyzerScore("MacroCycle", totalScore, category, details);
     }
 
-    /**
-     * [팩터 1] 물가 분석 (최대 ±20점)
-     * 물가 상승 폭이 둔화되거나 하락하면 긍정적(Risk-On/Expansion 환경), 상승 가속 시 부정적(Stagflation/금리 인상 우려)
-     */
+    /** 팩터 1 물가 분석 (최대 ±20점) */
     private double analyzeInflation(List<Double> cpi, List<Double> pce) {
         double score = 0;
         // CPI (±10점)
@@ -71,10 +68,7 @@ public class MacroAnalyzer implements MarketAnalyzer {
         return score;
     }
 
-    /**
-     * [팩터 2] 고용 분석 (최대 ±40점)
-     * 실업률과 실업수당 청구 건수는 낮아져야 긍정적, 비농업 고용은 증가해야 긍정적
-     */
+    /** 팩터 2 고용 분석 (최대 ±40점) */
     private double analyzeEmployment(List<Double> unemp, List<Double> nfp, List<Double> claims) {
         double score = 0;
         // 실업률 (역지표, ±15점)
@@ -86,10 +80,7 @@ public class MacroAnalyzer implements MarketAnalyzer {
         return score;
     }
 
-    /**
-     * [팩터 3] 경기 및 소비 분석 (최대 ±40점)
-     * GDP, 소매판매, 산업생산, 소비심리 모두 성장 및 가속 여부 확인
-     */
+    /** 팩터 3 경기 및 소비 분석 (최대 ±40점) */
     private double analyzeEconomy(List<Double> gdp, List<Double> retail, List<Double> sentiment, List<Double> indpro) {
         double score = 0;
         // GDP (정지표, ±10점)
@@ -103,10 +94,7 @@ public class MacroAnalyzer implements MarketAnalyzer {
         return score;
     }
 
-    /**
-     * 정지표(높아지면 좋은 지표: GDP, 고용, 소매판매 등) 점수 평가
-     * 절대값 상승(+50%) 및 과거 대비 상승폭 가속 여부(+50%)를 함께 반영
-     */
+    /** 정지표 점수 평가 */
     private double evaluatePositiveIndicator(List<Double> closes, double maxScore) {
         if (closes == null || closes.size() < 3) return 0.0;
 
@@ -119,20 +107,18 @@ public class MacroAnalyzer implements MarketAnalyzer {
         double currentDelta = cur - prev1;
         double pastDelta = prev1 - prev2;
 
-        // 1. 방향 (증가하면 점수 부여)
+        // 방향 (증가하면 점수 부여)
         if (currentDelta > 0) score += (maxScore * 0.5);
         else score -= (maxScore * 0.5);
 
-        // 2. 가속도 (성장 폭이 더 커지면 점수 추가, 둔화되면 삭감)
+        // 가속도
         if (currentDelta > pastDelta) score += (maxScore * 0.5);
         else score -= (maxScore * 0.5);
 
         return score;
     }
 
-    /**
-     * 역지표(낮아져야 좋은 지표: 실업률, CPI, 실업수당 청구 등) 점수 평가
-     */
+    /** 역지표 점수 평가 */
     private double evaluateNegativeIndicator(List<Double> closes, double maxScore) {
         if (closes == null || closes.size() < 3) return 0.0;
 
@@ -145,20 +131,18 @@ public class MacroAnalyzer implements MarketAnalyzer {
         double currentDelta = cur - prev1;
         double pastDelta = prev1 - prev2;
 
-        // 1. 방향 (감소하면 긍정적)
+        // 방향 (감소하면 긍정적)
         if (currentDelta < 0) score += (maxScore * 0.5);
         else score -= (maxScore * 0.5);
 
-        // 2. 가속도 (상승 폭 둔화 시 긍정적)
+        // 가속도 (상승 폭 둔화 시 긍정적)
         if (currentDelta < pastDelta) score += (maxScore * 0.5);
         else score -= (maxScore * 0.5);
 
         return score;
     }
 
-    /**
-     * 문서 10항에 명시된 5가지 경기 사이클 도출 로직
-     */
+    /** 문서 10항에 명시된 5가지 경기 사이클 도출 로직 */
     private String determineMacroRegime(double totalScore, double inflationScore, double employmentScore, double economyScore) {
         boolean isEconomyStrong = economyScore > 10;
         boolean isEconomySlowing = economyScore < -10;

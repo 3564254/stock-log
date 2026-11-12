@@ -23,7 +23,7 @@ public class SignalStrengthBuilder {
     private int buyWeight;
     private int sellWeight;
 
-    // ── 신호 + 가중치를 한 번에 ──
+    // 신호 + 가중치를 한 번에
     public void addBuySignal(String signal, int weight) {
         addBuySignal(signal);
         addBuyWeight(weight);
@@ -34,13 +34,13 @@ public class SignalStrengthBuilder {
         addSellWeight(weight);
     }
 
-    // ── 신호만 ──
+    // 신호만
     public void addBuySignal(String signal)   { addIfPresent(buySignals, signal); }
     public void addSellSignal(String signal)  { addIfPresent(sellSignals, signal); }
     /** 매수/매도 어느 쪽도 아닌 관찰 신호 (가중치 없음) */
     public void addWatchSignal(String signal) { addIfPresent(watchSignals, signal); }
 
-    // ── 가중치만 ──
+    // 가중치만
     public void addBuyWeight(int weight)  { this.buyWeight += weight; }
     public void addSellWeight(int weight) { this.sellWeight += weight; }
 
@@ -50,7 +50,7 @@ public class SignalStrengthBuilder {
         }
     }
 
-    // ── 결과 ──
+    // 결과
     public SignalResult build() {
         return new SignalResult(
                 List.copyOf(buySignals),

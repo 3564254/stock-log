@@ -8,10 +8,10 @@ import java.util.List;
 
 @Builder
 public record PortfolioAnalysisResult(
-        // 1. 기본 자산 정보
+        // 기본 자산 정보
         List<HoldingResponse> myStocks,
 
-        // 2. 분석 정보
+        // 분석 정보
         PortfolioAnalysisResponse analysis
 ) {
 

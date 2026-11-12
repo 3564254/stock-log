@@ -33,7 +33,7 @@ public class CrossAssetAnalyzer implements MarketAnalyzer {
 
     @Override
     public MarketAnalyzerScore analyze(Map<IndexType,MarketChartData> data) {
-        // 1. 주요 자산군 데이터 추출 및 수익률 계산 (20일 모멘텀 기준)
+        // 주요 자산군 데이터 추출 및 수익률 계산 (20일 모멘텀 기준)
         double stocks = getReturn(data, IndexType.SP500);
         double yields = getReturn(data, IndexType.US_TREASURY_10Y);
         double dollar = getReturn(data, IndexType.DOLLAR_INDEX);
@@ -45,10 +45,10 @@ public class CrossAssetAnalyzer implements MarketAnalyzer {
 
         AssetReturns20 returns = new AssetReturns20(stocks, yields, dollar, oil, gold, bitcoin, vix, hySpread);
 
-        // 2. 자산군 상관관계를 통한 매크로 환경 판별
+        // 자산군 상관관계를 통한 매크로 환경 판별
         String narrative = determineNarrative(returns);
 
-        // 3. 자산간 다이버전스 및 조합을 고려한 종합 점수 산출 (-100 ~ +100)
+        // 자산간 다이버전스 및 조합을 고려한 종합 점수 산출 (-100 ~ +100)
         double score = calculateScore(returns);
         ScoreCategory category = MarketAnalyzerScore.categorize(score);
         CrossAssetDetails details = new CrossAssetDetails(returns, narrative);
@@ -56,9 +56,7 @@ public class CrossAssetAnalyzer implements MarketAnalyzer {
         return new MarketAnalyzerScore("CrossAsset", score, category, details);
     }
 
-    /**
-     * 자산군들의 동시 움직임을 파악하여 현재 시장의 매크로 내러티브 도출
-     */
+    /** 자산군들의 동시 움직임을 파악하여 현재 시장의 매크로 내러티브 도출 */
     private String determineNarrative(AssetReturns20 r) {
         boolean isStocksUp = r.stocks() > 0;
         boolean isYieldsUp = r.yields() > 0;
@@ -72,7 +70,7 @@ public class CrossAssetAnalyzer implements MarketAnalyzer {
         if (isStocksUp && isYieldsUp && isDollarUp && isOilUp) {
             return "REFLATION_GROWTH";
         }
-        // 문서 예시 2: 주가하락 + VIX급등 + 신용스프레드확대 + 달러상승 + 금상승 (극단적 위험 회피 및 패닉)
+        // 문서 예시 2: 주가하락 + VIX급등 + 신용스프레드확대 + 달러상승 + 금상승
         if (!isStocksUp && isVixUp && isHySpreadUp && isDollarUp && isGoldUp) {
             return "PANIC_RISK_OFF";
         }
@@ -88,9 +86,7 @@ public class CrossAssetAnalyzer implements MarketAnalyzer {
         return "MIXED_SIGNALS"; // 혼조세
     }
 
-    /**
-     * 개별 자산의 방향성 및 조합을 통해 Risk-On / Risk-Off 점수 산출
-     */
+    /** 개별 자산의 방향성 및 조합을 통해 Risk-On / Risk-Off 점수 산출 */
     private double calculateScore(AssetReturns20 r) {
         double score = 0;
 
@@ -101,7 +97,7 @@ public class CrossAssetAnalyzer implements MarketAnalyzer {
         if (r.bitcoin() > 0) score += 15;
         else score -= 15;
 
-        // VIX, 신용 스프레드, 달러 (안전자산/위험지표 안정 시 가산점, 불안 시 감점)
+        // VIX, 신용 스프레드, 달러
         if (r.vix() < 0) score += 15;
         else score -= 15;
 
@@ -115,7 +111,7 @@ public class CrossAssetAnalyzer implements MarketAnalyzer {
         if (r.stocks() > 0 && r.yields() < 0) score += 15; // 금리 하락이 주가를 견인하는 유동성 장세
         if (r.stocks() < 0 && r.yields() > 0) score -= 15; // 금리 상승이 밸류에이션을 압박하는 긴축 우려
 
-        // 유가와 주가의 관계 (성장 견인 vs 인플레이션 우려)
+        // 유가와 주가의 관계
         if (r.oil() > 0 && r.stocks() > 0) score += 10;
         if (r.oil() > 0 && r.stocks() < 0) score -= 10;
 

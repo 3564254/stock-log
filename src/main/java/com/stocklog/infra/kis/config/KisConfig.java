@@ -23,11 +23,13 @@ public class KisConfig {
 
     private final KisProperties kisProperties;
 
+    /** 스크리닝·화면 요청이 겹쳐도 한도(초당 20건)를 넘지 않도록 여유를 둔 값 */
+    private static final int MAX_REQUESTS_PER_SECOND = 15;
+
     @Bean
     @Primary
     public WebClient kisWebClient() {
-        // 1. 커넥션 풀 설정
-        // KIS 서버의 유휴 연결 끊기 시간보다 짧게 설정하는 것이 핵심입니다.
+        // 커넥션 풀 설정 KIS 서버의 유휴 연결 끊기 시간보다 짧게 설정하는 것이 핵심입니다
         ConnectionProvider provider = ConnectionProvider.builder("kis-api-pool")
                 .maxConnections(50)                         // 최대 연결 수
                 .maxIdleTime(Duration.ofSeconds(20))        // 유휴 상태 유지 시간 (20초 지나면 폐기)
@@ -36,7 +38,7 @@ public class KisConfig {
                 .evictInBackground(Duration.ofSeconds(20))  // 백그라운드에서 만료된 연결 제거 주기
                 .build();
 
-        // 2. HttpClient 설정 (타임아웃 등)
+        // HttpClient 설정 (타임아웃 등)
         HttpClient httpClient = HttpClient.create(provider)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000) // 연결 타임아웃 5초
                 .responseTimeout(Duration.ofSeconds(10))            // 응답 타임아웃 10초
@@ -45,10 +47,12 @@ public class KisConfig {
                                 .addHandlerLast(new WriteTimeoutHandler(10)) // 쓰기 타임아웃
                 );
 
-        // 3. WebClient 빌드
+        // WebClient 빌드
         return WebClient.builder()
                 .baseUrl(kisProperties.baseUrl())
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
+                // KIS 초당 호출 한도(실전 20건) 안쪽으로 요청 간격을 맞추고, 5xx 본문(msg_cd)을 로그에 남긴다
+                .filter(new KisRequestThrottle(MAX_REQUESTS_PER_SECOND))
                 .build();
     }
 

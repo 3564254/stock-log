@@ -18,17 +18,17 @@ public class GlobalExceptionHandler {
         model.addAttribute("errorMessage", e.getMessage());
         HttpStatus status = e.getErrorCode().getStatus();
 
-        // 1. 404 Not Found 계열 (예: MEMBER_NOT_FOUND, STOCK_NOT_FOUND 등)
+        // 404 Not Found 계열
         if (status == HttpStatus.NOT_FOUND) {
             return "error/404";
         }
 
-        // 2. 403 Forbidden 계열 (예: FORBIDDEN_ACCESS)
+        // 403 Forbidden 계열
         if (status == HttpStatus.FORBIDDEN) {
             return "error/403";
         }
 
-        // 3. 그 외 (500 서버 에러 및 기타)
+        // 그 외
         return "error/500";
     }
 

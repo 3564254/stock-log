@@ -16,5 +16,5 @@ public record EngineInput(
         MarketAnalyzerScore defensive,
         MarketAnalyzerScore crossAsset,
         MarketAnalyzerScore divergence,
-        MarketAnalyzerScore shock          // 단기 급락·변동성 급등 감지 (가중합에는 넣지 않고 국면 문구·경고에만 쓴다)
+        MarketAnalyzerScore shock          // 단기 급락·변동성 급등 감지
 ) {}

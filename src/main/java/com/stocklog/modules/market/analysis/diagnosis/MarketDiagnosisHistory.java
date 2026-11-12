@@ -31,7 +31,7 @@ public class MarketDiagnosisHistory {
     @Column(nullable = false, unique = true)
     private LocalDate date;
 
-    // ── [1] 핵심 시계열 지표 ──
+    // 핵심 시계열 지표
     @Column(nullable = false)
     private double compositeScore;
 
@@ -49,7 +49,7 @@ public class MarketDiagnosisHistory {
     @Column(nullable = false)
     private int confidence;
 
-    // ── [2] 세부 분석기별 시계열 점수 (다중 라인 차트 렌더링 및 통계용) ──
+    // 세부 분석기별 시계열 점수
     @Column(nullable = false)
     private double trendScore;       // MarketTrend
 
@@ -57,7 +57,7 @@ public class MarketDiagnosisHistory {
     private double momentumScore;    // MarketMomentum
 
     @Column(nullable = false)
-    private double breadthScore;     // MarketBreadth (시장 건전성 및 왜곡 감지)
+    private double breadthScore;     // MarketBreadth
 
     @Column(nullable = false)
     private double ratesScore;       // InterestRates
@@ -80,7 +80,7 @@ public class MarketDiagnosisHistory {
     @Column(nullable = false)
     private double crossAssetScore;  // CrossAsset
 
-    // ── [3] 거시 국면 및 경고 플래그 ──
+    // 거시 국면 및 경고 플래그
     @Enumerated(EnumType.STRING)
     @Column(name = "macro_regime", length = 30)
     private MacroRegimeType macroRegime;
@@ -91,7 +91,7 @@ public class MarketDiagnosisHistory {
     @Column(nullable = false)
     private boolean hasBreadthDivergence; // 대형주 쏠림 등 시장 너비 괴리 여부
 
-    // ── [4] 세부 분석 원본 데이터 (필요시 백테스팅/디버깅용) ──
+    // 세부 분석 원본 데이터 (필요시 백테스팅/디버깅용)
     @Column(columnDefinition = "LONGTEXT") // JSON 크기를 고려해 TEXT -> LONGTEXT 권장
     private String rawEngineInputJson;
 

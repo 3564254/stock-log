@@ -7,7 +7,7 @@ public record TradingRuleCheckRequest(
         Long wishListId,
 
         Double currentRsi,   // 실시간 RSI 수치
-        String ma20Trend,    // 20일선 추세 방향 (UP, DOWN, FLAT)
+        String ma20Trend,    // 20일선 추세 방향
         Double currentVolume // 실시간 거래량 수치
 ) {
 }

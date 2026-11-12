@@ -12,20 +12,18 @@ import java.util.Set;
 
 import static com.stocklog.modules.common.finance.indicator.phase.PhaseConst.*;
 
-/**
- * 진입 계획 수립: 진입 유형별 구간 + 구조적 손절 -> 목표 -> RR -> 판정(Verdict).
- * 상태가 없는 순수 계산이라 전부 static이다. ATR은 구간 폭, 손절 버퍼, 추격 여부에만 쓴다.
- */
+/** 진입 계획 수립: 진입 유형별 구간 + 구조적 손절 -> 목표 -> RR -> 판정(Verdict) */
 public final class EntryPlanner {
 
     private EntryPlanner() {}
 
-    /** 신규 진입 계획을 세울 수 있는 Phase. STRONG_HOLD는 보유 관점이라 제외한다. */
+    /** 신규 진입 계획을 세울 수 있는 Phase */
     private static final Set<ChartPhase> PLANNABLE = EnumSet.of(
             ChartPhase.ENTRY_READY, ChartPhase.RE_ENTRY,
-            ChartPhase.COOLDOWN, ChartPhase.RECOVERY_WATCH);
+            ChartPhase.COOLDOWN, ChartPhase.RECOVERY_WATCH,
+            ChartPhase.STRONG_HOLD, ChartPhase.SETUP);
 
-    /** 정식 타점이 없어도 참고 가격대를 보여줄 Phase. 하락·손절 계열은 일부러 제외한다. */
+    /** 정식 타점이 없어도 참고 가격대를 보여줄 Phase. 하락·손절 계열은 일부러 제외한다 */
     private static final Set<ChartPhase> REFERENCE_PHASES = EnumSet.of(
             ChartPhase.WATCH, ChartPhase.SETUP, ChartPhase.ENTRY_READY, ChartPhase.RE_ENTRY,
             ChartPhase.COOLDOWN, ChartPhase.STRONG_HOLD, ChartPhase.RECOVERY_WATCH,
@@ -39,14 +37,28 @@ public final class EntryPlanner {
         return REFERENCE_PHASES.contains(phase);
     }
 
-    /** NONE, INSUFFICIENT_DATA는 계획 대상이 아니다. */
-    public static boolean isPlannableType(EntryType type) {
-        return type == EntryType.PULLBACK || type == EntryType.BREAKOUT || type == EntryType.RECLAIM;
+    /** 계획을 시도할 진입 유형 순서. 앞에서부터 build()가 성공하는 첫 유형을 쓴다 */
+    public static List<EntryType> candidateTypes(ChartPhase phase, EntryType classified) {
+        if (!isPlannablePhase(phase)) return List.of();
+        List<EntryType> defaults = switch (phase) {
+            case ENTRY_READY -> List.of(EntryType.BREAKOUT, EntryType.PULLBACK);
+            case RECOVERY_WATCH -> List.of(EntryType.RECLAIM, EntryType.KNEE); // 피봇 탈환이 안 되면(아직 아래면) 무릎
+            case RE_ENTRY, COOLDOWN, STRONG_HOLD, SETUP -> List.of(EntryType.PULLBACK);
+            default -> List.of();
+        };
+        java.util.LinkedHashSet<EntryType> order = new java.util.LinkedHashSet<>();
+        if (isPlannableType(classified)) order.add(classified);
+        order.addAll(defaults);
+        return List.copyOf(order);
     }
 
-    // ------------------------------------------------------------------
+    /** NONE, INSUFFICIENT_DATA는 계획 대상이 아니다 */
+    public static boolean isPlannableType(EntryType type) {
+        return type == EntryType.PULLBACK || type == EntryType.BREAKOUT || type == EntryType.RECLAIM
+                || type == EntryType.KNEE;
+    }
+
     // 진입 유형별 진입 구간 + 구조적 손절
-    // ------------------------------------------------------------------
     private record EntryStop(PriceZone zone, double stop) {}
 
     public static Optional<EntrySetup> build(EntryType type, SignalInputs in, List<PriceZone> zones) {
@@ -54,21 +66,21 @@ public final class EntryPlanner {
             case PULLBACK -> pullbackEntry(in, zones);
             case BREAKOUT -> breakoutEntry(in);
             case RECLAIM  -> reclaimEntry(in);
+            case KNEE     -> kneeEntry(in);
             case NONE, INSUFFICIENT_DATA -> Optional.empty();
         };
         return es.flatMap(x -> finish(type, x.zone(), x.stop(), in, zones));
     }
 
-    /** 진입 구간과 손절이 정해진 뒤 기준가, 목표, RR을 채워 계획을 완성한다. */
+    /** 진입 구간과 손절이 정해진 뒤 기준가, 목표, RR을 채워 계획을 완성한다 */
     private static Optional<EntrySetup> finish(EntryType type, PriceZone entry, double stop,
                                                SignalInputs in, List<PriceZone> zones) {
         // 구간 안이면 현재가, 구간 위면 구간 상단(보수적 체결 가정)을 기준가로 쓴다
-        double ref = Math.min(in.price(), entry.high());
+        double ref = Math.max(entry.low(), Math.min(in.price(), entry.high()));
         double risk = ref - stop;
         if (risk <= 0) return Optional.empty();
 
-        // 목표: 진입 구간과 "현재가" 둘 다보다 위에 있는 가장 가까운 유의미한 저항 구간의 하단. 없으면 NaN.
-        // (현재가가 이미 구간 위로 올라와 있으면, 지나온 가격대는 목표가 될 수 없다)
+        // 목표: 진입 구간과 "현재가" 둘 다보다 위에 있는 가장 가까운 유의미한 저항 구간의 하단. 없으면 NaN
         double floor = Math.max(entry.high(), in.price());
         double[] targets = zones.stream()
                 .filter(z -> z.low() > floor && z.strength() >= MIN_TARGET_STRENGTH)
@@ -81,11 +93,7 @@ public final class EntryPlanner {
         return Optional.of(new EntrySetup(type, entry, ref, stop, target1, target2, rr));
     }
 
-    /**
-     * 참고 가격대: 정식 진입 계획(PULLBACK/BREAKOUT/RECLAIM)이 없어도,
-     * 현재가 아래 가장 가까운 유의미한 지지 구간을 "관심 가격대"로 보여준다.
-     * type은 NONE이라 화면에서 정식 타점과 구분되고, 비중은 0이다.
-     */
+    /** 참고 가격대: 정식 진입 계획이 없어도, 현재가 아래 가장 가까운 유의미한 지지 구간을 "관심 가격대"로 보여준다 */
     public static Optional<EntrySetup> reference(SignalInputs in, List<PriceZone> zones) {
         return zones.stream()
                 .filter(z -> z.strength() >= MIN_SUPPORT_STRENGTH && z.high() < in.price())
@@ -96,7 +104,7 @@ public final class EntryPlanner {
     private static Optional<EntryStop> pullbackEntry(SignalInputs in, List<PriceZone> zones) {
         return zones.stream()
                 .filter(z -> z.strength() >= MIN_SUPPORT_STRENGTH)
-                .filter(z -> z.low() <= in.price())
+                .filter(z -> z.low() <= in.price() || isBoundaryChop(in, z.low()))
                 .filter(z -> (in.price() - z.high()) / in.atr() <= ENTRY_MAX_DIST_ATR)
                 .max(Comparator.comparingDouble(PriceZone::high))
                 .map(z -> new EntryStop(z, z.low() - STOP_BUFFER_ATR * in.atr()));
@@ -104,14 +112,14 @@ public final class EntryPlanner {
 
     private static Optional<EntryStop> breakoutEntry(SignalInputs in) {
         double rh = in.recentHigh();
-        if (!Double.isFinite(rh) || in.price() < rh) return Optional.empty();
+        if (!Double.isFinite(rh) || (in.price() < rh && !isBoundaryChop(in, rh))) return Optional.empty();
         PriceZone z = new PriceZone(rh, rh + ENTRY_BAND_ATR * in.atr(), 0, List.of("최근고점 돌파"));
         return Optional.of(new EntryStop(z, rh - STOP_BUFFER_ATR * in.atr()));
     }
 
     private static Optional<EntryStop> reclaimEntry(SignalInputs in) {
         double level = (Double.isFinite(in.pivotP()) && in.pivotP() > 0) ? in.pivotP() : in.ma20();
-        if (!Double.isFinite(level) || in.price() < level) return Optional.empty();
+        if (!Double.isFinite(level) || (in.price() < level && !isBoundaryChop(in, level))) return Optional.empty();
         PriceZone z = new PriceZone(level, level + ENTRY_BAND_ATR * in.atr(), 0, List.of("회복 레벨"));
         double stop = (Double.isFinite(in.recentLow()) && in.recentLow() < level)
                 ? in.recentLow() - STOP_BUFFER_ATR * in.atr()
@@ -119,22 +127,32 @@ public final class EntryPlanner {
         return Optional.of(new EntryStop(z, stop));
     }
 
-    // ------------------------------------------------------------------
+    /** 무릎(바닥 반전 초입): 회복 관찰 국면에서 5일선을 되찾았을 때 */
+    private static Optional<EntryStop> kneeEntry(SignalInputs in) {
+        double ma5 = in.ma5(), bottom = in.recentLow(), atr = in.atr();
+        if (!Double.isFinite(ma5) || ma5 <= 0 || !Double.isFinite(bottom) || bottom <= 0) return Optional.empty();
+        if (Double.isFinite(in.low()) && in.low() < bottom) return Optional.empty();       // 오늘 신저가 → 바닥 미확인
+        if (in.price() < ma5 && !isBoundaryChop(in, ma5)) return Optional.empty();        // 5일선 회복 전
+        PriceZone z = new PriceZone(ma5, ma5 + KNEE_BAND_ATR * atr, 0, List.of("5일선 회복"));
+        double stop = bottom - STOP_BUFFER_ATR * atr;
+        double ref = Math.max(z.low(), Math.min(in.price(), z.high()));
+        if (ref - stop > KNEE_MAX_RISK_ATR * atr) return Optional.empty();
+        return Optional.of(new EntryStop(z, stop));
+    }
+
     // 판정 + 트리거 + RR(마지막 단계)
-    // ------------------------------------------------------------------
-    /**
-     * 위쪽에 유의미한 저항 구간이 없을 때(신고가 돌파 등) 손익비를 가늠할 기본 목표 폭.
-     * 화면의 목표가로는 쓰지 않고, '손익비 검사를 건너뛰어 진입 가능으로 판정'되는 것만 막는다.
-     */
+    /** 위쪽에 유의미한 저항 구간이 없을 때(신고가 돌파 등) 손익비를 가늠할 기본 목표 폭 */
     private static final double FALLBACK_TARGET_ATR = 3.0;
 
     public static Verdict judge(EntryType type, SignalInputs in, EntrySetup setup) {
+        if (isBoundaryChop(in, setup.entry().low()) || isBoundaryChop(in, setup.entry().high())) {
+            return Verdict.BOUNDARY_WATCH;
+        }
         if (in.price() > setup.entry().high()) {
             return type == EntryType.PULLBACK ? Verdict.WAIT_FOR_ZONE : Verdict.CHASE_RISK;
         }
         double rr = setup.rr();
         if (!Double.isFinite(rr)) {
-            // 목표 저항이 없으면 예전엔 손익비 검사 없이 통과했다. ATR 기준 목표로 손익비를 추정한다
             double risk = setup.refPrice() - setup.stop();
             rr = risk > 0 ? (FALLBACK_TARGET_ATR * in.atr()) / risk : Double.NaN;
         }
@@ -147,7 +165,28 @@ public final class EntryPlanner {
         return Verdict.ACTIONABLE;
     }
 
-    /** 시가를 아직 모르면(NaN) 트리거를 막지 않는다. 시가가 들어오면 양봉을 요구한다. */
+    /** 국면 때문에 정식 계획이 없을 때도, 오늘 가격이 강한 지지 구간의 경계를 오르내리는 중이면 그 구간을 보여준다 */
+    public static Optional<EntrySetup> boundaryWatch(SignalInputs in, List<PriceZone> zones) {
+        if (!Double.isFinite(in.open())) return Optional.empty();
+        return zones.stream()
+                .filter(z -> z.strength() >= MIN_SUPPORT_STRENGTH)
+                .filter(z -> in.open() >= z.low())
+                .filter(z -> isBoundaryChop(in, z.low()))
+                .max(Comparator.comparingDouble(PriceZone::high))
+                .flatMap(z -> finish(EntryType.PULLBACK, z, z.low() - STOP_BUFFER_ATR * in.atr(), in, zones));
+    }
+
+    /** 경계 공방: 오늘 가격이 이 경계를 이미 위아래로 넘나들었고 */
+    static boolean isBoundaryChop(SignalInputs in, double boundary) {
+        if (!in.intraday()) return false;
+        if (!Double.isFinite(boundary) || !Double.isFinite(in.high()) || !Double.isFinite(in.low())
+                || !Double.isFinite(in.atr()) || in.atr() <= 0) return false;
+        double margin = CHOP_CROSS_ATR * in.atr();
+        boolean crossedToday = in.low() < boundary - margin && in.high() > boundary + margin;
+        return crossedToday && Math.abs(in.price() - boundary) <= CHOP_ATR * in.atr();
+    }
+
+    /** 시가를 아직 모르면(NaN) 트리거를 막지 않는다 */
     private static boolean bullishTrigger(SignalInputs in) {
         if (!Double.isFinite(in.open())) return true;
         return in.price() > in.open();
@@ -160,19 +199,12 @@ public final class EntryPlanner {
 
     /** 현재가에 이보다 가까운 손절선은 일상적인 흔들림에도 걸리므로 건너뛴다 */
     private static final double HOLD_MIN_GAP_ATR = 0.5;
+    /** 익절 목표는 현재가에서 이만큼은 떨어져 있어야 의미가 있다 */
+    private static final double TARGET_MIN_GAP_ATR = 0.5;
     /** 지지 구간도 최근 저점도 쓸 수 없을 때의 기본 폭 */
     private static final double HOLD_FALLBACK_ATR = 2.0;
 
-    /**
-     * 보유 관점의 손절선(이탈 기준선). 차트 국면과 상관없이 ATR만 있으면 항상 값을 낸다.
-     * 예전에는 강한 보유·진입 준비 같은 좋은 국면에서만 계산해서, 손절선이 가장 필요한 하락 국면에 비어 있었다.
-     *
-     * 1. 현재가 아래 유의미한 지지 구간 하단 - 버퍼 (가까운 구간부터, 현재가에 너무 붙은 건 건너뜀)
-     * 2. 없으면 최근 저점 - 버퍼
-     * 3. 그것도 안 되면 현재가 - 2 ATR
-     *
-     * 무상태라서, 보유 중 손절선을 올리기만 하려면 호출하는 쪽이 이전 값과 max()를 취해야 한다.
-     */
+    /** 보유 관점의 손절선(이탈 기준선). 차트 국면과 상관없이 ATR만 있으면 항상 값을 낸다 */
     public static HoldingStop holdingStop(SignalInputs in, List<PriceZone> zones) {
         double price = in.price();
         double atr = in.atr();
@@ -203,15 +235,12 @@ public final class EntryPlanner {
         public static final HoldingTarget NONE = new HoldingTarget(0.0, "");
     }
 
-    /**
-     * 보유 관점의 익절 목표. 현재가보다 최소 0.5 ATR 위에 있는 가장 가까운 유의미한 저항 구간의 하단.
-     * 위쪽에 저항이 없으면(신고가 구간 등) 목표를 지어내지 않고 NONE을 돌려준다.
-     */
+    /** 보유 관점의 익절 목표. 현재가보다 최소 0.5 ATR 위에 있는 가장 가까운 유의미한 저항 구간의 하단 */
     public static HoldingTarget holdingTarget(SignalInputs in, List<PriceZone> zones) {
         double price = in.price();
         double atr = in.atr();
         if (!(price > 0) || !(atr > 0)) return HoldingTarget.NONE;
-        double floor = price + HOLD_MIN_GAP_ATR * atr;
+        double floor = price + TARGET_MIN_GAP_ATR * atr;
         return zones.stream()
                 .filter(z -> z.strength() >= MIN_TARGET_STRENGTH && z.low() >= floor)
                 .min(Comparator.comparingDouble(PriceZone::low))
